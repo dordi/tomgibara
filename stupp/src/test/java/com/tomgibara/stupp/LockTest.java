@@ -16,6 +16,8 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.HashSet;
+
 import com.tomgibara.stupp.StuppFactory;
 import com.tomgibara.stupp.StuppLock;
 import com.tomgibara.stupp.StuppScope;
@@ -26,25 +28,52 @@ import junit.framework.TestCase;
 public class LockTest extends TestCase {
 
 	//TODO this is a weak test
-	public void testSynchronization() throws Exception {
+	public void testScopeSynchronized() throws Exception {
 		final StuppScope scope = new StuppScope(new StuppLock());
 		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
-		Thread t1 = new Thread(new Creator<Book>(bookFactory, 0, 2, 1000));
-		Thread t2 = new Thread(new Creator<Book>(bookFactory, 1, 2, 1000));
+		final Thread t1 = new Thread(new KeyedCreator<Book>(bookFactory, 0, 2, 1000));
+		final Thread t2 = new Thread(new KeyedCreator<Book>(bookFactory, 1, 2, 1000));
 		t1.start();
 		t2.start();
 		t1.join();
 		t2.join();
 	}
 	
-	private static class Creator<T> implements Runnable {
+	public void testSequenceSynchronized() throws Exception {
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppFactory<Book, Long> factory1 = new StuppFactory<Book, Long>(type, new StuppScope());
+		final StuppFactory<Book, Long> factory2 = new StuppFactory<Book, Long>(type, new StuppScope());
+		LongSequence sequence = new LongSequence(new StuppLock());
+		factory1.setSequence(sequence);
+		factory2.setSequence(sequence);
+		final int count = 10000;
+		final Thread t1 = new Thread(new SequenceCreator<Book>(factory1, count));
+		final Thread t2 = new Thread(new SequenceCreator<Book>(factory2, count));
+		t1.start();
+		t2.start();
+		t1.join();
+		t2.join();
+		
+		HashSet<Long> check = new HashSet<Long>();
+		
+		for (Book book : factory1.getAllInstances()) {
+			assertTrue("Duplicate id: " + book.getId(), check.add(book.getId()));
+		}
+		for (Book book : factory2.getAllInstances()) {
+			assertTrue("Duplicate id: " + book.getId(), check.add(book.getId()));
+		}
+		
+		assertEquals(count*2, check.size());
+	}
+	
+	private static class KeyedCreator<T> implements Runnable {
 		
 		private final StuppFactory<T, Long> factory;
+		private final int count;
 		private int next;
 		private int step;
-		private int count;
 
-		public Creator(StuppFactory<T, Long> factory, int next, int step, int count) {
+		public KeyedCreator(StuppFactory<T, Long> factory, int next, int step, int count) {
 			this.factory = factory;
 			this.next = next;
 			this.step = step;
@@ -58,6 +87,39 @@ public class LockTest extends TestCase {
 				factory.getAllInstances();
 				next += step;
 			}
+		}
+		
+	}
+	
+	private static class SequenceCreator<T> implements Runnable {
+
+		private final StuppFactory<T, ?> factory;
+		private final int count;
+
+		public SequenceCreator(StuppFactory<T, ?> factory, int count) {
+			this.factory = factory;
+			this.count = count;
+		}
+		
+		@Override
+		public void run() {
+			for (int i = 0; i < count; i++) {
+				factory.newInstance();
+			}
+		}
+	}
+	
+	private static class LongSequence extends StuppSequence<Long> {
+
+		private long next = 0;
+		
+		public LongSequence(StuppLock lock) {
+			super(lock);
+		}
+		
+		@Override
+		protected Long nextImpl() {
+			return next++;
 		}
 		
 	}

@@ -68,5 +68,9 @@ public class StuppFactory<T, K> {
 	public Collection<T> getAllInstances() {
 		return (Collection<T>) scope.getAllObjects(type);
 	}
+
+	public boolean deleteInstance(T instance) {
+		return scope.detach(instance);
+	}
 	
 }

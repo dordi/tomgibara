@@ -16,6 +16,8 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.Collections;
+
 import com.tomgibara.stupp.StuppFactory;
 import com.tomgibara.stupp.StuppScope;
 import com.tomgibara.stupp.StuppType;
@@ -27,7 +29,7 @@ public class FactoryTest extends TestCase {
 
 	public void testDuplicateNewInstance() {
 		
-		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class, null, null), new StuppScope());
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), new StuppScope());
 		Book book = factory.newInstance(1L);
 		try {
 			factory.newInstance(1L);
@@ -36,5 +38,15 @@ public class FactoryTest extends TestCase {
 			/* expected */
 		}
 	}
-	
+
+	public void testDeleteInstance() {
+
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), new StuppScope());
+		Book book = factory.newInstance(1L);
+		factory.deleteInstance(book);
+
+		assertEquals(Collections.emptySet(), factory.getAllInstances());
+		assertFalse(factory.deleteInstance(book));
+	}
+
 }

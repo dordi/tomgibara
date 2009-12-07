@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.WeakHashMap;
 
+import com.tomgibara.pronto.util.Classes;
 import com.tomgibara.pronto.util.Reflect;
 
 public class StuppType {
@@ -53,7 +54,19 @@ public class StuppType {
 	}
 	
 	private static StuppType getInstanceForProxyClass(Class<?> proxyClass, String keyProperty, Class<?> keyClass) {
-		if (keyProperty == null) keyProperty = identifyKeyProperty(proxyClass);
+		if (keyProperty == null) {
+			Method method = identifyKeyMethod(proxyClass);
+			keyProperty = Reflect.propertyName(method.getName());
+			if (Reflect.isSetter(method)) {
+				keyClass = method.getParameterTypes()[0];
+			} else if (Reflect.isGetter(method)) {
+				keyClass = method.getReturnType();
+			} else {
+				throw new IllegalArgumentException("Method annotated with @StuppKey is not an accessor: " + method.getName());
+			}
+		} else if (keyClass == null) {
+			throw new IllegalArgumentException("Key class must be specified with key property name.");
+		}
 		synchronized (instances) {
 			StuppType type = instances.get(proxyClass);
 			if (type == null) {
@@ -64,7 +77,8 @@ public class StuppType {
 		}
 	}
 	
-	private static String identifyKeyProperty(Class<?> proxyClass) {
+	//TODO resolve ambiguity around possible setter/getter signature differences
+	private static Method identifyKeyMethod(Class<?> proxyClass) {
 		Method keyMethod = null;
 		final Class<?>[] interfaces = proxyClass.getInterfaces();
 		for (Class<?> i : interfaces) {
@@ -80,7 +94,7 @@ public class StuppType {
 			}
 		}
 		if (keyMethod == null) throw new IllegalArgumentException("No StuppKey: " + Arrays.toString(interfaces));
-		return Reflect.propertyName(keyMethod.getName());
+		return keyMethod;
 	}
 
 	private final Class<?> proxyClass;
@@ -118,10 +132,10 @@ public class StuppType {
 		return clss.isAssignableFrom(proxyClass);
 	}
 	
-	public boolean keyImplements(Class<?> clss) {
+	public boolean keyAssignableFrom(Class<?> clss) {
 		return keyClass.isAssignableFrom(clss);
 	}
-	
+
 	public Object newInstance() {
 		try {
 			return proxyClass.getConstructor(CONS_PARAMS).newInstance(new Object[] { new StuppHandler(this) });
@@ -151,4 +165,14 @@ public class StuppType {
 		sb.append('>');
 		return sb.toString();
 	}
+
+	void checkKey(Object key) {
+		if (keyClass.isPrimitive()) {
+			if (key == null) throw new IllegalArgumentException("Primitive key cannot be null");
+			if (key.getClass() != Classes.classForPrimitive(keyClass)) throw new IllegalArgumentException("Key class must be " + keyClass +" not " + key.getClass());
+		} else {
+			if (key != null && !keyAssignableFrom(key.getClass())) throw new IllegalArgumentException("Invalid key class: " + key.getClass());
+		}
+	}
+	
 }

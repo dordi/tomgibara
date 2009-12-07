@@ -22,6 +22,7 @@ import com.tomgibara.stupp.StuppType;
 
 import junit.framework.TestCase;
 
+//TODO must test types with subclassable keys
 public class FactoryTest extends TestCase {
 
 	public void testDuplicateNewInstance() {

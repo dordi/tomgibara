@@ -24,6 +24,7 @@ public class StuppTests {
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Test for com.tomgibara.stupp");
 		//$JUnit-BEGIN$
+		suite.addTestSuite(StuppTest.class);
 		suite.addTestSuite(HandlerTest.class);
 		suite.addTestSuite(TypeTest.class);
 		suite.addTestSuite(ScopeTest.class);

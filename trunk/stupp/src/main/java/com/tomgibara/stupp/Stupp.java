@@ -26,7 +26,7 @@ public class Stupp {
 	}
 	
 	public static void setKey(Object object, Object value) {
-		getHandler(object).setKey(value);
+		getHandler(object).setKey(value, true);
 	}
 	
 	public static StuppType getType(Object object) {

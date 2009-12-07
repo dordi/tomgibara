@@ -34,7 +34,7 @@ public class StuppFactory<T, K> {
 		if (type == null) throw new IllegalArgumentException();
 		if (scope == null) throw new IllegalArgumentException();
 		if (instanceClass != null && !type.instanceImplements(instanceClass)) throw new IllegalArgumentException();
-		if (keyClass != null && !type.keyImplements(keyClass)) throw new IllegalArgumentException();
+		if (keyClass != null && !type.keyAssignableFrom(keyClass)) throw new IllegalArgumentException();
 		this.scope = scope;
 		this.type = type;
 	}

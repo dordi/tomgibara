@@ -61,7 +61,7 @@ public class StuppHandler implements InvocationHandler {
 				Object value = args[0];
 				//key is a special case - if we have scope there's more work to do
 				if (propertyName.equals(type.keyProperty)) {
-					setKey(value);
+					setKey(value, false);
 				} else {
 					Object previous = values.put(propertyName, value);
 					if (previous != value && scope != null) {
@@ -87,13 +87,13 @@ public class StuppHandler implements InvocationHandler {
 		return values.get(type.keyProperty);
 	}
 	
-	void setKey(Object value) {
+	void setKey(Object value, boolean check) {
 		//ids cannot be persistent in their own right
 		//NOTE: these tests can only catch a narrow subset of mistakes
-		if (value instanceof Collection) throw new IllegalArgumentException("Attempto to supply collective id: " + value);
+		if (value instanceof Collection) throw new IllegalArgumentException("Attempt to to supply collective id: " + value);
 		if (Stupp.getHandlerOrNull(value) != null) throw new IllegalArgumentException("Attempt to supply persistent id: " + value);
+		if (check) type.checkKey(value);
 		final String propertyName = type.keyProperty;
-		//TODO should ideally check key type
 		if (scope != null) {
 			Object previous = values.get(propertyName);
 			if (Objects.notEqual(previous, value)) {

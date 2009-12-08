@@ -18,13 +18,22 @@ package com.tomgibara.stupp;
 
 public abstract class StuppSequence<K> {
 
-	private StuppLock lock;
-	
-	public StuppSequence() {
-		this(null);
+	public interface Generator<K> {
+		
+		K next();
+		
 	}
 	
-	public StuppSequence(StuppLock lock) {
+	private final Generator<K> generator;
+	private final StuppLock lock;
+	
+	public StuppSequence(Generator<K> generator) {
+		this(generator, null);
+	}
+	
+	public StuppSequence(Generator<K> generator, StuppLock lock) {
+		if (generator == null) throw new IllegalArgumentException();
+		this.generator = generator;
 		this.lock = lock == null ? StuppLock.NOOP_LOCK : lock;
 	}
 
@@ -35,12 +44,10 @@ public abstract class StuppSequence<K> {
 	public K next() {
 		lock.lock();
 		try {
-			return nextImpl();
+			return generator.next();
 		} finally {
 			lock.unlock();
 		}
 	}
-	
-	protected abstract K nextImpl();
 	
 }

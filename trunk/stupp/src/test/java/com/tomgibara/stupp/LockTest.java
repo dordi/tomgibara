@@ -111,15 +111,14 @@ public class LockTest extends TestCase {
 	
 	private static class LongSequence extends StuppSequence<Long> {
 
-		private long next = 0;
-		
 		public LongSequence(StuppLock lock) {
-			super(lock);
-		}
-		
-		@Override
-		protected Long nextImpl() {
-			return next++;
+			super(new StuppSequence.Generator<Long>() {
+				private long next = 0;
+				@Override
+				public Long next() {
+					return next++;
+				}
+			}, lock);
 		}
 		
 	}

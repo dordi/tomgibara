@@ -134,13 +134,19 @@ public class StuppHandler implements InvocationHandler {
 		StuppHandler that = (StuppHandler) obj;
 		if (this.type != that.type) return false;
 		if (this.scope != that.scope) return false;
-		if (!this.values.equals(that.values)) return false;
+		for (String property : type.equalityProperties) {
+			if (Objects.notEqual(this.values.get(property), that.values.get(property))) return false;
+		}
 		return true;
 	}
 	
 	@Override
 	public int hashCode() {
-		return values.hashCode() ^ type.hashCode() ^ scope.hashCode();
+		int h = type.hashCode() ^ scope.hashCode();
+		for (String property : type.equalityProperties) {
+			h ^= Objects.hashCode(values.get(property));
+		}
+		return h;
 	}
 	
 	@Override

@@ -33,7 +33,7 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testMultipleInterfaces() {
-		StuppType baType = StuppType.getInstance(null, null, null, Book.class, Author.class);
+		StuppType baType = StuppType.getInstance(null, null, null, null, Book.class, Author.class);
 		Object instance = baType.newInstance();
 		((Book) instance).setName("Book Property");
 		((Author) instance).setSurname("Author Property");
@@ -53,12 +53,33 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testOverrideKey() {
-		StuppType type = StuppType.getInstance(C.class, "id", Long.class);
+		StuppType type = StuppType.getInstance(C.class, "id", Long.class, null);
 		C instance = (C) type.newInstance();
 		Stupp.setKey(instance, 1L);
 		assertEquals(1L, instance.getId());
 	}
-	
+
+	public void testOverrideEquality() {
+		StuppType type = StuppType.getInstance(D.class, null, null, "forename", "surname");
+		D d1 = (D) type.newInstance();
+		D d2 = (D) type.newInstance();
+		assertEquals(d1, d2);
+		assertEquals(d2, d1);
+		d1.setSurname("Gibara");
+		assertFalse(d1.equals(d2));
+		assertFalse(d2.equals(d1));
+		d2.setSurname("Gibara");
+		assertEquals(d1, d2);
+		assertEquals(d2, d1);
+		d1.setId(1L);
+		d2.setId(2L);
+		assertEquals(d1, d2);
+		assertEquals(d2, d1);
+		d1.setForename("Tom");
+		assertFalse(d1.equals(d2));
+		assertFalse(d2.equals(d1));
+	}
+
 	private static interface A {
 		@StuppKey
 		void setKey(String id);
@@ -78,4 +99,16 @@ public class TypeTest extends TestCase {
 		long getId();
 	}
 	
+	private static interface D {
+		
+		@StuppKey
+		void setId(long id);
+		
+		@StuppEquality
+		void setForename(String forename);
+		
+		@StuppEquality
+		void setSurname(String surname);
+	}
+
 }

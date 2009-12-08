@@ -29,15 +29,17 @@ public class HandlerTest extends TestCase {
 		StuppType type = StuppType.getInstance(Book.class);
 		Book book1 = (Book) type.newInstance();
 		Book book2 = (Book) type.newInstance();
+		//both have null properties
 		assertEquals(book1, book2);
 		book1.setName("Perl Cookbook");
-		assertFalse(book1.equals(book2));
-		book2.setName("Perl Cookbook");
-		assertEquals(book1, book2);
+		//both still equal because ids are equal
+		assertTrue(book1.equals(book2));
 		Stupp.setKey(book1, 1L);
 		Stupp.setKey(book2, 2L);
+		//unequal because ids differ
 		assertFalse(book1.equals(book2));
 		Stupp.setKey(book2, 1L);
+		//both again equal because ids are again equal
 		assertEquals(book1, book2);
 	}
 

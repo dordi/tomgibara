@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,21 +40,21 @@ public class StuppType {
 	public static StuppType getInstance(Class<?> clss) {
 		//inefficient, a key not based on the proxy class would be more efficient, but tricky to make correct
 		final Class<?> proxyClass = Proxy.getProxyClass(clss.getClassLoader(), clss);
-		return (StuppType) getInstanceForProxyClass(proxyClass, null, null);
+		return (StuppType) getInstanceForProxyClass(proxyClass, null, null, null);
 	}
 	
-	public static StuppType getInstance(Class<?> clss, String keyProperty, Class<?> keyClass) {
+	public static StuppType getInstance(Class<?> clss, String keyProperty, Class<?> keyClass, String... equalityProperties) {
 		final Class<?> proxyClass = Proxy.getProxyClass(clss.getClassLoader(), clss);
-		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass);
+		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass, equalityProperties);
 	}
 	
-	public static StuppType getInstance(String keyProperty, Class<?> keyClass, ClassLoader classloader, Class<?>... classes) {
+	public static StuppType getInstance(String keyProperty, Class<?> keyClass, String[] equalityProperties, ClassLoader classloader, Class<?>... classes) {
 		if (classloader == null) classloader = Thread.currentThread().getContextClassLoader();
 		final Class<?> proxyClass = Proxy.getProxyClass(classloader, classes);
-		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass);
+		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass, equalityProperties);
 	}
 	
-	private static StuppType getInstanceForProxyClass(Class<?> proxyClass, String keyProperty, Class<?> keyClass) {
+	private static StuppType getInstanceForProxyClass(Class<?> proxyClass, String keyProperty, Class<?> keyClass, String[] equalityProperties) {
 		if (keyProperty == null) {
 			Method method = identifyKeyMethod(proxyClass);
 			keyProperty = Reflect.propertyName(method.getName());
@@ -67,29 +68,40 @@ public class StuppType {
 		} else if (keyClass == null) {
 			throw new IllegalArgumentException("Key class must be specified with key property name.");
 		}
+		
+		if (equalityProperties == null || equalityProperties.length == 0) {
+			Method[] methods = identifyEqualityMethods(proxyClass);
+			if (methods.length == 0) {
+				equalityProperties = new String[] { keyProperty };
+			} else {
+				equalityProperties = new String[methods.length];
+				for (int i = 0; i < methods.length; i++) {
+					equalityProperties[i] = Reflect.propertyName(methods[i].getName());
+				}
+			}
+		}
 		synchronized (instances) {
 			StuppType type = instances.get(proxyClass);
 			if (type == null) {
-				type = new StuppType(proxyClass, keyProperty, keyClass);
+				type = new StuppType(proxyClass, keyProperty, keyClass, equalityProperties);
 				instances.put(proxyClass, type);
 			}
 			return type;
 		}
 	}
 	
-	//TODO resolve ambiguity around possible setter/getter signature differences
 	private static Method identifyKeyMethod(Class<?> proxyClass) {
 		Method keyMethod = null;
 		final Class<?>[] interfaces = proxyClass.getInterfaces();
 		for (Class<?> i : interfaces) {
 			for (Method method : i.getMethods()) {
-				if (method.isAnnotationPresent(StuppKey.class)) {
-					final String name = method.getName();
-					if (keyMethod == null) {
-						keyMethod = method;
-					} else if (!keyMethod.getName().equals(name)) {
-						throw new IllegalArgumentException("Conflicting key names defined by " + method.getName() + " and " + name + " on " + i.getName() + " of " + proxyClass.getName());
-					}
+				if (!Reflect.isSetter(method)) continue;
+				if (!method.isAnnotationPresent(StuppKey.class)) continue;
+				final String name = method.getName();
+				if (keyMethod == null) {
+					keyMethod = method;
+				} else if (!keyMethod.getName().equals(name)) {
+					throw new IllegalArgumentException("Conflicting key names defined by " + method.getName() + " and " + name + " on " + i.getName() + " of " + proxyClass.getName());
 				}
 			}
 		}
@@ -97,14 +109,29 @@ public class StuppType {
 		return keyMethod;
 	}
 
+	//TODO should roll this into identifyKeyMethod for efficiency
+	private static Method[] identifyEqualityMethods(Class<?> proxyClass) {
+		final HashSet<Method> equalityMethods = new HashSet<Method>();
+		final Class<?>[] interfaces = proxyClass.getInterfaces();
+		for (Class<?> i : interfaces) {
+			for (Method method : i.getMethods()) {
+				if (!Reflect.isSetter(method)) continue;
+				if (!method.isAnnotationPresent(StuppEquality.class)) continue;
+				equalityMethods.add(method);
+			}
+		}
+		return (Method[]) equalityMethods.toArray(new Method[equalityMethods.size()]);
+	}
+	
 	private final Class<?> proxyClass;
 
 	final String keyProperty;
 	final Class<?> keyClass;
+	final String[] equalityProperties;
 	final HashSet<String> propertyNames;
 	final HashMap<Method, String> methodPropertyNames;
 	
-	private StuppType(Class<?> clss, String keyProperty, Class keyClass) {
+	private StuppType(Class<?> clss, String keyProperty, Class keyClass, String[] equalityProperties) {
 		
 		//generate method property name map
 		HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
@@ -121,6 +148,7 @@ public class StuppType {
 		//assign values
 		this.keyProperty = keyProperty;
 		this.keyClass = keyClass;
+		this.equalityProperties = equalityProperties;
 		this.proxyClass = clss;
 		this.methodPropertyNames = methodPropertyNames;
 		this.propertyNames = new HashSet<String>(methodPropertyNames.values());

@@ -16,7 +16,7 @@
  */
 package com.tomgibara.stupp;
 
-public abstract class StuppSequence<K> {
+public class StuppSequence<K> {
 
 	public interface Generator<K> {
 		

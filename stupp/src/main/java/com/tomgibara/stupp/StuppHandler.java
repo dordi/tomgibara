@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.tomgibara.pronto.util.Objects;
@@ -63,19 +64,46 @@ public class StuppHandler implements InvocationHandler {
 				if (propertyName.equals(type.keyProperty)) {
 					setKey(value, false);
 				} else {
+					//TODO this is probably wrt properly synchronizing access to this object, investigate
 					Object previous = values.put(propertyName, value);
 					if (previous != value && scope != null) {
-						if (value instanceof Collection) {
-							for (Object object : (Collection<?>) value) {
-								scope.tryAttach(object);
+						final StuppLock lock = scope.lock;
+						lock.lock();
+						try {
+							//TODO make it so that scope work can be rolled back (necessary if index fails)
+							//ensure that managed objects are attached
+							if (value instanceof Collection<?>) {
+								for (Object object : (Collection<?>) value) {
+									scope.tryAttach(object);
+								}
 							}
+							if (value instanceof Map<?,?>) {
+								final Map<?,?> map = (Map<?,?>) value;
+								for (Object object : map.keySet()) scope.tryAttach(object);
+								for (Object object : map.values()) scope.tryAttach(object);
+							}
+							scope.tryAttach(value);
+							//TODO optimize by caching old/new values
+							//ensure that index is updated
+							HashSet<StuppIndex<?>> indices = scope.getIndices(type, propertyName);
+							if (!indices.isEmpty()) {
+								for (StuppIndex<?> index : indices) {
+									Object oldValue = index.getValue(values, propertyName, previous);
+									Object newValue = index.getValue(values);
+									index.checkUpdate(proxy, oldValue, newValue);
+								}
+								for (StuppIndex<?> index : indices) {
+									Object oldValue = index.getValue(values, propertyName, previous);
+									Object newValue = index.getValue(values);
+									index.performUpdate(proxy, oldValue, newValue);
+								}
+							}
+						} catch (IllegalArgumentException e) {
+							values.put(propertyName, previous);
+							throw e;
+						} finally {
+							lock.unlock();
 						}
-						if (value instanceof Map) {
-							final Map<?,?> map = (Map<?,?>) value;
-							for (Object object : map.keySet()) scope.tryAttach(object);
-							for (Object object : map.values()) scope.tryAttach(object);
-						}
-						scope.tryAttach(value);
 					}
 				}
 			} else throw new UnsupportedOperationException();
@@ -83,16 +111,24 @@ public class StuppHandler implements InvocationHandler {
 		return null;
 	}
 
+	Object getProperty(String property) {
+		return values.get(property);
+	}
+
+	HashMap<String, Object> getProperties() {
+		return values;
+	}
+	
 	Object getKey() {
 		return values.get(type.keyProperty);
 	}
 	
-	void setKey(Object value, boolean check) {
+	void setKey(Object value, boolean checkType) {
 		//ids cannot be persistent in their own right
 		//NOTE: these tests can only catch a narrow subset of mistakes
 		if (value instanceof Collection) throw new IllegalArgumentException("Attempt to to supply collective id: " + value);
 		if (Stupp.getHandlerOrNull(value) != null) throw new IllegalArgumentException("Attempt to supply persistent id: " + value);
-		if (check) type.checkKey(value);
+		if (checkType) type.checkKey(value);
 		final String propertyName = type.keyProperty;
 		if (scope != null) {
 			Object previous = values.get(propertyName);
@@ -142,7 +178,7 @@ public class StuppHandler implements InvocationHandler {
 	
 	@Override
 	public int hashCode() {
-		int h = type.hashCode() ^ scope.hashCode();
+		int h = type.hashCode() ^ Objects.hashCode(scope);
 		for (String property : type.equalityProperties) {
 			h ^= Objects.hashCode(values.get(property));
 		}

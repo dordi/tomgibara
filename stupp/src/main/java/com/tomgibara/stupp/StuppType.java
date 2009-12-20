@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.WeakHashMap;
@@ -130,17 +132,32 @@ public class StuppType {
 	final String[] equalityProperties;
 	final HashSet<String> propertyNames;
 	final HashMap<Method, String> methodPropertyNames;
+	final HashMap<String, Class<?>> propertyClasses;
 	
 	private StuppType(Class<?> clss, String keyProperty, Class keyClass, String[] equalityProperties) {
 		
-		//generate method property name map
+		//generate method property name map and type map
 		HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
+		HashMap<String, Class<?>> propertyClasses = new HashMap<String, Class<?>>();
 		final Class<?>[] interfaces = clss.getInterfaces();
 		for (Class<?> i : interfaces) {
 			for (Method method : i.getMethods()) {
-				if (Reflect.isSetter(method) || Reflect.isGetter(method)) {
+				final boolean setter = Reflect.isSetter(method);
+				final boolean getter = Reflect.isGetter(method);
+				if (setter || getter) {
 					final String propertyName = Reflect.propertyName(method.getName());
 					methodPropertyNames.put(method, propertyName);
+					Class<?> c = setter ? method.getParameterTypes()[0] : method.getReturnType();
+					Class<?> k = propertyClasses.get(propertyName);
+					if (k == null) {
+						propertyClasses.put(propertyName, c);
+					} else {
+						if (k.isAssignableFrom(c)) {
+							propertyClasses.put(propertyName, c);
+						} else if (!c.isAssignableFrom(k)) {
+							throw new IllegalArgumentException("Incompatible setter/getter types: " + propertyName);
+						}
+					}
 				}
 			}
 		}
@@ -152,6 +169,7 @@ public class StuppType {
 		this.proxyClass = clss;
 		this.methodPropertyNames = methodPropertyNames;
 		this.propertyNames = new HashSet<String>(methodPropertyNames.values());
+		this.propertyClasses = propertyClasses;
 		
 		if (!propertyNames.contains(keyProperty)) throw new IllegalArgumentException("No method for key property: " + keyProperty);
 	}
@@ -194,6 +212,8 @@ public class StuppType {
 		return sb.toString();
 	}
 
+	// package methods
+	
 	void checkKey(Object key) {
 		if (keyClass.isPrimitive()) {
 			if (key == null) throw new IllegalArgumentException("Primitive key cannot be null");
@@ -201,6 +221,12 @@ public class StuppType {
 		} else {
 			if (key != null && !keyAssignableFrom(key.getClass())) throw new IllegalArgumentException("Invalid key class: " + key.getClass());
 		}
+	}
+	
+	Collection<? extends StuppIndex<?>> newIndices() {
+		//TODO support more general type annotations in future?
+		//TODO could cache properties object
+		return Collections.singleton(new StuppUniqueIndex(new StuppProperties(this, keyProperty), true));
 	}
 	
 }

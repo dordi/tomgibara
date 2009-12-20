@@ -30,6 +30,8 @@ public class StuppTests {
 		suite.addTestSuite(ScopeTest.class);
 		suite.addTestSuite(FactoryTest.class);
 		suite.addTestSuite(LockTest.class);
+		suite.addTestSuite(PropertyIndexTest.class);
+		suite.addTestSuite(UniqueIndexTest.class);
 		//$JUnit-END$
 		return suite;
 	}

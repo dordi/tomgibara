@@ -28,6 +28,12 @@ public class Stupp {
 	public static void setKey(Object object, Object value) {
 		getHandler(object).setKey(value, true);
 	}
+
+	public static Object getProperty(Object object, String property) {
+		return getHandler(object).getProperty(property);
+	}
+	
+	//TODO support setProperty
 	
 	public static StuppType getType(Object object) {
 		return getHandler(object).getType();
@@ -53,4 +59,8 @@ public class Stupp {
 		return (StuppHandler) handler;
 	}
 	
+	//TODO check where we can use this
+	static StuppHandler getHandlerFast(Object object) {
+		return (StuppHandler) Proxy.getInvocationHandler(object);
+	}
 }

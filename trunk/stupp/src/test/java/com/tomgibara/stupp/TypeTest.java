@@ -80,6 +80,25 @@ public class TypeTest extends TestCase {
 		assertFalse(d2.equals(d1));
 	}
 
+	public void testIncompatibleTypes() {
+		try {
+			StuppType.getInstance(E.class);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		
+		try {
+			StuppType.getInstance(F.class);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		
+		StuppType.getInstance(G.class);
+		StuppType.getInstance(H.class);
+	}
+	
 	private static interface A {
 		@StuppKey
 		void setKey(String id);
@@ -111,4 +130,44 @@ public class TypeTest extends TestCase {
 		void setSurname(String surname);
 	}
 
+	private static interface E {
+		
+		@StuppKey
+		void setId(long id);
+
+		void setValue(long v);
+		
+		int getValue();
+	}
+	
+	private static interface F {
+		
+		@StuppKey
+		void setId(long id);
+
+		void setValue(String v);
+		
+		Boolean getValue();
+	}
+	
+	private static interface G {
+		
+		@StuppKey
+		void setId(long id);
+
+		void setValue(Number v);
+		
+		Integer getValue();
+	}
+	
+	private static interface H {
+		
+		@StuppKey
+		void setId(long id);
+
+		void setValue(Integer v);
+		
+		Number getValue();
+	}
+	
 }

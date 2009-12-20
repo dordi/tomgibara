@@ -216,7 +216,34 @@ public class ScopeTest extends TestCase {
 		assertEquals(2, scope.getAllObjects(authorType).size());
 		assertEquals(0, scope.getAllObjects(pubType).size());
 	}
-	
+
+	public void testAddIndex() {
+		final StuppScope scope = new StuppScope();
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
+		scope.addIndex(index);
+		assertEquals(1, scope.getAllIndices().size());
+		assertSame(index, scope.getAllIndices().iterator().next());
+		assertEquals(1, scope.getIndices(type, "name").size());
+		assertSame(index, scope.getIndices(type, "name").iterator().next());
+		try {
+			scope.addIndex(index);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		//TODO test adding index attached to other scope
+	}
+
+	public void testRemoveIndex() {
+		final StuppScope scope = new StuppScope();
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
+		scope.addIndex(index);
+		scope.removeIndex(index);
+		assertTrue(scope.getAllIndices().isEmpty());
+	}
+
 	private static interface Jacket {
 		
 		@StuppKey

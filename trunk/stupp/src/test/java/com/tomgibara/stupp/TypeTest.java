@@ -95,8 +95,16 @@ public class TypeTest extends TestCase {
 			/* expected */
 		}
 		
-		StuppType.getInstance(G.class);
+		try {
+			StuppType.getInstance(G.class);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+
 		StuppType.getInstance(H.class);
+
+		
 	}
 	
 	private static interface A {

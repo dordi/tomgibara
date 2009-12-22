@@ -19,10 +19,12 @@ package com.tomgibara.stupp;
 import java.util.Collection;
 
 //convenience class
+//TODO generalize to multivalue keys
 public class StuppFactory<T, K> {
 
 	private final StuppScope scope;
 	private final StuppType type;
+	private final StuppKeyedIndex index;
 	
 	private StuppSequence<? extends K> sequence;
 
@@ -37,6 +39,7 @@ public class StuppFactory<T, K> {
 		if (keyClass != null && !type.keyAssignableFrom(keyClass)) throw new IllegalArgumentException();
 		this.scope = scope;
 		this.type = type;
+		this.index = scope.register(type);
 	}
 
 	public void setSequence(StuppSequence<? extends K> sequence) {
@@ -56,17 +59,17 @@ public class StuppFactory<T, K> {
 	
 	public T newInstance(K key) {
 		Object object = type.newInstance();
-		Stupp.setKey(object, key);
+		Stupp.setProperty(object, type.keyProperty, key);
 		scope.attach(object);
 		return (T) object;
 	}
 
 	public T getInstance(K key) {
-		return (T) scope.getObject(type, key);
+		return (T) index.getSingleForKey(key);
 	}
 
 	public Collection<T> getAllInstances() {
-		return (Collection<T>) scope.getAllObjects(type);
+		return (Collection<T>) index.getAll();
 	}
 
 	public boolean deleteInstance(T instance) {

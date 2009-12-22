@@ -4,19 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
-public class StuppUniqueIndex extends StuppIndex<StuppUniqueIndex.UniqueCriteria> {
-
-	// statics
-	
-	public static class UniqueCriteria {
-
-		final Object values;
-
-		public UniqueCriteria(Object... values) {
-			this.values = values;
-		}
-
-	}
+public class StuppUniqueIndex extends StuppKeyedIndex {
 
 	// fields
 	
@@ -58,19 +46,15 @@ public class StuppUniqueIndex extends StuppIndex<StuppUniqueIndex.UniqueCriteria
 	}
 
 	@Override
-	public Collection<Object> get(UniqueCriteria criteria) {
-		return getForValue(criteria.values);
+	Iterable<Object> all() {
+		return index.values();
 	}
-
-	@Override
-	public Object getSingle(UniqueCriteria criteria) {
-		return getSingleForValue(criteria.values);
-	}
-
-	// public helper methods
 	
-	public Collection<Object> getForValue(Object... values) {
-		final Object value = getValue(values);
+	// keyed index methods
+	
+	@Override
+	public Collection<Object> getForKey(Object... values) {
+		final Object value = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {
@@ -82,8 +66,9 @@ public class StuppUniqueIndex extends StuppIndex<StuppUniqueIndex.UniqueCriteria
 		}
 	}
 
-	public Object getSingleForValue(Object... values) {
-		final Object value = getValue(values);
+	@Override
+	public Object getSingleForKey(Object... values) {
+		final Object value = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {

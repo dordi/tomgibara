@@ -1,8 +1,10 @@
 package com.tomgibara.stupp;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+//TODO should throw meaningful exception when not in scope
 public abstract class StuppIndex<C> {
 
 	final StuppProperties properties;
@@ -26,6 +28,26 @@ public abstract class StuppIndex<C> {
 
 	public abstract Object getSingle(C criteria);
 
+	public abstract boolean containsObject(Object object);
+
+	//override for efficiency
+	public Collection<Object> getAll() {
+		final ArrayList<Object> list = new ArrayList<Object>();
+		final StuppLock lock = scope.lock;
+		lock.lock();
+		try {
+			for (Object object : all()) list.add(object);
+		} finally {
+			lock.unlock();
+		}
+		return list;
+	}
+
+	//override for efficiency
+	public boolean matches(C criteria) {
+		return getSingle(criteria) != null;
+	}
+	
 	// package methods
 
 	// move methods onto a StuppCollator class
@@ -57,15 +79,17 @@ public abstract class StuppIndex<C> {
 	}
 	
 	//assumed to be from client code - checks types
-	Object getValue(Object[] arr) {
-		return properties.combine(arr, true);
+	Object getValue(Object[] arr, boolean checkTypes) {
+		return properties.combine(arr, checkTypes);
 	}
-	
+
+	//returns an iterator over all instances, should not make a copy
+	abstract Iterable<Object> all();
+
 	//TODO stopgap until we have some degree of support for transactions
 	abstract void checkUpdate(Object object, Object oldValue, Object newValue) throws IllegalArgumentException;
 
 	abstract void performUpdate(Object object, Object oldValue, Object newValue);
 
 	abstract void reset();
-
 }

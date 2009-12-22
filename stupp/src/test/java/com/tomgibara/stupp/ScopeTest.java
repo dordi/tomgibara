@@ -123,8 +123,8 @@ public class ScopeTest extends TestCase {
 		final Book book = bookFactory.newInstance(1L);
 		final Author author = authorFactory.newInstance(1L);
 
-		assertEquals(book, scope.getObject(bookType, 1L));
-		assertEquals(author, scope.getObject(authorType, 1L));
+		assertEquals(book, scope.getPrimaryIndex(bookType).getSingleForKey(1L));
+		assertEquals(author, scope.getPrimaryIndex(authorType).getSingleForKey(1L));
 		
 	}
 	
@@ -178,6 +178,7 @@ public class ScopeTest extends TestCase {
 		assertEquals(scope, Stupp.getScope(bookB));
 	}
 	
+	/*
 	public void testKeyedKey() {
 		final StuppScope scope = new StuppScope();
 		final StuppFactory<Jacket, Book> jacketFactory = new StuppFactory<Jacket, Book>(StuppType.getInstance(Jacket.class), scope);
@@ -187,9 +188,10 @@ public class ScopeTest extends TestCase {
 			jacketFactory.newInstance(book);
 			fail();
 		} catch (IllegalArgumentException e) {
-			/* expected */
+			/* expected *-/
 		}
 	}
+	*/
 
 	public void testGet() {
 		final StuppScope scope = new StuppScope();
@@ -200,9 +202,9 @@ public class ScopeTest extends TestCase {
 		final StuppType pubType = StuppType.getInstance(Publisher.class);
 		final StuppFactory<Publisher, Integer> pubFactory = new StuppFactory<Publisher, Integer>(pubType, scope);
 
-		assertEquals(0, scope.getAllObjects(bookType).size());
-		assertEquals(0, scope.getAllObjects(authorType).size());
-		assertEquals(0, scope.getAllObjects(pubType).size());
+		assertEquals(0, scope.getPrimaryIndex(bookType).getAll().size());
+		assertEquals(0, scope.getPrimaryIndex(authorType).getAll().size());
+		assertEquals(0, scope.getPrimaryIndex(pubType).getAll().size());
 
 		assertEquals(0, scope.getAllObjects().size());
 		Book book = bookFactory.newInstance(1L);
@@ -212,18 +214,19 @@ public class ScopeTest extends TestCase {
 		Author author2 = authorFactory.newInstance(2L);
 		assertEquals(3, scope.getAllObjects().size());
 		
-		assertEquals(1, scope.getAllObjects(bookType).size());
-		assertEquals(2, scope.getAllObjects(authorType).size());
-		assertEquals(0, scope.getAllObjects(pubType).size());
+		assertEquals(1, scope.getPrimaryIndex(bookType).getAll().size());
+		assertEquals(2, scope.getPrimaryIndex(authorType).getAll().size());
+		assertEquals(0, scope.getPrimaryIndex(pubType).getAll().size());
 	}
 
 	public void testAddIndex() {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
+		scope.register(type);
 		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
 		scope.addIndex(index);
-		assertEquals(1, scope.getAllIndices().size());
-		assertSame(index, scope.getAllIndices().iterator().next());
+		assertEquals(2, scope.getAllIndices().size());
+		assertTrue(scope.getAllIndices().contains(index));
 		assertEquals(1, scope.getIndices(type, "name").size());
 		assertSame(index, scope.getIndices(type, "name").iterator().next());
 		try {
@@ -238,10 +241,12 @@ public class ScopeTest extends TestCase {
 	public void testRemoveIndex() {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
+		scope.register(type);
 		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
 		scope.addIndex(index);
 		scope.removeIndex(index);
-		assertTrue(scope.getAllIndices().isEmpty());
+		assertEquals(1, scope.getAllIndices().size());
+		assertFalse(scope.getAllIndices().contains(index));
 	}
 
 	private static interface Jacket {

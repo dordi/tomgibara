@@ -5,21 +5,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class StuppPropertyIndex extends StuppIndex<StuppPropertyIndex.PropertyCriteria> {
-
-	// statics
-	
-	public static class PropertyCriteria {
-
-		final Object[] values;
-
-		public PropertyCriteria(Object... values) {
-			this.values = values;
-		}
-
-	}
+public class StuppPropertyIndex extends StuppKeyedIndex {
 
 	// fields
 	
@@ -62,19 +52,53 @@ public class StuppPropertyIndex extends StuppIndex<StuppPropertyIndex.PropertyCr
 	}
 
 	@Override
-	public Collection<Object> get(PropertyCriteria criteria) {
-		return getForValue(criteria.values);
-	}
+	Iterable<Object> all() {
+		return new Iterable<Object>() {
+			@Override
+			public Iterator<Object> iterator() {
+				return new Iterator<Object>() {
+					
+					private final Iterator<Set<Object>> outer = index.values().iterator();
 
-	@Override
-	public Object getSingle(PropertyCriteria criteria) {
-		return getSingleForValue(criteria.values);
-	}
+					private Iterator<Object> inner = Collections.emptySet().iterator();
 
-	// public helper methods
+					private Object next = advance();
+					
+					@Override
+					public boolean hasNext() {
+						return next != null;
+					}
+					
+					@Override
+					public Object next() {
+						if (next == null) throw new NoSuchElementException();
+						Object tmp = next;
+						next = advance();
+						return tmp;
+					}
+					
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+					
+					private Object advance() {
+						while(!inner.hasNext()) {
+							if (!outer.hasNext()) return null;
+							inner = outer.next().iterator();
+						}
+						return inner.next();
+					}
+				};
+			}
+		};
+	}
 	
-	public Collection<Object> getForValue(Object... values) {
-		final Object value = getValue(values);
+	// keyed iterator methods
+	
+	@Override
+	public Collection<Object> getForKey(Object... values) {
+		final Object value = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {
@@ -87,8 +111,9 @@ public class StuppPropertyIndex extends StuppIndex<StuppPropertyIndex.PropertyCr
 		}
 	}
 
-	public Object getSingleForValue(Object... values) {
-		final Object value = getValue(values);
+	@Override
+	public Object getSingleForKey(Object... values) {
+		final Object value = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {

@@ -45,7 +45,7 @@ public class FactoryTest extends TestCase {
 		Book book = factory.newInstance(1L);
 		factory.deleteInstance(book);
 
-		assertEquals(Collections.emptySet(), factory.getAllInstances());
+		assertEquals(0, factory.getAllInstances().size());
 		assertFalse(factory.deleteInstance(book));
 	}
 

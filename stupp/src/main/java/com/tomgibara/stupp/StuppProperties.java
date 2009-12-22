@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.tomgibara.pronto.util.Classes;
+
 public final class StuppProperties {
 
 	// fields
@@ -68,10 +70,15 @@ public final class StuppProperties {
 				final String name = names[i];
 				final Object value = values[i];
 				final Class<?> clss = propertyClasses.get(name);
+				final boolean primitive = clss.isPrimitive();
 				if (value == null) {
-					if (clss.isPrimitive()) throw new IllegalArgumentException("Null values for primitive at index " + i);
+					if (primitive) throw new IllegalArgumentException("Null values for primitive at index " + i);
 				} else {
-					if (!clss.isInstance(value)) throw new IllegalArgumentException("Incorrect values type " + value.getClass() + " at index " + i);
+					if (primitive) {
+						if (value.getClass() != Classes.classForPrimitive(clss)) throw new IllegalArgumentException("Value type " + value.getClass() + " does not match required primitive type at index " + i);
+					} else if (!clss.isInstance(value)) {
+						throw new IllegalArgumentException("Incorrect values type " + value.getClass() + " at index " + i);
+					}
 				}
 			}
 		}

@@ -147,15 +147,21 @@ public class StuppType {
 				if (setter || getter) {
 					final String propertyName = Reflect.propertyName(method.getName());
 					methodPropertyNames.put(method, propertyName);
-					Class<?> c = setter ? method.getParameterTypes()[0] : method.getReturnType();
-					Class<?> k = propertyClasses.get(propertyName);
-					if (k == null) {
-						propertyClasses.put(propertyName, c);
-					} else {
-						if (k.isAssignableFrom(c)) {
+					final Class<?> c = setter ? method.getParameterTypes()[0] : method.getReturnType();
+					final Class<?> k = propertyClasses.get(propertyName);
+					if (c != k) {
+						if (k == null) {
 							propertyClasses.put(propertyName, c);
-						} else if (!c.isAssignableFrom(k)) {
-							throw new IllegalArgumentException("Incompatible setter/getter types: " + propertyName);
+						} else {
+							boolean cek = k.isAssignableFrom(c);
+							boolean kec = c.isAssignableFrom(k);
+							if (!cek && !kec) {
+								throw new IllegalArgumentException("Incompatible setter/getter types: " + propertyName);
+							} else if (getter && cek || setter && kec) {
+								throw new IllegalArgumentException("Incompatible setter type too general: " + propertyName);
+							} else if (getter) {
+								propertyClasses.put(propertyName, c);
+							}
 						}
 					}
 				}
@@ -223,10 +229,14 @@ public class StuppType {
 		}
 	}
 	
-	Collection<? extends StuppIndex<?>> newIndices() {
+	StuppKeyedIndex createPrimaryIndex() {
+		return new StuppUniqueIndex(new StuppProperties(this, keyProperty), true);
+	}
+	
+	Collection<? extends StuppIndex<?>> createSecondaryIndices() {
 		//TODO support more general type annotations in future?
 		//TODO could cache properties object
-		return Collections.singleton(new StuppUniqueIndex(new StuppProperties(this, keyProperty), true));
+		return Collections.emptySet();
 	}
 	
 }

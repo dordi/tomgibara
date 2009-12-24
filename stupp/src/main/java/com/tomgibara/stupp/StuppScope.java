@@ -201,6 +201,20 @@ public class StuppScope {
 		return true;
 	}
 
+	//TODO possible to do more efficiently via a specific call through to indices?
+	public void detachAll() {
+		lock.lock();
+		try {
+			for (StuppKeyedIndex primaryIndex : primaryIndices.values()) {
+				for (Object object : primaryIndex.getAll()) {
+					detach(object);
+				}
+			}
+		} finally {
+			lock.unlock();
+		}
+	}
+	
 	public Collection<? extends Object> getAllObjects() {
 		HashSet<Object> set = new HashSet<Object>();
 		lock.lock();
@@ -215,7 +229,7 @@ public class StuppScope {
 		}
 		return set;
 	}
-	
+
 	//assumes lock is held
 	HashSet<StuppIndex<?>> getIndices(StuppType type, String propertyName) {
 		HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);

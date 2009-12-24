@@ -249,6 +249,25 @@ public class ScopeTest extends TestCase {
 		assertFalse(scope.getAllIndices().contains(index));
 	}
 
+	public void testDetachAll() {
+		final StuppScope scope = new StuppScope();
+		//check safe on totally empty
+		scope.detachAll();
+		assertEquals(0, scope.getAllObjects().size());
+		final StuppType type = StuppType.getInstance(Book.class);
+		scope.register(type);
+		Book book = (Book) type.newInstance();
+		book.setId(1L);
+		scope.attach(book);
+		assertEquals(1, scope.getAllObjects().size());
+		//check clearance
+		scope.detachAll();
+		assertEquals(0, scope.getAllObjects().size());
+		//check idempotent
+		scope.detachAll();
+		assertEquals(0, scope.getAllObjects().size());
+	}
+	
 	private static interface Jacket {
 		
 		@StuppKey

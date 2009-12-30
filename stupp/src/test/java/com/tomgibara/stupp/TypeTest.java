@@ -33,7 +33,7 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testMultipleInterfaces() {
-		StuppType baType = StuppType.getInstance(null, null, null, null, Book.class, Author.class);
+		StuppType baType = StuppType.newDefinition(Book.class, Author.class).getType();
 		Object instance = baType.newInstance();
 		((Book) instance).setName("Book Property");
 		((Author) instance).setSurname("Author Property");
@@ -53,14 +53,14 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testOverrideKey() {
-		StuppType type = StuppType.getInstance(C.class, "id", Long.class, null);
+		StuppType type = StuppType.newDefinition(C.class).setKeyProperties("id").getType();
 		C instance = (C) type.newInstance();
 		Stupp.setKey(instance, 1L);
 		assertEquals(1L, instance.getId());
 	}
 
 	public void testOverrideEquality() {
-		StuppType type = StuppType.getInstance(D.class, null, null, "forename", "surname");
+		StuppType type = StuppType.newDefinition(D.class).setEqualityProperties("forename", "surname").getType();
 		D d1 = (D) type.newInstance();
 		D d2 = (D) type.newInstance();
 		assertEquals(d1, d2);

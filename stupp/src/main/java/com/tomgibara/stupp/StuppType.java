@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.WeakHashMap;
 
 import com.tomgibara.pronto.util.Classes;
@@ -39,90 +40,53 @@ public class StuppType {
 	//TODO consider changing this
 	private static final WeakHashMap<Class, StuppType> instances = new WeakHashMap<Class, StuppType>();
 	
-	public static StuppType getInstance(Class<?> clss) {
-		//inefficient, a key not based on the proxy class would be more efficient, but tricky to make correct
-		final Class<?> proxyClass = Proxy.getProxyClass(clss.getClassLoader(), clss);
-		return (StuppType) getInstanceForProxyClass(proxyClass, null, null, null);
+	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
+		if (classLoader != null) return classLoader;
+		classLoader = Thread.currentThread().getContextClassLoader();
+		if (classLoader != null) return classLoader;
+		if (classLoader == null) classLoader = clss.getClassLoader();
+		return classLoader;
 	}
 	
-	public static StuppType getInstance(Class<?> clss, String keyProperty, Class<?> keyClass, String... equalityProperties) {
-		final Class<?> proxyClass = Proxy.getProxyClass(clss.getClassLoader(), clss);
-		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass, equalityProperties);
+	//TODO rename static methods
+	
+	public static Definition newDefinition(Class<?> clss) {
+		return newDefinition(null, clss);
 	}
 	
-	public static StuppType getInstance(String keyProperty, Class<?> keyClass, String[] equalityProperties, ClassLoader classloader, Class<?>... classes) {
-		if (classloader == null) classloader = Thread.currentThread().getContextClassLoader();
-		final Class<?> proxyClass = Proxy.getProxyClass(classloader, classes);
-		return (StuppType) getInstanceForProxyClass(proxyClass, keyProperty, keyClass, equalityProperties);
-	}
-	
-	private static StuppType getInstanceForProxyClass(Class<?> proxyClass, String keyProperty, Class<?> keyClass, String[] equalityProperties) {
-		if (keyProperty == null) {
-			Method method = identifyKeyMethod(proxyClass);
-			keyProperty = Reflect.propertyName(method.getName());
-			if (Reflect.isSetter(method)) {
-				keyClass = method.getParameterTypes()[0];
-			} else if (Reflect.isGetter(method)) {
-				keyClass = method.getReturnType();
-			} else {
-				throw new IllegalArgumentException("Method annotated with @StuppKey is not an accessor: " + method.getName());
-			}
-		} else if (keyClass == null) {
-			throw new IllegalArgumentException("Key class must be specified with key property name.");
-		}
+	public static Definition newDefinition(Class<?>... classes) {
+		return newDefinition(null, classes);
 		
-		if (equalityProperties == null || equalityProperties.length == 0) {
-			Method[] methods = identifyEqualityMethods(proxyClass);
-			if (methods.length == 0) {
-				equalityProperties = new String[] { keyProperty };
-			} else {
-				equalityProperties = new String[methods.length];
-				for (int i = 0; i < methods.length; i++) {
-					equalityProperties[i] = Reflect.propertyName(methods[i].getName());
-				}
-			}
-		}
+	}
+	
+	public static Definition newDefinition(ClassLoader classLoader, Class<?> clss) {
+		classLoader = nonNullClassLoader(classLoader, clss);
+		final Class<?> proxyClass = Proxy.getProxyClass(classLoader, clss);
+		return new Definition(proxyClass);
+	}
+	
+	public static Definition newDefinition(ClassLoader classLoader, Class<?>... classes) {
+		//TODO unpleasant change of behaviour here
+		classLoader = nonNullClassLoader(classLoader, StuppType.class);
+		final Class<?> proxyClass = Proxy.getProxyClass(classLoader, classes);
+		return new Definition(proxyClass);
+	}
+
+	//convenience method
+	public static StuppType getInstance(Class<?> clss) {
+		return newDefinition(clss).getType();
+	}
+	
+	private static StuppType getInstance(Definition def) {
+		Class<?> proxyClass = def.proxyClass;
 		synchronized (instances) {
 			StuppType type = instances.get(proxyClass);
 			if (type == null) {
-				type = new StuppType(proxyClass, keyProperty, keyClass, equalityProperties);
+				type = new StuppType(def);
 				instances.put(proxyClass, type);
 			}
 			return type;
 		}
-	}
-	
-	private static Method identifyKeyMethod(Class<?> proxyClass) {
-		Method keyMethod = null;
-		final Class<?>[] interfaces = proxyClass.getInterfaces();
-		for (Class<?> i : interfaces) {
-			for (Method method : i.getMethods()) {
-				if (!Reflect.isSetter(method)) continue;
-				if (!method.isAnnotationPresent(StuppKey.class)) continue;
-				final String name = method.getName();
-				if (keyMethod == null) {
-					keyMethod = method;
-				} else if (!keyMethod.getName().equals(name)) {
-					throw new IllegalArgumentException("Conflicting key names defined by " + method.getName() + " and " + name + " on " + i.getName() + " of " + proxyClass.getName());
-				}
-			}
-		}
-		if (keyMethod == null) throw new IllegalArgumentException("No StuppKey: " + Arrays.toString(interfaces));
-		return keyMethod;
-	}
-
-	//TODO should roll this into identifyKeyMethod for efficiency
-	private static Method[] identifyEqualityMethods(Class<?> proxyClass) {
-		final HashSet<Method> equalityMethods = new HashSet<Method>();
-		final Class<?>[] interfaces = proxyClass.getInterfaces();
-		for (Class<?> i : interfaces) {
-			for (Method method : i.getMethods()) {
-				if (!Reflect.isSetter(method)) continue;
-				if (!method.isAnnotationPresent(StuppEquality.class)) continue;
-				equalityMethods.add(method);
-			}
-		}
-		return (Method[]) equalityMethods.toArray(new Method[equalityMethods.size()]);
 	}
 	
 	private final Class<?> proxyClass;
@@ -134,50 +98,14 @@ public class StuppType {
 	final HashMap<Method, String> methodPropertyNames;
 	final HashMap<String, Class<?>> propertyClasses;
 	
-	private StuppType(Class<?> clss, String keyProperty, Class keyClass, String[] equalityProperties) {
-		
-		//generate method property name map and type map
-		HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
-		HashMap<String, Class<?>> propertyClasses = new HashMap<String, Class<?>>();
-		final Class<?>[] interfaces = clss.getInterfaces();
-		for (Class<?> i : interfaces) {
-			for (Method method : i.getMethods()) {
-				final boolean setter = Reflect.isSetter(method);
-				final boolean getter = Reflect.isGetter(method);
-				if (setter || getter) {
-					final String propertyName = Reflect.propertyName(method.getName());
-					methodPropertyNames.put(method, propertyName);
-					final Class<?> c = setter ? method.getParameterTypes()[0] : method.getReturnType();
-					final Class<?> k = propertyClasses.get(propertyName);
-					if (c != k) {
-						if (k == null) {
-							propertyClasses.put(propertyName, c);
-						} else {
-							boolean cek = k.isAssignableFrom(c);
-							boolean kec = c.isAssignableFrom(k);
-							if (!cek && !kec) {
-								throw new IllegalArgumentException("Incompatible setter/getter types: " + propertyName);
-							} else if (getter && cek || setter && kec) {
-								throw new IllegalArgumentException("Incompatible setter type too general: " + propertyName);
-							} else if (getter) {
-								propertyClasses.put(propertyName, c);
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		//assign values
-		this.keyProperty = keyProperty;
-		this.keyClass = keyClass;
-		this.equalityProperties = equalityProperties;
-		this.proxyClass = clss;
-		this.methodPropertyNames = methodPropertyNames;
-		this.propertyNames = new HashSet<String>(methodPropertyNames.values());
-		this.propertyClasses = propertyClasses;
-		
-		if (!propertyNames.contains(keyProperty)) throw new IllegalArgumentException("No method for key property: " + keyProperty);
+	private StuppType(Definition def) {
+		proxyClass = def.proxyClass;
+		keyProperty = def.keyProperties[0];
+		keyClass = def.keyClasses[0];
+		equalityProperties = def.equalityProperties;
+		methodPropertyNames = def.methodPropertyNames;
+		propertyClasses = def.propertyClasses;
+		propertyNames = new HashSet<String>(methodPropertyNames.values());
 	}
 
 	public boolean instanceImplements(Class<?> clss) {
@@ -237,6 +165,167 @@ public class StuppType {
 		//TODO support more general type annotations in future?
 		//TODO could cache properties object
 		return Collections.emptySet();
+	}
+	
+	// inner classes
+	
+	public static class Definition {
+		
+		final Class<?> proxyClass;
+		final HashMap<Method, String> methodPropertyNames;
+		final HashMap<String, Class<?>> propertyClasses;
+		String[] keyProperties = null;
+		Class<?>[] keyClasses = null;
+		String[] equalityProperties = null;
+		
+		private Definition(Class<?> proxyClass) {
+			//generate method property name map and type map
+			HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
+			HashMap<String, Class<?>> propertyClasses = new HashMap<String, Class<?>>();
+			final Class<?>[] interfaces = proxyClass.getInterfaces();
+			for (Class<?> i : interfaces) {
+				for (Method method : i.getMethods()) {
+					final boolean setter = Reflect.isSetter(method);
+					final boolean getter = Reflect.isGetter(method);
+					if (setter || getter) {
+						final String propertyName = Reflect.propertyName(method.getName());
+						methodPropertyNames.put(method, propertyName);
+						final Class<?> c = setter ? method.getParameterTypes()[0] : method.getReturnType();
+						final Class<?> k = propertyClasses.get(propertyName);
+						if (c != k) {
+							if (k == null) {
+								propertyClasses.put(propertyName, c);
+							} else {
+								boolean cek = k.isAssignableFrom(c);
+								boolean kec = c.isAssignableFrom(k);
+								if (!cek && !kec) {
+									throw new IllegalArgumentException("Incompatible setter/getter types: " + propertyName);
+								} else if (getter && cek || setter && kec) {
+									throw new IllegalArgumentException("Incompatible setter type too general: " + propertyName);
+								} else if (getter) {
+									propertyClasses.put(propertyName, c);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			//assign values
+			this.proxyClass = proxyClass;
+			this.methodPropertyNames = methodPropertyNames;
+			this.propertyClasses = propertyClasses;
+			
+			//default other state based on annotations
+			processAnnotations();
+		}
+		
+		public Definition setKeyProperties(String... keyProperties) {
+			if (keyProperties == null) throw new IllegalArgumentException("null keyProperties");
+			
+			final int length = keyProperties.length;
+			final HashSet<String> set = new HashSet<String>();
+			final Class<?>[] keyClasses = new Class<?>[length];
+			//TODO doesn't actually check if there is a corresponding setter - does that matter?
+			for (int i = 0; i < length; i++) {
+				final String property = keyProperties[i];
+				if (property == null) throw new IllegalArgumentException("Null key property at index " + i);
+				Class<?> clss = propertyClasses.get(property);
+				if (clss == null) throw new IllegalArgumentException("Unknown property " + property + " at index " + i);
+				if (!set.add(property)) throw new IllegalArgumentException("Duplicate key property " + property + " at index " + i);
+				keyClasses[i] = clss;
+			}
+
+			this.keyProperties = keyProperties.clone();
+			this.keyClasses = keyClasses;
+			return this;
+		}
+		
+		public Definition setEqualityProperties(String... equalityProperties) {
+			if (equalityProperties == null) throw new IllegalArgumentException("null equalityProperties");
+			
+			final int length = equalityProperties.length;
+			final LinkedHashSet<String> set = new LinkedHashSet<String>();
+			//TODO doesn't actually check if there is a corresponding setter - does that matter?
+			for (int i = 0; i < length; i++) {
+				final String property = equalityProperties[i];
+				if (property == null) throw new IllegalArgumentException("Null equality property at index " + i);
+				if (!propertyClasses.containsKey(property)) throw new IllegalArgumentException("Unknown property " + property + " at index " + i);
+				if (!set.add(property)) throw new IllegalArgumentException("Duplicate equality property " + property + " at index " + i);
+				
+			}
+
+			this.equalityProperties = (String[]) set.toArray(new String[set.size()]);
+			return this;
+		}
+		
+		private void checkComplete() {
+			//TODO relax this constraint in future - allow there to be no primary key
+			//missing keyProperties
+			if (keyProperties.length == 0) throw new IllegalStateException("No primary key defined");
+		}
+
+		public StuppType getType() {
+			checkComplete();
+			return getInstance(this);
+		}
+		
+		private void processAnnotations() {
+			ArrayList<Method> keyMethods = new ArrayList<Method>();
+			ArrayList<Method> equalityMethods = new ArrayList<Method>();
+			final Class<?>[] interfaces = proxyClass.getInterfaces();
+			for (Class<?> i : interfaces) {
+				for (Method method : i.getMethods()) {
+					if (!Reflect.isSetter(method)) continue;
+					final StuppKey key = method.getAnnotation(StuppKey.class);
+					final StuppEquality equality = method.getAnnotation(StuppEquality.class);
+					if (key != null) {
+						int index = key.index();
+						final int size = keyMethods.size();
+						if (index < 0 || index == size) {
+							keyMethods.add(method);
+						} else if (index < size) {
+							keyMethods.set(index, method);
+						} else {
+							while (index > size) {
+								keyMethods.add(null);
+								index --;
+							}
+							keyMethods.add(method);
+						}
+					}
+					if (equality != null || key != null) {
+						equalityMethods.add(method);
+					}
+				}
+			}
+			//ensure key properties have no gaps
+			while (keyMethods.remove(null));
+			//create key arrays
+			{
+				final int length = keyMethods.size();
+				final String[] keyProperties = new String[length];
+				final Class<?>[] keyClasses = new Class<?>[length];
+				for (int i = 0; i < length; i++) {
+					Method method = keyMethods.get(i);
+					keyProperties[i] = Reflect.propertyName(method.getName());
+					keyClasses[i] = method.getParameterTypes()[0];
+				}
+				this.keyProperties = keyProperties;
+				this.keyClasses = keyClasses;
+			}
+			//create equality array
+			{
+				final int length = equalityMethods.size();
+				final String[] equalityProperties = new String[length];
+				for (int i = 0; i < length; i++) {
+					Method method = equalityMethods.get(i);
+					equalityProperties[i] = Reflect.propertyName(method.getName());
+				}
+				this.equalityProperties = equalityProperties;
+			}
+		}
+		
 	}
 	
 }

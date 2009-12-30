@@ -23,4 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 
 public @interface StuppKey {
 
+	int index() default -1;
+	
 }

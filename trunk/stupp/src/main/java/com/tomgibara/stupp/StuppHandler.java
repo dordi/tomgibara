@@ -136,13 +136,13 @@ public class StuppHandler implements InvocationHandler {
 				HashSet<StuppIndex<?>> indices = scope.getIndices(type, propertyName);
 				if (!indices.isEmpty()) {
 					for (StuppIndex<?> index : indices) {
-						Object oldValue = index.getValue(values, propertyName, previous);
-						Object newValue = index.getValue(values);
+						StuppTuple oldValue = index.getValue(values, propertyName, previous);
+						StuppTuple newValue = index.getValue(values);
 						index.checkUpdate(proxy, oldValue, newValue);
 					}
 					for (StuppIndex<?> index : indices) {
-						Object oldValue = index.getValue(values, propertyName, previous);
-						Object newValue = index.getValue(values);
+						StuppTuple oldValue = index.getValue(values, propertyName, previous);
+						StuppTuple newValue = index.getValue(values);
 						index.performUpdate(proxy, oldValue, newValue);
 					}
 				}

@@ -43,7 +43,7 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 	// index methods
 
 	@Override
-	void checkUpdate(Object object, Object oldValue, Object newValue) throws IllegalArgumentException {
+	void checkUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) throws IllegalArgumentException {
 		if (newValue == null) return; //removals always allowed
 		if (newValue.equals(oldValue)) return; //no change in values
 		if (notNull && properties.containsNull(newValue)) throw new IllegalArgumentException("Value has null properties: " + properties.getNullProperties(newValue));
@@ -51,7 +51,7 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 	}
 
 	@Override
-	void performUpdate(Object object, Object oldValue, Object newValue) {
+	void performUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) {
 		if (oldValue != null) index.remove(oldValue);
 		if (newValue != null) index.put(newValue, object);
 	}
@@ -75,8 +75,7 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 		lock.lock();
 		try {
 			Object object = index.get(value);
-			return object == null ? Collections.emptySet() : Collections
-					.singleton(object);
+			return object == null ? Collections.emptySet() : Collections.singleton(object);
 		} finally {
 			lock.unlock();
 		}
@@ -84,11 +83,11 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 
 	@Override
 	public Object getSingleForKey(Object... values) {
-		final Object value = getValue(values, true);
+		final StuppTuple tuple = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {
-			return index.get(value);
+			return index.get(tuple);
 		} finally {
 			lock.unlock();
 		}

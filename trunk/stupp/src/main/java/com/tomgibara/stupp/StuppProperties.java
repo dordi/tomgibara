@@ -73,29 +73,10 @@ public final class StuppProperties {
 		return combine(values, false, true);
 	}
 	
-	//TODO can genericize?
 	public StuppTuple tupleFromInstance(Object instance) {
 		StuppHandler handler = Stupp.getHandler(instance);
 		if (handler.getType() != type) throw new IllegalArgumentException("Supplied instance has different type: " + handler.getType() + ", properties required type: " + type);
 		return handler.getProperties(this);
-	}
-	
-	// package methods
-
-	//TODO add combine method that takes array but checks types
-	
-	boolean containsNull(Object value) {
-		return ((StuppTuple) value).containsNull();
-	}
-
-	ArrayList<String> getNullProperties(Object value) {
-		final StuppTuple tuple = (StuppTuple) value;
-		final Object[] values = tuple.values;
-		final ArrayList<String> names = new ArrayList<String>();
-		for (int i = 0; i < values.length; i++) {
-			if (values[i] == null) names.add(propertyNames[i]);
-		}
-		return names;
 	}
 	
 	// private utility methods
@@ -123,12 +104,12 @@ public final class StuppProperties {
 			}
 		}
 		switch (values.length) {
-		case 0 : return new StuppTuple();
+		case 0 : return new StuppTuple(this);
 		//TODO introduce Single, Pair (poss. Triple) for efficiency
 		//case 1 : return new Single(values[0]);
 		//case 2 : return new Pair(values[0], values[1]);
 		//case 3 : return new Triple(values[0], values[1], values[2]);
-		default : return new StuppTuple(clone ? values.clone() : values);
+		default : return new StuppTuple(this, clone ? values.clone() : values);
 		}
 	}
 	

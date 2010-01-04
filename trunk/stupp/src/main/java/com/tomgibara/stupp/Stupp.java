@@ -21,14 +21,14 @@ import java.lang.reflect.Proxy;
 
 public class Stupp {
 
-	//TODO generalize key access to support multiple properties
-	public static Object getKey(Object object) {
+	public static StuppTuple getKey(Object object) {
 		return getHandler(object).getKey();
 	}
 	
-	public static void setKey(Object object, Object key) {
+	//TODO should take a tuple?
+	public static void setKey(Object object, Object... key) {
 		final StuppHandler handler = getHandler(object);
-		handler.setProperty(object, handler.getType().keyProperty, key, true);
+		handler.setProperties(object, handler.getType().keyProperties.propertyNames, key, true);
 	}
 			
 	public static void setProperty(Object object, String property, Object value) {
@@ -65,6 +65,7 @@ public class Stupp {
 		return (StuppHandler) handler;
 	}
 	
+	//assumes the object is a valid stupp managed instance
 	//TODO check where we can use this
 	static StuppHandler getHandlerFast(Object object) {
 		return (StuppHandler) Proxy.getInvocationHandler(object);

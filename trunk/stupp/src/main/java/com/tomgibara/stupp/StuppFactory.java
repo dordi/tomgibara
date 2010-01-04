@@ -18,7 +18,7 @@ package com.tomgibara.stupp;
 
 import java.util.Collection;
 
-//convenience class
+//convenience class, designed only for single keys
 //TODO generalize to multivalue keys
 public class StuppFactory<T, K> {
 
@@ -36,7 +36,12 @@ public class StuppFactory<T, K> {
 		if (type == null) throw new IllegalArgumentException();
 		if (scope == null) throw new IllegalArgumentException();
 		if (instanceClass != null && !type.instanceImplements(instanceClass)) throw new IllegalArgumentException();
-		if (keyClass != null && !type.keyAssignableFrom(keyClass)) throw new IllegalArgumentException();
+		final Class<?>[] propertyClasses = type.keyProperties.propertyClasses;
+		final int length = propertyClasses.length;
+		if (length < 1) throw new IllegalArgumentException("Type has no primary index.");
+		if (length > 1) throw new IllegalArgumentException("Type has multivalued primary index.");
+		final Class<?> typeKeyClass = propertyClasses[0];
+		if (keyClass != null && !typeKeyClass.isAssignableFrom(keyClass)) throw new IllegalArgumentException("Key class " + typeKeyClass + " cannot be assigned to specified key class " + keyClass);
 		this.scope = scope;
 		this.type = type;
 		this.index = scope.register(type);
@@ -59,7 +64,7 @@ public class StuppFactory<T, K> {
 	
 	public T newInstance(K key) {
 		Object object = type.newInstance();
-		Stupp.setProperty(object, type.keyProperty, key);
+		Stupp.setProperty(object, type.keyProperties.propertyNames[0], key);
 		scope.attach(object);
 		return (T) object;
 	}

@@ -30,6 +30,8 @@ import com.tomgibara.pronto.util.Reflect;
 
 public class StuppHandler implements InvocationHandler {
 
+	private static final Object[] NO_VALUES = new Object[0];
+	
 	private final StuppType type;
 	private final HashMap<String, Object> values;
 	private StuppScope scope;
@@ -74,8 +76,30 @@ public class StuppHandler implements InvocationHandler {
 		return values;
 	}
 	
-	Object getKey() {
-		return values.get(type.keyProperty);
+	StuppTuple getProperties(StuppProperties properties) {
+		//TODO investigate possible performance improvements
+		final int length = properties.size();
+		if (length == 0) return properties.combine(NO_VALUES, false, false);
+		final Object[] key = new Object[length];
+		final String[] propertyNames = properties.propertyNames;
+		for (int i = 0; i < length; i++) {
+			key[i] = values.get(propertyNames[i]);
+		}
+		return properties.combine(key, false, false);
+	}
+	
+	StuppTuple getKey() {
+		return getProperties(type.keyProperties);
+	}
+
+	//TODO must implement more efficiently - but - must avoid cost of boxing unecessarily though?
+	//assumes that array lengths have been validated
+	void setProperties(final Object proxy, final String[] propertyNames, final Object[] values, final boolean checkType) {
+		final int length = propertyNames.length;
+		if (checkType && length != values.length) throw new IllegalArgumentException("Number of values (" + values.length + ") does not match number of properties (" + length + ")");
+		for (int i = 0; i < length; i++) {
+			setProperty(proxy, propertyNames[i], values[i], checkType);
+		}
 	}
 	
 	void setProperty(final Object proxy, final String propertyName, final Object value, final boolean checkType) {
@@ -162,7 +186,7 @@ public class StuppHandler implements InvocationHandler {
 		StuppHandler that = (StuppHandler) obj;
 		if (this.type != that.type) return false;
 		if (this.scope != that.scope) return false;
-		for (String property : type.equalityProperties) {
+		for (String property : type.equalityProperties.propertyNames) {
 			if (Objects.notEqual(this.values.get(property), that.values.get(property))) return false;
 		}
 		return true;
@@ -171,7 +195,7 @@ public class StuppHandler implements InvocationHandler {
 	@Override
 	public int hashCode() {
 		int h = type.hashCode() ^ Objects.hashCode(scope);
-		for (String property : type.equalityProperties) {
+		for (String property : type.equalityProperties.propertyNames) {
 			h ^= Objects.hashCode(values.get(property));
 		}
 		return h;

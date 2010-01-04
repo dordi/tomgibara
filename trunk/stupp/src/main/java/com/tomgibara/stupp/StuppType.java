@@ -34,11 +34,11 @@ import com.tomgibara.pronto.util.Reflect;
 
 public class StuppType {
 
-	private static final Class[] CONS_PARAMS = new Class[] { InvocationHandler.class };
+	private static final Class<?>[] CONS_PARAMS = new Class<?>[] { InvocationHandler.class };
 
 	//key doesn't include key property - this means differing keyProperties will be ignored
 	//TODO consider changing this
-	private static final WeakHashMap<Class, StuppType> instances = new WeakHashMap<Class, StuppType>();
+	private static final WeakHashMap<Class<?>, StuppType> instances = new WeakHashMap<Class<?>, StuppType>();
 	
 	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
 		if (classLoader != null) return classLoader;
@@ -91,31 +91,25 @@ public class StuppType {
 	
 	private final Class<?> proxyClass;
 
-	final String keyProperty;
-	final Class<?> keyClass;
-	final String[] equalityProperties;
 	final HashSet<String> propertyNames;
 	final HashMap<Method, String> methodPropertyNames;
 	final HashMap<String, Class<?>> propertyClasses;
+	final StuppProperties keyProperties;
+	final StuppProperties equalityProperties;
 	
 	private StuppType(Definition def) {
 		proxyClass = def.proxyClass;
-		keyProperty = def.keyProperties[0];
-		keyClass = def.keyClasses[0];
-		equalityProperties = def.equalityProperties;
 		methodPropertyNames = def.methodPropertyNames;
 		propertyClasses = def.propertyClasses;
 		propertyNames = new HashSet<String>(methodPropertyNames.values());
+		keyProperties = new StuppProperties(this, def.keyProperties);
+		equalityProperties = new StuppProperties(this, def.equalityProperties);
 	}
 
 	public boolean instanceImplements(Class<?> clss) {
 		return clss.isAssignableFrom(proxyClass);
 	}
 	
-	public boolean keyAssignableFrom(Class<?> clss) {
-		return keyClass.isAssignableFrom(clss);
-	}
-
 	public Object newInstance() {
 		try {
 			return proxyClass.getConstructor(CONS_PARAMS).newInstance(new Object[] { new StuppHandler(this) });
@@ -147,18 +141,19 @@ public class StuppType {
 	}
 
 	// package methods
-	
-	void checkKey(Object key) {
-		if (keyClass.isPrimitive()) {
-			if (key == null) throw new IllegalArgumentException("Primitive key cannot be null");
-			if (key.getClass() != Classes.classForPrimitive(keyClass)) throw new IllegalArgumentException("Key class must be " + keyClass +" not " + key.getClass());
-		} else {
-			if (key != null && !keyAssignableFrom(key.getClass())) throw new IllegalArgumentException("Invalid key class: " + key.getClass());
-		}
-	}
+
+	//XXX
+//	void checkKey(Object key) {
+//		if (keyClass.isPrimitive()) {
+//			if (key == null) throw new IllegalArgumentException("Primitive key cannot be null");
+//			if (key.getClass() != Classes.classForPrimitive(keyClass)) throw new IllegalArgumentException("Key class must be " + keyClass +" not " + key.getClass());
+//		} else {
+//			if (key != null && !keyAssignableFrom(key.getClass())) throw new IllegalArgumentException("Invalid key class: " + key.getClass());
+//		}
+//	}
 	
 	StuppKeyedIndex createPrimaryIndex() {
-		return new StuppUniqueIndex(new StuppProperties(this, keyProperty), true);
+		return new StuppUniqueIndex(keyProperties, true);
 	}
 	
 	Collection<? extends StuppIndex<?>> createSecondaryIndices() {
@@ -175,7 +170,6 @@ public class StuppType {
 		final HashMap<Method, String> methodPropertyNames;
 		final HashMap<String, Class<?>> propertyClasses;
 		String[] keyProperties = null;
-		Class<?>[] keyClasses = null;
 		String[] equalityProperties = null;
 		
 		private Definition(Class<?> proxyClass) {
@@ -225,7 +219,6 @@ public class StuppType {
 			
 			final int length = keyProperties.length;
 			final HashSet<String> set = new HashSet<String>();
-			final Class<?>[] keyClasses = new Class<?>[length];
 			//TODO doesn't actually check if there is a corresponding setter - does that matter?
 			for (int i = 0; i < length; i++) {
 				final String property = keyProperties[i];
@@ -233,11 +226,9 @@ public class StuppType {
 				Class<?> clss = propertyClasses.get(property);
 				if (clss == null) throw new IllegalArgumentException("Unknown property " + property + " at index " + i);
 				if (!set.add(property)) throw new IllegalArgumentException("Duplicate key property " + property + " at index " + i);
-				keyClasses[i] = clss;
 			}
 
 			this.keyProperties = keyProperties.clone();
-			this.keyClasses = keyClasses;
 			return this;
 		}
 		
@@ -312,7 +303,6 @@ public class StuppType {
 					keyClasses[i] = method.getParameterTypes()[0];
 				}
 				this.keyProperties = keyProperties;
-				this.keyClasses = keyClasses;
 			}
 			//create equality array
 			{

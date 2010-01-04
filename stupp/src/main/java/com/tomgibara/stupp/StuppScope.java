@@ -94,7 +94,7 @@ public class StuppScope {
 			StuppKeyedIndex primaryIndex = primaryIndices.get(type);
 			if (primaryIndex == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
 			for (Object object : primaryIndex.all()) {
-				final Object value = index.getValue(object);
+				final StuppTuple value = index.getValue(object);
 				try {
 					index.checkUpdate(object, null, value);
 				} catch (IllegalArgumentException e) {
@@ -278,11 +278,11 @@ public class StuppScope {
 		//TODO cache new values between calls
 		if (!indices.isEmpty()) {
 			for (StuppIndex<?> index : indices) {
-				Object newValue = index.getValue(object);
+				StuppTuple newValue = index.getValue(object);
 				index.checkUpdate(object, null, newValue);
 			}
 			for (StuppIndex<?> index : indices) {
-				Object newValue = index.getValue(object);
+				StuppTuple newValue = index.getValue(object);
 				index.performUpdate(object, null, newValue);
 			}
 		}
@@ -294,11 +294,11 @@ public class StuppScope {
 		//TODO remove now redundant empty checks on indices - primary key ensures its not empty
 		if (!indices.isEmpty()) {
 			for (StuppIndex<?> index : indices) {
-				Object oldValue = index.getValue(object);
+				StuppTuple oldValue = index.getValue(object);
 				index.checkUpdate(object, oldValue, null);
 			}
 			for (StuppIndex<?> index : indices) {
-				Object oldValue = index.getValue(object);
+				StuppTuple oldValue = index.getValue(object);
 				index.performUpdate(object, oldValue, null);
 			}
 		}

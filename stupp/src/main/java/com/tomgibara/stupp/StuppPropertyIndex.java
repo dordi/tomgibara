@@ -29,7 +29,7 @@ public class StuppPropertyIndex extends StuppKeyedIndex {
 
 	// fields
 	
-	private final HashMap<Object, Set<Object>> index = new HashMap<Object, Set<Object>>();
+	private final HashMap<StuppTuple, Set<Object>> index = new HashMap<StuppTuple, Set<Object>>();
 
 	// constructors
 
@@ -40,12 +40,12 @@ public class StuppPropertyIndex extends StuppKeyedIndex {
 	// index methods
 	
 	@Override
-	void checkUpdate(Object object, Object oldValue, Object newValue) throws IllegalArgumentException {
+	void checkUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) throws IllegalArgumentException {
 		/* never fails */
 	}
 
 	@Override
-	void performUpdate(Object object, Object oldValue, Object newValue) {
+	void performUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) {
 		if (oldValue != null) {
 			final Set<Object> set = index.get(oldValue);
 			set.remove(object);
@@ -129,11 +129,11 @@ public class StuppPropertyIndex extends StuppKeyedIndex {
 
 	@Override
 	public Object getSingleForKey(Object... values) {
-		final Object value = getValue(values, true);
+		final StuppTuple tuple = getValue(values, true);
 		final StuppLock lock = scope.lock;
 		lock.lock();
 		try {
-			Set<Object> set = index.get(value);
+			Set<Object> set = index.get(tuple);
 			return set == null ? null : set.iterator().next();
 		} finally {
 			lock.unlock();

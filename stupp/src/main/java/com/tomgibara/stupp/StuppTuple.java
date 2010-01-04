@@ -16,17 +16,33 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-//TODO should tuple maintain reference to properties that created it?
-//TODO change to an interface with optimized implementations
+//TODO change to an interface/abstract class with optimized implementations
 public class StuppTuple {
 	
+	// fields
+	
+	private final StuppProperties properties;
 	final Object[] values;
 	
-	public StuppTuple(Object... values) {
+	// constructors
+	
+	//checks done by properties
+	StuppTuple(StuppProperties properties, Object... values) {
+		this.properties = properties;
 		this.values = values;
 	}
+	
+	// accessors
+	
+	public StuppProperties getProperties() {
+		return properties;
+	}
+	
+	// methods
 	
 	public boolean containsNull() {
 		for (int i = 0; i < values.length; i++) {
@@ -34,6 +50,23 @@ public class StuppTuple {
 		}
 		return false;
 	}
+	
+	// package methods
+	
+	//TODO consider making public
+	List<String> getNullProperties() {
+		final Object[] values = this.values;
+		final ArrayList<String> names = new ArrayList<String>();
+		final StuppProperties properties = this.properties;
+		for (int i = 0; i < values.length; i++) {
+			if (values[i] == null) {
+				names.add(properties.propertyNames[i]);
+			}
+		}
+		return names;
+	}
+	
+	// object methods
 	
 	@Override
 	public boolean equals(Object obj) {

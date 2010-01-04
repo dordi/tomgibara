@@ -46,7 +46,7 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 	void checkUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) throws IllegalArgumentException {
 		if (newValue == null) return; //removals always allowed
 		if (newValue.equals(oldValue)) return; //no change in values
-		if (notNull && properties.containsNull(newValue)) throw new IllegalArgumentException("Value has null properties: " + properties.getNullProperties(newValue));
+		if (notNull && newValue.containsNull()) throw new IllegalArgumentException("Value has null properties: " + newValue.getNullProperties());
 		if (index.containsKey(newValue)) throw new IllegalArgumentException("Duplicate values on index: " + newValue);
 	}
 

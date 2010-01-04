@@ -172,8 +172,8 @@ public class StuppScope {
 
 	public boolean attach(Object object) {
 		StuppHandler handler = Stupp.getHandler(object);
-		Object key = handler.getKey();
-		if (key == null) throw new IllegalArgumentException("Object has no key");
+		StuppTuple key = handler.getKey();
+		if (key.containsNull()) throw new IllegalArgumentException("Primary key contains null");
 		lock.lock();
 		try {
 			StuppScope scope = handler.getScope();
@@ -250,8 +250,8 @@ public class StuppScope {
 		if (object == null) return;
 		StuppHandler handler = Stupp.getHandlerOrNull(object);
 		if (handler == null) return;
-		Object key = handler.getKey();
-		if (key == null) throw new IllegalArgumentException("Cannot attach object without key to scope " + this);
+		StuppTuple key = handler.getKey();
+		if (key.containsNull()) throw new IllegalArgumentException("Cannot attach object without key to scope " + this);
 
 		StuppScope scope = handler.getScope();
 		if (scope == this) return;
@@ -264,8 +264,8 @@ public class StuppScope {
 		if (object == null) return;
 		StuppHandler handler = Stupp.getHandlerOrNull(object);
 		if (handler == null) return;
-		Object key = handler.getKey();
-		if (key == null) return;
+		StuppTuple key = handler.getKey();
+		if (key.containsNull()) return;
 
 		StuppScope scope = handler.getScope();
 		if (scope != this) return;

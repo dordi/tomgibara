@@ -75,12 +75,12 @@ public abstract class StuppIndex<C> {
 			final String property = propertyNames[i];
 			arr[i] = propertyName != null && property.equals(propertyName) ? value : values.get(property);
 		}
-		return properties.combine(arr, false);
+		return properties.combine(arr, false, false);
 	}
 	
 	//assumed to be from client code - checks types
 	Object getValue(Object[] arr, boolean checkTypes) {
-		return properties.combine(arr, checkTypes);
+		return properties.combine(arr, checkTypes, false);
 	}
 
 	//returns an iterator over all instances, should not make a copy

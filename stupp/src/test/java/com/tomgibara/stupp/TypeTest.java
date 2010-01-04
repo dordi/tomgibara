@@ -16,6 +16,8 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.HashSet;
+
 import com.tomgibara.stupp.Stupp;
 import com.tomgibara.stupp.StuppKey;
 import com.tomgibara.stupp.StuppType;
@@ -33,23 +35,18 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testMultipleInterfaces() {
-		StuppType baType = StuppType.newDefinition(Book.class, Author.class).getType();
+		StuppType baType = StuppType.newDefinition(Book.class, Catalogue.class).getType();
 		Object instance = baType.newInstance();
 		((Book) instance).setName("Book Property");
-		((Author) instance).setSurname("Author Property");
+		((Catalogue) instance).setBooks(new HashSet<Book>());
 	}
 	
 	public void testPresentKey() {
 		StuppType.getInstance(A.class);
 	}
 	
-	public void testDuplicateKey() {
-		try {
-			StuppType.getInstance(B.class);
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
+	public void testMultipleKey() {
+		StuppType.getInstance(B.class);
 	}
 	
 	public void testOverrideKey() {

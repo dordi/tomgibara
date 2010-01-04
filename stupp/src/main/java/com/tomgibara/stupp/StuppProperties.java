@@ -13,19 +13,24 @@ public final class StuppProperties {
 	
 	final StuppType type;
 	final String[] propertyNames;
+	final Class<?>[] propertyClasses;
 
 	// constructors
 	
 	public StuppProperties(StuppType type, String... propertyNames) {
 		final HashSet<String> checkSet = new HashSet<String>();
+		final Class<?>[] propertyClasses = new Class<?>[propertyNames.length];
+		final HashMap<String, Class<?>> map = type.propertyClasses;
 		for (int i = 0; i < propertyNames.length; i++) {
 			final String propertyName = propertyNames[i];
 			if (propertyName == null) throw new IllegalArgumentException("null property name at index " + i);
 			if (!checkSet.add(propertyName)) throw new IllegalArgumentException("duplicate property name at index " + i +": " + propertyName);
 			if (!type.propertyNames.contains(propertyName)) throw new IllegalArgumentException("no such property at index " + i +": " + propertyName);
+			propertyClasses[i] = map.get(propertyName);
 		}
 		this.type = type;
 		this.propertyNames = propertyNames.clone();
+		this.propertyClasses = propertyClasses;
 	}
 
 	// accessors
@@ -33,21 +38,42 @@ public final class StuppProperties {
 	public StuppType getType() {
 		return type;
 	}
+
+	public int size() {
+		return propertyNames.length;
+	}
 	
 	public String[] getPropertyNames() {
 		return propertyNames.clone();
 	}
 
+	public Class<?>[] getPropertyClasses() {
+		return propertyClasses.clone();
+	}
+	
+	// methods
+	
+	public StuppTuple tupleFromValues(Object... values) {
+		return combine(values, false, true);
+	}
+	
+	//TODO can genericize?
+	public StuppTuple tupleFromInstance(Object instance) {
+		StuppHandler handler = Stupp.getHandler(instance);
+		if (handler.getType() != type) throw new IllegalArgumentException("Supplied instance has different type: " + handler.getType() + ", properties required type: " + type);
+		return handler.getProperties(this);
+	}
+	
 	// package methods
 
 	//TODO add combine method that takes array but checks types
 	
 	boolean containsNull(Object value) {
-		return ((Tuple) value).hasNull();
+		return ((StuppTuple) value).containsNull();
 	}
 
 	ArrayList<String> getNullProperties(Object value) {
-		final Tuple tuple = (Tuple) value;
+		final StuppTuple tuple = (StuppTuple) value;
 		final Object[] values = tuple.values;
 		final ArrayList<String> names = new ArrayList<String>();
 		for (int i = 0; i < values.length; i++) {
@@ -58,18 +84,16 @@ public final class StuppProperties {
 	
 	// private utility methods
 	
-	//may keep reference to supplied values array
+	//may keep reference to supplied values array if clone not set
 	//never returns null
-	Object combine(Object[] values, boolean check) {
+	StuppTuple combine(Object[] values, boolean check, boolean clone) {
 		if (check) {
 			final String[] names = propertyNames;
-			final HashMap<String, Class<?>> propertyClasses = type.propertyClasses;
 			if (values == null) throw new IllegalArgumentException("Null values array supplied");
 			if (values.length != names.length) throw new IllegalArgumentException("Incorrect number of values, expected " + names.length +" and received " + values.length);
 			for (int i = 0; i < names.length; i++) {
-				final String name = names[i];
 				final Object value = values[i];
-				final Class<?> clss = propertyClasses.get(name);
+				final Class<?> clss = propertyClasses[i];
 				final boolean primitive = clss.isPrimitive();
 				if (value == null) {
 					if (primitive) throw new IllegalArgumentException("Null values for primitive at index " + i);
@@ -83,12 +107,12 @@ public final class StuppProperties {
 			}
 		}
 		switch (values.length) {
-		case 0 : return null;
+		case 0 : return new StuppTuple();
 		//TODO introduce Single, Pair (poss. Triple) for efficiency
 		//case 1 : return new Single(values[0]);
 		//case 2 : return new Pair(values[0], values[1]);
 		//case 3 : return new Triple(values[0], values[1], values[2]);
-		default : return new Tuple(values);
+		default : return new StuppTuple(clone ? values.clone() : values);
 		}
 	}
 	
@@ -111,43 +135,6 @@ public final class StuppProperties {
 	@Override
 	public String toString() {
 		return type + ":" + Arrays.toString(propertyNames);
-	}
-
-	// inner classes
-	
-	private static class Tuple {
-		
-		final Object[] values;
-		
-		public Tuple(Object[] values) {
-			this.values = values;
-		}
-		
-		boolean hasNull() {
-			for (int i = 0; i < values.length; i++) {
-				if (values == null) return true;
-			}
-			return false;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) return true;
-			if (!(obj instanceof Tuple)) return false;
-			Tuple that = (Tuple) obj;
-			return Arrays.equals(this.values, that.values);
-		}
-		
-		@Override
-		public int hashCode() {
-			return Arrays.hashCode(values);
-		}
-		
-		@Override
-		public String toString() {
-			return Arrays.toString(values);
-		}
-		
 	}
 	
 }

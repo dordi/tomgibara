@@ -163,7 +163,9 @@ public class ScopeTest extends TestCase {
 	
 	public void testChangeKeyToDuplicate() {
 		final StuppScope scope = new StuppScope();
-		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
+		final StuppProperties indexProps = scope.getPrimaryIndex(type).getProperties();
 		final Book bookA = bookFactory.newInstance(1L);
 		final Book bookB = bookFactory.newInstance(2L);
 		try {
@@ -172,9 +174,9 @@ public class ScopeTest extends TestCase {
 		} catch (IllegalArgumentException e) {
 			/* expected */
 		}
-		assertEquals(1L, Stupp.getKey(bookA));
+		assertEquals(indexProps.tupleFromValues(1L), Stupp.getKey(bookA));
 		assertEquals(scope, Stupp.getScope(bookA));
-		assertEquals(2L, Stupp.getKey(bookB));
+		assertEquals(indexProps.tupleFromValues(2L), Stupp.getKey(bookB));
 		assertEquals(scope, Stupp.getScope(bookB));
 	}
 	

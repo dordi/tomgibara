@@ -30,7 +30,7 @@ public class StuppScope {
 	// fields
 	
 	//private final HashMap<StuppType, HashMap<Object, Object>> instances = new HashMap<StuppType, HashMap<Object,Object>>();
-	private final HashMap<StuppType, StuppKeyedIndex> primaryIndices = new HashMap<StuppType, StuppKeyedIndex>();
+	private final HashMap<StuppType, StuppIndex<StuppTuple>> primaryIndices = new HashMap<StuppType, StuppIndex<StuppTuple>>();
 	private final HashSet<StuppIndex<?>> allIndices = new HashSet<StuppIndex<?>>();
 	//TODO store index lists using arrays for efficiency
 	private final HashMap<StuppType, HashSet<StuppIndex<?>>> indicesByType = new HashMap<StuppType, HashSet<StuppIndex<?>>>();
@@ -57,10 +57,10 @@ public class StuppScope {
 
 	//must be called before type instances can be attached to this scope
 	//TODO support transitive closure of type
-	public StuppKeyedIndex register(StuppType type) {
+	public StuppIndex<StuppTuple> register(StuppType type) {
 		lock.lock();
 		try {
-			StuppKeyedIndex primaryIndex = primaryIndices.get(type);
+			StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
 			if (primaryIndex == null) {
 				primaryIndex = type.createPrimaryIndex();
 				primaryIndices.put(type, primaryIndex);
@@ -91,7 +91,7 @@ public class StuppScope {
 		lock.lock();
 		try {
 			index.reset();
-			StuppKeyedIndex primaryIndex = primaryIndices.get(type);
+			StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
 			if (primaryIndex == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
 			for (Object object : primaryIndex.all()) {
 				final StuppTuple value = index.getValue(object);
@@ -149,10 +149,10 @@ public class StuppScope {
 		 }
 	 }
 	
-	public StuppKeyedIndex getPrimaryIndex(StuppType type) {
+	public StuppIndex<StuppTuple> getPrimaryIndex(StuppType type) {
 		lock.lock();
 		try {
-			final StuppKeyedIndex primaryIndex = primaryIndices.get(type);
+			final StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
 			if (primaryIndex == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
 			return primaryIndex;
 		 } finally {
@@ -205,7 +205,7 @@ public class StuppScope {
 	public void detachAll() {
 		lock.lock();
 		try {
-			for (StuppKeyedIndex primaryIndex : primaryIndices.values()) {
+			for (StuppIndex<StuppTuple> primaryIndex : primaryIndices.values()) {
 				for (Object object : primaryIndex.getAll()) {
 					detach(object);
 				}

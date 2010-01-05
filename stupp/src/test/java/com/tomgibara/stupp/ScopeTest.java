@@ -123,8 +123,10 @@ public class ScopeTest extends TestCase {
 		final Book book = bookFactory.newInstance(1L);
 		final Author author = authorFactory.newInstance(1L);
 
-		assertEquals(book, scope.getPrimaryIndex(bookType).getSingleForKey(1L));
-		assertEquals(author, scope.getPrimaryIndex(authorType).getSingleForKey(1L));
+		final StuppIndex<StuppTuple> bookIndex = scope.getPrimaryIndex(bookType);
+		final StuppIndex<StuppTuple> authorIndex = scope.getPrimaryIndex(authorType);
+		assertEquals(book, bookIndex.getSingle(bookIndex.getProperties().tupleFromValues(1L)));
+		assertEquals(author, authorIndex.getSingle(authorIndex.getProperties().tupleFromValues(1L)));
 		
 	}
 	
@@ -225,7 +227,7 @@ public class ScopeTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"));
 		scope.addIndex(index);
 		assertEquals(2, scope.getAllIndices().size());
 		assertTrue(scope.getAllIndices().contains(index));
@@ -244,7 +246,7 @@ public class ScopeTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(new StuppProperties(type, "name"));
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"));
 		scope.addIndex(index);
 		scope.removeIndex(index);
 		assertEquals(1, scope.getAllIndices().size());

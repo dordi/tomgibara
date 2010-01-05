@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
-public class StuppUniqueIndex extends StuppKeyedIndex {
+public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
 	// fields
 	
@@ -39,9 +39,41 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 	public boolean isNotNull() {
 		return notNull;
 	}
+
+	// convenience methods
 	
+	public Collection<Object> get(Object... values) {
+		return get(properties.tupleFromValues(values));
+	}
+
+	public Object getSingle(Object... values) {
+		return getSingle(properties.tupleFromValues(values));
+	}
+
 	// index methods
 
+	@Override
+	public Collection<Object> get(StuppTuple criteria) {
+		Object object = getSingle(criteria);
+		return object == null ? Collections.emptySet() : Collections.singleton(object);
+	}
+
+	@Override
+	public Object getSingle(StuppTuple criteria) {
+		final StuppLock lock = scope.lock;
+		lock.lock();
+		try {
+			return index.get(criteria);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public boolean containsObject(Object object) {
+		return getSingle(properties.tupleFromInstance(object)) == object;
+	}
+	
 	@Override
 	void checkUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) throws IllegalArgumentException {
 		if (newValue == null) return; //removals always allowed
@@ -66,30 +98,4 @@ public class StuppUniqueIndex extends StuppKeyedIndex {
 		return index.values();
 	}
 	
-	// keyed index methods
-	
-	@Override
-	public Collection<Object> getForKey(Object... values) {
-		final Object value = getValue(values, true);
-		final StuppLock lock = scope.lock;
-		lock.lock();
-		try {
-			Object object = index.get(value);
-			return object == null ? Collections.emptySet() : Collections.singleton(object);
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	@Override
-	public Object getSingleForKey(Object... values) {
-		final StuppTuple tuple = getValue(values, true);
-		final StuppLock lock = scope.lock;
-		lock.lock();
-		try {
-			return index.get(tuple);
-		} finally {
-			lock.unlock();
-		}
-	}
 }

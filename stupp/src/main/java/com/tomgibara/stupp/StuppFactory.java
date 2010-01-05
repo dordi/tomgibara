@@ -24,7 +24,7 @@ public class StuppFactory<T, K> {
 
 	private final StuppScope scope;
 	private final StuppType type;
-	private final StuppKeyedIndex index;
+	private final StuppIndex<StuppTuple> index;
 	
 	private StuppSequence<? extends K> sequence;
 
@@ -47,6 +47,14 @@ public class StuppFactory<T, K> {
 		this.index = scope.register(type);
 	}
 
+	public StuppType getType() {
+		return type;
+	}
+	
+	public StuppScope getScope() {
+		return scope;
+	}
+	
 	public void setSequence(StuppSequence<? extends K> sequence) {
 		this.sequence = sequence;
 	}
@@ -70,7 +78,7 @@ public class StuppFactory<T, K> {
 	}
 
 	public T getInstance(K key) {
-		return (T) index.getSingleForKey(key);
+		return (T) index.getSingle(index.properties.tupleFromValues(key));
 	}
 
 	public Collection<T> getAllInstances() {

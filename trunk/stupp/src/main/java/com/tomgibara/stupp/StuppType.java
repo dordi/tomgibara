@@ -102,12 +102,16 @@ public class StuppType {
 		methodPropertyNames = def.methodPropertyNames;
 		propertyClasses = def.propertyClasses;
 		propertyNames = new HashSet<String>(methodPropertyNames.values());
-		keyProperties = new StuppProperties(this, def.keyProperties);
-		equalityProperties = new StuppProperties(this, def.equalityProperties);
+		keyProperties = properties(def.keyProperties);
+		equalityProperties = properties(def.equalityProperties);
 	}
 
 	public boolean instanceImplements(Class<?> clss) {
 		return clss.isAssignableFrom(proxyClass);
+	}
+	
+	public StuppProperties properties(String... propertyNames) {
+		return new StuppProperties(this, propertyNames);
 	}
 	
 	public Object newInstance() {
@@ -152,7 +156,7 @@ public class StuppType {
 //		}
 //	}
 	
-	StuppKeyedIndex createPrimaryIndex() {
+	StuppIndex<StuppTuple> createPrimaryIndex() {
 		return new StuppUniqueIndex(keyProperties, true);
 	}
 	

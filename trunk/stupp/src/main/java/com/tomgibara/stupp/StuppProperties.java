@@ -16,7 +16,6 @@
  */
 package com.tomgibara.stupp;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +32,7 @@ public final class StuppProperties {
 
 	// constructors
 	
-	public StuppProperties(StuppType type, String... propertyNames) {
+	StuppProperties(StuppType type, String... propertyNames) {
 		final HashSet<String> checkSet = new HashSet<String>();
 		final Class<?>[] propertyClasses = new Class<?>[propertyNames.length];
 		final HashMap<String, Class<?>> map = type.propertyClasses;

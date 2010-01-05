@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class StuppPropertyIndex extends StuppKeyedIndex {
+public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 
 	// fields
 	
@@ -37,7 +37,48 @@ public class StuppPropertyIndex extends StuppKeyedIndex {
 		super(properties);
 	}
 	
+	// convenience methods
+	
+	public Collection<Object> get(Object... values) {
+		return get(properties.tupleFromValues(values));
+	}
+
+	public Object getSingle(Object... values) {
+		return getSingle(properties.tupleFromValues(values));
+	}
+
 	// index methods
+
+	@Override
+	public Collection<Object> get(StuppTuple criteria) {
+		final StuppLock lock = scope.lock;
+		lock.lock();
+		try {
+			HashSet<Object> result = new HashSet<Object>();
+			Set<Object> set = index.get(criteria);
+			if (set != null) result.addAll(set);
+			return result;
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	@Override
+	public Object getSingle(StuppTuple criteria) {
+		final StuppLock lock = scope.lock;
+		lock.lock();
+		try {
+			Set<Object> set = index.get(criteria);
+			return set == null ? null : set.iterator().next();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	@Override
+	public boolean containsObject(Object object) {
+		return getSingle(properties.tupleFromInstance(object)) == object;
+	}
 	
 	@Override
 	void checkUpdate(Object object, StuppTuple oldValue, StuppTuple newValue) throws IllegalArgumentException {
@@ -110,33 +151,4 @@ public class StuppPropertyIndex extends StuppKeyedIndex {
 		};
 	}
 	
-	// keyed iterator methods
-	
-	@Override
-	public Collection<Object> getForKey(Object... values) {
-		final Object value = getValue(values, true);
-		final StuppLock lock = scope.lock;
-		lock.lock();
-		try {
-			HashSet<Object> result = new HashSet<Object>();
-			Set<Object> set = index.get(value);
-			if (set != null) result.addAll(set);
-			return result;
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	@Override
-	public Object getSingleForKey(Object... values) {
-		final StuppTuple tuple = getValue(values, true);
-		final StuppLock lock = scope.lock;
-		lock.lock();
-		try {
-			Set<Object> set = index.get(tuple);
-			return set == null ? null : set.iterator().next();
-		} finally {
-			lock.unlock();
-		}
-	}
 }

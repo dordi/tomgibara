@@ -26,14 +26,51 @@ import junit.framework.TestCase;
 
 public class TypeTest extends TestCase {
 
-	public void testCanonical() {
-		StuppType type1 = StuppType.getInstance(Book.class);
-		StuppType type2 = StuppType.getInstance(Book.class);
+	public void testCanonicalDefinitions() {
+		StuppType type1 = StuppType.newDefinition(Book.class).getType();
+		StuppType type2 = StuppType.newDefinition(Book.class).getType();
 		assertSame(type1, type2);
-		StuppType type3 = StuppType.getInstance(Author.class);
+		StuppType type3 = StuppType.newDefinition(Author.class).getType();
 		assertNotSame(type1, type3);
 	}
 	
+	public void testDifferentDefinitions() {
+		StuppType type1 = StuppType.newDefinition(Book.class).getType();
+		StuppType type2 = StuppType.newDefinition(Book.class).setEqualityProperties("name").getType();
+		StuppType type3 = StuppType.newDefinition(Book.class).setKeyProperties("name").getType();
+		assertNotSame(type1, type2);
+		assertNotSame(type2, type3);
+		assertNotSame(type3, type1);
+	}
+	
+	public void testModifiedDefinition() {
+		StuppType.Definition def = StuppType.newDefinition(Book.class);
+		StuppType type1 = def.getType();
+		StuppType type2 = def.setKeyProperties("name").getType();
+		assertFalse(type1.equals(type2));
+	}
+	
+	public void testClonedDefinitions() {
+		StuppType.Definition def1 = StuppType.newDefinition(Book.class);
+		StuppType.Definition def2 = def1.clone().setKeyProperties("name");
+		StuppType.Definition def3 = def2.clone().setKeyProperties("id");
+		assertFalse(def1.equals(def2));
+		assertFalse(def2.equals(def3));
+		assertTrue(def3.equals(def1));
+		StuppType type1 = def1.getType();
+		StuppType type2 = def2.getType();
+		StuppType type3 = def3.getType();
+		assertFalse(type1.equals(type2));
+		assertFalse(type2.equals(type3));
+		assertTrue(type3.equals(type1));
+	}
+	
+	public void testInstanceMethod() {
+		StuppType type1 = StuppType.getInstance(Book.class);
+		StuppType type2 = StuppType.newDefinition(Book.class).getType();
+		assertSame(type1, type2);
+	}
+
 	public void testMultipleInterfaces() {
 		StuppType baType = StuppType.newDefinition(Book.class, Catalogue.class).getType();
 		Object instance = baType.newInstance();

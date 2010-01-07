@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.WeakHashMap;
 
-import com.tomgibara.pronto.util.Classes;
 import com.tomgibara.pronto.util.Reflect;
 
 public class StuppType {
@@ -38,7 +37,7 @@ public class StuppType {
 
 	//key doesn't include key property - this means differing keyProperties will be ignored
 	//TODO consider changing this
-	private static final WeakHashMap<Class<?>, StuppType> instances = new WeakHashMap<Class<?>, StuppType>();
+	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
 	
 	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
 		if (classLoader != null) return classLoader;
@@ -78,12 +77,11 @@ public class StuppType {
 	}
 	
 	private static StuppType getInstance(Definition def) {
-		Class<?> proxyClass = def.proxyClass;
 		synchronized (instances) {
-			StuppType type = instances.get(proxyClass);
+			StuppType type = instances.get(def);
 			if (type == null) {
 				type = new StuppType(def);
-				instances.put(proxyClass, type);
+				instances.put(def.clone(), type);
 			}
 			return type;
 		}
@@ -168,13 +166,21 @@ public class StuppType {
 	
 	// inner classes
 	
-	public static class Definition {
+	public static class Definition implements Cloneable {
 		
 		final Class<?> proxyClass;
 		final HashMap<Method, String> methodPropertyNames;
 		final HashMap<String, Class<?>> propertyClasses;
 		String[] keyProperties = null;
 		String[] equalityProperties = null;
+		
+		private Definition(Definition that) {
+			this.proxyClass = that.proxyClass;
+			this.methodPropertyNames = that.methodPropertyNames;
+			this.propertyClasses = that.propertyClasses;
+			this.keyProperties = that.keyProperties.clone();
+			this.equalityProperties = that.equalityProperties.clone();
+		}
 		
 		private Definition(Class<?> proxyClass) {
 			//generate method property name map and type map
@@ -263,6 +269,27 @@ public class StuppType {
 		public StuppType getType() {
 			checkComplete();
 			return getInstance(this);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) return true;
+			if (!(obj instanceof Definition)) return false;
+			final Definition that = (Definition) obj;
+			if (this.proxyClass != that.proxyClass) return false;
+			if (!Arrays.equals(this.keyProperties, that.keyProperties)) return false;
+			if (!Arrays.equals(equalityProperties, that.equalityProperties)) return false;
+			return true;
+		}
+		
+		@Override
+		public int hashCode() {
+			return proxyClass.hashCode() ^ Arrays.hashCode(keyProperties) ^ Arrays.hashCode(equalityProperties);
+		}
+		
+		@Override
+		protected Definition clone() {
+			return new Definition(this);
 		}
 		
 		private void processAnnotations() {

@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -42,11 +44,6 @@ public class StuppType {
 		if (classLoader != null) return classLoader;
 		if (classLoader == null) classLoader = clss.getClassLoader();
 		return classLoader;
-	}
-	
-	//TODO implement
-	private static void checkIndexName(String indexName) {
-		
 	}
 	
 	//TODO rename static methods
@@ -119,7 +116,7 @@ public class StuppType {
 	}
 
 	public StuppProperties getIndexProperties() {
-		return indexProperties.get(StuppIndexed.DEFAULT_INDEX_NAME);
+		return indexProperties.get(StuppIndexed.PRIMARY_INDEX_NAME);
 	}
 
 	public StuppProperties getIndexProperties(String indexName) {
@@ -158,22 +155,14 @@ public class StuppType {
 
 	// package methods
 
-	//TODO unite methods when primary keys are no longer explicit
-	StuppIndex<StuppTuple> createPrimaryIndex() {
-		for (String indexName : indexProperties.keySet()) {
-			if (indexName.equals(StuppIndexed.DEFAULT_INDEX_NAME)) return new StuppUniqueIndex(indexProperties.get(indexName), StuppIndexed.DEFAULT_INDEX_NAME, true);
+	Collection<? extends StuppIndex<?>> createIndices() {
+		if (indexProperties.isEmpty()) return Collections.emptySet();
+		ArrayList<StuppIndex<?>> list = new ArrayList<StuppIndex<?>>(indexProperties.size());
+		for (Map.Entry<String, StuppProperties> entry : indexProperties.entrySet()) {
+			final StuppIndex<?> index = new StuppUniqueIndex(entry.getValue(), entry.getKey(), true);
+			list.add(index);
 		}
-		return null;
-	}
-	
-	Map<String, ? extends StuppIndex<?>> createSecondaryIndices() {
-		final HashMap<String, StuppIndex<?>> map = new HashMap<String, StuppIndex<?>>();
-		for (String indexName : indexProperties.keySet()) {
-			if (indexName.equals(StuppIndexed.DEFAULT_INDEX_NAME)) continue;
-			final StuppIndex<?> index = new StuppUniqueIndex(indexProperties.get(indexName), indexName, true);
-			map.put(indexName, index);
-		}
-		return map;
+		return list;
 	}
 	
 	// inner classes
@@ -240,7 +229,7 @@ public class StuppType {
 		//TODO introduce index class
 		public Definition addIndex(String indexName, String... keyProperties) {
 			if (keyProperties == null) throw new IllegalArgumentException("null indexProperties");
-			checkIndexName(indexName);
+			StuppIndex.checkName(indexName);
 			if (this.indexProperties.containsKey(indexName)) throw new IllegalArgumentException("duplicate index name: " + indexName);
 			
 			//check key properties
@@ -325,7 +314,7 @@ public class StuppType {
 						final String indexName = indexed.name();
 						ArrayList<Method> methods = keyMethods.get(indexName);
 						if (methods == null) {
-							checkIndexName(indexName);
+							StuppIndex.checkName(indexName);
 							methods = new ArrayList<Method>();
 							keyMethods.put(indexName, methods);
 						}

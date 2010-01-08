@@ -16,10 +16,13 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import sun.awt.GlobalCursorManager;
 
 public class StuppScope {
 
@@ -30,10 +33,10 @@ public class StuppScope {
 	// fields
 	
 	//private final HashMap<StuppType, HashMap<Object, Object>> instances = new HashMap<StuppType, HashMap<Object,Object>>();
-	private final HashMap<StuppType, StuppIndex<StuppTuple>> primaryIndices = new HashMap<StuppType, StuppIndex<StuppTuple>>();
+	private final HashMap<StuppType, StuppGlobalIndex> globalIndices = new HashMap<StuppType, StuppGlobalIndex>();
 	private final HashSet<StuppIndex<?>> allIndices = new HashSet<StuppIndex<?>>();
 	//TODO store index lists using arrays for efficiency
-	private final HashMap<StuppType, HashSet<StuppIndex<?>>> indicesByType = new HashMap<StuppType, HashSet<StuppIndex<?>>>();
+	private final HashMap<StuppType, HashMap<String, StuppIndex<?>>> indicesByType = new HashMap<StuppType, HashMap<String, StuppIndex<?>>>();
 	private final HashMap<StuppType, HashMap<String, HashSet<StuppIndex<?>>>> typeLookup = new HashMap<StuppType, HashMap<String,HashSet<StuppIndex<?>>>>();
 	
 	//may also be taken by indices
@@ -57,16 +60,15 @@ public class StuppScope {
 
 	//must be called before type instances can be attached to this scope
 	//TODO support transitive closure of type
-	public StuppIndex<StuppTuple> register(StuppType type) {
+	public void register(StuppType type) {
 		lock.lock();
 		try {
-			StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
-			if (primaryIndex == null) {
-				primaryIndex = type.createPrimaryIndex();
-				primaryIndices.put(type, primaryIndex);
-				addIndex(primaryIndex);
+			if (globalIndices.containsKey(type)) return; // already registered
+			indicesByType.put(type, new HashMap<String, StuppIndex<?>>());
+			addIndex(new StuppGlobalIndex(type));
+			for (StuppIndex<?> index : type.createIndices()) {
+				addIndex(index);
 			}
-			return primaryIndex;
 		} finally {
 			lock.unlock();
 		}
@@ -75,7 +77,7 @@ public class StuppScope {
 	public Set<StuppType> getRegisteredTypes() {
 		lock.lock();
 		try {
-			return new HashSet<StuppType>( primaryIndices.keySet() );
+			return new HashSet<StuppType>( indicesByType.keySet() );
 		} finally {
 			lock.unlock();
 		}
@@ -85,44 +87,15 @@ public class StuppScope {
 		final StuppScope indexScope = index.scope;
 		if (indexScope == this) throw new IllegalArgumentException("Index already added to the scope");
 		if (indexScope != null) throw new IllegalArgumentException("Index already added to other scope: " + indexScope);
-		final StuppProperties properties = index.properties;
-		final StuppType type = properties.type;
+		final StuppType type = index.properties.type;
 		
 		lock.lock();
 		try {
+			HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+			if (indices.containsKey(index.name)) throw new IllegalArgumentException("Index with name " + index.name + " already registered for type " + type);
 			index.reset();
-			StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
-			if (primaryIndex == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			for (Object object : primaryIndex.all()) {
-				final StuppTuple value = index.getValue(object);
-				try {
-					index.checkUpdate(object, null, value);
-				} catch (IllegalArgumentException e) {
-					index.reset();
-					throw e;
-				}
-			}
-			HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
-			if (propertyLookup == null) {
-				propertyLookup = new HashMap<String, HashSet<StuppIndex<?>>>();
-				typeLookup.put(type, propertyLookup);
-			}
-			for (String propertyName : properties.propertyNames) {
-				HashSet<StuppIndex<?>> indices = propertyLookup.get(propertyName);
-				if (indices == null) {
-					indices = new HashSet<StuppIndex<?>>();
-					propertyLookup.put(propertyName, indices);
-				}
-				indices.add(index);
-			}
-			HashSet<StuppIndex<?>> indices = indicesByType.get(type);
-			if (indices == null) {
-				indices = new HashSet<StuppIndex<?>>();
-				indicesByType.put(type, indices);
-			}
-			indices.add(index);
-			this.allIndices.add(index);
-			index.scope = this;
+			addIndexImpl(index);
 		} finally {
 			lock.unlock();
 		}
@@ -145,30 +118,41 @@ public class StuppScope {
 				propertyLookup.get(propertyName).remove(index);
 			}
 		 } finally {
-			 lock.unlock();
+			lock.unlock();
 		 }
-	 }
+	}
+
+	public StuppGlobalIndex getGlobalIndex(StuppType type) {
+		StuppGlobalIndex index = globalIndices.get(type);
+		if (index == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+		return index;
+	}
 	
-	public StuppIndex<StuppTuple> getPrimaryIndex(StuppType type) {
+	public StuppIndex<?> getPrimaryIndex(StuppType type) {
+		return getIndex(type, StuppIndexed.PRIMARY_INDEX_NAME);
+	}
+	
+	public StuppIndex<?> getIndex(StuppType type, String indexName) {
 		lock.lock();
 		try {
-			final StuppIndex<StuppTuple> primaryIndex = primaryIndices.get(type);
-			if (primaryIndex == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			return primaryIndex;
+			final HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+			final StuppIndex<?> index = indices.get(indexName);
+			if (index == null) throw new IllegalArgumentException("No index with name " + indexName + " registered for type " + type);
+			return index;
 		 } finally {
 			 lock.unlock();
 		 }
 	}
-	
-	 public Set<StuppIndex<?>> getAllIndices() {
-		 lock.lock();
-		 try {
-			 return (HashSet<StuppIndex<?>>) allIndices.clone();
-		 } finally {
-			 lock.unlock();
-		 }
-	 }
-		
+
+	public Set<StuppIndex<?>> getAllIndices() {
+		lock.lock();
+		try {
+			return (HashSet<StuppIndex<?>>) allIndices.clone();
+		} finally {
+			lock.unlock();
+		}
+	}
 
 	public boolean attach(Object object) {
 		StuppHandler handler = Stupp.getHandler(object);
@@ -205,8 +189,8 @@ public class StuppScope {
 	public void detachAll() {
 		lock.lock();
 		try {
-			for (StuppIndex<StuppTuple> primaryIndex : primaryIndices.values()) {
-				for (Object object : primaryIndex.getAll()) {
+			for (StuppGlobalIndex globalIndex : globalIndices.values()) {
+				for (Object object : globalIndex.getAll()) {
 					detach(object);
 				}
 			}
@@ -216,18 +200,18 @@ public class StuppScope {
 	}
 	
 	public Collection<? extends Object> getAllObjects() {
-		HashSet<Object> set = new HashSet<Object>();
+		final ArrayList<Object> list = new ArrayList<Object>();
 		lock.lock();
 		try {
-			for (StuppIndex<?> primaryIndex : primaryIndices.values()) {
+			for (StuppIndex<?> primaryIndex : globalIndices.values()) {
 				for (Object object : primaryIndex.all()) {
-					set.add(object);
+					list.add(object);
 				}
 			}
 		} finally {
 			lock.unlock();
 		}
-		return set;
+		return list;
 	}
 
 	//assumes lock is held
@@ -240,8 +224,10 @@ public class StuppScope {
 	}
 	
 	//assumes lock is held
-	HashSet<StuppIndex<?>> getIndices(StuppType type) {
-		HashSet<StuppIndex<?>> indices = indicesByType.get(type);
+	Collection<StuppIndex<?>> getIndices(StuppType type) {
+		final HashMap<String, StuppIndex<?>> map = indicesByType.get(type);
+		if (map == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+		Collection<StuppIndex<?>> indices = map.values();
 		return indices == null ? NO_INDICES : indices;
 	}
 	
@@ -273,34 +259,70 @@ public class StuppScope {
 		handler.setScope(null);
 	}
 
+	// must be called with lock, assumes index does not exist and indicesByType has been populated w/ map
+	private void addIndexImpl(StuppIndex<?> index) {
+		final StuppProperties properties = index.properties;
+		final StuppType type = properties.type;
+
+		if (index instanceof StuppGlobalIndex) {
+			globalIndices.put(type, (StuppGlobalIndex) index);
+		} else {
+			StuppGlobalIndex globalIndex = globalIndices.get(type);
+			//TODO could optimize, no need to clone collection here
+			for (Object object : globalIndex.all()) {
+				final StuppTuple value = index.getValue(object);
+				try {
+					index.checkUpdate(object, null, value);
+				} catch (IllegalArgumentException e) {
+					index.reset();
+					throw e;
+				}
+			}
+		}
+		
+		HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
+		if (propertyLookup == null) {
+			propertyLookup = new HashMap<String, HashSet<StuppIndex<?>>>();
+			typeLookup.put(type, propertyLookup);
+		}
+		for (String propertyName : properties.propertyNames) {
+			HashSet<StuppIndex<?>> indices = propertyLookup.get(propertyName);
+			if (indices == null) {
+				indices = new HashSet<StuppIndex<?>>();
+				propertyLookup.put(propertyName, indices);
+			}
+			indices.add(index);
+		}
+		HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+		indices.put(index.getName(), index);
+		this.allIndices.add(index);
+		index.scope = this;
+		
+	}
+	
 	private void add(StuppType type, Object object) {
-		final HashSet<StuppIndex<?>> indices = getIndices(type);
+		final Collection<StuppIndex<?>> indices = getIndices(type);
 		//TODO cache new values between calls
-		if (!indices.isEmpty()) {
-			for (StuppIndex<?> index : indices) {
-				StuppTuple newValue = index.getValue(object);
-				index.checkUpdate(object, null, newValue);
-			}
-			for (StuppIndex<?> index : indices) {
-				StuppTuple newValue = index.getValue(object);
-				index.performUpdate(object, null, newValue);
-			}
+		for (StuppIndex<?> index : indices) {
+			StuppTuple newValue = index.getValue(object);
+			index.checkUpdate(object, null, newValue);
+		}
+		for (StuppIndex<?> index : indices) {
+			StuppTuple newValue = index.getValue(object);
+			index.performUpdate(object, null, newValue);
 		}
 	}
 
 	private void remove(StuppType type, Object object) {
-		final HashSet<StuppIndex<?>> indices = getIndices(type);
+		final Collection<StuppIndex<?>> indices = getIndices(type);
 		//TODO cache old values between calls
-		//TODO remove now redundant empty checks on indices - primary key ensures its not empty
-		if (!indices.isEmpty()) {
-			for (StuppIndex<?> index : indices) {
-				StuppTuple oldValue = index.getValue(object);
-				index.checkUpdate(object, oldValue, null);
-			}
-			for (StuppIndex<?> index : indices) {
-				StuppTuple oldValue = index.getValue(object);
-				index.performUpdate(object, oldValue, null);
-			}
+		for (StuppIndex<?> index : indices) {
+			StuppTuple oldValue = index.getValue(object);
+			index.checkUpdate(object, oldValue, null);
+		}
+		for (StuppIndex<?> index : indices) {
+			StuppTuple oldValue = index.getValue(object);
+			index.performUpdate(object, oldValue, null);
 		}
 	}
 

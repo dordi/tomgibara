@@ -170,9 +170,9 @@ public class ScopeTest extends TestCase {
 		} catch (IllegalArgumentException e) {
 			/* expected */
 		}
-		assertEquals(indexProps.tupleFromValues(1L), Stupp.getKey(bookA));
+		assertEquals(indexProps.tupleFromValues(1L), type.getIndexProperties().tupleFromInstance(bookA));
 		assertEquals(scope, Stupp.getScope(bookA));
-		assertEquals(indexProps.tupleFromValues(2L), Stupp.getKey(bookB));
+		assertEquals(indexProps.tupleFromValues(2L), type.getIndexProperties().tupleFromInstance(bookB));
 		assertEquals(scope, Stupp.getScope(bookB));
 	}
 	

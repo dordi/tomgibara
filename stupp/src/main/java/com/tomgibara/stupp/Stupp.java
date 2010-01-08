@@ -21,10 +21,6 @@ import java.lang.reflect.Proxy;
 
 public class Stupp {
 
-	public static StuppTuple getKey(Object object) {
-		return getHandler(object).getKey();
-	}
-
 	public static void setProperty(Object object, String property, Object value) {
 		getHandler(object).setProperty(object, property, value, true);
 	}

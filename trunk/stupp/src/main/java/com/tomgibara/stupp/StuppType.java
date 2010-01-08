@@ -46,7 +46,7 @@ public class StuppType {
 		return classLoader;
 	}
 	
-	//TODO rename static methods
+	//TODO rename static methods?
 	
 	public static Definition newDefinition(Class<?> clss) {
 		return newDefinition(null, clss);
@@ -92,7 +92,6 @@ public class StuppType {
 	final HashMap<Method, String> methodPropertyNames;
 	final HashMap<String, Class<?>> propertyClasses;
 	final StuppProperties equalityProperties;
-	//TODO rename
 	final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
 	
 	private StuppType(Definition def) {
@@ -173,7 +172,6 @@ public class StuppType {
 		final HashMap<Method, String> methodPropertyNames;
 		final HashMap<String, Class<?>> propertyClasses;
 		String[] equalityProperties = null;
-		//TODO rename
 		final HashMap<String, ArrayList<String>> indexProperties = new HashMap<String, ArrayList<String>>();
 		
 		private Definition(Definition that) {
@@ -302,7 +300,7 @@ public class StuppType {
 		}
 		
 		private void processAnnotations() {
-			HashMap<String, ArrayList<Method>> keyMethods = new HashMap<String, ArrayList<Method>>();
+			HashMap<String, ArrayList<Method>> indexMethods = new HashMap<String, ArrayList<Method>>();
 			ArrayList<Method> equalityMethods = new ArrayList<Method>();
 			final Class<?>[] interfaces = proxyClass.getInterfaces();
 			for (Class<?> i : interfaces) {
@@ -312,11 +310,11 @@ public class StuppType {
 					final StuppEquality equality = method.getAnnotation(StuppEquality.class);
 					if (indexed != null) {
 						final String indexName = indexed.name();
-						ArrayList<Method> methods = keyMethods.get(indexName);
+						ArrayList<Method> methods = indexMethods.get(indexName);
 						if (methods == null) {
 							StuppIndex.checkName(indexName);
 							methods = new ArrayList<Method>();
-							keyMethods.put(indexName, methods);
+							indexMethods.put(indexName, methods);
 						}
 						int index = indexed.index();
 						final int size = methods.size();
@@ -339,20 +337,20 @@ public class StuppType {
 				}
 			}
 			//create key arrays
-			for (Map.Entry<String, ArrayList<Method>> entry : keyMethods.entrySet()) {
+			for (Map.Entry<String, ArrayList<Method>> entry : indexMethods.entrySet()) {
 				final String indexName = entry.getKey();
 				final ArrayList<Method> methods = entry.getValue();
 				//ensure key properties have no gaps
 				while (methods.remove(null));
 				{
 					final int length = methods.size();
-					final ArrayList<String> keyProperties = new ArrayList<String>(length);
+					final ArrayList<String> properties = new ArrayList<String>(length);
 					for (int i = 0; i < length; i++) {
 						final Method method = methods.get(i);
 						final String propertyName = Reflect.propertyName(method.getName());
-						keyProperties.add(propertyName);
+						properties.add(propertyName);
 					}
-					this.indexProperties.put(indexName, keyProperties);
+					this.indexProperties.put(indexName, properties);
 				}
 			}
 			//create equality array

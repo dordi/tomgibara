@@ -18,12 +18,6 @@ package com.tomgibara.stupp;
 
 import java.util.HashSet;
 
-import com.tomgibara.stupp.Stupp;
-import com.tomgibara.stupp.StuppFactory;
-import com.tomgibara.stupp.StuppKey;
-import com.tomgibara.stupp.StuppScope;
-import com.tomgibara.stupp.StuppType;
-
 import junit.framework.TestCase;
 
 public class ScopeTest extends TestCase {
@@ -274,7 +268,7 @@ public class ScopeTest extends TestCase {
 	
 	private static interface Jacket {
 		
-		@StuppKey
+		@StuppIndexed
 		void setBook(Book book);
 		
 	}

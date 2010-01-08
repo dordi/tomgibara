@@ -18,13 +18,11 @@ package com.tomgibara.stupp;
 
 import java.util.Collection;
 
-import com.tomgibara.stupp.StuppKey;
-
 public interface Publisher {
 
 	int getCode();
 	
-	@StuppKey
+	@StuppIndexed
 	void setCode(int code);
 	
 	Collection<Book> getBooks();

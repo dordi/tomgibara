@@ -18,10 +18,6 @@ package com.tomgibara.stupp;
 
 import java.util.HashSet;
 
-import com.tomgibara.stupp.Stupp;
-import com.tomgibara.stupp.StuppKey;
-import com.tomgibara.stupp.StuppType;
-
 import junit.framework.TestCase;
 
 public class TypeTest extends TestCase {
@@ -37,7 +33,7 @@ public class TypeTest extends TestCase {
 	public void testDifferentDefinitions() {
 		StuppType type1 = StuppType.newDefinition(Book.class).getType();
 		StuppType type2 = StuppType.newDefinition(Book.class).setEqualityProperties("name").getType();
-		StuppType type3 = StuppType.newDefinition(Book.class).setKeyProperties("name").getType();
+		StuppType type3 = StuppType.newDefinition(Book.class).addIndex("test", "name").getType();
 		assertNotSame(type1, type2);
 		assertNotSame(type2, type3);
 		assertNotSame(type3, type1);
@@ -46,14 +42,14 @@ public class TypeTest extends TestCase {
 	public void testModifiedDefinition() {
 		StuppType.Definition def = StuppType.newDefinition(Book.class);
 		StuppType type1 = def.getType();
-		StuppType type2 = def.setKeyProperties("name").getType();
+		StuppType type2 = def.removeIndex("primary").addIndex("primary", "name").getType();
 		assertFalse(type1.equals(type2));
 	}
 	
 	public void testClonedDefinitions() {
 		StuppType.Definition def1 = StuppType.newDefinition(Book.class);
-		StuppType.Definition def2 = def1.clone().setKeyProperties("name");
-		StuppType.Definition def3 = def2.clone().setKeyProperties("id");
+		StuppType.Definition def2 = def1.clone().removeIndex("primary").addIndex("primary", "name");
+		StuppType.Definition def3 = def2.clone().removeIndex("primary").addIndex("primary", "id");
 		assertFalse(def1.equals(def2));
 		assertFalse(def2.equals(def3));
 		assertTrue(def3.equals(def1));
@@ -87,7 +83,7 @@ public class TypeTest extends TestCase {
 	}
 	
 	public void testOverrideKey() {
-		StuppType type = StuppType.newDefinition(C.class).setKeyProperties("id").getType();
+		StuppType type = StuppType.newDefinition(C.class).removeIndex("primary").addIndex("primary", "id").getType();
 		C instance = (C) type.newInstance();
 		Stupp.setKey(instance, 1L);
 		assertEquals(1L, instance.getId());
@@ -142,19 +138,19 @@ public class TypeTest extends TestCase {
 	}
 	
 	private static interface A {
-		@StuppKey
+		@StuppIndexed
 		void setKey(String id);
 	}
 	
 	private static interface B {
-		@StuppKey
+		@StuppIndexed
 		void setKey(String key);
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 	}
 	
 	private static interface C {
-		@StuppKey
+		@StuppIndexed
 		void setKey(String key);
 		void setId(long id);
 		long getId();
@@ -162,7 +158,7 @@ public class TypeTest extends TestCase {
 	
 	private static interface D {
 		
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 		
 		@StuppEquality
@@ -174,7 +170,7 @@ public class TypeTest extends TestCase {
 
 	private static interface E {
 		
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 
 		void setValue(long v);
@@ -184,7 +180,7 @@ public class TypeTest extends TestCase {
 	
 	private static interface F {
 		
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 
 		void setValue(String v);
@@ -194,7 +190,7 @@ public class TypeTest extends TestCase {
 	
 	private static interface G {
 		
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 
 		void setValue(Number v);
@@ -204,7 +200,7 @@ public class TypeTest extends TestCase {
 	
 	private static interface H {
 		
-		@StuppKey
+		@StuppIndexed
 		void setId(long id);
 
 		void setValue(Integer v);

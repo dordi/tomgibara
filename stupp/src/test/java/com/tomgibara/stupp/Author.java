@@ -16,13 +16,12 @@
  */
 package com.tomgibara.stupp;
 
-import com.tomgibara.stupp.StuppKey;
 
 public interface Author {
 
 	long getId();
 	
-	@StuppKey
+	@StuppIndexed
 	void setId(long id);
 	
 	String getSurname();

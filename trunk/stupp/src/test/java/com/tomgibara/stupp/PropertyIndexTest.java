@@ -26,7 +26,7 @@ public class PropertyIndexTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"));
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
 		scope.addIndex(index);
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
 		Book book1 = bookFactory.newInstance(1L);

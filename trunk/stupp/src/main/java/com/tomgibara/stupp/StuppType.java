@@ -117,6 +117,14 @@ public class StuppType {
 	public StuppProperties properties(String... propertyNames) {
 		return new StuppProperties(this, propertyNames);
 	}
+
+	public StuppProperties getIndexProperties() {
+		return indexProperties.get(StuppIndexed.DEFAULT_INDEX_NAME);
+	}
+
+	public StuppProperties getIndexProperties(String indexName) {
+		return indexProperties.get(indexName);
+	}
 	
 	public Object newInstance() {
 		try {

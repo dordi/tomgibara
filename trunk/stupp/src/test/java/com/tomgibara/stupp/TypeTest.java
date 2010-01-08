@@ -85,7 +85,7 @@ public class TypeTest extends TestCase {
 	public void testOverrideKey() {
 		StuppType type = StuppType.newDefinition(C.class).removeIndex("primary").addIndex("primary", "id").getType();
 		C instance = (C) type.newInstance();
-		Stupp.setKey(instance, 1L);
+		type.getIndexProperties().tupleFromValues(1L).setOn(instance);
 		assertEquals(1L, instance.getId());
 	}
 

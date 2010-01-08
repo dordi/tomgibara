@@ -22,11 +22,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.tomgibara.pronto.util.Reflect;
@@ -43,6 +42,11 @@ public class StuppType {
 		if (classLoader != null) return classLoader;
 		if (classLoader == null) classLoader = clss.getClassLoader();
 		return classLoader;
+	}
+	
+	//TODO implement
+	private static void checkIndexName(String indexName) {
+		
 	}
 	
 	//TODO rename static methods
@@ -90,16 +94,20 @@ public class StuppType {
 	final HashSet<String> propertyNames;
 	final HashMap<Method, String> methodPropertyNames;
 	final HashMap<String, Class<?>> propertyClasses;
-	final StuppProperties keyProperties;
 	final StuppProperties equalityProperties;
+	//TODO rename
+	final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
 	
 	private StuppType(Definition def) {
 		proxyClass = def.proxyClass;
 		methodPropertyNames = def.methodPropertyNames;
 		propertyClasses = def.propertyClasses;
 		propertyNames = new HashSet<String>(methodPropertyNames.values());
-		keyProperties = properties(def.keyProperties);
 		equalityProperties = properties(def.equalityProperties);
+		for (Map.Entry<String, ArrayList<String>> entry : def.indexProperties.entrySet()) {
+			final ArrayList<String> propertyNames = entry.getValue();
+			indexProperties.put(entry.getKey(), properties((String[]) propertyNames.toArray(new String[propertyNames.size()])));
+		}
 	}
 
 	public boolean instanceImplements(Class<?> clss) {
@@ -142,14 +150,22 @@ public class StuppType {
 
 	// package methods
 
+	//TODO unite methods when primary keys are no longer explicit
 	StuppIndex<StuppTuple> createPrimaryIndex() {
-		return new StuppUniqueIndex(keyProperties, "primary", true);
+		for (String indexName : indexProperties.keySet()) {
+			if (indexName.equals(StuppIndexed.DEFAULT_INDEX_NAME)) return new StuppUniqueIndex(indexProperties.get(indexName), StuppIndexed.DEFAULT_INDEX_NAME, true);
+		}
+		return null;
 	}
 	
-	Collection<? extends StuppIndex<?>> createSecondaryIndices() {
-		//TODO support more general type annotations in future?
-		//TODO could cache properties object
-		return Collections.emptySet();
+	Map<String, ? extends StuppIndex<?>> createSecondaryIndices() {
+		final HashMap<String, StuppIndex<?>> map = new HashMap<String, StuppIndex<?>>();
+		for (String indexName : indexProperties.keySet()) {
+			if (indexName.equals(StuppIndexed.DEFAULT_INDEX_NAME)) continue;
+			final StuppIndex<?> index = new StuppUniqueIndex(indexProperties.get(indexName), indexName, true);
+			map.put(indexName, index);
+		}
+		return map;
 	}
 	
 	// inner classes
@@ -159,14 +175,15 @@ public class StuppType {
 		final Class<?> proxyClass;
 		final HashMap<Method, String> methodPropertyNames;
 		final HashMap<String, Class<?>> propertyClasses;
-		String[] keyProperties = null;
 		String[] equalityProperties = null;
+		//TODO rename
+		final HashMap<String, ArrayList<String>> indexProperties = new HashMap<String, ArrayList<String>>();
 		
 		private Definition(Definition that) {
 			this.proxyClass = that.proxyClass;
 			this.methodPropertyNames = that.methodPropertyNames;
 			this.propertyClasses = that.propertyClasses;
-			this.keyProperties = that.keyProperties.clone();
+			this.indexProperties.putAll(that.indexProperties);
 			this.equalityProperties = that.equalityProperties.clone();
 		}
 		
@@ -212,9 +229,13 @@ public class StuppType {
 			processAnnotations();
 		}
 		
-		public Definition setKeyProperties(String... keyProperties) {
-			if (keyProperties == null) throw new IllegalArgumentException("null keyProperties");
+		//TODO introduce index class
+		public Definition addIndex(String indexName, String... keyProperties) {
+			if (keyProperties == null) throw new IllegalArgumentException("null indexProperties");
+			checkIndexName(indexName);
+			if (this.indexProperties.containsKey(indexName)) throw new IllegalArgumentException("duplicate index name: " + indexName);
 			
+			//check key properties
 			final int length = keyProperties.length;
 			final HashSet<String> set = new HashSet<String>();
 			//TODO doesn't actually check if there is a corresponding setter - does that matter?
@@ -226,7 +247,12 @@ public class StuppType {
 				if (!set.add(property)) throw new IllegalArgumentException("Duplicate key property " + property + " at index " + i);
 			}
 
-			this.keyProperties = keyProperties.clone();
+			this.indexProperties.put(indexName, new ArrayList<String>(Arrays.asList(keyProperties)));
+			return this;
+		}
+		
+		public Definition removeIndex(String indexName) {
+			indexProperties.remove(indexName);
 			return this;
 		}
 		
@@ -247,11 +273,9 @@ public class StuppType {
 			this.equalityProperties = (String[]) set.toArray(new String[set.size()]);
 			return this;
 		}
-		
+
+		//TODO consider removing this method
 		private void checkComplete() {
-			//TODO relax this constraint in future - allow there to be no primary key
-			//missing keyProperties
-			if (keyProperties.length == 0) throw new IllegalStateException("No primary key defined");
 		}
 
 		public StuppType getType() {
@@ -265,14 +289,14 @@ public class StuppType {
 			if (!(obj instanceof Definition)) return false;
 			final Definition that = (Definition) obj;
 			if (this.proxyClass != that.proxyClass) return false;
-			if (!Arrays.equals(this.keyProperties, that.keyProperties)) return false;
 			if (!Arrays.equals(equalityProperties, that.equalityProperties)) return false;
+			if (!this.indexProperties.equals(that.indexProperties)) return false;
 			return true;
 		}
 		
 		@Override
 		public int hashCode() {
-			return proxyClass.hashCode() ^ Arrays.hashCode(keyProperties) ^ Arrays.hashCode(equalityProperties);
+			return proxyClass.hashCode() ^ indexProperties.hashCode() ^ Arrays.hashCode(equalityProperties);
 		}
 		
 		@Override
@@ -281,47 +305,58 @@ public class StuppType {
 		}
 		
 		private void processAnnotations() {
-			ArrayList<Method> keyMethods = new ArrayList<Method>();
+			HashMap<String, ArrayList<Method>> keyMethods = new HashMap<String, ArrayList<Method>>();
 			ArrayList<Method> equalityMethods = new ArrayList<Method>();
 			final Class<?>[] interfaces = proxyClass.getInterfaces();
 			for (Class<?> i : interfaces) {
 				for (Method method : i.getMethods()) {
 					if (!Reflect.isSetter(method)) continue;
-					final StuppKey key = method.getAnnotation(StuppKey.class);
+					final StuppIndexed indexed = method.getAnnotation(StuppIndexed.class);
 					final StuppEquality equality = method.getAnnotation(StuppEquality.class);
-					if (key != null) {
-						int index = key.index();
-						final int size = keyMethods.size();
+					if (indexed != null) {
+						final String indexName = indexed.name();
+						ArrayList<Method> methods = keyMethods.get(indexName);
+						if (methods == null) {
+							checkIndexName(indexName);
+							methods = new ArrayList<Method>();
+							keyMethods.put(indexName, methods);
+						}
+						int index = indexed.index();
+						final int size = methods.size();
 						if (index < 0 || index == size) {
-							keyMethods.add(method);
+							methods.add(method);
 						} else if (index < size) {
-							keyMethods.set(index, method);
+							methods.set(index, method);
 						} else {
 							while (index > size) {
-								keyMethods.add(null);
+								methods.add(null);
 								index --;
 							}
-							keyMethods.add(method);
+							methods.add(method);
 						}
 					}
-					if (equality != null || key != null) {
+					//TODO weaken this
+					if (equality != null || indexed != null) {
 						equalityMethods.add(method);
 					}
 				}
 			}
-			//ensure key properties have no gaps
-			while (keyMethods.remove(null));
 			//create key arrays
-			{
-				final int length = keyMethods.size();
-				final String[] keyProperties = new String[length];
-				final Class<?>[] keyClasses = new Class<?>[length];
-				for (int i = 0; i < length; i++) {
-					Method method = keyMethods.get(i);
-					keyProperties[i] = Reflect.propertyName(method.getName());
-					keyClasses[i] = method.getParameterTypes()[0];
+			for (Map.Entry<String, ArrayList<Method>> entry : keyMethods.entrySet()) {
+				final String indexName = entry.getKey();
+				final ArrayList<Method> methods = entry.getValue();
+				//ensure key properties have no gaps
+				while (methods.remove(null));
+				{
+					final int length = methods.size();
+					final ArrayList<String> keyProperties = new ArrayList<String>(length);
+					for (int i = 0; i < length; i++) {
+						final Method method = methods.get(i);
+						final String propertyName = Reflect.propertyName(method.getName());
+						keyProperties.add(propertyName);
+					}
+					this.indexProperties.put(indexName, keyProperties);
 				}
-				this.keyProperties = keyProperties;
 			}
 			//create equality array
 			{

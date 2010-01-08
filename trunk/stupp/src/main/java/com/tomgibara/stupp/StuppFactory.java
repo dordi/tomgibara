@@ -25,6 +25,7 @@ public class StuppFactory<T, K> {
 	private final StuppScope scope;
 	private final StuppType type;
 	private final StuppIndex<StuppTuple> index;
+	private final String indexedProperty;
 	
 	private StuppSequence<? extends K> sequence;
 
@@ -32,11 +33,13 @@ public class StuppFactory<T, K> {
 		this(type, scope, null, null);
 	}
 
+	//TODO provide constructor that takes index name
 	public StuppFactory(StuppType type, StuppScope scope, Class<T> instanceClass, Class<K> keyClass) {
 		if (type == null) throw new IllegalArgumentException();
 		if (scope == null) throw new IllegalArgumentException();
 		if (instanceClass != null && !type.instanceImplements(instanceClass)) throw new IllegalArgumentException();
-		final Class<?>[] propertyClasses = type.keyProperties.propertyClasses;
+		final StuppProperties indexProperties = type.indexProperties.get(StuppIndexed.DEFAULT_INDEX_NAME);
+		final Class<?>[] propertyClasses = indexProperties.propertyClasses;
 		final int length = propertyClasses.length;
 		if (length < 1) throw new IllegalArgumentException("Type has no primary index.");
 		if (length > 1) throw new IllegalArgumentException("Type has multivalued primary index.");
@@ -45,6 +48,7 @@ public class StuppFactory<T, K> {
 		this.scope = scope;
 		this.type = type;
 		this.index = scope.register(type);
+		this.indexedProperty = indexProperties.propertyNames[0];
 	}
 
 	public StuppType getType() {
@@ -72,7 +76,7 @@ public class StuppFactory<T, K> {
 	
 	public T newInstance(K key) {
 		Object object = type.newInstance();
-		Stupp.setProperty(object, type.keyProperties.propertyNames[0], key);
+		Stupp.setProperty(object, indexedProperty, key);
 		scope.attach(object);
 		return (T) object;
 	}

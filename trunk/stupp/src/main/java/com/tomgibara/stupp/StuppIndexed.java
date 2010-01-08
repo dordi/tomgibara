@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Tom Gibara
+ * Copyright 2010 Tom Gibara
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,13 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 
-public @interface StuppKey {
+public @interface StuppIndexed {
 
+	public static final String DEFAULT_INDEX_NAME = "primary";
+
+	//TODO rename, confusing
 	int index() default -1;
+	
+	String name() default DEFAULT_INDEX_NAME;
 	
 }

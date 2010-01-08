@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import sun.awt.GlobalCursorManager;
-
 public class StuppScope {
 
 	// statics

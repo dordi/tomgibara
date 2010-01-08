@@ -23,11 +23,11 @@ import java.lang.annotation.RetentionPolicy;
 
 public @interface StuppIndexed {
 
-	public static final String DEFAULT_INDEX_NAME = "primary";
+	public static final String PRIMARY_INDEX_NAME = "primary";
 
 	//TODO rename, confusing
 	int index() default -1;
 	
-	String name() default DEFAULT_INDEX_NAME;
+	String name() default PRIMARY_INDEX_NAME;
 	
 }

@@ -45,9 +45,11 @@ public class StuppFactory<T, K> {
 		if (length > 1) throw new IllegalArgumentException("Type has multivalued primary index.");
 		final Class<?> typeKeyClass = propertyClasses[0];
 		if (keyClass != null && !typeKeyClass.isAssignableFrom(keyClass)) throw new IllegalArgumentException("Key class " + typeKeyClass + " cannot be assigned to specified key class " + keyClass);
+		scope.register(type);
 		this.scope = scope;
 		this.type = type;
-		this.index = scope.register(type);
+		//XXX MAJOR HACK
+		this.index = (StuppIndex<StuppTuple>) scope.getPrimaryIndex(type);
 		this.indexedProperty = indexProperties.propertyNames[0];
 	}
 

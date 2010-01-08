@@ -19,17 +19,24 @@ package com.tomgibara.stupp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 //TODO should throw meaningful exception when not in scope
 public abstract class StuppIndex<C> {
 
+	private static final Pattern validNamePattern = Pattern.compile("[A-Za-z]+");
+	
+	static void checkName(String name) {
+		if (!validNamePattern.matcher(name).matches()) throw new IllegalArgumentException("Index name " + name + "does not match pattern: " + validNamePattern.pattern());
+	}
+	
 	final StuppProperties properties;
 	final String name;
 
 	StuppScope scope = null;
 
 	public StuppIndex(StuppProperties properties, String name) {
-		if (properties.propertyNames.length == 0) throw new IllegalArgumentException("no property names");
+		if (getClass() != StuppGlobalIndex.class) checkName(name);
 		this.properties = properties;
 		this.name = name;
 	}

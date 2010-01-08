@@ -227,7 +227,7 @@ public class ScopeTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"));
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
 		scope.addIndex(index);
 		assertEquals(2, scope.getAllIndices().size());
 		assertTrue(scope.getAllIndices().contains(index));
@@ -246,7 +246,7 @@ public class ScopeTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"));
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
 		scope.addIndex(index);
 		scope.removeIndex(index);
 		assertEquals(1, scope.getAllIndices().size());

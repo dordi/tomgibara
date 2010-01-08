@@ -29,8 +29,8 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
 	// constructors
 
-	public StuppUniqueIndex(StuppProperties properties, boolean notNull) {
-		super(properties);
+	public StuppUniqueIndex(StuppProperties properties, String name, boolean notNull) {
+		super(properties, name);
 		this.notNull = notNull;
 	}
 	

@@ -27,7 +27,7 @@ public class UniqueIndexTest extends TestCase {
 		final StuppScope scope = new StuppScope();
 		StuppType type = StuppType.getInstance(Book.class);
 		scope.register(type);
-		final StuppUniqueIndex index = new StuppUniqueIndex(type.properties("name"), false);
+		final StuppUniqueIndex index = new StuppUniqueIndex(type.properties("name"), "test", false);
 		scope.addIndex(index);
 
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);

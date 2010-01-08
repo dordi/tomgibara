@@ -24,18 +24,24 @@ import java.util.HashMap;
 public abstract class StuppIndex<C> {
 
 	final StuppProperties properties;
+	final String name;
 
 	StuppScope scope = null;
 
-	public StuppIndex(StuppProperties properties) {
+	public StuppIndex(StuppProperties properties, String name) {
 		if (properties.propertyNames.length == 0) throw new IllegalArgumentException("no property names");
 		this.properties = properties;
+		this.name = name;
 	}
 
 	// accessors
 	
 	public StuppProperties getProperties() {
 		return properties;
+	}
+	
+	public String getName() {
+		return name;
 	}
 
 	// public methods (require scope to be set and must take lock)

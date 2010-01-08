@@ -33,8 +33,8 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 
 	// constructors
 
-	public StuppPropertyIndex(StuppProperties properties) {
-		super(properties);
+	public StuppPropertyIndex(StuppProperties properties, String name) {
+		super(properties, name);
 	}
 	
 	// convenience methods

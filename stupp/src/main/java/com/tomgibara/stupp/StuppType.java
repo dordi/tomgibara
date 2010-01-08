@@ -35,8 +35,6 @@ public class StuppType {
 
 	private static final Class<?>[] CONS_PARAMS = new Class<?>[] { InvocationHandler.class };
 
-	//key doesn't include key property - this means differing keyProperties will be ignored
-	//TODO consider changing this
 	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
 	
 	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
@@ -144,18 +142,8 @@ public class StuppType {
 
 	// package methods
 
-	//XXX
-//	void checkKey(Object key) {
-//		if (keyClass.isPrimitive()) {
-//			if (key == null) throw new IllegalArgumentException("Primitive key cannot be null");
-//			if (key.getClass() != Classes.classForPrimitive(keyClass)) throw new IllegalArgumentException("Key class must be " + keyClass +" not " + key.getClass());
-//		} else {
-//			if (key != null && !keyAssignableFrom(key.getClass())) throw new IllegalArgumentException("Invalid key class: " + key.getClass());
-//		}
-//	}
-	
 	StuppIndex<StuppTuple> createPrimaryIndex() {
-		return new StuppUniqueIndex(keyProperties, true);
+		return new StuppUniqueIndex(keyProperties, "primary", true);
 	}
 	
 	Collection<? extends StuppIndex<?>> createSecondaryIndices() {

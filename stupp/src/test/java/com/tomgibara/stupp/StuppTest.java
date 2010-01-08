@@ -23,7 +23,7 @@ public class StuppTest extends TestCase {
 	public void testSetKey() {
 		StuppType type = StuppType.getInstance(Book.class);
 		Object instance = type.newInstance();
-		Stupp.setKey(instance, 1L);
+		type.getIndexProperties().tupleFromValues(1L).setOn(instance);
 		assertEquals(((Book)instance).getId(), 1L);
 	}
 	
@@ -31,7 +31,7 @@ public class StuppTest extends TestCase {
 		StuppType type = StuppType.getInstance(Book.class);
 		Object instance = type.newInstance();
 		try {
-			Stupp.setKey(instance, "1");
+			type.getIndexProperties().tupleFromValues("1").setOn(instance);
 			fail();
 		} catch (IllegalArgumentException e) {
 			/* expected */

@@ -51,6 +51,12 @@ public class StuppTuple {
 		return false;
 	}
 	
+	// public methods
+	
+	public void setOn(Object object) {
+		Stupp.getHandler(object).setProperties(object, properties.propertyNames, values, true);
+	}
+	
 	// package methods
 	
 	//TODO consider making public

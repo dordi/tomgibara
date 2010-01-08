@@ -34,11 +34,11 @@ public class HandlerTest extends TestCase {
 		book1.setName("Perl Cookbook");
 		//both still equal because ids are equal
 		assertTrue(book1.equals(book2));
-		Stupp.setKey(book1, 1L);
-		Stupp.setKey(book2, 2L);
+		type.getIndexProperties().tupleFromValues(1L).setOn(book1);
+		type.getIndexProperties().tupleFromValues(2L).setOn(book2);
 		//unequal because ids differ
 		assertFalse(book1.equals(book2));
-		Stupp.setKey(book2, 1L);
+		type.getIndexProperties().tupleFromValues(1L).setOn(book2);
 		//both again equal because ids are again equal
 		assertEquals(book1, book2);
 	}

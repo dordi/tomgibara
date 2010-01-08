@@ -24,13 +24,7 @@ public class Stupp {
 	public static StuppTuple getKey(Object object) {
 		return getHandler(object).getKey();
 	}
-	
-	//TODO should take a tuple?
-	public static void setKey(Object object, Object... key) {
-		final StuppHandler handler = getHandler(object);
-		handler.setProperties(object, handler.getType().indexProperties.get(StuppIndexed.DEFAULT_INDEX_NAME).propertyNames, key, true);
-	}
-			
+
 	public static void setProperty(Object object, String property, Object value) {
 		getHandler(object).setProperty(object, property, value, true);
 	}
@@ -39,8 +33,6 @@ public class Stupp {
 		return getHandler(object).getProperty(property);
 	}
 
-	//TODO support setProperty
-	
 	public static StuppType getType(Object object) {
 		return getHandler(object).getType();
 	}

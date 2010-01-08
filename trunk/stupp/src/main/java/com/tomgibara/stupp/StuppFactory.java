@@ -38,7 +38,7 @@ public class StuppFactory<T, K> {
 		if (type == null) throw new IllegalArgumentException();
 		if (scope == null) throw new IllegalArgumentException();
 		if (instanceClass != null && !type.instanceImplements(instanceClass)) throw new IllegalArgumentException();
-		final StuppProperties indexProperties = type.indexProperties.get(StuppIndexed.DEFAULT_INDEX_NAME);
+		final StuppProperties indexProperties = type.getIndexProperties();
 		final Class<?>[] propertyClasses = indexProperties.propertyClasses;
 		final int length = propertyClasses.length;
 		if (length < 1) throw new IllegalArgumentException("Type has no primary index.");

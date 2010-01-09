@@ -19,13 +19,11 @@ package com.tomgibara.stupp;
 import java.util.Collection;
 
 //convenience class, designed only for single keys
-//TODO generalize to multivalue keys
 public class StuppFactory<T, K> {
 
 	private final StuppScope scope;
 	private final StuppType type;
-	private final StuppIndex<StuppTuple> index;
-	private final String indexedProperty;
+	private final StuppUniqueIndex index;
 	
 	private StuppSequence<? extends K> sequence;
 
@@ -33,24 +31,22 @@ public class StuppFactory<T, K> {
 		this(type, scope, null, null);
 	}
 
-	//TODO provide constructor that takes index name
 	public StuppFactory(StuppType type, StuppScope scope, Class<T> instanceClass, Class<K> keyClass) {
 		if (type == null) throw new IllegalArgumentException();
 		if (scope == null) throw new IllegalArgumentException();
 		if (instanceClass != null && !type.instanceImplements(instanceClass)) throw new IllegalArgumentException();
+		Class<? extends StuppIndex<?>> indexClass = type.getIndexClass();
+		if (indexClass != StuppUniqueIndex.class) throw new IllegalArgumentException("Factory requires a StuppUniqueIndex primary index.");
 		final StuppProperties indexProperties = type.getIndexProperties();
 		final Class<?>[] propertyClasses = indexProperties.propertyClasses;
 		final int length = propertyClasses.length;
-		if (length < 1) throw new IllegalArgumentException("Type has no primary index.");
-		if (length > 1) throw new IllegalArgumentException("Type has multivalued primary index.");
+		if (length > 1) throw new IllegalArgumentException("Factory requires a single-valued primary index.");
 		final Class<?> typeKeyClass = propertyClasses[0];
 		if (keyClass != null && !typeKeyClass.isAssignableFrom(keyClass)) throw new IllegalArgumentException("Key class " + typeKeyClass + " cannot be assigned to specified key class " + keyClass);
 		scope.register(type);
 		this.scope = scope;
 		this.type = type;
-		//XXX MAJOR HACK
-		this.index = (StuppIndex<StuppTuple>) scope.getPrimaryIndex(type);
-		this.indexedProperty = indexProperties.propertyNames[0];
+		this.index = (StuppUniqueIndex) scope.getPrimaryIndex(type);
 	}
 
 	public StuppType getType() {
@@ -78,13 +74,13 @@ public class StuppFactory<T, K> {
 	
 	public T newInstance(K key) {
 		Object object = type.newInstance();
-		Stupp.setProperty(object, indexedProperty, key);
+		index.properties.tupleFromValues(key).setOn(object);
 		scope.attach(object);
 		return (T) object;
 	}
 
 	public T getInstance(K key) {
-		return (T) index.getSingle(index.properties.tupleFromValues(key));
+		return (T) index.getSingle(key);
 	}
 
 	public Collection<T> getAllInstances() {

@@ -118,8 +118,18 @@ public class StuppType {
 		return indexProperties.get(StuppIndexed.PRIMARY_INDEX_NAME);
 	}
 
+	//TODO include index type in annotation
+	public Class<? extends StuppIndex<?>> getIndexClass() {
+		return getIndexClass(StuppIndexed.PRIMARY_INDEX_NAME);
+	}
+	
 	public StuppProperties getIndexProperties(String indexName) {
 		return indexProperties.get(indexName);
+	}
+	
+	//TODO include index type in annotation
+	public Class<? extends StuppIndex<?>> getIndexClass(String indexName) {
+		return StuppUniqueIndex.class;
 	}
 	
 	public Object newInstance() {

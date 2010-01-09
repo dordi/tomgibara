@@ -124,9 +124,8 @@ public class ScopeTest extends TestCase {
 		final Book book = bookFactory.newInstance(1L);
 		final Author author = authorFactory.newInstance(1L);
 
-		//XXX MAJOR HACK
-		final StuppIndex<StuppTuple> bookIndex = (StuppIndex<StuppTuple>) scope.getPrimaryIndex(bookType);
-		final StuppIndex<StuppTuple> authorIndex = (StuppIndex<StuppTuple>) scope.getPrimaryIndex(authorType);
+		final StuppUniqueIndex bookIndex = (StuppUniqueIndex) scope.getPrimaryIndex(bookType);
+		final StuppUniqueIndex authorIndex = (StuppUniqueIndex) scope.getPrimaryIndex(authorType);
 		assertEquals(book, bookIndex.getSingle(bookIndex.getProperties().tupleFromValues(1L)));
 		assertEquals(author, authorIndex.getSingle(authorIndex.getProperties().tupleFromValues(1L)));
 		

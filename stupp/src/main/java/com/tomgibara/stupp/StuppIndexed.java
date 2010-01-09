@@ -25,8 +25,7 @@ public @interface StuppIndexed {
 
 	public static final String PRIMARY_INDEX_NAME = "primary";
 
-	//TODO rename, confusing
-	int index() default -1;
+	int position() default -1;
 	
 	String name() default PRIMARY_INDEX_NAME;
 	

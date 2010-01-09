@@ -326,16 +326,16 @@ public class StuppType {
 							methods = new ArrayList<Method>();
 							indexMethods.put(indexName, methods);
 						}
-						int index = indexed.index();
+						int position = indexed.position();
 						final int size = methods.size();
-						if (index < 0 || index == size) {
+						if (position < 0 || position == size) {
 							methods.add(method);
-						} else if (index < size) {
-							methods.set(index, method);
+						} else if (position < size) {
+							methods.set(position, method);
 						} else {
-							while (index > size) {
+							while (position > size) {
 								methods.add(null);
-								index --;
+								position --;
 							}
 							methods.add(method);
 						}

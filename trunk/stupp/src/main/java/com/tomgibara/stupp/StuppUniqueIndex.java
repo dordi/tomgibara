@@ -53,6 +53,11 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	// index methods
 
 	@Override
+	public Class<StuppTuple> getCriteriaClass() {
+		return StuppTuple.class;
+	}
+
+	@Override
 	public Collection<Object> get(StuppTuple criteria) {
 		Object object = getSingle(criteria);
 		return object == null ? Collections.emptySet() : Collections.singleton(object);

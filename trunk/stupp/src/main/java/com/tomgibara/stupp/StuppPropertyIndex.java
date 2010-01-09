@@ -50,6 +50,11 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 	// index methods
 
 	@Override
+	public Class<StuppTuple> getCriteriaClass() {
+		return StuppTuple.class;
+	}
+
+	@Override
 	public Collection<Object> get(StuppTuple criteria) {
 		final StuppLock lock = scope.lock;
 		lock.lock();

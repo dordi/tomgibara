@@ -22,6 +22,11 @@ class StuppGlobalIndex extends StuppIndex<Void> {
 	// index methods
 	
 	@Override
+	public Class<Void> getCriteriaClass() {
+		return Void.class;
+	}
+	
+	@Override
 	public boolean containsObject(Object object) {
 		return index.contains(object);
 	}

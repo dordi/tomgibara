@@ -17,7 +17,12 @@
 package com.tomgibara.stupp;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,12 +33,25 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	
 	@Target(ElementType.TYPE)
 	@StuppIndexDefinition(StuppUniqueIndex.class)
-	public static @interface StuppUniquelyIndexed {
+	@Retention(RetentionPolicy.RUNTIME)
+	public static @interface Definition {
 
 		String name() default StuppType.PRIMARY_INDEX_NAME;
 		
 		boolean notNull() default true;
 		
+	}
+	
+	public static Definition newDefinition(final String name, final boolean notNull) {
+		return (Definition) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { Definition.class }, new InvocationHandler() {
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) {
+				final String methodName = method.getName();
+				if (methodName.equals("name")) return name;
+				if (methodName.equals("notNull")) return notNull;
+				throw new UnsupportedOperationException();
+			}
+		});
 	}
 	
 	// fields
@@ -43,11 +61,12 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
 	// constructors
 
-	public StuppUniqueIndex(StuppProperties properties, StuppUniquelyIndexed ann) {
+	public StuppUniqueIndex(StuppProperties properties, Definition ann) {
 		super(properties, ann.name());
 		this.notNull = ann.notNull();
 	}
-	
+
+	//convenience constructor
 	public StuppUniqueIndex(StuppProperties properties, String name, boolean notNull) {
 		super(properties, name);
 		this.notNull = notNull;

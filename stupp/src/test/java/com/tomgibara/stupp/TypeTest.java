@@ -16,6 +16,7 @@
  */
 package com.tomgibara.stupp;
 
+import java.util.Collection;
 import java.util.HashSet;
 
 import junit.framework.TestCase;
@@ -137,6 +138,13 @@ public class TypeTest extends TestCase {
 		
 	}
 	
+	public void testIndexDefinition() {
+		StuppType type = StuppType.getInstance(I.class);
+		Collection<? extends StuppIndex<?>> indices = type.createIndices();
+		assertEquals(1, indices.size());
+		StuppPropertyIndex index = (StuppPropertyIndex) indices.iterator().next();
+	}
+	
 	private static interface A {
 		@StuppIndexed
 		void setKey(String id);
@@ -206,6 +214,16 @@ public class TypeTest extends TestCase {
 		void setValue(Integer v);
 		
 		Number getValue();
+	}
+	
+	@StuppPropertyIndex.Definition(name = "prop")
+	private static interface I {
+		
+		@StuppIndexed(name = "prop")
+		void setValue(String value);
+		
+		String getValue();
+		
 	}
 	
 }

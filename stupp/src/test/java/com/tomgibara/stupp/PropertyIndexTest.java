@@ -18,10 +18,19 @@ package com.tomgibara.stupp;
 
 import java.util.Collection;
 
+import com.tomgibara.stupp.StuppPropertyIndex.Definition;
+
 import junit.framework.TestCase;
 
 public class PropertyIndexTest extends TestCase {
 
+	public void testAnnotationConstructor() {
+		final StuppType type = StuppType.getInstance(Book.class);
+		Definition definition = StuppPropertyIndex.newDefinition("test");
+		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), definition);
+		assertEquals("test", index.getName());
+	}
+	
 	public void testProperty() {
 		final StuppScope scope = new StuppScope();
 		StuppType type = StuppType.getInstance(Book.class);

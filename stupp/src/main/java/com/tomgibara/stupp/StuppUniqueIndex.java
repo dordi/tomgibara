@@ -16,12 +16,26 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
 public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
+	// statics
+	
+	@Target(ElementType.TYPE)
+	@StuppIndexDefinition(StuppUniqueIndex.class)
+	public static @interface StuppUniquelyIndexed {
+
+		String name() default StuppType.PRIMARY_INDEX_NAME;
+		
+		boolean notNull() default true;
+		
+	}
+	
 	// fields
 	
 	private final HashMap<Object, Object> index = new HashMap<Object, Object>();
@@ -29,6 +43,11 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
 	// constructors
 
+	public StuppUniqueIndex(StuppProperties properties, StuppUniquelyIndexed ann) {
+		super(properties, ann.name());
+		this.notNull = ann.notNull();
+	}
+	
 	public StuppUniqueIndex(StuppProperties properties, String name, boolean notNull) {
 		super(properties, name);
 		this.notNull = notNull;
@@ -38,6 +57,11 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	
 	public boolean isNotNull() {
 		return notNull;
+	}
+
+	@Override
+	public Class<StuppTuple> getCriteriaClass() {
+		return StuppTuple.class;
 	}
 
 	// convenience methods
@@ -51,11 +75,6 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	}
 
 	// index methods
-
-	@Override
-	public Class<StuppTuple> getCriteriaClass() {
-		return StuppTuple.class;
-	}
 
 	@Override
 	public Collection<Object> get(StuppTuple criteria) {

@@ -52,7 +52,7 @@ public abstract class StuppIndex<C> {
 	}
 
 	public abstract Class<C> getCriteriaClass();
-	
+
 	// public methods (require scope to be set and must take lock)
 
 	public abstract Collection<Object> get(C criteria);

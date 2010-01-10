@@ -412,12 +412,13 @@ public class StuppType {
 			if (this.proxyClass != that.proxyClass) return false;
 			if (!Arrays.equals(equalityProperties, that.equalityProperties)) return false;
 			if (!this.indexProperties.equals(that.indexProperties)) return false;
+			if (!this.indexDefinitions.equals(that.indexDefinitions)) return false;
 			return true;
 		}
 		
 		@Override
 		public int hashCode() {
-			return proxyClass.hashCode() ^ indexProperties.hashCode() ^ Arrays.hashCode(equalityProperties);
+			return proxyClass.hashCode() ^ indexProperties.hashCode() ^ indexDefinitions.hashCode() ^ Arrays.hashCode(equalityProperties);
 		}
 		
 		@Override

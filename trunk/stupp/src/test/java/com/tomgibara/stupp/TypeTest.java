@@ -19,6 +19,8 @@ package com.tomgibara.stupp;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.tomgibara.stupp.StuppPropertyIndex.Definition;
+
 import junit.framework.TestCase;
 
 public class TypeTest extends TestCase {
@@ -138,8 +140,16 @@ public class TypeTest extends TestCase {
 		
 	}
 	
-	public void testIndexDefinition() {
+	public void testAnnotatedIndexDefinition() {
 		StuppType type = StuppType.getInstance(I.class);
+		Collection<? extends StuppIndex<?>> indices = type.createIndices();
+		assertEquals(1, indices.size());
+		StuppPropertyIndex index = (StuppPropertyIndex) indices.iterator().next();
+	}
+	
+	public void testIndexDefinition() {
+		final Definition indexDefinition = StuppPropertyIndex.newDefinition(StuppType.PRIMARY_INDEX_NAME);
+		final StuppType type = StuppType.newDefinition(A.class).setIndexDefinition(indexDefinition).getType();
 		Collection<? extends StuppIndex<?>> indices = type.createIndices();
 		assertEquals(1, indices.size());
 		StuppPropertyIndex index = (StuppPropertyIndex) indices.iterator().next();

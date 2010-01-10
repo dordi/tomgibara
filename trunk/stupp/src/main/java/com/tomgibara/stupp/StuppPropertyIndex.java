@@ -49,7 +49,9 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 		return (Definition) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { Definition.class }, new InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) {
-				if (method.getName().equals("name")) return name;
+				final String methodName = method.getName();
+				if (methodName.equals("name")) return name;
+				if (methodName.equals("annotationType")) return Definition.class;
 				throw new UnsupportedOperationException();
 			}
 		});

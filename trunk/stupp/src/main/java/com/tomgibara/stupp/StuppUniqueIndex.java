@@ -49,6 +49,7 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 				final String methodName = method.getName();
 				if (methodName.equals("name")) return name;
 				if (methodName.equals("notNull")) return notNull;
+				if (methodName.equals("annotationType")) return Definition.class;
 				throw new UnsupportedOperationException();
 			}
 		});

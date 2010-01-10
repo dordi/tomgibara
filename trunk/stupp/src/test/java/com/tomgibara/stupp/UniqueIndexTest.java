@@ -16,12 +16,20 @@
  */
 package com.tomgibara.stupp;
 
-import java.util.Collection;
-
 import junit.framework.TestCase;
+
+import com.tomgibara.stupp.StuppUniqueIndex.Definition;
 
 public class UniqueIndexTest extends TestCase {
 
+	public void testAnnotationConstruction() {
+		final StuppType type = StuppType.getInstance(Book.class);
+		final Definition definition = StuppUniqueIndex.newDefinition("test", false);
+		final StuppUniqueIndex index = new StuppUniqueIndex(type.properties("name"), definition);
+		assertEquals("test", index.getName());
+		assertEquals(false, index.isNotNull());
+	}
+	
 	public void testUniqueNullable() {
 		
 		final StuppScope scope = new StuppScope();

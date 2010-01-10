@@ -17,7 +17,12 @@
 package com.tomgibara.stupp;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,10 +38,21 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 	
 	@Target(ElementType.TYPE)
 	@StuppIndexDefinition(StuppPropertyIndex.class)
-	public static @interface StuppPropertyIndexed {
+	@Retention(RetentionPolicy.RUNTIME)
+	public static @interface Definition {
 
 		String name() default StuppType.PRIMARY_INDEX_NAME;
 		
+	}
+	
+	public static Definition newDefinition(final String name) {
+		return (Definition) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { Definition.class }, new InvocationHandler() {
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) {
+				if (method.getName().equals("name")) return name;
+				throw new UnsupportedOperationException();
+			}
+		});
 	}
 	
 	// fields
@@ -45,10 +61,11 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 
 	// constructors
 
-	public StuppPropertyIndex(StuppProperties properties, StuppPropertyIndexed ann) {
+	public StuppPropertyIndex(StuppProperties properties, Definition ann) {
 		super(properties, ann.name());
 	}
-	
+
+	//convenience constructor
 	public StuppPropertyIndex(StuppProperties properties, String name) {
 		super(properties, name);
 	}

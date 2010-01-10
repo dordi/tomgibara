@@ -127,7 +127,7 @@ public class StuppScope {
 	}
 	
 	public StuppIndex<?> getPrimaryIndex(StuppType type) {
-		return getIndex(type, StuppIndexed.PRIMARY_INDEX_NAME);
+		return getIndex(type, StuppType.PRIMARY_INDEX_NAME);
 	}
 	
 	public StuppIndex<?> getIndex(StuppType type, String indexName) {
@@ -292,7 +292,7 @@ public class StuppScope {
 			indices.add(index);
 		}
 		HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
-		indices.put(index.getName(), index);
+		indices.put(index.name, index);
 		this.allIndices.add(index);
 		index.scope = this;
 		

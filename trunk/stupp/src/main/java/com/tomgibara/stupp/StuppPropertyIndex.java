@@ -16,6 +16,8 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,12 +29,26 @@ import java.util.Set;
 
 public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 
+	// statics
+	
+	@Target(ElementType.TYPE)
+	@StuppIndexDefinition(StuppPropertyIndex.class)
+	public static @interface StuppPropertyIndexed {
+
+		String name() default StuppType.PRIMARY_INDEX_NAME;
+		
+	}
+	
 	// fields
 	
 	private final HashMap<StuppTuple, Set<Object>> index = new HashMap<StuppTuple, Set<Object>>();
 
 	// constructors
 
+	public StuppPropertyIndex(StuppProperties properties, StuppPropertyIndexed ann) {
+		super(properties, ann.name());
+	}
+	
 	public StuppPropertyIndex(StuppProperties properties, String name) {
 		super(properties, name);
 	}

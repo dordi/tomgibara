@@ -16,15 +16,14 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+public @interface StuppIndexDefinition {
 
-public @interface StuppIndexed {
-
-	int position() default -1;
-	
-	String name() default StuppType.PRIMARY_INDEX_NAME;
-	
+	Class<? extends StuppIndex<?>> value();
 }

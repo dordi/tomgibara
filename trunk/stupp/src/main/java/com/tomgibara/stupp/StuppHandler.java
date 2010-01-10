@@ -90,7 +90,7 @@ public class StuppHandler implements InvocationHandler {
 	
 	//TODO should be version that takes index name
 	StuppTuple getKey() {
-		return getProperties(type.indexProperties.get(StuppIndexed.PRIMARY_INDEX_NAME));
+		return getProperties(type.indexProperties.get(StuppType.PRIMARY_INDEX_NAME));
 	}
 
 	//TODO must implement more efficiently - but - must avoid cost of boxing unecessarily though?

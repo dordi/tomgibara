@@ -16,9 +16,12 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,12 +34,19 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.tomgibara.pronto.util.Reflect;
+import com.tomgibara.stupp.StuppPropertyIndex.StuppPropertyIndexed;
+import com.tomgibara.stupp.StuppUniqueIndex.StuppUniquelyIndexed;
 
 public class StuppType {
 
+	public static final String PRIMARY_INDEX_NAME = "primary";
+
 	private static final Class<?>[] CONS_PARAMS = new Class<?>[] { InvocationHandler.class };
 
+	//TODO this caching won't work because references to definitions aren't maintained
 	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
+	
+	private static final HashMap<Class<? extends Annotation>, Constructor<? extends StuppIndex<?>>> indexCons = new HashMap<Class<? extends Annotation>, Constructor<? extends StuppIndex<?>>>();
 	
 	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
 		if (classLoader != null) return classLoader;
@@ -47,6 +57,32 @@ public class StuppType {
 	}
 	
 	//TODO rename static methods?
+	
+	public static void registerIndexAnnotation(Class<? extends Annotation> annotationClass) {
+		//null check
+		if (annotationClass == null) throw new IllegalArgumentException("null annotationClass");
+		final StuppIndexDefinition definition = annotationClass.getAnnotation(StuppIndexDefinition.class);
+		//no index class defined
+		if (definition == null) throw new IllegalArgumentException("No StuppIndexDefinition annotation: " + annotationClass);
+		final Class<? extends StuppIndex<?>> indexClass = definition.value();
+		if (indexClass == null) throw new IllegalArgumentException("null indexClass");
+		//can't trust generics - is it an index?
+		if (!StuppIndex.class.isAssignableFrom(indexClass)) throw new IllegalArgumentException("Index class does not extend StuppIndex: " + indexClass);
+		//is it concrete?
+		if (Modifier.isAbstract(indexClass.getModifiers())) throw new IllegalArgumentException("Index class is abstract: " + indexClass);
+		//does it have a relevant constructor?
+		final Constructor<? extends StuppIndex<?>> constructor;
+		try {
+			constructor = indexClass.getConstructor(StuppProperties.class, annotationClass);
+		} catch (NoSuchMethodException e) {
+			throw new IllegalArgumentException("Index has no (StuppProperties, Annotation) constructor: " + indexClass);
+		}
+		//all checks done, now register
+		synchronized (constructor) {
+			// no need to check for duplication, call is idempotent
+			indexCons.put(annotationClass, constructor);
+		}
+	}
 	
 	public static Definition newDefinition(Class<?> clss) {
 		return newDefinition(null, clss);
@@ -86,6 +122,12 @@ public class StuppType {
 		}
 	}
 	
+	static {
+		//TODO could optimize away checking
+		registerIndexAnnotation(StuppUniquelyIndexed.class);
+		registerIndexAnnotation(StuppPropertyIndexed.class);
+	}
+	
 	private final Class<?> proxyClass;
 
 	final HashSet<String> propertyNames;
@@ -115,12 +157,12 @@ public class StuppType {
 	}
 
 	public StuppProperties getIndexProperties() {
-		return indexProperties.get(StuppIndexed.PRIMARY_INDEX_NAME);
+		return indexProperties.get(PRIMARY_INDEX_NAME);
 	}
 
 	//TODO include index type in annotation
 	public Class<? extends StuppIndex<?>> getIndexClass() {
-		return getIndexClass(StuppIndexed.PRIMARY_INDEX_NAME);
+		return getIndexClass(PRIMARY_INDEX_NAME);
 	}
 	
 	public StuppProperties getIndexProperties(String indexName) {
@@ -175,7 +217,7 @@ public class StuppType {
 	}
 	
 	// inner classes
-	
+
 	public static class Definition implements Cloneable {
 		
 		final Class<?> proxyClass;

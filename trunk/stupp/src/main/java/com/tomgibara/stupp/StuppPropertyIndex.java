@@ -32,6 +32,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import com.tomgibara.pronto.util.Annotations;
+
 public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 
 	// statics
@@ -46,15 +48,7 @@ public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 	}
 	
 	public static Definition newDefinition(final String name) {
-		return (Definition) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { Definition.class }, new InvocationHandler() {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) {
-				final String methodName = method.getName();
-				if (methodName.equals("name")) return name;
-				if (methodName.equals("annotationType")) return Definition.class;
-				throw new UnsupportedOperationException();
-			}
-		});
+		return Annotations.instantiate(Definition.class.getClassLoader(), Definition.class, Collections.singletonMap("name", (Object) name), false);
 	}
 	
 	// fields

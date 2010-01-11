@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import com.tomgibara.pronto.util.Annotations;
+
 public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 
 	// statics
@@ -43,16 +45,10 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	}
 	
 	public static Definition newDefinition(final String name, final boolean notNull) {
-		return (Definition) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { Definition.class }, new InvocationHandler() {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) {
-				final String methodName = method.getName();
-				if (methodName.equals("name")) return name;
-				if (methodName.equals("notNull")) return notNull;
-				if (methodName.equals("annotationType")) return Definition.class;
-				throw new UnsupportedOperationException();
-			}
-		});
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		map.put("name", name);
+		map.put("notNull", notNull);
+		return Annotations.instantiate(Definition.class.getClassLoader(), Definition.class, map, false);
 	}
 	
 	// fields

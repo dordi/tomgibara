@@ -59,20 +59,4 @@ public class Stupp {
 		return (StuppHandler) Proxy.getInvocationHandler(object);
 	}
 	
-	/*
-	//does no checking at all! - don't expose until it's decided
-	//TODO consider adding extra checks to implementation, or abandoning it
-	public static <A extends Annotation> A instantiate(final Class<A> annotationClass, final Map<String, Object> values) {
-		return (A) Proxy.newProxyInstance(Stupp.class.getClassLoader(), new Class[] { annotationClass }, new InvocationHandler() {
-			
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) {
-				Object value = values.get(method.getName());
-				if (value == null) value = method.getDefaultValue();
-				return value;
-			}
-			
-		});
-	}
-	*/
 }

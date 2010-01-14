@@ -143,6 +143,20 @@ public class StuppScope {
 		 }
 	}
 
+	public Set<StuppIndex<?>> getIndices(StuppProperties properties) {
+		lock.lock();
+		try {
+			final StuppType type = properties.type;
+			if (!globalIndices.containsKey(type)) throw new IllegalArgumentException("Type not registered with scope: " + type);
+			final HashSet<StuppIndex<?>> indices = getIndices(type, properties.propertyNames);
+			//TODO is there a way around this inefficiency?
+			//yes in the future, when scopes have definitions, the structures can be immutable
+			return new HashSet<StuppIndex<?>>(indices);
+		} finally {
+			lock.unlock();
+		}
+	}
+
 	public Set<StuppIndex<?>> getAllIndices() {
 		lock.lock();
 		try {
@@ -214,10 +228,23 @@ public class StuppScope {
 
 	//assumes lock is held
 	HashSet<StuppIndex<?>> getIndices(StuppType type, String propertyName) {
-		HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
+		final HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
 		if (propertyLookup == null) return NO_INDICES;
-		HashSet<StuppIndex<?>> indices = propertyLookup.get(propertyName);
+		final HashSet<StuppIndex<?>> indices = propertyLookup.get(propertyName);
 		if (indices == null) return NO_INDICES;
+		return indices;
+	}
+	
+	//assumes lock is held
+	HashSet<StuppIndex<?>> getIndices(StuppType type, String[] propertyNames) {
+		if (propertyNames.length == 0) return NO_INDICES;
+		if (propertyNames.length == 1) return getIndices(type, propertyNames[0]);
+		final HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
+		if (propertyLookup == null) return NO_INDICES;
+		final HashSet<StuppIndex<?>> indices = new HashSet<StuppIndex<?>>();
+		for (String propertyName : propertyNames) {
+			indices.addAll(propertyLookup.get(propertyName));
+		}
 		return indices;
 	}
 	

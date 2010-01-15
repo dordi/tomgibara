@@ -32,11 +32,13 @@ public class UniqueIndexTest extends TestCase {
 	
 	public void testUniqueNullable() {
 		
-		final StuppScope scope = new StuppScope();
 		StuppType type = StuppType.getInstance(Book.class);
-		scope.register(type);
-		final StuppUniqueIndex index = new StuppUniqueIndex(type.properties("name"), "test", false);
-		scope.addIndex(index);
+		final StuppScope scope = StuppScope.newDefinition()
+			.addType(type)
+			.addIndex("test", type.properties("name"))
+			.setIndexDefinition(StuppUniqueIndex.newDefinition("test", false))
+			.createScope();
+		final StuppUniqueIndex index = (StuppUniqueIndex) scope.getIndex(type, "test");
 
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
 		Book book1 = bookFactory.newInstance(1L);

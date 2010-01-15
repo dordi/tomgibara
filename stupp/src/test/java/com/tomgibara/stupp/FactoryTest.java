@@ -29,7 +29,7 @@ public class FactoryTest extends TestCase {
 
 	public void testDuplicateNewInstance() {
 		
-		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), new StuppScope());
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
 		Book book = factory.newInstance(1L);
 		try {
 			factory.newInstance(1L);
@@ -41,7 +41,7 @@ public class FactoryTest extends TestCase {
 
 	public void testDeleteInstance() {
 
-		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), new StuppScope());
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
 		Book book = factory.newInstance(1L);
 		factory.deleteInstance(book);
 

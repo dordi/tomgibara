@@ -23,7 +23,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 //TODO should throw meaningful exception when not in scope
@@ -105,6 +107,25 @@ public abstract class StuppIndex<C> {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+	
+	static Collection<? extends StuppIndex<?>> createIndices(HashMap<String, StuppProperties> indexProperties, HashMap<String, Annotation> indexDefinitions) {
+		if (indexProperties.isEmpty()) return Collections.emptySet();
+		ArrayList<StuppIndex<?>> list = new ArrayList<StuppIndex<?>>(indexProperties.size());
+		for (Map.Entry<String, StuppProperties> entry : indexProperties.entrySet()) {
+			final String name = entry.getKey();
+			final Annotation definition = indexDefinitions.get(name);
+			final StuppIndex<?> index;
+			if (definition == null) {
+				//default index
+				//TODO this could be controlled via some form of policy
+				index = new StuppUniqueIndex(entry.getValue(), name, true);
+			} else {
+				index = createIndex(entry.getValue(), definition);
+			}
+			list.add(index);
+		}
+		return list;
 	}
 	
 	// fields

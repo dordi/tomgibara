@@ -162,22 +162,7 @@ public class StuppType {
 	// package methods
 
 	Collection<? extends StuppIndex<?>> createIndices() {
-		if (indexProperties.isEmpty()) return Collections.emptySet();
-		ArrayList<StuppIndex<?>> list = new ArrayList<StuppIndex<?>>(indexProperties.size());
-		for (Map.Entry<String, StuppProperties> entry : indexProperties.entrySet()) {
-			final String name = entry.getKey();
-			final Annotation definition = indexDefinitions.get(name);
-			final StuppIndex<?> index;
-			if (definition == null) {
-				//default index
-				//TODO this could be controlled via some form of policy
-				index = new StuppUniqueIndex(entry.getValue(), name, true);
-			} else {
-				index = StuppIndex.createIndex(entry.getValue(), definition);
-			}
-			list.add(index);
-		}
-		return list;
+		return StuppIndex.createIndices(indexProperties, indexDefinitions);
 	}
 	
 	// inner classes

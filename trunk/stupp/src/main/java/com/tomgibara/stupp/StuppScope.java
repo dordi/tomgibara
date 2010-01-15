@@ -16,17 +16,26 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.tomgibara.pronto.util.Arguments;
+
+//TODO hide register and addIndex methods when definitions are done
+//TODO remove unecessary locking when indices and types are immutable
 public class StuppScope {
 
 	// statics
 
 	private static final HashSet<StuppIndex<?>> NO_INDICES = new HashSet<StuppIndex<?>>();
+	
+	public static Definition newDefinition() {
+		return new Definition();
+	}
 	
 	// fields
 	
@@ -38,7 +47,7 @@ public class StuppScope {
 	private final HashMap<StuppType, HashMap<String, HashSet<StuppIndex<?>>>> typeLookup = new HashMap<StuppType, HashMap<String,HashSet<StuppIndex<?>>>>();
 	
 	//may also be taken by indices
-	StuppLock lock;
+	final StuppLock lock;
 	
 	public StuppScope(StuppLock lock) {
 		this.lock = lock;
@@ -47,15 +56,21 @@ public class StuppScope {
 	public StuppScope() {
 		this(StuppLock.NOOP_LOCK);
 	}
+
+	private StuppScope(Definition def) {
+		lock = def.lock == null ? StuppLock.NOOP_LOCK : def.lock;
+		for (StuppType type : def.types) {
+			register(type);
+		}
+		for (StuppIndex<?> index : StuppIndex.createIndices(def.indexProperties, def.indexDefinitions)) {
+			addIndex(index);
+		}
+	}
 	
 	public StuppLock getLock() {
 		return lock == StuppLock.NOOP_LOCK ? null : lock;
 	}
 	
-	public void setLock(StuppLock lock) {
-		this.lock = lock == null ? StuppLock.NOOP_LOCK : lock;
-	}
-
 	//must be called before type instances can be attached to this scope
 	//TODO support transitive closure of type
 	public void register(StuppType type) {
@@ -351,4 +366,62 @@ public class StuppScope {
 		}
 	}
 
+	// inner classes
+	
+	public static class Definition {
+
+		StuppLock lock = null;
+		final HashSet<StuppType> types = new HashSet<StuppType>();
+		final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
+		final HashMap<String, Annotation> indexDefinitions = new HashMap<String, Annotation>();
+		
+		public Definition setLock(StuppLock lock) {
+			this.lock = lock;
+			return this;
+		}
+		
+		public Definition addType(StuppType type) {
+			Arguments.notNull(type, "type");
+			types.add(type);
+			return this;
+		}
+		
+		public Definition removeType(StuppType type) {
+			Arguments.notNull(type, "type");
+			types.remove(type);
+			return this;
+		}
+		
+		public Definition addIndex(String indexName, StuppProperties properties) {
+			Arguments.notNull(indexName, "indexName");
+			Arguments.notNull(properties, "properties");
+			indexProperties.put(indexName, properties);
+			return this;
+		}
+		
+		public Definition removeIndex(String indexName) {
+			Arguments.notNull(indexName, "indexName");
+			indexProperties.remove(indexName);
+			return this;
+		}
+		
+		public Definition setIndexDefinition(Annotation annotation) {
+			final String indexName = StuppIndex.checkForIndexAnnotation(annotation);
+			if (indexName == null) throw new IllegalArgumentException("Supplied annotation is not an index definition annotation");
+			indexDefinitions.put(indexName, annotation);
+			return this;
+		}
+		
+		public Definition clearIndexDefinition(String name) {
+			Arguments.notNull(name, "name");
+			indexDefinitions.remove(name);
+			return this;
+		}
+		
+		public StuppScope createScope() {
+			return new StuppScope(this);
+		}
+		
+	}
+	
 }

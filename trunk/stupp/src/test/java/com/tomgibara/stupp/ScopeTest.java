@@ -24,10 +24,9 @@ public class ScopeTest extends TestCase {
 
 	public void testPropertyScope() {
 
-		final StuppScope scope = new StuppScope();
-		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
 		StuppType authorType = StuppType.getInstance(Author.class);
-		scope.register(authorType);
+		final StuppScope scope = StuppScope.newDefinition().addType(authorType).createScope();
+		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
 
 		Book book = bookFactory.newInstance(1L);
 		Author author = (Author) authorType.newInstance();
@@ -37,7 +36,7 @@ public class ScopeTest extends TestCase {
 	}
 
 	public void testNullKey() {
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		final StuppType bookType = StuppType.getInstance(Book.class);
 		try {
 			scope.attach(bookType.newInstance());
@@ -49,7 +48,7 @@ public class ScopeTest extends TestCase {
 	
 	public void testNullPropertyKey() {
 
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
 		final StuppType authorType = StuppType.getInstance(Author.class);
 
@@ -68,7 +67,7 @@ public class ScopeTest extends TestCase {
 		final StuppType bookType = StuppType.getInstance(Book.class);
 		final StuppType authorType = StuppType.getInstance(Author.class);
 
-		final StuppScope scope1 = new StuppScope();
+		final StuppScope scope1 = StuppScope.newDefinition().createScope();
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(bookType, scope1);
 		StuppFactory<Author, Long> authorFactory = new StuppFactory<Author, Long>(authorType, scope1);
 		
@@ -80,21 +79,21 @@ public class ScopeTest extends TestCase {
 		assertNull(Stupp.getScope(book));
 		assertNull(Stupp.getScope(author));
 		
-		final StuppScope scope2 = new StuppScope();
-		scope2.register(bookType);
-		scope2.register(authorType);
+		final StuppScope scope2 = StuppScope.newDefinition()
+			.addType(bookType)
+			.addType(authorType)
+			.createScope();
 		scope2.attach(book);
 		assertEquals(scope2, Stupp.getScope(book));
 		assertEquals(scope2, Stupp.getScope(author));
 	}
 
 	public void testCollection() {
-		final StuppScope bookScope = new StuppScope();
+		final StuppScope bookScope = StuppScope.newDefinition().createScope();
 		final StuppType bookType = StuppType.getInstance(Book.class);
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(bookType, bookScope);
-		final StuppScope pubScope = new StuppScope();
+		final StuppScope pubScope = StuppScope.newDefinition().addType(bookType).createScope();
 		StuppFactory<Publisher, Integer> pubFactory = new StuppFactory<Publisher, Integer>(StuppType.getInstance(Publisher.class), pubScope);
-		pubScope.register(bookType);
 		Publisher publisher = pubFactory.newInstance(1);
 		Book book1 = bookFactory.newInstance(1L);
 		Book book2 = bookFactory.newInstance(2L);
@@ -115,7 +114,7 @@ public class ScopeTest extends TestCase {
 	
 	public void testSameTypesDifferentKey() {
 
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		final StuppType bookType = StuppType.getInstance(Book.class);
 		final StuppType authorType = StuppType.getInstance(Author.class);
 		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(bookType, scope);
@@ -132,7 +131,7 @@ public class ScopeTest extends TestCase {
 	}
 	
 	public void testSameTypeSameKey() {
-		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), new StuppScope());
+		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
 		final Book book = bookFactory.newInstance(1L);
 		try {
 			bookFactory.newInstance(1L);
@@ -144,7 +143,7 @@ public class ScopeTest extends TestCase {
 	}
 
 	public void testChangeKey() {
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
 		final Book bookA = bookFactory.newInstance(1L);
 		bookA.setId(1L);
@@ -165,7 +164,7 @@ public class ScopeTest extends TestCase {
 	}
 	
 	public void testChangeKeyToDuplicate() {
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		final StuppType type = StuppType.getInstance(Book.class);
 		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
 		final StuppProperties indexProps = scope.getPrimaryIndex(type).getProperties();
@@ -199,7 +198,7 @@ public class ScopeTest extends TestCase {
 	*/
 
 	public void testGet() {
-		final StuppScope scope = new StuppScope();
+		final StuppScope scope = StuppScope.newDefinition().createScope();
 		final StuppType bookType = StuppType.getInstance(Book.class);
 		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(bookType, scope);
 		final StuppType authorType = StuppType.getInstance(Author.class);
@@ -225,24 +224,20 @@ public class ScopeTest extends TestCase {
 	}
 
 	public void testAddIndex() {
-		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
-		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
-		scope.addIndex(index);
+		final StuppScope scope = StuppScope.newDefinition()
+			.addType(type)
+			.addIndex("test", type.properties("name"))
+			.setIndexDefinition(StuppPropertyIndex.newDefinition("test"))
+			.createScope();
+		final StuppPropertyIndex index = (StuppPropertyIndex) scope.getIndex(type, "test");
 		assertEquals(3, scope.getAllIndices().size());
 		assertTrue(scope.getAllIndices().contains(index));
 		assertEquals(1, scope.getIndices(type, "name").size());
 		assertSame(index, scope.getIndices(type, "name").iterator().next());
-		try {
-			scope.addIndex(index);
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-		//TODO test adding index attached to other scope
 	}
 
+	/*
 	public void testRemoveIndex() {
 		final StuppScope scope = new StuppScope();
 		final StuppType type = StuppType.getInstance(Book.class);
@@ -253,14 +248,16 @@ public class ScopeTest extends TestCase {
 		assertEquals(2, scope.getAllIndices().size());
 		assertFalse(scope.getAllIndices().contains(index));
 	}
+	*/
 
 	public void testDetachAll() {
-		final StuppScope scope = new StuppScope();
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppScope scope = StuppScope.newDefinition()
+			.addType(type)
+			.createScope();
 		//check safe on totally empty
 		scope.detachAll();
 		assertEquals(0, scope.getAllObjects().size());
-		final StuppType type = StuppType.getInstance(Book.class);
-		scope.register(type);
 		Book book = (Book) type.newInstance();
 		book.setId(1L);
 		scope.attach(book);

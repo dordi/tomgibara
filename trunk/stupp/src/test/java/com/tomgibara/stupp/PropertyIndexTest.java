@@ -32,11 +32,14 @@ public class PropertyIndexTest extends TestCase {
 	}
 	
 	public void testProperty() {
-		final StuppScope scope = new StuppScope();
 		StuppType type = StuppType.getInstance(Book.class);
-		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
-		scope.addIndex(index);
+		final StuppScope scope = StuppScope
+			.newDefinition()
+			.addType(type)
+			.addIndex("test", type.properties("name"))
+			.setIndexDefinition(StuppPropertyIndex.newDefinition("test"))
+			.createScope();
+		final StuppPropertyIndex index = (StuppPropertyIndex) scope.getIndex(type, "test");
 		StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
 		Book book1 = bookFactory.newInstance(1L);
 		book1.setName("Tom");

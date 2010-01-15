@@ -49,18 +49,10 @@ public class StuppScope {
 	//may also be taken by indices
 	final StuppLock lock;
 	
-	public StuppScope(StuppLock lock) {
-		this.lock = lock;
-	}
-
-	public StuppScope() {
-		this(StuppLock.NOOP_LOCK);
-	}
-
 	private StuppScope(Definition def) {
 		lock = def.lock == null ? StuppLock.NOOP_LOCK : def.lock;
 		for (StuppType type : def.types) {
-			register(type);
+			addType(type);
 		}
 		for (StuppIndex<?> index : StuppIndex.createIndices(def.indexProperties, def.indexDefinitions)) {
 			addIndex(index);
@@ -71,22 +63,6 @@ public class StuppScope {
 		return lock == StuppLock.NOOP_LOCK ? null : lock;
 	}
 	
-	//must be called before type instances can be attached to this scope
-	//TODO support transitive closure of type
-	public void register(StuppType type) {
-		lock.lock();
-		try {
-			if (globalIndices.containsKey(type)) return; // already registered
-			indicesByType.put(type, new HashMap<String, StuppIndex<?>>());
-			addIndex(new StuppGlobalIndex(type));
-			for (StuppIndex<?> index : type.createIndices()) {
-				addIndex(index);
-			}
-		} finally {
-			lock.unlock();
-		}
-	}
-
 	public Set<StuppType> getRegisteredTypes() {
 		lock.lock();
 		try {
@@ -96,45 +72,6 @@ public class StuppScope {
 		}
 	}
 	
-	public void addIndex(StuppIndex<?> index) {
-		final StuppScope indexScope = index.scope;
-		if (indexScope == this) throw new IllegalArgumentException("Index already added to the scope");
-		if (indexScope != null) throw new IllegalArgumentException("Index already added to other scope: " + indexScope);
-		final StuppType type = index.properties.type;
-		
-		lock.lock();
-		try {
-			HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
-			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			if (indices.containsKey(index.name)) throw new IllegalArgumentException("Index with name " + index.name + " already registered for type " + type);
-			index.reset();
-			addIndexImpl(index);
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	//TODO guard against removing primary index
-	public void removeIndex(StuppIndex<?> index) {
-		final StuppScope indexScope = index.scope;
-		if (indexScope == null) throw new IllegalArgumentException("Index not added to a scope.");
-		if (indexScope != this) throw new IllegalArgumentException("Index added to a different scope: " + indexScope);
-		final StuppProperties properties = index.properties;
-		final StuppType type = properties.type;
-
-		lock.lock();
-		try {
-			allIndices.remove(index);
-			indicesByType.get(type).remove(index);
-			HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
-			for (String propertyName : properties.propertyNames) {
-				propertyLookup.get(propertyName).remove(index);
-			}
-		 } finally {
-			lock.unlock();
-		 }
-	}
-
 	public StuppGlobalIndex getGlobalIndex(StuppType type) {
 		StuppGlobalIndex index = globalIndices.get(type);
 		if (index == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
@@ -299,6 +236,61 @@ public class StuppScope {
 		handler.setScope(null);
 	}
 
+	//TODO make private when factory has been fixed
+	//must be called before type instances can be attached to this scope
+	void addType(StuppType type) {
+		lock.lock();
+		try {
+			if (globalIndices.containsKey(type)) return; // already registered
+			indicesByType.put(type, new HashMap<String, StuppIndex<?>>());
+			addIndex(new StuppGlobalIndex(type));
+			for (StuppIndex<?> index : type.createIndices()) {
+				addIndex(index);
+			}
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	private void addIndex(StuppIndex<?> index) {
+		final StuppScope indexScope = index.scope;
+		if (indexScope == this) throw new IllegalArgumentException("Index already added to the scope");
+		if (indexScope != null) throw new IllegalArgumentException("Index already added to other scope: " + indexScope);
+		final StuppType type = index.properties.type;
+		
+		lock.lock();
+		try {
+			HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+			if (indices.containsKey(index.name)) throw new IllegalArgumentException("Index with name " + index.name + " already registered for type " + type);
+			index.reset();
+			addIndexImpl(index);
+		} finally {
+			lock.unlock();
+		}
+	}
+
+	//TODO probably remove this method
+	private void removeIndex(StuppIndex<?> index) {
+		final StuppScope indexScope = index.scope;
+		if (indexScope == null) throw new IllegalArgumentException("Index not added to a scope.");
+		if (indexScope != this) throw new IllegalArgumentException("Index added to a different scope: " + indexScope);
+		final StuppProperties properties = index.properties;
+		final StuppType type = properties.type;
+
+		lock.lock();
+		try {
+			allIndices.remove(index);
+			indicesByType.get(type).remove(index);
+			HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
+			for (String propertyName : properties.propertyNames) {
+				propertyLookup.get(propertyName).remove(index);
+			}
+		 } finally {
+			lock.unlock();
+		 }
+	}
+
 	// must be called with lock, assumes index does not exist and indicesByType has been populated w/ map
 	private void addIndexImpl(StuppIndex<?> index) {
 		final StuppProperties properties = index.properties;
@@ -368,6 +360,9 @@ public class StuppScope {
 
 	// inner classes
 	
+	//TODO implement object methods and cloning
+	//TODO should check consistency: that the types which indices depend on have been explicitly added
+	//TODO provide addType method that performs transitive closure
 	public static class Definition {
 
 		StuppLock lock = null;

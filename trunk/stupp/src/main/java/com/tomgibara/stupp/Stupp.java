@@ -16,10 +16,15 @@
  */
 package com.tomgibara.stupp;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 public class Stupp {
+
+	static final Class<?>[] NO_PARAMS = new Class<?>[0];
 
 	public static void setProperty(Object object, String property, Object value) {
 		getHandler(object).setProperty(object, property, value, true);
@@ -58,5 +63,34 @@ public class Stupp {
 	static StuppHandler getHandlerFast(Object object) {
 		return (StuppHandler) Proxy.getInvocationHandler(object);
 	}
+
+	static String nameOfAnnotation(Annotation annotation) {
+		final Method method;
+		try {
+			method = annotation.getClass().getMethod("name", NO_PARAMS);
+		} catch (NoSuchMethodException e) {
+			throw new IllegalStateException("Annotation registered without name method: " + annotation.getClass(), e);
+		}
+		try {
+			return (String) method.invoke(annotation);
+		} catch (ClassCastException e) {
+			throw new IllegalStateException("Annotation registered with non-String name method: " + annotation.getClass(), e);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalStateException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
+	static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
+		if (classLoader != null) return classLoader;
+		classLoader = Thread.currentThread().getContextClassLoader();
+		if (classLoader != null) return classLoader;
+		if (classLoader == null) classLoader = clss.getClassLoader();
+		return classLoader;
+	}
+	
+
 }

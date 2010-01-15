@@ -21,7 +21,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,92 +38,10 @@ public class StuppType {
 
 	public static final String PRIMARY_INDEX_NAME = "primary";
 
-	private static final Class<?>[] NO_PARAMS = new Class<?>[0];
-	
 	private static final Class<?>[] CONS_PARAMS = new Class<?>[] { InvocationHandler.class };
 
 	//TODO this caching won't work because references to definitions aren't maintained
 	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
-	
-	private static final HashMap<Class<? extends Annotation>, Constructor<? extends StuppIndex<?>>> indexCons = new HashMap<Class<? extends Annotation>, Constructor<? extends StuppIndex<?>>>();
-	
-	private static ClassLoader nonNullClassLoader(ClassLoader classLoader, Class<?> clss) {
-		if (classLoader != null) return classLoader;
-		classLoader = Thread.currentThread().getContextClassLoader();
-		if (classLoader != null) return classLoader;
-		if (classLoader == null) classLoader = clss.getClassLoader();
-		return classLoader;
-	}
-	
-	//this can probably avoid being exposed unless classloader situations arise
-	//note: due to the large number of checks peformed by this method, callers should first confirm that the annotationType has not already been registered
-	private static void registerIndexAnnotation(Class<? extends Annotation> annotationType) {
-		//null check
-		if (annotationType == null) throw new IllegalArgumentException("null annotationType");
-		final StuppIndexDefinition definition = annotationType.getAnnotation(StuppIndexDefinition.class);
-		//no index class defined
-		if (definition == null) throw new IllegalArgumentException("No StuppIndexDefinition for annotation: " + annotationType);
-		//does the annotation have a name method?
-		try {
-			Method method = annotationType.getMethod("name", NO_PARAMS);
-			if (method.getReturnType() != String.class) throw new IllegalArgumentException("Annotation has name property which is not a String: " + method.getReturnType());
-		} catch (NoSuchMethodException e) {
-			throw new IllegalArgumentException("Annotation has no name property.");
-		}
-		final Class<? extends StuppIndex<?>> indexClass = definition.value();
-		if (indexClass == null) throw new IllegalArgumentException("null indexClass");
-		//can't trust generics - is it an index?
-		if (!StuppIndex.class.isAssignableFrom(indexClass)) throw new IllegalArgumentException("Index class does not extend StuppIndex: " + indexClass);
-		//is it concrete?
-		if (Modifier.isAbstract(indexClass.getModifiers())) throw new IllegalArgumentException("Index class is abstract: " + indexClass);
-		//does it have a relevant constructor?
-		final Constructor<? extends StuppIndex<?>> constructor;
-		try {
-			constructor = indexClass.getConstructor(StuppProperties.class, annotationType);
-		} catch (NoSuchMethodException e) {
-			throw new IllegalArgumentException("Index has no (StuppProperties, Annotation) constructor: " + indexClass);
-		}
-		//all checks done, now register
-		synchronized (indexCons) {
-			// no need to check for duplication, call is idempotent
-			indexCons.put(annotationType, constructor);
-		}
-	}
-	
-	private static String checkForIndexAnnotation(Annotation annotation) {
-		final Class<? extends Annotation> annotationType = annotation.annotationType();
-		for (Annotation ann : annotationType.getAnnotations()) {
-			if (ann.annotationType() == StuppIndexDefinition.class) {
-				final boolean alreadyRegistered;
-				synchronized(indexCons) {
-					alreadyRegistered = indexCons.containsKey(annotationType);
-				}
-				if (!alreadyRegistered) registerIndexAnnotation(annotationType);
-				return nameOfAnnotation(annotation);
-			}
-		}
-		return null;
-	}
-	
-	private static String nameOfAnnotation(Annotation annotation) {
-		final Method method;
-		try {
-			method = annotation.getClass().getMethod("name", NO_PARAMS);
-		} catch (NoSuchMethodException e) {
-			throw new IllegalStateException("Annotation registered without name method: " + annotation.getClass(), e);
-		}
-		try {
-			return (String) method.invoke(annotation);
-		} catch (ClassCastException e) {
-			throw new IllegalStateException("Annotation registered with non-String name method: " + annotation.getClass(), e);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalStateException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
-	}
 	
 	public static Definition newDefinition(Class<?> clss) {
 		return newDefinition(null, clss);
@@ -135,14 +52,14 @@ public class StuppType {
 	}
 	
 	public static Definition newDefinition(ClassLoader classLoader, Class<?> clss) {
-		classLoader = nonNullClassLoader(classLoader, clss);
+		classLoader = Stupp.nonNullClassLoader(classLoader, clss);
 		final Class<?> proxyClass = Proxy.getProxyClass(classLoader, clss);
 		return new Definition(proxyClass);
 	}
 	
 	public static Definition newDefinition(ClassLoader classLoader, Class<?>... classes) {
 		//TODO unpleasant change of behaviour here
-		classLoader = nonNullClassLoader(classLoader, StuppType.class);
+		classLoader = Stupp.nonNullClassLoader(classLoader, StuppType.class);
 		final Class<?> proxyClass = Proxy.getProxyClass(classLoader, classes);
 		return new Definition(proxyClass);
 	}
@@ -256,21 +173,7 @@ public class StuppType {
 				//TODO this could be controlled via some form of policy
 				index = new StuppUniqueIndex(entry.getValue(), name, true);
 			} else {
-				synchronized (indexCons) {
-					Constructor<? extends StuppIndex<?>> constructor = indexCons.get(definition.annotationType());
-					if (constructor == null) throw new IllegalStateException("No constructor for index definition annotation: " + definition);
-					try {
-						index = constructor.newInstance(entry.getValue(), definition);
-					} catch (IllegalArgumentException e) {
-						throw new IllegalStateException(e);
-					} catch (InstantiationException e) {
-						throw new RuntimeException(e);
-					} catch (IllegalAccessException e) {
-						throw new RuntimeException(e);
-					} catch (InvocationTargetException e) {
-						throw new RuntimeException(e);
-					}
-				}
+				index = StuppIndex.createIndex(entry.getValue(), definition);
 			}
 			list.add(index);
 		}
@@ -366,7 +269,7 @@ public class StuppType {
 		}
 
 		public Definition setIndexDefinition(Annotation annotation) {
-			final String indexName = checkForIndexAnnotation(annotation);
+			final String indexName = StuppIndex.checkForIndexAnnotation(annotation);
 			if (indexName == null) throw new IllegalArgumentException("Supplied annotation is not an index definition annotation");
 			indexDefinitions.put(indexName, annotation);
 			return this;
@@ -435,7 +338,7 @@ public class StuppType {
 			for (Class<?> i : interfaces) {
 				Annotation[] annotations = i.getAnnotations();
 				for (Annotation annotation : annotations) {
-					final String indexName = checkForIndexAnnotation(annotation);
+					final String indexName = StuppIndex.checkForIndexAnnotation(annotation);
 					//TODO in the future allow repeated consistent definitions of index annotation (requires equality on annotation implementations). 
 					if (indexName != null) {
 						Annotation old = indexDefinitions.put(indexName, annotation);

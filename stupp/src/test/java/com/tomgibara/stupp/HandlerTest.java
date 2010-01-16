@@ -50,8 +50,11 @@ public class HandlerTest extends TestCase {
 	}
 	
 	public void testUnequalScopes() throws Exception {
-		StuppFactory<Book, Long> factory1 = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
-		StuppFactory<Book, Long> factory2 = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppScope scope1 = StuppScope.newDefinition().addType(type).createScope();
+		final StuppScope scope2 = StuppScope.newDefinition().addType(type).createScope();
+		StuppFactory<Book, Long> factory1 = new StuppFactory<Book, Long>(type, scope1);
+		StuppFactory<Book, Long> factory2 = new StuppFactory<Book, Long>(type, scope2);
 		Book book1 = factory1.newInstance(0L);
 		Book book2 = factory2.newInstance(0L);
 		assertFalse(book1.equals(book2));

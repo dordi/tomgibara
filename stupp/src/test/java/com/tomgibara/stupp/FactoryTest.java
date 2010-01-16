@@ -28,8 +28,9 @@ import junit.framework.TestCase;
 public class FactoryTest extends TestCase {
 
 	public void testDuplicateNewInstance() {
-		
-		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppScope scope = StuppScope.newDefinition().addType(type).createScope();
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(type, scope);
 		Book book = factory.newInstance(1L);
 		try {
 			factory.newInstance(1L);
@@ -40,8 +41,9 @@ public class FactoryTest extends TestCase {
 	}
 
 	public void testDeleteInstance() {
-
-		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), StuppScope.newDefinition().createScope());
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppScope scope = StuppScope.newDefinition().addType(type).createScope();
+		StuppFactory<Book, Long> factory = new StuppFactory<Book, Long>(type, scope);
 		Book book = factory.newInstance(1L);
 		factory.deleteInstance(book);
 

@@ -29,8 +29,9 @@ public class LockTest extends TestCase {
 
 	//TODO this is a weak test
 	public void testScopeSynchronized() throws Exception {
-		final StuppScope scope = StuppScope.newDefinition().setLock(new StuppLock()).createScope();
-		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(StuppType.getInstance(Book.class), scope);
+		final StuppType type = StuppType.getInstance(Book.class);
+		final StuppScope scope = StuppScope.newDefinition().addType(type).setLock(new StuppLock()).createScope();
+		final StuppFactory<Book, Long> bookFactory = new StuppFactory<Book, Long>(type, scope);
 		final Thread t1 = new Thread(new KeyedCreator<Book>(bookFactory, 0, 2, 1000));
 		final Thread t2 = new Thread(new KeyedCreator<Book>(bookFactory, 1, 2, 1000));
 		t1.start();
@@ -41,8 +42,10 @@ public class LockTest extends TestCase {
 	
 	public void testSequenceSynchronized() throws Exception {
 		final StuppType type = StuppType.getInstance(Book.class);
-		final StuppFactory<Book, Long> factory1 = new StuppFactory<Book, Long>(type, StuppScope.newDefinition().createScope());
-		final StuppFactory<Book, Long> factory2 = new StuppFactory<Book, Long>(type, StuppScope.newDefinition().createScope());
+		final StuppScope scope1 = StuppScope.newDefinition().addType(type).createScope();
+		final StuppScope scope2 = StuppScope.newDefinition().addType(type).createScope();
+		final StuppFactory<Book, Long> factory1 = new StuppFactory<Book, Long>(type, scope1);
+		final StuppFactory<Book, Long> factory2 = new StuppFactory<Book, Long>(type, scope2);
 		LongSequence sequence = new LongSequence(new StuppLock());
 		factory1.setSequence(sequence);
 		factory2.setSequence(sequence);

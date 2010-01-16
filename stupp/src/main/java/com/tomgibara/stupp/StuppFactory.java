@@ -43,7 +43,6 @@ public class StuppFactory<T, K> {
 		if (length > 1) throw new IllegalArgumentException("Factory requires a single-valued primary index.");
 		final Class<?> typeKeyClass = propertyClasses[0];
 		if (keyClass != null && !typeKeyClass.isAssignableFrom(keyClass)) throw new IllegalArgumentException("Key class " + typeKeyClass + " cannot be assigned to specified key class " + keyClass);
-		scope.addType(type);
 		this.scope = scope;
 		this.type = type;
 		this.index = (StuppUniqueIndex) scope.getPrimaryIndex(type);

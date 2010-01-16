@@ -19,14 +19,14 @@ package com.tomgibara.stupp;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.tomgibara.pronto.util.Arguments;
 
-//TODO hide register and addIndex methods when definitions are done
-//TODO remove unecessary locking when indices and types are immutable
 public class StuppScope {
 
 	// statics
@@ -46,6 +46,9 @@ public class StuppScope {
 	private final HashMap<StuppType, HashMap<String, StuppIndex<?>>> indicesByType = new HashMap<StuppType, HashMap<String, StuppIndex<?>>>();
 	private final HashMap<StuppType, HashMap<String, HashSet<StuppIndex<?>>>> typeLookup = new HashMap<StuppType, HashMap<String,HashSet<StuppIndex<?>>>>();
 	
+	private final Set<StuppIndex<?>> publicAllIndices = Collections.unmodifiableSet(allIndices);
+	private final Map<StuppType, HashMap<String, StuppIndex<?>>> publicIndicesByType = Collections.unmodifiableMap(indicesByType);
+
 	//may also be taken by indices
 	final StuppLock lock;
 	
@@ -63,13 +66,8 @@ public class StuppScope {
 		return lock == StuppLock.NOOP_LOCK ? null : lock;
 	}
 	
-	public Set<StuppType> getRegisteredTypes() {
-		lock.lock();
-		try {
-			return new HashSet<StuppType>( indicesByType.keySet() );
-		} finally {
-			lock.unlock();
-		}
+	public Set<StuppType> getTypes() {
+		return publicIndicesByType.keySet();
 	}
 	
 	public StuppGlobalIndex getGlobalIndex(StuppType type) {
@@ -83,39 +81,23 @@ public class StuppScope {
 	}
 	
 	public StuppIndex<?> getIndex(StuppType type, String indexName) {
-		lock.lock();
-		try {
-			final HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
-			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			final StuppIndex<?> index = indices.get(indexName);
-			if (index == null) throw new IllegalArgumentException("No index with name " + indexName + " registered for type " + type);
-			return index;
-		 } finally {
-			 lock.unlock();
-		 }
+		final HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+		if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+		final StuppIndex<?> index = indices.get(indexName);
+		if (index == null) throw new IllegalArgumentException("No index with name " + indexName + " registered for type " + type);
+		return index;
 	}
 
 	public Set<StuppIndex<?>> getIndices(StuppProperties properties) {
-		lock.lock();
-		try {
-			final StuppType type = properties.type;
-			if (!globalIndices.containsKey(type)) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			final HashSet<StuppIndex<?>> indices = getIndices(type, properties.propertyNames);
-			//TODO is there a way around this inefficiency?
-			//yes in the future, when scopes have definitions, the structures can be immutable
-			return new HashSet<StuppIndex<?>>(indices);
-		} finally {
-			lock.unlock();
-		}
+		final StuppType type = properties.type;
+		if (!globalIndices.containsKey(type)) throw new IllegalArgumentException("Type not registered with scope: " + type);
+		final HashSet<StuppIndex<?>> indices = getIndices(type, properties.propertyNames);
+		//TODO is there a way around this inefficiency?
+		return new HashSet<StuppIndex<?>>(indices);
 	}
 
 	public Set<StuppIndex<?>> getAllIndices() {
-		lock.lock();
-		try {
-			return (HashSet<StuppIndex<?>>) allIndices.clone();
-		} finally {
-			lock.unlock();
-		}
+		return publicAllIndices;
 	}
 
 	public boolean attach(Object object) {
@@ -149,6 +131,7 @@ public class StuppScope {
 		return true;
 	}
 
+	//TODO taking lock twice, better to have a detachImpl method?
 	//TODO possible to do more efficiently via a specific call through to indices?
 	public void detachAll() {
 		lock.lock();
@@ -236,9 +219,7 @@ public class StuppScope {
 		handler.setScope(null);
 	}
 
-	//TODO make private when factory has been fixed
-	//must be called before type instances can be attached to this scope
-	void addType(StuppType type) {
+	private void addType(StuppType type) {
 		lock.lock();
 		try {
 			if (globalIndices.containsKey(type)) return; // already registered
@@ -258,40 +239,14 @@ public class StuppScope {
 		if (indexScope != null) throw new IllegalArgumentException("Index already added to other scope: " + indexScope);
 		final StuppType type = index.properties.type;
 		
-		lock.lock();
-		try {
-			HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
-			if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
-			if (indices.containsKey(index.name)) throw new IllegalArgumentException("Index with name " + index.name + " already registered for type " + type);
-			index.reset();
-			addIndexImpl(index);
-		} finally {
-			lock.unlock();
-		}
+		HashMap<String, StuppIndex<?>> indices = indicesByType.get(type);
+		if (indices == null) throw new IllegalArgumentException("Type not registered with scope: " + type);
+		if (indices.containsKey(index.name)) throw new IllegalArgumentException("Index with name " + index.name + " already registered for type " + type);
+		index.reset();
+		addIndexImpl(index);
 	}
 
-	//TODO probably remove this method
-	private void removeIndex(StuppIndex<?> index) {
-		final StuppScope indexScope = index.scope;
-		if (indexScope == null) throw new IllegalArgumentException("Index not added to a scope.");
-		if (indexScope != this) throw new IllegalArgumentException("Index added to a different scope: " + indexScope);
-		final StuppProperties properties = index.properties;
-		final StuppType type = properties.type;
-
-		lock.lock();
-		try {
-			allIndices.remove(index);
-			indicesByType.get(type).remove(index);
-			HashMap<String, HashSet<StuppIndex<?>>> propertyLookup = typeLookup.get(type);
-			for (String propertyName : properties.propertyNames) {
-				propertyLookup.get(propertyName).remove(index);
-			}
-		 } finally {
-			lock.unlock();
-		 }
-	}
-
-	// must be called with lock, assumes index does not exist and indicesByType has been populated w/ map
+	// assumes index does not exist and indicesByType has been populated w/ map
 	private void addIndexImpl(StuppIndex<?> index) {
 		final StuppProperties properties = index.properties;
 		final StuppType type = properties.type;

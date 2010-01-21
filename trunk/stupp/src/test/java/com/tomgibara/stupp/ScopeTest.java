@@ -271,6 +271,10 @@ public class ScopeTest extends TestCase {
 		//check idempotent
 		scope.detachAll();
 		assertEquals(0, scope.getAllObjects().size());
+		//check index clear
+		book = (Book) type.newInstance();
+		book.setId(1L);
+		scope.attach(book);
 	}
 	
 	private static interface Jacket {

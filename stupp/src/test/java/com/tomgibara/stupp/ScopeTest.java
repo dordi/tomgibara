@@ -17,6 +17,7 @@
 package com.tomgibara.stupp;
 
 import java.util.HashSet;
+import java.util.Map;
 
 import com.tomgibara.stupp.ann.StuppIndexed;
 
@@ -242,19 +243,16 @@ public class ScopeTest extends TestCase {
 		assertSame(index, scope.getIndices(type, "name").iterator().next());
 	}
 
-	/*
-	public void testRemoveIndex() {
-		final StuppScope scope = new StuppScope();
+	public void testAllTypes() {
 		final StuppType type = StuppType.getInstance(Book.class);
-		scope.register(type);
-		final StuppPropertyIndex index = new StuppPropertyIndex(type.properties("name"), "test");
-		scope.addIndex(index);
-		scope.removeIndex(index);
-		assertEquals(2, scope.getAllIndices().size());
-		assertFalse(scope.getAllIndices().contains(index));
+		final StuppScope scope = StuppScope.newDefinition()
+			.addType(type)
+			.createScope();
+		Map<String, StuppType> map = scope.getAllTypes();
+		assertEquals(1, map.size());
+		assertEquals(type, map.get(type.getName()));
 	}
-	*/
-
+	
 	public void testDetachAll() {
 		final StuppType type = StuppType.getInstance(Book.class);
 		final StuppScope scope = StuppScope.newDefinition()

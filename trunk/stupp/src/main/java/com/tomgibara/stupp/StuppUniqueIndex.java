@@ -20,9 +20,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +50,7 @@ public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 	
 	// fields
 	
-	private final HashMap<Object, Object> index = new HashMap<Object, Object>();
+	private final HashMap<StuppTuple, Object> index = new HashMap<StuppTuple, Object>();
 	private final boolean notNull;
 
 	// constructors

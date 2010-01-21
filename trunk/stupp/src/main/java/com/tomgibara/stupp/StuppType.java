@@ -17,7 +17,6 @@
 package com.tomgibara.stupp;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -25,16 +24,18 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.regex.Pattern;
 
+import com.tomgibara.pronto.util.Arguments;
 import com.tomgibara.pronto.util.Reflect;
 import com.tomgibara.stupp.ann.StuppEquality;
 import com.tomgibara.stupp.ann.StuppIndexed;
+import com.tomgibara.stupp.ann.StuppNamed;
 
 public class StuppType {
 
@@ -45,6 +46,10 @@ public class StuppType {
 	//TODO this caching won't work because references to definitions aren't maintained
 	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
 	
+	//TODO establish proper rules for valid type names
+	private static final Pattern validNamePattern = Pattern.compile("[A-Za-z_]+");
+	private static final Pattern invalidCharPattern = Pattern.compile("[^A-Za-z_]");
+
 	public static Definition newDefinition(Class<?> clss) {
 		return newDefinition(null, clss);
 	}
@@ -71,6 +76,10 @@ public class StuppType {
 		return newDefinition(clss).getType();
 	}
 	
+	static void checkName(String name) {
+		if (!validNamePattern.matcher(name).matches()) throw new IllegalArgumentException("Index name " + name + "does not match pattern: " + validNamePattern.pattern());
+	}
+	
 	private static StuppType getInstance(Definition def) {
 		synchronized (instances) {
 			StuppType type = instances.get(def);
@@ -91,6 +100,7 @@ public class StuppType {
 	final StuppProperties equalityProperties;
 	final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
 	final HashMap<String, Annotation> indexDefinitions;
+	final String name;
 	
 	private StuppType(Definition def) {
 		proxyClass = def.proxyClass;
@@ -103,8 +113,13 @@ public class StuppType {
 			indexProperties.put(entry.getKey(), properties((String[]) propertyNames.toArray(new String[propertyNames.size()])));
 		}
 		indexDefinitions = def.indexDefinitions;
+		name = def.name;
 	}
 
+	public String getName() {
+		return name;
+	}
+	
 	public boolean instanceImplements(Class<?> clss) {
 		return clss.isAssignableFrom(proxyClass);
 	}
@@ -151,14 +166,7 @@ public class StuppType {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append('<');
-		for (Class<?> clss : proxyClass.getInterfaces()) {
-			if (sb.length() > 1) sb.append(", ");
-			sb.append(clss.getName());
-		}
-		sb.append('>');
-		return sb.toString();
+		return name;
 	}
 
 	// package methods
@@ -177,6 +185,7 @@ public class StuppType {
 		String[] equalityProperties = null;
 		final HashMap<String, ArrayList<String>> indexProperties = new HashMap<String, ArrayList<String>>();
 		final HashMap<String, Annotation> indexDefinitions = new HashMap<String, Annotation>();
+		String name;
 		
 		private Definition(Definition that) {
 			this.proxyClass = that.proxyClass;
@@ -185,6 +194,7 @@ public class StuppType {
 			this.indexProperties.putAll(that.indexProperties);
 			this.equalityProperties = that.equalityProperties.clone();
 			this.indexDefinitions.putAll(that.indexDefinitions);
+			this.name = that.name;
 		}
 		
 		private Definition(Class<?> proxyClass) {
@@ -192,8 +202,14 @@ public class StuppType {
 			HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
 			HashMap<String, Class<?>> propertyClasses = new HashMap<String, Class<?>>();
 			final Class<?>[] interfaces = proxyClass.getInterfaces();
-			for (Class<?> i : interfaces) {
-				for (Method method : i.getMethods()) {
+			StringBuilder sb = new StringBuilder();
+			for (Class<?> iface : interfaces) {
+				if (sb.length() > 0) sb.append('_');
+				final String name = iface.getSimpleName();
+				final int i = name.lastIndexOf('.');
+				final String baseName = i < 0 ? name : name.substring(i+1);
+				sb.append(invalidCharPattern.matcher(baseName).replaceAll(""));
+				for (Method method : iface.getMethods()) {
 					final boolean setter = Reflect.isSetter(method);
 					final boolean getter = Reflect.isGetter(method);
 					if (setter || getter) {
@@ -224,9 +240,17 @@ public class StuppType {
 			this.proxyClass = proxyClass;
 			this.methodPropertyNames = methodPropertyNames;
 			this.propertyClasses = propertyClasses;
+			this.name = sb.length() == 0 ? "_" : sb.toString();
 			
 			//default other state based on annotations
 			processAnnotations();
+		}
+		
+		public Definition setName(String name) {
+			Arguments.notNull(name, "name");
+			checkName(name);
+			this.name = name;
+			return this;
 		}
 		
 		public Definition addIndex(String indexName, String... keyProperties) {
@@ -322,7 +346,17 @@ public class StuppType {
 			final ArrayList<Method> equalityMethods = new ArrayList<Method>();
 			final HashMap<String, Annotation> indexDefinitions = new HashMap<String, Annotation>();
 			final Class<?>[] interfaces = proxyClass.getInterfaces();
+			StringBuilder sb = null;
 			for (Class<?> i : interfaces) {
+				StuppNamed named = i.getAnnotation(StuppNamed.class);
+				if (named != null) {
+					if (sb == null) {
+						sb = new StringBuilder();
+					} else {
+						sb.append('_');
+					}
+					sb.append(named.value());
+				}
 				Annotation[] annotations = i.getAnnotations();
 				for (Annotation annotation : annotations) {
 					final String indexName = StuppIndex.checkForIndexAnnotation(annotation);
@@ -364,6 +398,11 @@ public class StuppType {
 					}
 				}
 			}
+			//create name
+			if (sb != null) {
+				name = sb.toString();
+				checkName(name);
+			}
 			//create key arrays
 			for (Map.Entry<String, ArrayList<Method>> entry : indexMethods.entrySet()) {
 				final String indexName = entry.getKey();
@@ -394,7 +433,6 @@ public class StuppType {
 			//record index annotations permanently
 			this.indexDefinitions.putAll(indexDefinitions);
 		}
-
 	}
 	
 }

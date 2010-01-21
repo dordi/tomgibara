@@ -22,6 +22,7 @@ import java.util.HashSet;
 import com.tomgibara.stupp.StuppPropertyIndex.Definition;
 import com.tomgibara.stupp.ann.StuppEquality;
 import com.tomgibara.stupp.ann.StuppIndexed;
+import com.tomgibara.stupp.ann.StuppNamed;
 
 import junit.framework.TestCase;
 
@@ -157,6 +158,19 @@ public class TypeTest extends TestCase {
 		StuppPropertyIndex index = (StuppPropertyIndex) indices.iterator().next();
 	}
 	
+	public void testTypeName() {
+		final StuppType testType = StuppType.getInstance(Tést.class);
+		StuppType.checkName(testType.getName());
+		final StuppType teeTum = StuppType.newDefinition(Dee.class, Dum.class).getType();
+		assertEquals("Tee_Tum", teeTum.getName());
+		try {
+			StuppType.getInstance(BadName.class);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+	}
+	
 	private static interface A {
 		@StuppIndexed
 		void setKey(String id);
@@ -237,5 +251,23 @@ public class TypeTest extends TestCase {
 		String getValue();
 		
 	}
+
+	private static interface Tést {
+		
+	}
 	
+	@StuppNamed("Tee")
+	private static interface Dee {
+		
+	}
+	
+	@StuppNamed("Tum")
+	private static interface Dum {
+		
+	}
+	
+	@StuppNamed("****")
+	private static interface BadName {
+		
+	}
 }

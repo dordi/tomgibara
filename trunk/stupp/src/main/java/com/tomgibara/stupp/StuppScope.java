@@ -39,7 +39,7 @@ public class StuppScope {
 	
 	// fields
 	
-	//private final HashMap<StuppType, HashMap<Object, Object>> instances = new HashMap<StuppType, HashMap<Object,Object>>();
+	private final HashMap<String, StuppType> allTypes = new HashMap<String, StuppType>();
 	private final HashMap<StuppType, StuppGlobalIndex> globalIndices = new HashMap<StuppType, StuppGlobalIndex>();
 	private final HashSet<StuppIndex<?>> allIndices = new HashSet<StuppIndex<?>>();
 	//TODO store index lists using arrays for efficiency
@@ -48,13 +48,14 @@ public class StuppScope {
 	
 	private final Set<StuppIndex<?>> publicAllIndices = Collections.unmodifiableSet(allIndices);
 	private final Map<StuppType, HashMap<String, StuppIndex<?>>> publicIndicesByType = Collections.unmodifiableMap(indicesByType);
+	private final Map<String, StuppType> publicAllTypes = Collections.unmodifiableMap(allTypes);
 
 	//may also be taken by indices
 	final StuppLock lock;
 	
 	private StuppScope(Definition def) {
 		lock = def.lock == null ? StuppLock.NOOP_LOCK : def.lock;
-		for (StuppType type : def.types) {
+		for (StuppType type : def.types.values()) {
 			addType(type);
 		}
 		for (StuppIndex<?> index : StuppIndex.createIndices(def.indexProperties, def.indexDefinitions)) {
@@ -96,6 +97,10 @@ public class StuppScope {
 		return new HashSet<StuppIndex<?>>(indices);
 	}
 
+	public Map<String, StuppType> getAllTypes() {
+		return publicAllTypes;
+	}
+	
 	public Set<StuppIndex<?>> getAllIndices() {
 		return publicAllIndices;
 	}
@@ -222,7 +227,9 @@ public class StuppScope {
 	private void addType(StuppType type) {
 		lock.lock();
 		try {
-			if (globalIndices.containsKey(type)) return; // already registered
+			final String typeName = type.name;
+			if (allTypes.containsKey(typeName)) throw new IllegalArgumentException("Type with name " + typeName + " already added.");
+			allTypes.put(typeName, type);
 			indicesByType.put(type, new HashMap<String, StuppIndex<?>>());
 			addIndex(new StuppGlobalIndex(type));
 			for (StuppIndex<?> index : type.createIndices()) {
@@ -321,7 +328,7 @@ public class StuppScope {
 	public static class Definition {
 
 		StuppLock lock = null;
-		final HashSet<StuppType> types = new HashSet<StuppType>();
+		final HashMap<String, StuppType> types = new HashMap<String, StuppType>();
 		final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
 		final HashMap<String, Annotation> indexDefinitions = new HashMap<String, Annotation>();
 		
@@ -332,19 +339,22 @@ public class StuppScope {
 		
 		public Definition addType(StuppType type) {
 			Arguments.notNull(type, "type");
-			types.add(type);
+			final String typeName = type.name;
+			if (types.containsKey(typeName)) throw new IllegalArgumentException("Duplicate type name: " + typeName);
+			types.put(typeName, type);
 			return this;
 		}
 		
-		public Definition removeType(StuppType type) {
-			Arguments.notNull(type, "type");
-			types.remove(type);
+		public Definition removeType(String typeName) {
+			Arguments.notNull(typeName, "typeName");
+			types.remove(typeName);
 			return this;
 		}
 		
 		public Definition addIndex(String indexName, StuppProperties properties) {
 			Arguments.notNull(indexName, "indexName");
 			Arguments.notNull(properties, "properties");
+			if (indexProperties.containsKey(indexName)) throw new IllegalArgumentException("Duplicate index name: " + indexName);
 			indexProperties.put(indexName, properties);
 			return this;
 		}

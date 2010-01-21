@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.tomgibara.pronto.util.Annotations;
+import com.tomgibara.stupp.ann.StuppIndexDefinition;
 
 public class StuppPropertyIndex extends StuppIndex<StuppTuple> {
 

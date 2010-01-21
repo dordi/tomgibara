@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.tomgibara.pronto.util.Reflect;
+import com.tomgibara.stupp.ann.StuppEquality;
+import com.tomgibara.stupp.ann.StuppIndexed;
 
 public class StuppType {
 

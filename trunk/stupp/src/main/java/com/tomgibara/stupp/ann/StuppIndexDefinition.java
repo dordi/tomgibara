@@ -14,12 +14,14 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.stupp;
+package com.tomgibara.stupp.ann;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.tomgibara.stupp.StuppIndex;
 
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)

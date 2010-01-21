@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.tomgibara.stupp.StuppPropertyIndex.Definition;
+import com.tomgibara.stupp.ann.StuppEquality;
+import com.tomgibara.stupp.ann.StuppIndexed;
 
 import junit.framework.TestCase;
 

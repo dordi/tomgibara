@@ -18,6 +18,8 @@ package com.tomgibara.stupp;
 
 import java.util.HashSet;
 
+import com.tomgibara.stupp.ann.StuppIndexed;
+
 import junit.framework.TestCase;
 
 public class ScopeTest extends TestCase {

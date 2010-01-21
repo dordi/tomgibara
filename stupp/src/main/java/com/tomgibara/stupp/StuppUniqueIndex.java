@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import com.tomgibara.pronto.util.Annotations;
+import com.tomgibara.stupp.ann.StuppIndexDefinition;
 
 public class StuppUniqueIndex extends StuppIndex<StuppTuple> {
 

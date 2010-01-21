@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.tomgibara.stupp.ann.StuppIndexDefinition;
+
 //TODO should throw meaningful exception when not in scope
 public abstract class StuppIndex<C> {
 

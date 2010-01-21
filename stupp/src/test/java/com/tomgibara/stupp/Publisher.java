@@ -18,6 +18,8 @@ package com.tomgibara.stupp;
 
 import java.util.Collection;
 
+import com.tomgibara.stupp.ann.StuppIndexed;
+
 public interface Publisher {
 
 	int getCode();

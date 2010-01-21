@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.stupp;
+package com.tomgibara.stupp.ann;
 
 public @interface StuppEquality {
 }

@@ -16,6 +16,8 @@
  */
 package com.tomgibara.stupp;
 
+import com.tomgibara.stupp.ann.StuppIndexed;
+
 
 public interface Author {
 

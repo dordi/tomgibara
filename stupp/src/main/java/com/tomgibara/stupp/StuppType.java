@@ -47,8 +47,8 @@ public class StuppType {
 	private static final WeakHashMap<Definition, StuppType> instances = new WeakHashMap<Definition, StuppType>();
 	
 	//TODO establish proper rules for valid type names
-	private static final Pattern validNamePattern = Pattern.compile("[A-Za-z_]+");
-	private static final Pattern invalidCharPattern = Pattern.compile("[^A-Za-z_]");
+	private static final Pattern validNamePattern = Pattern.compile("[A-Za-z]+");
+	private static final Pattern invalidCharPattern = Pattern.compile("[^A-Za-z]");
 
 	public static Definition newDefinition(Class<?> clss) {
 		return newDefinition(null, clss);
@@ -353,7 +353,7 @@ public class StuppType {
 					if (sb == null) {
 						sb = new StringBuilder();
 					} else {
-						sb.append('_');
+						sb.append("And");
 					}
 					sb.append(named.value());
 				}

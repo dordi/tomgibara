@@ -162,7 +162,7 @@ public class TypeTest extends TestCase {
 		final StuppType testType = StuppType.getInstance(Tést.class);
 		StuppType.checkName(testType.getName());
 		final StuppType teeTum = StuppType.newDefinition(Dee.class, Dum.class).getType();
-		assertEquals("Tee_Tum", teeTum.getName());
+		assertEquals("TeeAndTum", teeTum.getName());
 		try {
 			StuppType.getInstance(BadName.class);
 			fail();

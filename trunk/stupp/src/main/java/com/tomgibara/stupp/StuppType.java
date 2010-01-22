@@ -94,12 +94,19 @@ public class StuppType {
 	
 	private final Class<?> proxyClass;
 
+	//set of property names for the type
 	final HashSet<String> propertyNames;
+	//maps methods to the property name they correspond to
 	final HashMap<Method, String> methodPropertyNames;
+	//maps property names to their types
 	final HashMap<String, Class<?>> propertyClasses;
+	//the properties over which equality is defined
 	final StuppProperties equalityProperties;
+	//maps index names to the properties they operate over
 	final HashMap<String, StuppProperties> indexProperties = new HashMap<String, StuppProperties>();
+	//maps index names to index definitions
 	final HashMap<String, Annotation> indexDefinitions;
+	//the name of the type
 	final String name;
 	
 	private StuppType(Definition def) {

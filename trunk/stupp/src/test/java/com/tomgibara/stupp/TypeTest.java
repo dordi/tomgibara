@@ -23,6 +23,7 @@ import com.tomgibara.stupp.StuppPropertyIndex.Definition;
 import com.tomgibara.stupp.ann.StuppEquality;
 import com.tomgibara.stupp.ann.StuppIndexed;
 import com.tomgibara.stupp.ann.StuppNamed;
+import com.tomgibara.stupp.ann.StuppRelated;
 
 import junit.framework.TestCase;
 
@@ -171,6 +172,40 @@ public class TypeTest extends TestCase {
 		}
 	}
 	
+	public void testRelated() {
+		final StuppType jType = StuppType.getInstance(J.class);
+		try {
+			StuppType.newDefinition(J.class).addRelation("book", "Foo");
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			StuppType.getInstance(K.class);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			StuppType.newDefinition(L.class).addRelation("moo", null).getType();
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			StuppType.newDefinition(L.class).addRelation("book", "*").getType();
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		final StuppType l1Type = StuppType.newDefinition(L.class).addRelation("book", null).getType();
+		final StuppType l2Type = StuppType.newDefinition(L.class).addRelation("book", "Book").getType();
+		final StuppType l3Type = StuppType.newDefinition(L.class).addRelation("book", "Bar").getType();
+		assertSame(l1Type, l2Type);
+		assertNotSame(l2Type, l3Type);
+		
+	}
+	
 	private static interface A {
 		@StuppIndexed
 		void setKey(String id);
@@ -249,6 +284,32 @@ public class TypeTest extends TestCase {
 		void setValue(String value);
 		
 		String getValue();
+		
+	}
+
+	private static interface J {
+		
+		@StuppRelated
+		void setBook(Book book);
+		
+		Book getBook();
+		
+	}
+
+	private static interface K {
+		
+		@StuppRelated
+		void setValue(String value);
+
+		String getValue();
+		
+	}
+
+	private static interface L {
+		
+		void setBook(Book book);
+		
+		Book getBook();
 		
 	}
 

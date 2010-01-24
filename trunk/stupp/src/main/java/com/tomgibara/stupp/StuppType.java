@@ -36,10 +36,13 @@ import com.tomgibara.pronto.util.Reflect;
 import com.tomgibara.stupp.ann.StuppEquality;
 import com.tomgibara.stupp.ann.StuppIndexed;
 import com.tomgibara.stupp.ann.StuppNamed;
+import com.tomgibara.stupp.ann.StuppRelated;
 
 public class StuppType {
 
 	public static final String PRIMARY_INDEX_NAME = "primary";
+	
+	public static final String ANONYMOUS_TYPE_NAME = "Anonymous";
 
 	private static final Class<?>[] CONS_PARAMS = new Class<?>[] { InvocationHandler.class };
 
@@ -79,6 +82,23 @@ public class StuppType {
 	static void checkName(String name) {
 		if (!validNamePattern.matcher(name).matches()) throw new IllegalArgumentException("Index name " + name + "does not match pattern: " + validNamePattern.pattern());
 	}
+
+	private static String getTypeName(Class<?> clss) {
+		final String name = clss.getSimpleName();
+		final int i = name.lastIndexOf('.');
+		final String baseName = i < 0 ? name : name.substring(i+1);
+		return invalidCharPattern.matcher(baseName).replaceAll("");
+	}
+	
+	//TODO not perfectly correct
+	private static String getTypeName(Class<?>... classes) {
+		StringBuilder sb = new StringBuilder();
+		for (Class<?> clss : classes) {
+			if (sb.length() > 0) sb.append("And");
+			sb.append(getTypeName(clss));
+		}
+		return sb.length() == 0 ? ANONYMOUS_TYPE_NAME : sb.toString();
+	}
 	
 	private static StuppType getInstance(Definition def) {
 		synchronized (instances) {
@@ -98,8 +118,10 @@ public class StuppType {
 	final HashSet<String> propertyNames;
 	//maps methods to the property name they correspond to
 	final HashMap<Method, String> methodPropertyNames;
-	//maps property names to their types
+	//maps property names to their java types
 	final HashMap<String, Class<?>> propertyClasses;
+	//the names of relation types
+	final HashMap<String, String> propertyTypeNames;
 	//the properties over which equality is defined
 	final StuppProperties equalityProperties;
 	//maps index names to the properties they operate over
@@ -113,6 +135,7 @@ public class StuppType {
 		proxyClass = def.proxyClass;
 		methodPropertyNames = def.methodPropertyNames;
 		propertyClasses = def.propertyClasses;
+		propertyTypeNames = def.propertyTypeNames;
 		propertyNames = new HashSet<String>(methodPropertyNames.values());
 		equalityProperties = properties(def.equalityProperties);
 		for (Map.Entry<String, ArrayList<String>> entry : def.indexProperties.entrySet()) {
@@ -189,6 +212,7 @@ public class StuppType {
 		final Class<?> proxyClass;
 		final HashMap<Method, String> methodPropertyNames;
 		final HashMap<String, Class<?>> propertyClasses;
+		final HashMap<String, String> propertyTypeNames = new HashMap<String, String>();;
 		String[] equalityProperties = null;
 		final HashMap<String, ArrayList<String>> indexProperties = new HashMap<String, ArrayList<String>>();
 		final HashMap<String, Annotation> indexDefinitions = new HashMap<String, Annotation>();
@@ -198,6 +222,7 @@ public class StuppType {
 			this.proxyClass = that.proxyClass;
 			this.methodPropertyNames = that.methodPropertyNames;
 			this.propertyClasses = that.propertyClasses;
+			this.propertyTypeNames.putAll(that.propertyTypeNames);
 			this.indexProperties.putAll(that.indexProperties);
 			this.equalityProperties = that.equalityProperties.clone();
 			this.indexDefinitions.putAll(that.indexDefinitions);
@@ -209,13 +234,7 @@ public class StuppType {
 			HashMap<Method, String> methodPropertyNames = new HashMap<Method, String>();
 			HashMap<String, Class<?>> propertyClasses = new HashMap<String, Class<?>>();
 			final Class<?>[] interfaces = proxyClass.getInterfaces();
-			StringBuilder sb = new StringBuilder();
 			for (Class<?> iface : interfaces) {
-				if (sb.length() > 0) sb.append('_');
-				final String name = iface.getSimpleName();
-				final int i = name.lastIndexOf('.');
-				final String baseName = i < 0 ? name : name.substring(i+1);
-				sb.append(invalidCharPattern.matcher(baseName).replaceAll(""));
 				for (Method method : iface.getMethods()) {
 					final boolean setter = Reflect.isSetter(method);
 					final boolean getter = Reflect.isGetter(method);
@@ -247,7 +266,7 @@ public class StuppType {
 			this.proxyClass = proxyClass;
 			this.methodPropertyNames = methodPropertyNames;
 			this.propertyClasses = propertyClasses;
-			this.name = sb.length() == 0 ? "_" : sb.toString();
+			this.name = getTypeName(interfaces);
 			
 			//default other state based on annotations
 			processAnnotations();
@@ -298,6 +317,21 @@ public class StuppType {
 			return this;
 		}
 		
+		public Definition addRelation(String propertyName, String typeName) {
+			Arguments.notNull(propertyName, "propertyName");
+			final Class<?> clss = propertyClasses.get(propertyName);
+			if (clss == null) throw new IllegalArgumentException("Unknown property: " + propertyName);
+			if (typeName == null) {
+				typeName = getTypeName(clss);
+			} else {
+				checkName(typeName);
+			}
+			final String existing = propertyTypeNames.get(propertyName);
+			if (existing != null && !existing.equals(typeName)) throw new IllegalArgumentException("Relation type already defined for " + propertyName +" as " + typeName);
+			propertyTypeNames.put(propertyName, typeName);
+			return this;
+		}
+		
 		public Definition setEqualityProperties(String... equalityProperties) {
 			if (equalityProperties == null) throw new IllegalArgumentException("null equalityProperties");
 			
@@ -332,6 +366,7 @@ public class StuppType {
 			final Definition that = (Definition) obj;
 			if (this.proxyClass != that.proxyClass) return false;
 			if (!Arrays.equals(equalityProperties, that.equalityProperties)) return false;
+			if (!this.propertyTypeNames.equals(that.propertyTypeNames)) return false;
 			if (!this.indexProperties.equals(that.indexProperties)) return false;
 			if (!this.indexDefinitions.equals(that.indexDefinitions)) return false;
 			return true;
@@ -339,7 +374,7 @@ public class StuppType {
 		
 		@Override
 		public int hashCode() {
-			return proxyClass.hashCode() ^ indexProperties.hashCode() ^ indexDefinitions.hashCode() ^ Arrays.hashCode(equalityProperties);
+			return proxyClass.hashCode() ^ propertyTypeNames.hashCode() ^ indexProperties.hashCode() ^ indexDefinitions.hashCode() ^ Arrays.hashCode(equalityProperties);
 		}
 		
 		@Override
@@ -375,8 +410,20 @@ public class StuppType {
 				}
 				for (Method method : i.getMethods()) {
 					if (!Reflect.isSetter(method)) continue;
+					final StuppRelated related = method.getAnnotation(StuppRelated.class);
+					if (related != null) {
+						final String propertyName = methodPropertyNames.get(method);
+						Class<?> clss = propertyClasses.get(propertyName);
+						if (!clss.isInterface()) throw new IllegalArgumentException("Relation must be defined on an interface for property: " + propertyName);
+						String typeName = related.type();
+						if (typeName.isEmpty()) {
+							typeName = getTypeName(i);
+						} else {
+							checkName(typeName);
+						}
+						propertyTypeNames.put(propertyName, typeName);
+					}
 					final StuppIndexed indexed = method.getAnnotation(StuppIndexed.class);
-					final StuppEquality equality = method.getAnnotation(StuppEquality.class);
 					if (indexed != null) {
 						final String indexName = indexed.name();
 						ArrayList<Method> methods = indexMethods.get(indexName);
@@ -399,6 +446,7 @@ public class StuppType {
 							methods.add(method);
 						}
 					}
+					final StuppEquality equality = method.getAnnotation(StuppEquality.class);
 					//TODO weaken this
 					if (equality != null || indexed != null) {
 						equalityMethods.add(method);

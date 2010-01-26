@@ -105,7 +105,7 @@ public class MoneyCalc {
 		if (!(obj instanceof Money)) return false;
 		Money that = (Money) obj;
 		if (!this.type.equals(that.type)) return false;
-		if (!this.amount.equals(that.amount)) return false;
+		if (this.amount.compareTo(that.amount) != 0) return false;
 		return true;
 	}
 	

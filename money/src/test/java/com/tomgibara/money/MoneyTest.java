@@ -27,4 +27,17 @@ public class MoneyTest extends TestCase {
 		assertEquals("1.06", type.money(1.051).getRoundedAmount(RoundingMode.UP).toString());
 	}
 	
+	public void testPosNeg() {
+		MoneyType t = new MoneyType(Locale.US);
+		Money n = t.money(-1);
+		Money z = t.money(0);
+		Money p = t.money(1);
+		assertTrue(n.sign() < 0);
+		assertFalse(n.isZero());
+		assertTrue(z.sign() == 0);
+		assertTrue(z.isZero());
+		assertTrue(p.sign() > 0);
+		assertFalse(p.isZero());
+	}
+	
 }

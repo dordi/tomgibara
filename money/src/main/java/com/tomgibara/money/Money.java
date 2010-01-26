@@ -61,6 +61,14 @@ public class Money {
 		return amount.setScale(type.places, mode);
 	}
 
+	public boolean isZero() {
+		return amount.signum() == 0;
+	}
+
+	public int sign() {
+		return amount.signum();
+	}
+	
 	// public methods
 	
 	public MoneyCalc calc() {

@@ -49,4 +49,9 @@ public class MoneyTypeTest extends TestCase {
 		assertEquals("1.00", us.money(new BigDecimal(1.0)).getRoundedAmount().toString());
 	}
 	
+	public void testParse() {
+		MoneyType us = new MoneyType(Locale.US);
+		assertEquals(us.money(100), us.money("$1.00"));
+	}
+	
 }

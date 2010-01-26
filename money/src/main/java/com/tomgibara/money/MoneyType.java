@@ -3,6 +3,7 @@ package com.tomgibara.money;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Currency;
 import java.util.Locale;
 
@@ -62,6 +63,16 @@ public class MoneyType {
 	
 	public Money money(BigDecimal largeDenomination) {
 		return new Money(this, largeDenomination);
+	}
+	
+	public Money money(String string) {
+		synchronized (format) {
+			try {
+				return new Money(this, new BigDecimal( format.parse(string).toString() ));
+			} catch (ParseException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
 	}
 	
 	//convenience method

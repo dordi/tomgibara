@@ -85,7 +85,7 @@ public class MoneyType {
 		return new Money(this, largeDenomination);
 	}
 	
-	public Money money(String string) {
+	public Money parse(String string) {
 		synchronized (format) {
 			try {
 				return new Money(this, new BigDecimal( format.parse(string).toString() ));

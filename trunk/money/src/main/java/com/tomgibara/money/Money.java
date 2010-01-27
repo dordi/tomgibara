@@ -3,8 +3,9 @@ package com.tomgibara.money;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.Currency;
 
-public class Money {
+public class Money implements Comparable<Money> {
 
 	// statics
 	
@@ -76,6 +77,13 @@ public class Money {
 	}
 	
 	// object methods
+	
+	public int compareTo(Money that) {
+		final Currency currencyThis = this.type.currency;
+		final Currency currencyThat = that.type.currency;
+		if (currencyThis != null && currencyThat != null && currencyThis != currencyThat) throw new IllegalArgumentException("Incompatible currencies " + currencyThis + " " + currencyThat);
+		return this.amount.compareTo(that.amount);
+	}
 	
 	public boolean equals(Object obj) {
 		if (this == obj) return true;

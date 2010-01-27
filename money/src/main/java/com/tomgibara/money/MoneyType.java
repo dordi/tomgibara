@@ -12,15 +12,19 @@ public class MoneyType {
 	// fields
 	
 	//may be null if not specified
-	private final Currency currency;
+	final Currency currency;
 	
 	//may be null if not specified
-	private final Locale locale;
+	final Locale locale;
 	
 	final NumberFormat format;
 	final int places;
 	
 	// constructors
+	
+	public MoneyType() {
+		this(null, null);
+	}
 	
 	public MoneyType(Locale locale) {
 		this(locale, locale == null ? null : Currency.getInstance(locale));

@@ -7,7 +7,7 @@ public class MoneyCalc {
 
 	// statics
 	
-	public static final MoneyType DEFAULT_TYPE = new MoneyType(null, null);
+	public static final MoneyType DEFAULT_TYPE = new MoneyType();
 	
 	// fields
 	

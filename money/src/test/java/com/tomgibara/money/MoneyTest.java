@@ -40,4 +40,12 @@ public class MoneyTest extends TestCase {
 		assertFalse(p.isZero());
 	}
 	
+	public void testCompareTo() {
+		MoneyType us = new MoneyType(Locale.US);
+		MoneyType rt = new MoneyType();
+		assertTrue(us.money(100).compareTo(us.money(40)) > 0);
+		assertTrue(rt.money().compareTo(us.money(40)) < 0);
+		assertTrue(us.money(40).compareTo(rt.money(40)) == 0);
+	}
+	
 }

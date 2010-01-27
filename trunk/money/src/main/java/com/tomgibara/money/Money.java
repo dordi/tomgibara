@@ -21,9 +21,35 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Currency;
 
+/**
+ * <p>
+ * A class that stores a monetary amount. Amounts are stored as BigDecimal
+ * values against a {@link MoneyType}. Instances of this class are immutable and
+ * safe for multithreaded use.
+ * </p>
+ * 
+ * <p>
+ * Note: although the money amounts may be formatted to the nearest small
+ * denomination, the actual amounts are stored to an arbitrary degree of
+ * precision.
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 public class Money implements Comparable<Money> {
 
 	// statics
+	
+	/**
+	 * The default rounding mode used when rounding monetary values.
+	 */
+
+	/*
+	 * This mode has been chosen on the basis that it is familiar and easily
+	 * reasoned about.
+	 */
 	
 	public static final RoundingMode DEFAULT_ROUNDING = RoundingMode.HALF_UP;
 	
@@ -56,15 +82,34 @@ public class Money implements Comparable<Money> {
 	}
 	
 	// accessors
+
+	/**
+	 * The type of this money.
+	 * 
+	 * @return the type of this money
+	 */
 	
 	public MoneyType getType() {
 		return type;
 	}
 	
+	/**
+	 * The monetary amount.
+	 * 
+	 * @return an amount of money
+	 */
+	
 	public BigDecimal getAmount() {
 		return amount;
 	}
 
+	/**
+	 * The amount of money rounded to the number of decimal places dictated by
+	 * the currency format of the money type.
+	 * 
+	 * @return the monetary amount rounded to the nearest small denomination
+	 */
+	
 	public BigDecimal getRoundedAmount() {
 		if (roundedAmount == null) {
 			roundedAmount = amount.setScale(type.places, DEFAULT_ROUNDING);
@@ -72,21 +117,51 @@ public class Money implements Comparable<Money> {
 		return roundedAmount;
 	}
 
+	/**
+	 * The amount of money rounded to the number of decimal places dictated by
+	 * the currency format of the money type.
+	 * 
+	 * @param mode
+	 *            the rounding rule to apply
+	 * 
+	 * @return the monetary amount rounded to the nearest small denomination
+	 */
+	
 	public BigDecimal getRoundedAmount(RoundingMode mode) {
 		if (mode == null) throw new IllegalArgumentException("null mode");
 		if (mode == DEFAULT_ROUNDING) return getRoundedAmount();
 		return amount.setScale(type.places, mode);
 	}
 
+	/**
+	 * Whether the monetary amount is zero.
+	 * 
+	 * @return true iff the monetary amount is zero
+	 */
+	
 	public boolean isZero() {
 		return amount.signum() == 0;
 	}
 
+	/**
+	 * The sign of the monetary amount: -1 if the amount is negative, 1 if it is
+	 * positive and 0 if it is zero.
+	 * 
+	 * @return the sign of the monetary amount
+	 */
+	
 	public int sign() {
 		return amount.signum();
 	}
 	
 	// public methods
+	
+	/**
+	 * Open a new monetary calculation. The calculation's initial type and
+	 * amount will match those of this object.
+	 * 
+	 * @return a new monetary calculation
+	 */
 	
 	public MoneyCalc calc() {
 		return new MoneyCalc(type, amount);
@@ -94,7 +169,17 @@ public class Money implements Comparable<Money> {
 	
 	// object methods
 	
-	public int compareTo(Money that) {
+	/**
+	 * Compares the value of two monetary amounts.
+	 * 
+	 * @param a
+	 *            money object to compare with
+	 * @return a comparison as per the contract for {@link Comparable}
+	 * @throws IllegalArgumentException
+	 *             if the monetary types have different currencies
+	 */
+	
+	public int compareTo(Money that) throws IllegalArgumentException {
 		final Currency currencyThis = this.type.currency;
 		final Currency currencyThat = that.type.currency;
 		if (currencyThis != null && currencyThat != null && currencyThis != currencyThat) throw new IllegalArgumentException("Incompatible currencies " + currencyThis + " " + currencyThat);
@@ -113,6 +198,13 @@ public class Money implements Comparable<Money> {
 	public int hashCode() {
 		return type.hashCode() ^ amount.hashCode();
 	}
+	
+	/**
+	 * Presents the monetary amount as per the format dictated by the locale of
+	 * the type (or the default locale if none is specified).
+	 * 
+	 * @return the money as a currency formatted string
+	 */
 	
 	public String toString() {
 		return type.format(this);

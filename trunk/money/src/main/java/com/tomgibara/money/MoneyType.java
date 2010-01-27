@@ -23,6 +23,22 @@ import java.text.ParseException;
 import java.util.Currency;
 import java.util.Locale;
 
+/**
+ * <p>
+ * Combines a currency with a locale for the purpose of recording and formatting
+ * monetary amounts. Instances of this class are immutable.
+ * </p>
+ * 
+ * <p>
+ * If a null locale is supplied for a type, then any money values of that type
+ * will be formatted with the currency formatter specified by the default
+ * platform locale.
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 public class MoneyType {
 
 	// fields
@@ -33,35 +49,78 @@ public class MoneyType {
 	//may be null if not specified
 	final Locale locale;
 	
+	//TODO a thread local might be better
 	final NumberFormat format;
 	final int places;
+	final Money zeroMoney;
 	
 	// constructors
+
+	/**
+	 * Construct a new type with no specific locale or currency.
+	 */
 	
 	public MoneyType() {
 		this(null, null);
 	}
 	
+	/**
+	 * Construct a new type with a specific locale. The currency will be the
+	 * default currency for the supplied locale (where supplied).
+	 * 
+	 * @param locale
+	 *            the locale for the type, may be null
+	 */
+
 	public MoneyType(Locale locale) {
 		this(locale, locale == null ? null : Currency.getInstance(locale));
 	}
-	
+
+	/**
+	 * Construct a new type a specific currency but no specific locale.
+	 * 
+	 * @param currency
+	 *            the currency for the type, may be null
+	 */
+
 	public MoneyType(Currency currency) {
 		this(null, currency);
 	}
+	
+	/**
+	 * Construct a new type with a specific locale and currency.
+	 * 
+	 * @param locale
+	 *            the locale for the type, may be null
+	 * @param currency
+	 *            the currency for the type, may be null
+	 */
 
 	public MoneyType(Locale locale, Currency currency) {
 		this.locale = locale;
 		this.currency = currency;
 		this.format = locale == null ? NumberFormat.getCurrencyInstance() : NumberFormat.getCurrencyInstance(locale);
 		this.places = format.getMaximumFractionDigits();
+		this.zeroMoney = new Money(this, BigDecimal.ZERO);
 	}
 	
 	// accessors
 	
+	/**
+	 * The currency for this type.
+	 * 
+	 * @return a currency or null
+	 */
+	
 	public Currency getCurrency() {
 		return currency;
 	}
+	
+	/**
+	 * The locale for this type.
+	 * 
+	 * @return a locale or null
+	 */
 	
 	public Locale getLocale() {
 		return locale;
@@ -69,23 +128,66 @@ public class MoneyType {
 	
 	// public methods
 	
+	/**
+	 * Converts the supplied value (eg. cents) into a monetary amount.
+	 * 
+	 * @param smallDenomination
+	 *            a monetary value in small denominations
+	 * @return a corresponding monetary amount
+	 */
+
 	public Money money(int smallDenomination) {
 		return new Money(this, smallDenomination);
 	}
 	
+	/**
+	 * Converts the supplied value (eg. cents) into a monetary amount.
+	 * 
+	 * @param smallDenomination
+	 *            a monetary value in small denominations
+	 * @return a corresponding monetary amount
+	 */
+
 	public Money money(BigInteger smallDenomination) {
 		return new Money(this, smallDenomination);
 	}
+	
+	/**
+	 * Converts the supplied value (eg. dollars) into a monetary amount.
+	 * 
+	 * @param largeDenomination
+	 *            a monetary value in large denominations
+	 * @return a corresponding monetary amount
+	 */
 	
 	public Money money(double largeDenomination) {
 		return new Money(this, largeDenomination);
 	}
 	
+	/**
+	 * Converts the supplied value (eg. dollars) into a monetary amount.
+	 * 
+	 * @param largeDenomination
+	 *            a monetary value in large denominations
+	 * @return a corresponding monetary amount
+	 */
+	
 	public Money money(BigDecimal largeDenomination) {
 		return new Money(this, largeDenomination);
 	}
-	
-	public Money parse(String string) {
+
+	/**
+	 * Parses a string into a monetary amount according the locale for this type
+	 * (or the default system locale if none was specified).
+	 * 
+	 * @param string
+	 *            a formatted currency value
+	 * @return the corresponding monetary amount
+	 * @throws IllegalArgumentException
+	 *             if the string could not be parsed
+	 */
+
+	public Money parse(String string) throws IllegalArgumentException {
 		synchronized (format) {
 			try {
 				return new Money(this, new BigDecimal( format.parse(string).toString() ));
@@ -95,12 +197,23 @@ public class MoneyType {
 		}
 	}
 	
-	//convenience method
-	public Money money() {
-		return new Money(this, BigDecimal.ZERO);
-	}
+	/**
+	 * A convenience method that returns a zero monetary amount.
+	 * 
+	 * @return a monetary amount of zero
+	 */
 	
-	//convenience method
+	public Money money() {
+		return zeroMoney;
+	}
+
+	/**
+	 * A convenience method that a monetary calculation with the initial value
+	 * of zero.
+	 * 
+	 * @return a new monetary calculation initialized to zero
+	 */
+	
 	public MoneyCalc calc() {
 		return new MoneyCalc(this, BigDecimal.ZERO);
 	}
@@ -156,6 +269,7 @@ public class MoneyType {
 		} else if (this.locale.equals(that.locale)) {
 			locale = this.locale;
 		} else {
+			//TODO this is lazy
 			String strThis = this.locale.getCountry() + '_' + this.locale.getLanguage();
 			String strThat = that.locale.getCountry() + '_' + that.locale.getLanguage();
 			if (strThis.startsWith(strThat)) {

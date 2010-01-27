@@ -18,13 +18,37 @@ package com.tomgibara.money;
 
 import java.math.BigDecimal;
 
-//WARNING MUTABLE!
+/**
+ * <p>
+ * Instances of this class accumulate interim calculation values on monetary
+ * amounts. NOTE: Operations on this class mutate the object value, consequently
+ * the class is not safe for concurrent multithreaded use.
+ * </p>
+ * 
+ * <p>
+ * Because instances of this class are mutable, calculations will generally be
+ * performed more efficiently than if {@link Money} objects are being realized
+ * at each computational step.
+ * </p>
+ * 
+ * <p>
+ * Each operation on the calculation returns the same calculation so that
+ * repeated calls to one object may be chained. As operations are performed as
+ * part of a calculation, an attempt is made to reconcile the type of each
+ * monetary amount with that of the calculation, if this is not possible (eg.
+ * adding dollars to pounds sterling) an exception is raised.
+ * </p>
+ * 
+ * <p>
+ * Calculations operate at arbitrary precision.
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 public class MoneyCalc {
 
-	// statics
-	
-	public static final MoneyType DEFAULT_TYPE = new MoneyType();
-	
 	// fields
 	
 	private MoneyType type;
@@ -32,12 +56,7 @@ public class MoneyCalc {
 	
 	// constructors
 
-	public MoneyCalc() {
-		type = DEFAULT_TYPE;
-		amount = BigDecimal.ZERO;
-	}
-
-	public MoneyCalc(MoneyType type, BigDecimal amount) {
+	MoneyCalc(MoneyType type, BigDecimal amount) {
 		if (type == null) throw new IllegalArgumentException("null type");
 		if (amount == null) throw new IllegalArgumentException("null amount");
 		this.type = type;
@@ -46,51 +65,134 @@ public class MoneyCalc {
 	
 	// accessors
 	
+	/**
+	 * The amount thus far computed.
+	 * 
+	 * @return the computed amount
+	 */
+	
 	public BigDecimal getAmount() {
 		return amount;
 	}
+
+	/**
+	 * The monetary type of this calculation.
+	 * 
+	 * @return the monetary type
+	 */
 	
 	public MoneyType getType() {
 		return type;
 	}
+	
+	/**
+	 * Directly change the amount of the calculation. 
+	 * 
+	 * @param amount any amount of money
+	 */
 	
 	public void setAmount(BigDecimal amount) {
 		if (amount == null) throw new IllegalArgumentException("null amount");
 		this.amount = amount;
 	}
 
+	/**
+	 * Directly change the type of the calculation
+	 * 
+	 * @param type any monetary type
+	 */
+	
 	public void setType(MoneyType type) {
 		if (type == null) throw new IllegalArgumentException("null type");
 		this.type = type;
 	}
 
 	// methods
+
+	/**
+	 * Obtains the result of this calculation as a monetary amount. A
+	 * calculation object may continue to be used after this method is called.
+	 * Each call will return a {@link Money} object that represents the value of
+	 * the calculation at the time of the call.
+	 * 
+	 * @return the result of this calculation.
+	 */
 	
 	public Money money() {
 		return new Money(type, amount);
 	}
 	
-	public MoneyCalc add(Money money) {
+	/**
+	 * Adds a monetary amount to this calculation.
+	 * 
+	 * @param money
+	 *            the monetary amount to add
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if the type of the money supplied cannot be reconciled
+	 *             with the type of the calculation
+	 */
+	
+	public MoneyCalc add(Money money) throws IllegalArgumentException {
 		type = type.combine(money.type);
 		amount = amount.add(money.amount);
 		return this;
 	}
 
+	/**
+	 * Subtracts a monetary amount from this calculation.
+	 * 
+	 * @param money
+	 *            the monetary amount to subtract
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if the type of the money supplied cannot be reconciled
+	 *             with the type of the calculation
+	 */
+	
 	public MoneyCalc subtract(Money money) {
 		type = type.combine(money.type);
 		amount = amount.subtract(money.amount);
 		return this;
 	}
 	
+	/**
+	 * Multiplies the current calculation amount by the supplied value.
+	 * 
+	 * @param value
+	 *            the multiplicand
+	 * @return the current calculation object
+	 */
+	
 	public MoneyCalc multiply(BigDecimal value) {
 		amount = amount.multiply(value);
 		return this;
 	}
 	
+	/**
+	 * Divides the current calculation amount by the supplied value.
+	 * 
+	 * @param value
+	 *            the multiplicand
+	 * @return the current calculation object
+	 */
+	
 	public MoneyCalc divide(BigDecimal value) {
 		amount = amount.divide(value);
 		return this;
 	}
+	
+	/**
+	 * Takes the maximum of the current calculation value and the supplied
+	 * monetary amount.
+	 * 
+	 * @param money
+	 *            a monetary amount
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if the type of the money supplied cannot be reconciled with
+	 *             the type of the calculation
+	 */
 	
 	public MoneyCalc max(Money money) {
 		type = type.combine(money.type);
@@ -98,16 +200,40 @@ public class MoneyCalc {
 		return this;
 	}
 	
+	/**
+	 * Takes the minimum of the current calculation value and the supplied
+	 * monetary amount.
+	 * 
+	 * @param money
+	 *            a monetary amount
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if the type of the money supplied cannot be reconciled with
+	 *             the type of the calculation
+	 */
+	
 	public MoneyCalc min(Money money) {
 		type = type.combine(money.type);
 		amount = amount.min(money.amount);
 		return this;
 	}
 	
+	/**
+	 * Takes the absolute value of the current calculation value.
+	 * 
+	 * @return the current calculation object
+	 */
+	
 	public MoneyCalc abs() {
 		amount = amount.abs();
 		return this;
 	}
+	
+	/**
+	 * Negates the value of the current calculation value.
+	 * 
+	 * @return the current calculation object
+	 */
 	
 	public MoneyCalc negate() {
 		amount = amount.negate();

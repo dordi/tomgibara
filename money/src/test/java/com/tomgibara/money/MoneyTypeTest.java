@@ -71,4 +71,9 @@ public class MoneyTypeTest extends TestCase {
 		assertEquals(us.money(100), us.parse("$1.00"));
 	}
 	
+	public void testDefaultMoneyType() {
+		MoneyType type = new MoneyType();
+		assertNotNull(type.money().toString());
+	}
+	
 }

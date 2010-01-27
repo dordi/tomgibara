@@ -68,7 +68,7 @@ public class MoneyTypeTest extends TestCase {
 	
 	public void testParse() {
 		MoneyType us = new MoneyType(Locale.US);
-		assertEquals(us.money(100), us.money("$1.00"));
+		assertEquals(us.money(100), us.parse("$1.00"));
 	}
 	
 }

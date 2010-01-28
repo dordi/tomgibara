@@ -96,7 +96,7 @@
   <distributionManagement>
     <site>
       <id>tomgibara.com</id>
-      <url>scp://tom@zetec.recipexperience.com/home/apache/public/www.tomgibara.com/projects/money/maven/</url>
+      <url>scp://zetec.recipexperience.com/home/apache/public/www.tomgibara.com/projects/money/maven/</url>
     </site>
     <repository>
       <id>tomgibara.com</id>

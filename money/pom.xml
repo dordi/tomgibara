@@ -4,7 +4,7 @@
   <artifactId>money</artifactId>
   <name>Money</name>
   <version>1.0-SNAPSHOT</version>
-  <description>Small set of classes for handling monetary amounts.</description>
+  <description>Small collection of classes for handling monetary amounts.</description>
   <dependencies>
   	<dependency>
   		<groupId>junit</groupId>
@@ -14,6 +14,33 @@
   		<scope>test</scope>
   	</dependency>
   </dependencies>
+  <url>http://www.tomgibara.com/projects/money</url>
+  <inceptionYear>2010</inceptionYear>
+  <issueManagement>
+  	<system>Google Code</system>
+  	<url>http://code.google.com/p/tomgibara/issues/list</url>
+  </issueManagement>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+  	<developer>
+  		<id>tomgibara</id>
+  		<name>Tom Gibara</name>
+  		<email>me@tomgibara.com</email>
+  		<url>http://www.tomgibara.com</url>
+  	</developer>
+  </developers>
+  <scm>
+  	<connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/money</connection>
+  	<developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/money</developerConnection>
+  	<tag>HEAD</tag>
+  	<url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/money</url>
+  </scm>
   <build>
     <plugins>
       <plugin>
@@ -28,4 +55,54 @@
       </plugin>
     </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <bottom>Copyright © {inceptionYear}-{currentYear} Tom Gibara. All Rights Reserved.</bottom>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <configuration>
+          <bottom>Copyright © {inceptionYear}-{currentYear} Tom Gibara. All Rights Reserved.</bottom>
+        </configuration>
+      </plugin>
+      <!-- 
+      <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+         <artifactId>maven-checkstyle-plugin</artifactId>
+         <configuration>
+            <configLocation>checkstyle.xml</configLocation>
+         </configuration>
+      </plugin>
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>changelog-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>taglist-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+  <distributionManagement>
+    <site>
+      <id>tomgibara.com</id>
+      <url>scp://tom@zetec.recipexperience.com/home/apache/public/www.tomgibara.com/projects/money/maven/</url>
+    </site>
+    <repository>
+      <id>tomgibara.com</id>
+      <name>Personal</name>
+      <url>scp://zetec.recipexperience.com/home/apache/public/www.tomgibara.com/maven/repo</url>
+    </repository>
+  </distributionManagement>
 </project>

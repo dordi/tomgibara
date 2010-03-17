@@ -7,7 +7,7 @@ public interface Lattice<E> extends MeetSemiLattice<E>, JoinSemiLattice<E> {
 
 	Lattice<E> boundedBelow(E bottom);
 
-	Lattice<E> boundedLattice(E top, E bottom);
+	Lattice<E> bounded(E top, E bottom);
 
 	boolean isBounded();
 

@@ -99,7 +99,7 @@ public class SetLattice<E> implements Lattice<Set<E>> {
 	}
 	
 	@Override
-	public Lattice<Set<E>> boundedLattice(Set<E> top, Set<E> bottom) {
+	public Lattice<Set<E>> bounded(Set<E> top, Set<E> bottom) {
 		if (!this.top.containsAll(top)) throw new IllegalArgumentException();
 		if (!bottom.containsAll(this.bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);

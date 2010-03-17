@@ -6,7 +6,7 @@ public class OrderedLatticeTest extends TestCase {
 
 	public void testBounded() {
 		OrderedLattice<Integer> lattice = new OrderedLattice<Integer>();
-		final Lattice<Integer> bounded = lattice.boundedLattice(5, 2);
+		final Lattice<Integer> bounded = lattice.bounded(5, 2);
 		assertTrue(bounded.contains(3));
 		assertTrue(bounded.contains(5));
 		assertTrue(bounded.contains(2));

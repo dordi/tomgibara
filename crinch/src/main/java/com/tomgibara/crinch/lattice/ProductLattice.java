@@ -87,12 +87,12 @@ public class ProductLattice implements Lattice<Object[]> {
 	}
 
 	@Override
-	public Lattice<Object[]> boundedLattice(Object[] top, Object[] bottom) {
+	public Lattice<Object[]> bounded(Object[] top, Object[] bottom) {
 		checkTuple(top);
 		checkTuple(bottom);
 		final Lattice[] lattices = new Lattice[this.lattices.length];
 		for (int i = 0; i < lattices.length; i++) {
-			lattices[i] = this.lattices[i].boundedLattice(top[i], bottom[i]);
+			lattices[i] = this.lattices[i].bounded(top[i], bottom[i]);
 		}
 		return new ProductLattice(lattices);
 	}

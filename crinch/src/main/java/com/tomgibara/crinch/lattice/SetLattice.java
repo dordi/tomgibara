@@ -87,13 +87,13 @@ public class SetLattice<E> implements Lattice<Set<E>> {
 	}
 	
 	@Override
-	public JoinSemiLattice<Set<E>> boundedJoinSemiLattice(Set<E> top) {
+	public JoinSemiLattice<Set<E>> boundedAbove(Set<E> top) {
 		if (!top.containsAll(bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);
 	}
 	
 	@Override
-	public MeetSemiLattice<Set<E>> boundedMeetSemiLattice(Set<E> bottom) {
+	public MeetSemiLattice<Set<E>> boundedBelow(Set<E> bottom) {
 		if (!top.containsAll(bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);
 	}

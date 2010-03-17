@@ -81,7 +81,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 		return new OrderedLattice<E>(null, bottom);
 	};
 	
-	public Lattice<E> boundedLattice(E top, E bottom) {
+	public Lattice<E> bounded(E top, E bottom) {
 		return new OrderedLattice<E>(top, bottom);
 	};
 	

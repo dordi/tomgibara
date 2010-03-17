@@ -4,7 +4,7 @@ public interface MeetSemiLattice<E> extends SemiLattice<E> {
 
 	E meet(E a, E b);
 
-	MeetSemiLattice<E> boundedMeetSemiLattice(E bottom);
+	MeetSemiLattice<E> boundedBelow(E bottom);
 
 	E getBottom();
 	

@@ -73,11 +73,11 @@ public class OrderedLattice<E> implements Lattice<E> {
 		return compare(a,b) <= 0 ? a : b;
 	};
 	
-	public JoinSemiLattice<E> boundedJoinSemiLattice(E top) {
+	public JoinSemiLattice<E> boundedAbove(E top) {
 		return new OrderedLattice<E>(top, null);
 	}
 	
-	public MeetSemiLattice<E> boundedMeetSemiLattice(E bottom) {
+	public MeetSemiLattice<E> boundedBelow(E bottom) {
 		return new OrderedLattice<E>(null, bottom);
 	};
 	

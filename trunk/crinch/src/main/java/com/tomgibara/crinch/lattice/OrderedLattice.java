@@ -2,47 +2,105 @@ package com.tomgibara.crinch.lattice;
 
 import java.util.Comparator;
 
-public class OrderedLattice<T> implements Lattice<T> {
+public class OrderedLattice<E> implements Lattice<E> {
 
-	final Comparator<T> comparator;
+	private final Comparator<E> comparator;
+	private final E top;
+	private final E bottom;
+	
 
 	public OrderedLattice() {
-		comparator = null;
+		this(null, null);
 	}
 
-	public OrderedLattice(Comparator<T> comparator) {
+	public OrderedLattice(Comparator<E> comparator) {
+		this(null, null, comparator);
+	}
+
+	public OrderedLattice(E top, E bottom) {
+		checkOrder(top, bottom);
+		this.top = top;
+		this.bottom = bottom;
+		comparator = null;
+	}
+	
+	public OrderedLattice(E top, E bottom, Comparator<E> comparator) {
+		if (comparator == null) throw new NullPointerException();
+		checkOrder(top, bottom);
+		this.top = top;
+		this.bottom = bottom;
 		this.comparator = comparator;
 	}
 
-	public boolean contains(T e) {
-		return true;
+	public Comparator<E> getComparator() {
+		return comparator;
+	}
+	
+	@Override
+	public E getBottom() {
+		return bottom;
+	}
+	
+	@Override
+	public E getTop() {
+		return top;
+	}
+
+	@Override
+	public boolean isBoundedAbove() {
+		return top != null;
+	}
+	
+	@Override
+	public boolean isBoundedBelow() {
+		return bottom != null;
+	}
+
+	@Override
+	public boolean isBounded() {
+		return top != null && bottom != null;
+	}
+	
+	public boolean contains(E e) {
+		return (top == null || compare(e, top) <= 0) && (bottom == null || compare(bottom, e) <= 0);
 	};
 	
-	public T join(T a, T b) {
+	public E join(E a, E b) {
 		return compare(a,b) >= 0 ? a : b;
 	};
 
-	public T meet(T a, T b) {
+	public E meet(E a, E b) {
 		return compare(a,b) <= 0 ? a : b;
 	};
 	
-	public BoundedJoinSemiLattice<T> boundedJoinSemiLattice(T top) {
-		return new BoundedOrderedLattice<T>(top, null);
+	public JoinSemiLattice<E> boundedJoinSemiLattice(E top) {
+		return new OrderedLattice<E>(top, null);
 	}
 	
-	public BoundedMeetSemiLattice<T> boundedMeetSemiLattice(T bottom) {
-		return new BoundedOrderedLattice<T>(null, bottom);
+	public MeetSemiLattice<E> boundedMeetSemiLattice(E bottom) {
+		return new OrderedLattice<E>(null, bottom);
 	};
 	
-	public BoundedLattice<T> boundedLattice(T top, T bottom) {
-		return new BoundedOrderedLattice<T>(top, bottom);
+	public Lattice<E> boundedLattice(E top, E bottom) {
+		return new OrderedLattice<E>(top, bottom);
 	};
 	
-	int compare(T a, T b) {
+	private int compare(E a, E b) {
 		if (comparator == null) {
-			return ((Comparable<T>)a).compareTo(b);
+			return ((Comparable<E>)a).compareTo(b);
 		} else {
 			return comparator.compare(a, b);
 		}
 	}
+
+	private void checkOrder(E a, E b) {
+		if (a == null || b == null) return;
+		if (compare(a, b) < 0) throw new IllegalArgumentException();
+	}
+	
+	private void checkBounds(E a) {
+		if (top != null) checkOrder(top, a);
+		if (bottom != null) checkOrder(a, bottom);
+	}
+	
 }

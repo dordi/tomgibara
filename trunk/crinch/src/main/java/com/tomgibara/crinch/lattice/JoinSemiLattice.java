@@ -4,6 +4,10 @@ public interface JoinSemiLattice<E> extends SemiLattice<E> {
 
 	E join(E a, E b);
 	
-	BoundedJoinSemiLattice<E> boundedJoinSemiLattice(E top);
+	JoinSemiLattice<E> boundedJoinSemiLattice(E top);
 
+	E getTop();
+	
+	boolean isBoundedAbove();
+	
 }

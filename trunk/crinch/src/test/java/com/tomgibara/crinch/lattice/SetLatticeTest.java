@@ -16,7 +16,7 @@ public class SetLatticeTest extends TestCase {
 		SetLattice<Integer> lattice = new SetLattice<Integer>(set(1,2,3,4));
 		assertEquals(set(1,2,3,4), lattice.getTop());
 		assertEquals(set(), lattice.getBottom());
-		BoundedLattice<Set<Integer>> bounded = lattice.boundedLattice(set(1,2,4), set(2));
+		Lattice<Set<Integer>> bounded = lattice.boundedLattice(set(1,2,4), set(2));
 		assertTrue(bounded.contains(set(1,2)));
 		assertTrue(bounded.contains(set(2,4)));
 		assertFalse(bounded.contains(set(1,4)));

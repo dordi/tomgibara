@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SetLattice<E> implements BoundedLattice<Set<E>> {
+public class SetLattice<E> implements Lattice<Set<E>> {
 
 	private final Set<E> top;
 	private final Set<E> bottom;
@@ -15,6 +15,8 @@ public class SetLattice<E> implements BoundedLattice<Set<E>> {
 	}
 	
 	public SetLattice(Set<E> top, Set<E> bottom) {
+		if (top == null) throw new IllegalArgumentException();
+		if (bottom == null) throw new IllegalArgumentException();
 		if (!top.containsAll(bottom)) throw new IllegalArgumentException();
 		this.top = top;
 		this.bottom = bottom;
@@ -28,6 +30,21 @@ public class SetLattice<E> implements BoundedLattice<Set<E>> {
 	@Override
 	public Set<E> getBottom() {
 		return bottom;
+	}
+	
+	@Override
+	public boolean isBoundedAbove() {
+		return true;
+	}
+	
+	@Override
+	public boolean isBoundedBelow() {
+		return true;
+	}
+	
+	@Override
+	public boolean isBounded() {
+		return true;
 	}
 	
 	@Override
@@ -70,19 +87,19 @@ public class SetLattice<E> implements BoundedLattice<Set<E>> {
 	}
 	
 	@Override
-	public BoundedJoinSemiLattice<Set<E>> boundedJoinSemiLattice(Set<E> top) {
+	public JoinSemiLattice<Set<E>> boundedJoinSemiLattice(Set<E> top) {
 		if (!top.containsAll(bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);
 	}
 	
 	@Override
-	public BoundedMeetSemiLattice<Set<E>> boundedMeetSemiLattice(Set<E> bottom) {
+	public MeetSemiLattice<Set<E>> boundedMeetSemiLattice(Set<E> bottom) {
 		if (!top.containsAll(bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);
 	}
 	
 	@Override
-	public BoundedLattice<Set<E>> boundedLattice(Set<E> top, Set<E> bottom) {
+	public Lattice<Set<E>> boundedLattice(Set<E> top, Set<E> bottom) {
 		if (!this.top.containsAll(top)) throw new IllegalArgumentException();
 		if (!bottom.containsAll(this.bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);

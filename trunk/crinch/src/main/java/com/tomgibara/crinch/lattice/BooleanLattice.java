@@ -1,0 +1,84 @@
+package com.tomgibara.crinch.lattice;
+
+public class BooleanLattice implements Lattice<Boolean> {
+
+	private final boolean top;
+	private final boolean bottom;
+	
+	public BooleanLattice() {
+		top = true;
+		bottom = false;
+	}
+	
+	public BooleanLattice(boolean top, boolean bottom) {
+		if (bottom && !top) throw new IllegalArgumentException();
+		this.top = top;
+		this.bottom = bottom;
+	}
+	
+	@Override
+	public boolean isBounded() {
+		return true;
+	}
+	
+	@Override
+	public boolean isBoundedAbove() {
+		return true;
+	}
+	
+	@Override
+	public boolean isBoundedBelow() {
+		return true;
+	}
+	
+	@Override
+	public Boolean getTop() {
+		return top;
+	}
+	
+	@Override
+	public Boolean getBottom() {
+		return bottom;
+	}
+	
+	@Override
+	public boolean contains(Boolean bool) {
+		final boolean b = bool;
+		return b == top || b == bottom;
+	}
+	
+	@Override
+	public Lattice<Boolean> bounded(Boolean top, Boolean bottom) {
+		final boolean t = top;
+		final boolean b = bottom;
+		if (t == this.top && b == this.bottom) return this;
+		return new BooleanLattice(t, b);
+	}
+	
+	@Override
+	public Lattice<Boolean> boundedAbove(Boolean top) {
+		final boolean t = top;
+		return t == this.top ? this : new BooleanLattice(t, bottom);
+	}
+
+	@Override
+	public Lattice<Boolean> boundedBelow(Boolean bottom) {
+		final boolean b = bottom;
+		return b == this.bottom ? this : new BooleanLattice(top, b);
+	}
+	
+	@Override
+	public Boolean join(Boolean a, Boolean b) {
+		final boolean c = a || b;
+		if (c != top && c != bottom) throw new IllegalArgumentException();
+		return c;
+	}
+	
+	@Override
+	public Boolean meet(Boolean a, Boolean b) {
+		final boolean c = a && b;
+		if (c != top && c != bottom) throw new IllegalArgumentException();
+		return c;
+	}
+	
+}

@@ -18,7 +18,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 	}
 
 	public OrderedLattice(E top, E bottom) {
-		checkOrder(top, bottom);
+		if (top != null && bottom != null && compare(top, bottom) < 0) throw new IllegalArgumentException();
 		this.top = top;
 		this.bottom = bottom;
 		comparator = null;
@@ -26,7 +26,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 	
 	public OrderedLattice(E top, E bottom, Comparator<E> comparator) {
 		if (comparator == null) throw new NullPointerException();
-		checkOrder(top, bottom);
+		if (top != null && bottom != null && compare(top, bottom) < 0) throw new IllegalArgumentException();
 		this.top = top;
 		this.bottom = bottom;
 		this.comparator = comparator;
@@ -62,27 +62,40 @@ public class OrderedLattice<E> implements Lattice<E> {
 	}
 	
 	public boolean contains(E e) {
+		if (e == null) throw new IllegalArgumentException();
 		return (top == null || compare(e, top) <= 0) && (bottom == null || compare(bottom, e) <= 0);
 	};
 	
 	public E join(E a, E b) {
+		checkBounds(a);
+		checkBounds(b);
 		return compare(a,b) >= 0 ? a : b;
 	};
 
 	public E meet(E a, E b) {
+		checkBounds(a);
+		checkBounds(b);
 		return compare(a,b) <= 0 ? a : b;
 	};
 	
 	public Lattice<E> boundedAbove(E top) {
-		return new OrderedLattice<E>(top, null);
+		final int cmp = this.top == null ? 1 : compare(this.top, top);
+		if (cmp < 0) throw new IllegalArgumentException();
+		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	}
 	
 	public Lattice<E> boundedBelow(E bottom) {
-		return new OrderedLattice<E>(null, bottom);
+		final int cmp = this.bottom == null ? 1 : compare(bottom, this.bottom);
+		if (cmp < 0) throw new IllegalArgumentException();
+		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
 	
 	public Lattice<E> bounded(E top, E bottom) {
-		return new OrderedLattice<E>(top, bottom);
+		final int cmpA = this.top == null ? 1 : compare(this.top, top);
+		if (cmpA < 0) throw new IllegalArgumentException();
+		final int cmpB = this.bottom == null ? 1 : compare(bottom, this.bottom);
+		if (cmpB < 0) throw new IllegalArgumentException();
+		return cmpA == 0 && cmpB == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
 	
 	private int compare(E a, E b) {
@@ -93,14 +106,14 @@ public class OrderedLattice<E> implements Lattice<E> {
 		}
 	}
 
-	private void checkOrder(E a, E b) {
-		if (a == null || b == null) return;
-		if (compare(a, b) < 0) throw new IllegalArgumentException();
-	}
-	
 	private void checkBounds(E a) {
+		if (a == null) throw new IllegalArgumentException();
 		if (top != null) checkOrder(top, a);
 		if (bottom != null) checkOrder(a, bottom);
+	}
+	
+	private void checkOrder(E a, E b) {
+		if (a != null && compare(a, b) < 0) throw new IllegalArgumentException();
 	}
 	
 }

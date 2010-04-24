@@ -2,6 +2,7 @@ package com.tomgibara.crinch.bits;
 
 import java.util.Arrays;
 
+//TODO use case for bloom filters needs immutability
 public final class BitVector implements Cloneable {
 
 	// statics
@@ -363,11 +364,11 @@ public final class BitVector implements Cloneable {
 	
 	@Override
 	public int hashCode() {
-		int h = 0;
+		int h = size;
 		for (int i = 0; i < bits.length; i++) {
 			final long l = bits[i];
-			h ^= ((int) l       ) * 31;
-			h ^= ((int)(l >> 32)) * 31;
+			h = h * 31 + ((int) l       );
+			h = h * 31 + ((int)(l >> 32));
 		}
 		return h;
 	}
@@ -503,7 +504,7 @@ public final class BitVector implements Cloneable {
 		final int to = (position + thatSize + ADDRESS_MASK) >> ADDRESS_BITS;
 		final int s = position & ADDRESS_MASK;
 		final int len = to - from;
-		//skip first and list
+		//skip first and last
 		final int limit = len - 1;
 		int j = from+1;
 		int i = 1;

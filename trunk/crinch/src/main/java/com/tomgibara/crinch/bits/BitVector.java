@@ -150,6 +150,74 @@ public final class BitVector implements Cloneable {
 		return new BitVector(length, newBits);
 	}
 	
+	// bit counting methods
+	
+	public int countOnes() {
+		if (size == 0) return 0;
+		int count = 0;
+		for (int i = 0; i < bits.length; i++) {
+			count += Long.bitCount(bits[i]);
+		}
+		return count;
+	}
+
+	public int countOnes(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to > size) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		if (from == to) return 0;
+		final int f = from >> ADDRESS_BITS;
+		final int t = to >> ADDRESS_BITS;
+		final int r = from & ADDRESS_MASK;
+		final int l = to & ADDRESS_MASK;
+		if (f == t) {
+			final long m = (-1L >>> (ADDRESS_SIZE - l + r)) << r;
+			return Long.bitCount(m & bits[f]);  
+		}
+
+		int count = 0;
+		count += Long.bitCount( (-1L << r) & bits[f] );
+		for (int i = f+1; i < t-1; i++) {
+			count += Long.bitCount(bits[i]);
+		}
+		count += Long.bitCount( (-1L >>> (ADDRESS_SIZE - l)) & bits[t] );
+		return count;
+	}
+
+	public int countZeros() {
+		if (size == 0) return 0;
+		int count = 0;
+		for (int i = bits.length-2; i >= 0; i--) {
+			count += Long.bitCount(~bits[i]);
+		}
+		//treat last bits as a special case
+		count += Long.bitCount(mask & ~bits[bits.length-1]);
+		return count;
+	}
+	
+	public int countZeros(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to > size) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		if (from == to) return 0;
+		final int f = from >> ADDRESS_BITS;
+		final int t = to >> ADDRESS_BITS;
+		final int r = from & ADDRESS_MASK;
+		final int l = to & ADDRESS_MASK;
+		if (f == t) {
+			final long m = (-1L >>> (ADDRESS_SIZE - l + r)) << r;
+			return Long.bitCount(m & ~bits[f]);  
+		}
+
+		int count = 0;
+		count += Long.bitCount( (-1L << r) & ~bits[f] );
+		for (int i = f+1; i < t-1; i++) {
+			count += Long.bitCount(~bits[i]);
+		}
+		count += Long.bitCount( (-1L >>> (ADDRESS_SIZE - l)) & ~bits[t] );
+		return count;
+	}
+
 	// operations
 	
 	public void modify(Operation operation, boolean value) {
@@ -457,7 +525,7 @@ public final class BitVector implements Cloneable {
 		if (length == 0) return;
 		final int i = position >> ADDRESS_BITS;
 		final int s = position & ADDRESS_MASK;
-		final long m = length == 64 ? -1L : (1L << length) - 1L;
+		final long m = length == ADDRESS_SIZE ? -1L : (1L << length) - 1L;
 		final long v = bs & m;
 		if (s == 0) { // fast case, long-aligned
 			bits[i] = bits[i] & ~m | v;

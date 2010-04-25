@@ -39,6 +39,7 @@ public final class BitVector implements Cloneable {
 	
 	public BitVector(int size) {
 		if (size < 0) throw new IllegalArgumentException();
+		if (size > (Integer.MAX_VALUE / 8)) throw new IllegalArgumentException();
 		final int length = (size + ADDRESS_MASK) >> ADDRESS_BITS;
 		this.bits = new long[length];
 		this.size = size;

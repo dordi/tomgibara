@@ -382,7 +382,7 @@ public final class ParameterMap<V> implements Map<String, V> {
 		
 		@Override
 		public boolean isEmpty() {
-			return size != 0;
+			return size == 0;
 		}
 		
 		@Override

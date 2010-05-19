@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-//TODO need to watch for self-reference on mutations
 public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
 
 	// statics
@@ -37,6 +36,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private static final int ADDRESS_SIZE = 1 << ADDRESS_BITS;
 	private static final int ADDRESS_MASK = ADDRESS_SIZE - 1;
 	
+	private boolean overlapping(int thisFrom, int thisTo, int thatFrom, int thatTo) {
+		return thisTo > thatFrom && thisFrom < thatTo;
+	}
+
 	//necessary for throwing an IAE
 	private static int stringLength(String str) {
 		if (str == null) throw new IllegalArgumentException();
@@ -793,41 +796,12 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private void perform(int operation, BitVector that) {
 		if (this.size() != that.size()) throw new IllegalArgumentException("mismatched vector size");
 		perform(operation, 0, that);
-		/*
-		if (that == null) throw new IllegalArgumentException("null vector");
-		final int thisSize = this.finish - this.start;
-		final int thatSize = that.finish - that.start;
-		if (thisSize != thatSize) throw new IllegalArgumentException("incorrect size, expected " + thisSize + " and got " + thatSize);
-		//TODO generalize to allow start to differ by 64 and finish to be unconstrained
-		if ((this.start & ADDRESS_MASK) == 0 && (that.start & ADDRESS_MASK) == 0 && (this.finish & ADDRESS_MASK) == 0) {
-			final int f = this.start >> ADDRESS_BITS;
-			final int t = this.finish >> ADDRESS_BITS;
-			final int d = (that.start - this.start) >> ADDRESS_BITS;
-			long[] thisBits = this.bits;
-			long[] thatBits = that.bits;
-			switch (operation) {
-			case SET :
-				System.arraycopy(thatBits, f + d, thisBits, f, t - f);
-				break;
-			case AND :
-				for (int i = f; i < t; i++) thisBits[i] &= thatBits[i + d];
-				break;
-			case OR:
-				for (int i = f; i < t; i++) thisBits[i] |= thatBits[i + d];
-				break;
-			case XOR:
-				for (int i = f; i < t; i++) thisBits[i] ^= thatBits[i + d];
-				break;
-			}
-		} else {
-			perform(operation, 0, that);
-		}
-		*/
 	}
 
 	private void perform(int operation, int position, BitVector that) {
 		if (that == null) throw new IllegalArgumentException("null vector");
 		final int thatSize = that.size();
+		if (this.bits == that.bits && overlapping(position, position + thatSize, that.start, that.finish)) that = that.copy();
 		if (thatSize == 0) return;
 		if (thatSize <= ADDRESS_SIZE) {
 			perform(operation, position, that.getBits(0, thatSize), thatSize);
@@ -840,55 +814,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		for (int s = that.start; s < that.finish; s++) {
 			performAdj(operation, position++, that.getBitAdj(s));
 		}
-		/*
-		final long[] thatBits = that.bits;
-		//basic optimization: if the vector contains only one long perform the operation on the single long
-		if (thatSize <= ADDRESS_SIZE) perform(operation, position, that.bits[0], thatSize);
-		if (position < 0) throw new IllegalArgumentException("negative position");
-		if (position + that.size > this.size) throw new IllegalArgumentException();
-		final long[] bits = this.bits;
-		final int from = position >> ADDRESS_BITS;
-		final int to = (position + thatSize + ADDRESS_MASK) >> ADDRESS_BITS;
-		final int s = position & ADDRESS_MASK;
-		final int len = to - from;
-		//skip first and last
-		final int limit = len - 1;
-		int j = from+1;
-		int i = 1;
-		if (s == 0) {
-			switch(operation) {
-			case SET :
-				for (; i < limit; i++, j++) bits[j]  = thatBits[i];
-				break;
-			case AND :
-				for (; i < limit; i++, j++) bits[j] &= thatBits[i];
-				break;
-			case OR :
-				for (; i < limit; i++, j++) bits[j] |= thatBits[i];
-				break;
-			case XOR :
-				for (; i < limit; i++, j++) bits[j] ^= thatBits[i];
-				break;
-			}
-		} else {
-			switch(operation) {
-			case SET :
-				for (; i < limit; i++, j++) bits[j]  = (thatBits[i] >>> s) | (thatBits[i+1] << (ADDRESS_SIZE - s));
-				break;
-			case AND :
-				for (; i < limit; i++, j++) bits[j] &= (thatBits[i] >>> s) | (thatBits[i+1] << (ADDRESS_SIZE - s));
-				break;
-			case OR :
-				for (; i < limit; i++, j++) bits[j] |= (thatBits[i] >>> s) | (thatBits[i+1] << (ADDRESS_SIZE - s));
-				break;
-			case XOR :
-				for (; i < limit; i++, j++) bits[j] ^= (thatBits[i] >>> s) | (thatBits[i+1] << (ADDRESS_SIZE - s));
-				break;
-			}
-		}
-		//last bits as a special case
-		//TODO work out how to mask these remaining bits
-		 */
 	}
 	
 	private boolean compare(final int comp, final BitVector that) {

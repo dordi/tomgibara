@@ -157,4 +157,16 @@ public class BitVectorTest extends TestCase {
 		assertEquals(1, c.countOnes());
 	}
 	
+	public void testOverlapping() {
+		BitVector v = new BitVector("1010101010101010");
+		BitVector w = v.rangeView(0, 15);
+		v.xorVector(1, w);
+		assertEquals(new BitVector("1111111111111110"), v);
+		
+		v = new BitVector("1010101010101010");
+		w = v.rangeView(1, 16);
+		v.xorVector(0, w);
+		assertEquals(new BitVector("1111111111111111"), v);
+	}
+	
 }

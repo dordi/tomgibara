@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-//TODO use case for bloom filters needs immutability
 //TODO need to watch for self-reference on mutations
 public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
 
@@ -51,6 +50,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private final long[] bits;
 	private final long startMask;
 	private final long finishMask;
+	private final boolean mutable;
 	
 	// constructors
 	
@@ -65,17 +65,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.finish = size;
 		this.startMask = -1L; 
 		this.finishMask = -1L >>> (length * ADDRESS_SIZE - size) ;
-	}
-	
-	//creates an aligned copy
-	public BitVector(BitVector that) {
-		final int size = that.finish - that.start;
-		final int length = (size + ADDRESS_MASK) >> ADDRESS_BITS;
-		this.start = 0;
-		this.finish = size;
-		this.bits = that.bits.clone();
-		this.startMask = -1L;
-		this.finishMask = -1L >>> (length * ADDRESS_SIZE - size);
+		this.mutable = true;
 	}
 	
 	//TODO consider allowing different radixes
@@ -91,7 +81,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
-	private BitVector(int start, int finish, long[] bits) {
+	private BitVector(int start, int finish, long[] bits, boolean mutable) {
 		final int startIndex = start >> ADDRESS_BITS;
 		final int finishIndex = (finish + ADDRESS_MASK) >> ADDRESS_BITS;
 		this.start = start;
@@ -106,6 +96,101 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			this.startMask = startMask;
 			this.finishMask = finishMask;
 		}
+		this.mutable = mutable;
+	}
+	
+	// duplication
+
+	//TODO consider adding a trimmed copy, or guarantee this is trimmed?
+	//only creates a new bit vector if necessary
+	public BitVector aligned() {
+		return start == 0 ? this : getVectorAdj(start, finish, true);
+	}
+
+	public BitVector duplicate(boolean copy, boolean mutable) {
+		if (mutable && !copy && !this.mutable) throw new IllegalStateException("Cannot obtain mutable view of an immutable BitVector");
+		return new BitVector(start, finish, copy ? bits.clone() : bits, mutable);
+	}
+	
+	public BitVector duplicate(int from, int to, boolean copy, boolean mutable) {
+		if (mutable && !copy && !this.mutable) throw new IllegalStateException("Cannot obtain mutable view of an immutable BitVector");
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return new BitVector(from, to, copy ? bits.clone() : bits, mutable);
+	}
+	
+	//only creates a new bit vector if necessary
+	public BitVector mutable() {
+		return mutable ? this : mutableCopy();
+	}
+	
+	//only creates a new bit vector if necessary
+	public BitVector immutable() {
+		return mutable ? immutableCopy() : this;
+	}
+	
+	// views
+	
+	//TODO consider renaming range methods, eg rangeView
+	
+	//returns a new bitvector that is backed by the same data as this one
+	//equivalent to clone
+	public BitVector view() {
+		return duplicate(false, mutable);
+	}
+	
+	//returns a new bitvector that is backed by the same data as this one
+	public BitVector view(int from, int to) {
+		return duplicate(from, to, false, mutable);
+	}
+	
+	//returns a new mutable bitvector that is backed by the same data as this one
+	public BitVector mutableView() {
+		return duplicate(false, true);
+	}
+	
+	//returns a new mutable bitvector that is backed by the same data as this one
+	public BitVector mutableView(int from, int to) {
+		return duplicate(from, to, false, true);
+	}
+	
+	//returns a new immutable bitvector that is backed by the same data as this one
+	public BitVector immutableView() {
+		return duplicate(false, false);
+	}
+	
+	//returns a new immutable bitvector that is backed by the same data as this one
+	public BitVector immutableView(int from, int to) {
+		return duplicate(from, to, false, false);
+	}
+	
+	// copies
+	
+	public BitVector copy() {
+		return duplicate(true, mutable);
+	}
+
+	public BitVector copy(int from, int to) {
+		return duplicate(from, to, true, mutable);
+	}
+	
+	public BitVector immutableCopy() {
+		return duplicate(true, false);
+	}
+
+	public BitVector immutableCopy(int from, int to) {
+		return duplicate(from, to, true, false);
+	}
+	
+	public BitVector mutableCopy() {
+		return duplicate(true, true);
+	}
+
+	public BitVector mutableCopy(int from, int to) {
+		return duplicate(from, to, true, true);
 	}
 	
 	// accessors
@@ -160,59 +245,24 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		} else if (s + length <= ADDRESS_SIZE) { //single long case
 			b = bits[i] >>> s;
 		} else {
-			b = (bits[i] >>> s) | (bits[i+1] << (s + length - ADDRESS_SIZE));
+			b = (bits[i] >>> s) | (bits[i+1] << (ADDRESS_SIZE - s));
 		}
-		return length == ADDRESS_SIZE ? b : b & ((1 << length) - 1);
+		return length == ADDRESS_SIZE ? b : b & ((1L << length) - 1);
 	}
 	
+	//always mutable & aligned
 	public BitVector getVector(int position, int length) {
 		if (position < 0) throw new IllegalArgumentException();
 		if (length < 0) throw new IllegalArgumentException();
 		position += start;
 		if (position + length > finish) throw new IllegalArgumentException();
-		final long[] newBits;
-		if (length == finish) {
-			newBits = bits.clone();
-		} else if (length == 0) {
-			newBits = new long[0];
-		} else {
-			final int from = position >> ADDRESS_BITS;
-			final int to = (position + length + ADDRESS_MASK) >> ADDRESS_BITS;
-			if ((position & ADDRESS_MASK) == 0) {
-				newBits = Arrays.copyOfRange(bits, from, to);
-			} else {
-				final int s = position & ADDRESS_MASK;
-				final int len = to - from;
-				newBits = new long[len];
-				//do all but last bit
-				int j = from;
-				int i = 0;
-				for (; i < len - 1; i++, j++) {
-					newBits[i] = (bits[j] >>> s) | (bits[j+1] << (ADDRESS_SIZE - s));
-				}
-				//do last bits as a special case
-				if (j+1 < len) {
-					newBits[i] = (bits[j] >>> s) | (bits[j+1] << (ADDRESS_SIZE - s));
-				} else {
-					newBits[i] = bits[j] >>> s;
-				}
-			}
-		}
-		return new BitVector(0, length, newBits);
+		return getVectorAdj(position, length, true);
 	}
 	
 	// bit counting methods
 	
 	public int countOnes() {
-		if (start == finish) return 0;
-		if (start == 0) {
-			int count = 0;
-			for (int i = 0; i < bits.length; i++) {
-				count += Long.bitCount(bits[i]);
-			}
-			return count;
-		}
-		return countOnes(0, finish);
+		return countOnesAdj(start, finish);
 	}
 
 	public int countOnes(int from, int to) {
@@ -221,23 +271,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		from += start;
 		to += start;
 		if (to > finish) throw new IllegalArgumentException();
-		if (from == to) return 0;
-		final int f = from >> ADDRESS_BITS;
-		final int t = to >> ADDRESS_BITS;
-		final int r = from & ADDRESS_MASK;
-		final int l = to & ADDRESS_MASK;
-		if (f == t) {
-			final long m = (-1L >>> (ADDRESS_SIZE - l + r)) << r;
-			return Long.bitCount(m & bits[f]);  
-		}
-
-		int count = 0;
-		count += Long.bitCount( (-1L << r) & bits[f] );
-		for (int i = f+1; i < t-1; i++) {
-			count += Long.bitCount(bits[i]);
-		}
-		count += Long.bitCount( (-1L >>> (ADDRESS_SIZE - l)) & bits[t] );
-		return count;
+		return countOnesAdj(from, to);
 	}
 
 	public int countZeros() {
@@ -251,7 +285,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	// operations
 	
 	public void modify(Operation operation, boolean value) {
-		perform(operation.ordinal(), value);
+		performAdj(operation.ordinal(), start, finish, value);
+	}
+
+	public void modifyRange(Operation operation, int from, int to, boolean value) {
+		perform(operation.ordinal(), from, to, value);
 	}
 	
 	public void modifyBit(Operation operation, int position, boolean value) {
@@ -320,7 +358,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	// convenience setters
 	
 	public void flip() {
-		perform(XOR, true);
+		performAdj(XOR, start, finish, true);
 	}
 	
 	public void flipBit(int position) {
@@ -328,7 +366,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	public void set(boolean value) {
-		perform(SET, value);
+		performAdj(SET, start, finish, value);
+	}
+	
+	public void setRange(int from, int to, boolean value) {
+		perform(SET, from, to, value);
 	}
 	
 	public void setBit(int position, boolean value) {
@@ -364,7 +406,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	public void and(boolean value) {
-		perform(AND, value);
+		performAdj(AND, start, finish, value);
+	}
+	
+	public void andRange(int from, int to, boolean value) {
+		perform(AND, from, to, value);
 	}
 	
 	public void andBit(int position, boolean value) {
@@ -400,7 +446,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	public void or(boolean value) {
-		perform(OR, value);
+		performAdj(OR, start, finish, value);
+	}
+	
+	public void orRange(int from, int to, boolean value) {
+		perform(OR, from, to, value);
 	}
 	
 	public void orBit(int position, boolean value) {
@@ -436,7 +486,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	public void xor(boolean value) {
-		perform(XOR, value);
+		performAdj(XOR, start, finish, value);
+	}
+	
+	public void xorRange(int from, int to, boolean value) {
+		perform(XOR, from, to, value);
 	}
 	
 	public void xorBit(int position, boolean value) {
@@ -489,22 +543,23 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	@Override
 	public byte byteValue() {
-		return getByte(0);
+		//TODO others should follow this pattern
+		return (byte) getBitsAdj(start, Math.min(8, finish-start));
 	}
 	
 	@Override
 	public short shortValue() {
-		return getShort(0);
+		return (short) getBitsAdj(start, Math.min(16, finish-start));
 	}
 	
 	@Override
 	public int intValue() {
-		return getInt(0);
+		return (int) getBitsAdj(start, Math.min(32, finish-start));
 	}
 	
 	@Override
 	public long longValue() {
-		return getLong(0);
+		return (long) getBitsAdj(start, Math.min(64, finish-start));
 	}
 	
 	public BigInteger bigIntValue() {
@@ -559,12 +614,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		int h = 0;
 		//optimized case, starts at zero
 		if (start == 0) {
-			final int f = finish >> ADDRESS_BITS;
+			final int f = (finish-1) >> ADDRESS_BITS;
 			for (int i = 0; i < f; i++) {
 				final long l = bits[i];
 				h = h * 31 + ((int) l       );
 				h = h * 31 + ((int)(l >> 32));
 			}
+			//TODO equivalently finishMask != -1?
 			if ((finish & ADDRESS_MASK) != 0) {
 				final long l = bits[f] & finishMask;
 				h = h * 31 + ((int) l       );
@@ -592,11 +648,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		final int size = finish - start;
 		switch (size) {
 		case 0 : return "";
-		case 1 : return getBitImpl(0) ? "1" : "0";
+		case 1 : return getBitAdj(start) ? "1" : "0";
 		default :
 			StringBuilder sb = new StringBuilder(size);
-			for (int i = 0; i < size; i++) {
-				sb.append(getBitImpl(size - 1 - i) ? '1' : '0');
+			for (int i = finish - 1; i >= start; i--) {
+				sb.append(getBitAdj(i) ? '1' : '0');
 			}
 			return sb.toString();
 		}
@@ -617,83 +673,127 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (position < 0)  throw new IllegalArgumentException();
 		position += start;
 		if (position >= finish) throw new IllegalArgumentException();
-		final int i = position >> ADDRESS_BITS;
-		final long m = 1L << (position & ADDRESS_MASK);
-		switch(operation) {
-		case SET : 
-			if (value) {
-				bits[i] |=  m;
-			} else {
-				bits[i] &= ~m;
-			}
-			break;
-		case AND :
-			if (value) {
-				/* no-op */
-			} else {
-				bits[i] &= ~m;
-			}
-			break;
-		case OR :
-			if (value) {
-				bits[i] |=  m;
-			} else {
-				/* no-op */
-			}
-			break;
-		case XOR :
-			if (value) {
-				bits[i] ^=  m;
-			} else {
-				/* no-op */
-			}
-			break;
-		}
+		performAdj(operation, position, value);
 	}
 	
-	private void perform(int operation, boolean value) {
+	private void perform(int operation, int from, int to, boolean value) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		performAdj(operation, from, to, value);
+	}
+
+	private void performAdj(int operation, int from, int to, boolean value) {
+		if (start == finish) return; // nothing to do for an empty vector
+		
+		//rationalize possible operations into SETs or INVERTs
 		switch (operation) {
-		case AND: if (value == false) perform(SET, false); else return; 
-		case OR:  if (value == true) perform(SET, true); else return;
+		case AND: if (value == false) performAdj(SET, from, to, false); else return; 
+		case OR:  if (value == true) performAdj(SET, from, to, true); else return;
 		case XOR : if (value == false) return;
 		}
-		final long m = value ? -1L : 0L;
-		switch (operation) {
+		
+		final int f = start >> ADDRESS_BITS;
+		final int t = (finish-1) >> ADDRESS_BITS;
+		
+		if (f == t) { // change falls into one element
+			final long mask = startMask & finishMask;
+			switch (operation) {
+			case SET :
+				if (value) {
+					bits[f] |= mask;
+				} else {
+					bits[f] &= ~mask;
+				}
+				break;
+			case XOR :
+				bits[f] ^= mask;
+				break;
+			}
+			return;
+		}
+		
+		switch (operation) { //process intermediate elements
 		case SET :
-			Arrays.fill(bits, m);
-			break;
-		case AND :
-			for (int i = 0; i < bits.length; i++) bits[i] &= m;
+			Arrays.fill(bits, f+1, t, value ? -1L : 0L);
 			break;
 		case XOR :
-			for (int i = 0; i < bits.length; i++) bits[i] = ~bits[i];
+			for (int i = f+1; i < t; i++) bits[i] = ~bits[i];
 			break;
 		}
-		if (value) bits[bits.length - 1] &= mask;
+		
+		//process terminals
+		switch (operation) {
+		case SET :
+			if (value) {
+				bits[f] |= startMask;
+				bits[t] |= finishMask;
+			} else {
+				bits[f] &= ~startMask;
+				bits[t] &= ~finishMask;
+			}
+			break;
+		case XOR :
+			bits[f] ^= startMask;
+			bits[t] ^= finishMask;
+			break;
+		}
 	}
-	
+
 	//assumes address size is size of long
 	private void perform(int operation, int position, long bs, int length) {
 		if (position < 0) throw new IllegalArgumentException();
 		if (length < 0 || length > ADDRESS_SIZE) throw new IllegalArgumentException();
 		position += start;
-		if (start + position + length > finish) throw new IllegalArgumentException();
+		if (position + length > finish) throw new IllegalArgumentException();
 		if (length == 0) return;
 		final int i = position >> ADDRESS_BITS;
 		final int s = position & ADDRESS_MASK;
 		final long m = length == ADDRESS_SIZE ? -1L : (1L << length) - 1L;
 		final long v = bs & m;
 		if (s == 0) { // fast case, long-aligned
-			bits[i] = bits[i] & ~m | v;
+			switch (operation) {
+			case SET : bits[i] = bits[i] & ~m | v; break;
+			case AND : bits[i] &= v | ~m; break;
+			case OR  : bits[i] |= v; break;
+			case XOR : bits[i] ^= v; break;
+			}
 		} else if (s + length <= ADDRESS_SIZE) { //single long case
-			bits[i] = bits[i] & Long.rotateLeft(~m, s) | (v << s);
+			switch (operation) {
+			case SET : bits[i] = bits[i] & Long.rotateLeft(~m, s) | (v << s); break;
+			case AND : bits[i] &= (v << s) | Long.rotateLeft(~m, s); break;
+			case OR  : bits[i] |= v << s; break;
+			case XOR : bits[i] ^= v << s; break;
+			}
+			
 		} else {
-			bits[i]   = bits[i  ] & (-1L >>> (         ADDRESS_SIZE - s)) | (v <<                  s );
-			bits[i+1] = bits[i+1] & (-1L <<  (length - ADDRESS_SIZE + s)) | (v >>> (ADDRESS_SIZE - s));
+			switch (operation) {
+			case SET :
+				bits[i  ] = bits[i  ] & (-1L >>> (         ADDRESS_SIZE - s)) | (v <<                  s );
+				bits[i+1] = bits[i+1] & (-1L <<  (length - ADDRESS_SIZE + s)) | (v >>> (ADDRESS_SIZE - s));
+				break;
+			case AND :
+				bits[i  ]  &= (v <<                  s ) | (-1L >>> (         ADDRESS_SIZE - s));
+				bits[i+1]  &= (v >>> (ADDRESS_SIZE - s)) | (-1L <<  (length - ADDRESS_SIZE + s));
+				break;
+			case OR  :
+				bits[i  ]  |= (v <<                  s );
+				bits[i+1]  |= (v >>> (ADDRESS_SIZE - s));
+				break;
+			case XOR :
+				bits[i  ]  ^= (v <<                  s );
+				bits[i+1]  ^= (v >>> (ADDRESS_SIZE - s));
+				break;
+			}
 		}
 	}
 	
 	private void perform(int operation, BitVector that) {
+		if (this.size() != that.size()) throw new IllegalArgumentException("mismatched vector size");
+		perform(operation, 0, that);
+		/*
 		if (that == null) throw new IllegalArgumentException("null vector");
 		final int thisSize = this.finish - this.start;
 		final int thatSize = that.finish - that.start;
@@ -722,12 +822,25 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		} else {
 			perform(operation, 0, that);
 		}
+		*/
 	}
 
 	private void perform(int operation, int position, BitVector that) {
-		if (this == null) throw new IllegalArgumentException("null vector");
-		final int thatSize = that.size;
+		if (that == null) throw new IllegalArgumentException("null vector");
+		final int thatSize = that.size();
 		if (thatSize == 0) return;
+		if (thatSize <= ADDRESS_SIZE) {
+			perform(operation, position, that.getBits(0, thatSize), thatSize);
+			return;
+		}
+		if (position < 0) throw new IllegalArgumentException("negative position");
+		position += this.start;
+		if (position + that.finish - that.start > this.finish) throw new IllegalArgumentException();
+		//TODO *really* need to optimize this
+		for (int s = that.start; s < that.finish; s++) {
+			performAdj(operation, position++, that.getBitAdj(s));
+		}
+		/*
 		final long[] thatBits = that.bits;
 		//basic optimization: if the vector contains only one long perform the operation on the single long
 		if (thatSize <= ADDRESS_SIZE) perform(operation, position, that.bits[0], thatSize);
@@ -775,6 +888,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 		//last bits as a special case
 		//TODO work out how to mask these remaining bits
+		 */
 	}
 	
 	private boolean compare(final int comp, final BitVector that) {
@@ -788,24 +902,26 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
 			}
 		}
+		//TODO worth optimizing for case where this == that?
 		//fully optimal case - both start at 0
 		//TODO can weaken this constraint - can optimize if their start are equal
 		if (this.start == 0 && that.start == 0) {
 			final long[] thisBits = this.bits;
 			final long[] thatBits = that.bits;
+			final int t = (finish-1) >> ADDRESS_BITS;
 			switch (comp) {
 			case EQUALS :
-				for (int i = thisBits.length-2; i >= 0; i++) {
+				for (int i = t-1; i >= 0; i--) {
 					if (thisBits[i] != thatBits[i]) return false;
 				}
 				break;
 			case INTERSECTS :
-				for (int i = thisBits.length-2; i >= 0; i++) {
+				for (int i = t-1; i >= 0; i--) {
 					if ((thisBits[i] & thatBits[i]) != 0) return true;
 				}
 				break;
 			case CONTAINS :
-				for (int i = thisBits.length-2; i >= 0; i++) {
+				for (int i = t-1; i >= 0; i--) {
 					final long bits = thisBits[i];
 					if ((bits | thatBits[i]) != bits) return false;
 				}
@@ -813,8 +929,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp); 
 			}
 			{
-				final long thisB = thisBits[thisBits.length - 1] & this.finishMask;
-				final long thatB = thatBits[thatBits.length] & that.finishMask;
+				final long thisB = thisBits[t] & this.finishMask;
+				final long thatB = thatBits[t] & that.finishMask;
 				switch (comp) {
 				case EQUALS : return thisB == thatB;
 				case INTERSECTS : return (thisB & thatB) == 0;
@@ -857,31 +973,132 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		switch (comp) {
 		case EQUALS :
 			for (int i = 0; i < size; i++) {
-				if (that.getBitImpl(i) != this.getBitImpl(i)) return false;
+				if (that.getBitAdj(that.start + i) != this.getBitAdj(this.start + i)) return false;
 			}
 			return true;
 		case INTERSECTS :
 			for (int i = 0; i < size; i++) {
-				if (that.getBitImpl(i) && this.getBitImpl(i)) return true;
+				if (that.getBitAdj(that.start + i) && this.getBitAdj(this.start + i)) return true;
 			}
 			return false;
 		case CONTAINS :
 			for (int i = 0; i < size; i++) {
-				if (that.getBitImpl(i) && !this.getBitImpl(i)) return false;
+				if (that.getBitAdj(that.start + i) && !this.getBitAdj(this.start + i)) return false;
 			}
 			return true;
 		default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
 		}
 	}
 
-	private boolean getBitImpl(int position) {
-		position += start;
+	private boolean getBitAdj(int position) {
 		final int i = position >> ADDRESS_BITS;
 		final long m = 1L << (position & ADDRESS_MASK);
 		return (bits[i] & m) != 0;
-
 	}
 
+	private long getBitsAdj(int position, int length) {
+		final int i = position >> ADDRESS_BITS;
+		final int s = position & ADDRESS_MASK;
+		final long b;
+		if (s == 0) { // fast case, long-aligned
+			b = bits[i];
+		} else if (s + length <= ADDRESS_SIZE) { //single long case
+			b = bits[i] >>> s;
+		} else {
+			b = (bits[i] >>> s) | (bits[i+1] << (s + length - ADDRESS_SIZE));
+		}
+		return length == ADDRESS_SIZE ? b : b & ((1 << length) - 1);
+	}
+	private BitVector getVectorAdj(int position, int length, boolean mutable) {
+		position += start;
+		final long[] newBits;
+		if (length == finish) {
+			newBits = bits.clone();
+		} else if (length == 0) {
+			newBits = new long[0];
+		} else {
+			final int from = position >> ADDRESS_BITS;
+			final int to = (position + length + ADDRESS_MASK) >> ADDRESS_BITS;
+			if ((position & ADDRESS_MASK) == 0) {
+				newBits = Arrays.copyOfRange(bits, from, to);
+			} else {
+				final int s = position & ADDRESS_MASK;
+				final int len = to - from;
+				newBits = new long[len];
+				//do all but last bit
+				int j = from;
+				int i = 0;
+				for (; i < len - 1; i++, j++) {
+					newBits[i] = (bits[j] >>> s) | (bits[j+1] << (ADDRESS_SIZE - s));
+				}
+				//do last bits as a special case
+				if (j+1 < len) {
+					newBits[i] = (bits[j] >>> s) | (bits[j+1] << (ADDRESS_SIZE - s));
+				} else {
+					newBits[i] = bits[j] >>> s;
+				}
+			}
+		}
+		return new BitVector(0, length, newBits, mutable);
+	}
+
+	private int countOnesAdj(int from, int to) {
+		if (from == to) return 0;
+		final int f = from >> ADDRESS_BITS;
+		final int t = (to-1) >> ADDRESS_BITS;
+		final int r = from & ADDRESS_MASK;
+		final int l = to & ADDRESS_MASK;
+		if (f == t) {
+			//alternatively: (0x8000000000000000L >> (l - r - 1)) >>> (ADDRESS_SIZE - l);
+			final long m = (-1L >>> (ADDRESS_SIZE - l + r)) << r;
+			return Long.bitCount(m & bits[f]);  
+		}
+
+		int count = 0;
+		count += Long.bitCount( (-1L << r) & bits[f] );
+		for (int i = f+1; i < t; i++) {
+			count += Long.bitCount(bits[i]);
+		}
+		count += Long.bitCount( (-1L >>> (ADDRESS_SIZE - l)) & bits[t] );
+		return count;
+	}
+
+	private void performAdj(int operation, int position, boolean value) {
+		final int i = position >> ADDRESS_BITS;
+		final long m = 1L << (position & ADDRESS_MASK);
+		switch(operation) {
+		case SET : 
+			if (value) {
+				bits[i] |=  m;
+			} else {
+				bits[i] &= ~m;
+			}
+			break;
+		case AND :
+			if (value) {
+				/* no-op */
+			} else {
+				bits[i] &= ~m;
+			}
+			break;
+		case OR :
+			if (value) {
+				bits[i] |=  m;
+			} else {
+				/* no-op */
+			}
+			break;
+		case XOR :
+			if (value) {
+				bits[i] ^=  m;
+			} else {
+				/* no-op */
+			}
+			break;
+		}
+
+	}
+	
 	// inner classes
 	
 	private class BitIterator implements ListIterator<Boolean> {
@@ -912,7 +1129,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		@Override
 		public Boolean next() {
 			if (!hasNext()) throw new NoSuchElementException();
-			return Boolean.valueOf( getBitImpl(index++) );
+			return Boolean.valueOf( getBitAdj(index++) );
 		}
 		
 		@Override
@@ -928,7 +1145,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		@Override
 		public Boolean previous() {
 			if (!hasPrevious()) throw new NoSuchElementException();
-			return Boolean.valueOf( getBitImpl(--index) );
+			return Boolean.valueOf( getBitAdj(--index) );
 		}
 
 		@Override

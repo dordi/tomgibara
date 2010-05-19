@@ -22,7 +22,7 @@ public class BitVectorTest extends TestCase {
 		for (int i = 0; i < size; i++) {
 			int a = random.nextInt(v.size()+1);
 			int b = a + random.nextInt(v.size()+1-a);
-			vs[i+1] = v.view(a, b);
+			vs[i+1] = v.rangeView(a, b);
 		}
 		return vs;
 	}
@@ -90,7 +90,7 @@ public class BitVectorTest extends TestCase {
 		testNumberMethods(v, -1);
 		
 		//check view vector
-		v = v.view(64, 128);
+		v = v.rangeView(64, 128);
 		testNumberMethods(v, -1);
 		
 		//check empty vector

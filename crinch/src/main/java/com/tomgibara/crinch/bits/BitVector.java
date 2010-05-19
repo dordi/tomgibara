@@ -143,7 +143,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	//returns a new bitvector that is backed by the same data as this one
-	public BitVector view(int from, int to) {
+	public BitVector rangeView(int from, int to) {
 		return duplicate(from, to, false, mutable);
 	}
 	
@@ -153,7 +153,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	//returns a new mutable bitvector that is backed by the same data as this one
-	public BitVector mutableView(int from, int to) {
+	public BitVector mutableRangeView(int from, int to) {
 		return duplicate(from, to, false, true);
 	}
 	
@@ -163,7 +163,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	//returns a new immutable bitvector that is backed by the same data as this one
-	public BitVector immutableView(int from, int to) {
+	public BitVector immutableRangeView(int from, int to) {
 		return duplicate(from, to, false, false);
 	}
 	
@@ -173,7 +173,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return duplicate(true, mutable);
 	}
 
-	public BitVector copy(int from, int to) {
+	public BitVector rangeCopy(int from, int to) {
 		return duplicate(from, to, true, mutable);
 	}
 	
@@ -181,7 +181,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return duplicate(true, false);
 	}
 
-	public BitVector immutableCopy(int from, int to) {
+	public BitVector immutableRangeCopy(int from, int to) {
 		return duplicate(from, to, true, false);
 	}
 	
@@ -189,7 +189,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return duplicate(true, true);
 	}
 
-	public BitVector mutableCopy(int from, int to) {
+	public BitVector mutableRangeCopy(int from, int to) {
 		return duplicate(from, to, true, true);
 	}
 	

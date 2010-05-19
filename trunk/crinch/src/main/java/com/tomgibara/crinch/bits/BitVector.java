@@ -320,7 +320,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public byte[] toByteArray() {
 		//TODO can optimize when byte aligned
-		final int size = start - finish;
+		final int size = finish - start;
 		final int length = (size + 7) >> 3;
 		final byte[] bytes = new byte[length];
 		if (length == 0) return bytes;
@@ -563,7 +563,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	public BigInteger bigIntValue() {
-		return new BigInteger(toByteArray());
+		return start == finish ? BigInteger.ZERO : new BigInteger(toByteArray());
 	}
 	
 	@Override
@@ -998,6 +998,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	private long getBitsAdj(int position, int length) {
 		final int i = position >> ADDRESS_BITS;
+		if (i >= bits.length) return 0L; // may happen if position == finish
 		final int s = position & ADDRESS_MASK;
 		final long b;
 		if (s == 0) { // fast case, long-aligned
@@ -1007,7 +1008,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		} else {
 			b = (bits[i] >>> s) | (bits[i+1] << (s + length - ADDRESS_SIZE));
 		}
-		return length == ADDRESS_SIZE ? b : b & ((1 << length) - 1);
+		return length == ADDRESS_SIZE ? b : b & ((1L << length) - 1);
 	}
 	private BitVector getVectorAdj(int position, int length, boolean mutable) {
 		position += start;

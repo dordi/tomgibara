@@ -206,6 +206,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return start == 0;
 	}
 	
+	public boolean isMutable() {
+		return mutable;
+	}
+	
 	// getters
 	
 	public boolean getBit(int position) {
@@ -661,6 +665,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
+	//shallow, externally identical to calling view();
 	public BitVector clone() {
 		try {
 			return (BitVector) super.clone();

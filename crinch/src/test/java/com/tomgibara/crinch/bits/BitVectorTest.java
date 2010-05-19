@@ -169,4 +169,40 @@ public class BitVectorTest extends TestCase {
 		assertEquals(new BitVector("1111111111111111"), v);
 	}
 	
+	public void testCloneViewAndCopy() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				BitVector v = vs[j];
+				
+				BitVector cl = v.clone();
+				assertEquals(v, cl);
+				assertNotSame(v, cl);
+				
+				BitVector cp = v.copy();
+				assertEquals(v, cp);
+				assertNotSame(v, cp);
+				
+				BitVector vw = v.view();
+				assertEquals(v, vw);
+				assertNotSame(v, vw);
+				
+				//check clone and view are backed by same data
+				cl.xor(true);
+				cp.xorVector(vw);
+				assertEquals(cp.size(), cp.countOnes());
+				
+				assertTrue(v.isMutable());
+				BitVector mu = v.mutable();
+				assertSame(v, mu);
+				BitVector im = v.immutable();
+				assertNotSame(v, im);
+				assertFalse(im.isMutable());
+				mu = im.mutable();
+				assertNotSame(im, mu);
+				assertTrue(mu.isMutable());
+			}
+		}
+	}
+	
 }

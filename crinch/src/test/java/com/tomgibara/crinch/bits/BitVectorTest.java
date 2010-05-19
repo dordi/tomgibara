@@ -76,6 +76,39 @@ public class BitVectorTest extends TestCase {
 		assertEquals((byte)new BigInteger("10010111", 2).intValue(), v.getByte(64));
 	}
 
+	public void testNumberMethods() {
+		//check short vector
+		BitVector v = new BitVector(1);
+		testNumberMethods(v, 0);
+		v.set(true);
+		testNumberMethods(v, 1);
+		
+		//check long vector
+		v = new BitVector(128);
+		testNumberMethods(v, 0);
+		v.set(true);
+		testNumberMethods(v, -1);
+		
+		//check view vector
+		v = v.view(64, 128);
+		testNumberMethods(v, -1);
+		
+		//check empty vector
+		v = new BitVector(0);
+		testNumberMethods(v, 0);
+		
+	}
+	
+	private void testNumberMethods(BitVector v, long value) {
+		assertEquals((byte) value, v.byteValue());
+		assertEquals((short) value, v.shortValue());
+		assertEquals((int) value, v.intValue());
+		assertEquals(value, v.longValue());
+		assertEquals(BigInteger.valueOf(value), v.bigIntValue());
+		assertEquals((float) value, v.floatValue());
+		assertEquals((double) value, v.doubleValue());
+	}
+	
 	public void testBitCounts() {
 		for (int i = 0; i < 10; i++) {
 			BitVector[] vs = randomVectorFamily(10);
@@ -83,24 +116,6 @@ public class BitVectorTest extends TestCase {
 				testBitCounts(vs[j]);
 			}
 		}
-	}
-	
-	public void testSetGetBit() {
-		for (int i = 0; i < 10; i++) {
-			BitVector[] vs = randomVectorFamily(10);
-			for (int j = 0; j < vs.length; j++) {
-				testGetSetBit(vs[j]);
-			}
-		}
-	}
-
-	private void testGetSetBit(BitVector v) {
-		BitVector c = v.copy();
-		int i = random.nextInt(v.size());
-		v.setBit(i, !v.getBit(i));
-		c.xorVector(v);
-		assertTrue(c.getBit(i));
-		assertEquals(1, c.countOnes());
 	}
 	
 	private void testBitCounts(BitVector v) {
@@ -122,6 +137,24 @@ public class BitVectorTest extends TestCase {
 			assertEquals(oneCount, v.countOnes(a, b));
 			assertEquals(zeroCount, v.countZeros(a, b));
 		}
+	}
+	
+	public void testSetGetBit() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testGetSetBit(vs[j]);
+			}
+		}
+	}
+
+	private void testGetSetBit(BitVector v) {
+		BitVector c = v.copy();
+		int i = random.nextInt(v.size());
+		v.setBit(i, !v.getBit(i));
+		c.xorVector(v);
+		assertTrue(c.getBit(i));
+		assertEquals(1, c.countOnes());
 	}
 	
 }

@@ -694,6 +694,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	private void performAdj(int operation, int from, int to, boolean value) {
+		if (!mutable) throw new IllegalStateException();
 		if (start == finish) return; // nothing to do for an empty vector
 		
 		//rationalize possible operations into SETs or INVERTs
@@ -756,6 +757,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (length < 0 || length > ADDRESS_SIZE) throw new IllegalArgumentException();
 		position += start;
 		if (position + length > finish) throw new IllegalArgumentException();
+		if (!mutable) throw new IllegalStateException();
 		if (length == 0) return;
 		final int i = position >> ADDRESS_BITS;
 		final int s = position & ADDRESS_MASK;
@@ -995,6 +997,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	private void performAdj(int operation, int position, boolean value) {
+		if (!mutable) throw new IllegalStateException();
 		final int i = position >> ADDRESS_BITS;
 		final long m = 1L << (position & ADDRESS_MASK);
 		switch(operation) {

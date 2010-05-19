@@ -204,5 +204,51 @@ public class BitVectorTest extends TestCase {
 			}
 		}
 	}
-	
+
+	public void testMutability() {
+		BitVector v = new BitVector(1).immutable();
+		try {
+			v.modify(BitVector.Operation.SET, true);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.modifyRange(BitVector.Operation.SET, 0, 1, true);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.modifyBit(BitVector.Operation.SET, 0, true);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.modifyBits(BitVector.Operation.SET, 0, 1L, 1);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.modifyVector(BitVector.Operation.SET, v);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.modifyVector(BitVector.Operation.SET, 0, v);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		}
+		try {
+			v.duplicate(false, true);
+			fail();
+		} catch (IllegalStateException e) {
+			//expected
+		} 
+	}
+
 }

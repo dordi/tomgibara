@@ -1,5 +1,9 @@
 package com.tomgibara.crinch.bits;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -251,4 +255,50 @@ public class BitVectorTest extends TestCase {
 		} 
 	}
 
+	public void testSerialization() throws Exception {
+		BitVector v1 = randomVector(1000);
+		BitVector w1 = v1.view();
+		BitVector x1 = v1.copy();
+		BitVector y1 = x1.immutableView();
+		
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ObjectOutputStream oout = new ObjectOutputStream(out);
+		oout.writeObject(v1);
+		oout.writeObject(w1);
+		oout.writeObject(x1);
+		oout.writeObject(y1);
+		oout.close();
+		
+		ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+		ObjectInputStream oin = new ObjectInputStream(in);
+		BitVector v2 = (BitVector) oin.readObject();
+		BitVector w2 = (BitVector) oin.readObject();
+		BitVector x2 = (BitVector) oin.readObject();
+		BitVector y2 = (BitVector) oin.readObject();
+		oin.close();
+		
+		assertNotSame(v1, v2);
+		assertNotSame(w1, w2);
+		assertNotSame(x1, x2);
+		assertNotSame(y1, y2);
+		
+		assertEquals(v1, v2);
+		assertEquals(w1, w2);
+		assertEquals(x1, x2);
+		assertEquals(y1, y2);
+
+		assertTrue(v2.isMutable());
+		assertTrue(w2.isMutable());
+		assertTrue(x2.isMutable());
+		assertFalse(y2.isMutable());
+
+		assertTrue(x2.equals(v2));
+		w2.set(true);
+		assertEquals(1000, v2.countOnes());
+		assertFalse(x2.equals(v2));
+		x2.set(true);
+		assertEquals(1000, y2.countOnes());
+		
+	}
+	
 }

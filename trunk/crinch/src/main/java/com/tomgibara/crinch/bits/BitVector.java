@@ -1,11 +1,14 @@
 package com.tomgibara.crinch.bits;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
+//stopping short of implementing List - so many more methods - many of which cannot be supported
 public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
 
 	// statics
@@ -48,12 +51,14 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	// fields
 	
+	//core fields
 	private final int start;
 	private final int finish;
 	private final long[] bits;
+	private final boolean mutable;
+	//derived fields
 	private final long startMask;
 	private final long finishMask;
-	private final boolean mutable;
 	
 	// constructors
 	
@@ -100,6 +105,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			this.finishMask = finishMask;
 		}
 		this.mutable = mutable;
+	}
+	
+	private BitVector(Serial serial) {
+		this(serial.start, serial.finish, serial.bits, serial.mutable);
 	}
 	
 	// duplication
@@ -550,7 +559,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	@Override
 	public byte byteValue() {
-		//TODO others should follow this pattern
 		return (byte) getBitsAdj(start, Math.min(8, finish-start));
 	}
 	
@@ -673,6 +681,12 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			//should never occur
 			throw new RuntimeException("Clone failure!", e);
 		}
+	}
+
+	// serialization
+	
+	private Object writeReplace() throws ObjectStreamException {
+		return new Serial(this);
 	}
 	
 	// private utility methods
@@ -1101,6 +1115,28 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
+	}
+
+	private static class Serial implements Serializable {
+		
+		private static final long serialVersionUID = -1476938830216828886L;
+
+		private int start;
+		private int finish;
+		private long[] bits;
+		private boolean mutable;
+		
+		Serial(BitVector v) {
+			start = v.start;
+			finish = v.finish;
+			bits = v.bits;
+			mutable = v.mutable;
+		}
+		
+		private Object readResolve() throws ObjectStreamException {
+			return new BitVector(this);
+		}
+		
 	}
 	
 }

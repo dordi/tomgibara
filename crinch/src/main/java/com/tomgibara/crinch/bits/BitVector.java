@@ -95,7 +95,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.start = start;
 		this.finish = finish;
 		this.bits = bits;
-		final long startMask = -1 << (start - startIndex * ADDRESS_SIZE);
+		final long startMask = -1L << (start - startIndex * ADDRESS_SIZE);
 		final long finishMask = -1L >>> (finishIndex * ADDRESS_SIZE - finish);
 		//TODO necessary? confirm this should be copied to all
 		if (startIndex + 1 == finishIndex) {
@@ -268,9 +268,22 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	public boolean compare(Comparison comparison, BitVector vector) {
 		return compare(comparison.ordinal(), vector);
 	}
-	
-	//TODO consider methods that compare subranges
 
+	// tests
+	
+	public boolean isAll(boolean value) {
+		return isAllAdj(start, finish, value);
+	}
+	
+	public boolean isRangeAll(int from, int to, boolean value) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return isAllAdj(from, to, value);
+	}
+	
 	// views
 	
 	public byte[] toByteArray() {
@@ -493,6 +506,25 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	public boolean testContains(BitVector vector) {
 		return compare(CONTAINS, vector);
 	}
+
+	// convenience tests
+
+	public boolean isAllZeros() {
+		return isAllAdj(start, finish, false);
+	}
+	
+	public boolean isRangeAllZeros(int from, int to) {
+		return isRangeAll(from, to, false);
+	}
+	
+	public boolean isAllOnes() {
+		return isAllAdj(start, finish, true);
+	}
+	
+	public boolean isRangeAllOnes(int from, int to) {
+		return isRangeAll(from, to, true);
+	}
+	
 	
 	// convenience views
 	
@@ -1007,6 +1039,44 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 		count += Long.bitCount( (-1L >>> (ADDRESS_SIZE - l)) & bits[t] );
 		return count;
+	}
+
+	private boolean isAllAdj(int from, int to, boolean value) {
+		if (from == to) return true;
+		final int f = from >> ADDRESS_BITS;
+		final int t = (to-1) >> ADDRESS_BITS;
+		
+		final long fm;
+		final long tm;
+		if (value) {
+			fm = -1L >>> (ADDRESS_SIZE -(from & ADDRESS_MASK));
+			tm = -1L << (to & ADDRESS_SIZE);
+		} else {
+			fm = -1L << (from & ADDRESS_MASK);
+			tm = -1L >>> (ADDRESS_SIZE - (to & ADDRESS_MASK));
+		}
+
+		if (f == t) { // bits fit into a single element
+			if (value) {
+				return (bits[f] | fm | tm) == -1L;
+			} else {
+				return (bits[f] & fm & tm) == 0L;
+			}
+		}
+
+		//check intermediate elements
+		if (value) {
+			for (int i = f+1; i < t; i++) if (bits[i] != -1L) return false;
+		} else {
+			for (int i = f+1; i < t; i++) if (bits[i] != 0L) return false;
+		}
+
+		//check terminals
+		if (value) {
+			return (bits[f] | fm) == -1L && (bits[t] | tm) == -1L;
+		} else {
+			return (bits[f] & fm) == 0L && (bits[t] & tm) == 0L;
+		}
 	}
 
 	private void performAdj(int operation, int position, boolean value) {

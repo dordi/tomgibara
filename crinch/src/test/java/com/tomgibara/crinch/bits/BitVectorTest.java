@@ -332,5 +332,44 @@ public class BitVectorTest extends TestCase {
 		assertEquals(1000, y2.countOnes());
 		
 	}
+
+	public void testIsAll() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testIsAll(vs[j]);
+			}
+		}
+	}
+	
+	private void testIsAll(BitVector v) {
+		v.set(false);
+		assertTrue(v.isAllZeros());
+		v.set(true);
+		assertTrue(v.isAllOnes());
+		int reps = v.size();
+		for (int i = 0; i < reps; i++) {
+			int a = random.nextInt(v.size()+1);
+			int b = a + random.nextInt(v.size()+1-a);
+			v.setRange(a, b, false);
+			assertTrue(v.isRangeAllZeros(a, b));
+			v.setRange(a, b, true);
+			assertTrue(v.isRangeAllOnes(a, b));
+		}
+	}
+	
+	public void testCompare() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testCompare(vs[j]);
+			}
+		}
+	}
+
+	private void testCompare(BitVector v) {
+		assertTrue(v.testEquals(v));
+		assertTrue(v.testContains(v));
+	}
 	
 }

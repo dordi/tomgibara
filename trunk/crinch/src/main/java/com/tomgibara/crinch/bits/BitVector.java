@@ -111,6 +111,20 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this(serial.start, serial.finish, serial.bits, serial.mutable);
 	}
 	
+	// accessors
+	
+	public int size() {
+		return finish - start;
+	}
+
+	public boolean isAligned() {
+		return start == 0;
+	}
+	
+	public boolean isMutable() {
+		return mutable;
+	}
+	
 	// duplication
 
 	//TODO consider adding a trimmed copy, or guarantee this is trimmed?
@@ -142,81 +156,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	//only creates a new bit vector if necessary
 	public BitVector immutable() {
 		return mutable ? immutableCopy() : this;
-	}
-	
-	// views
-	
-	//TODO consider renaming range methods, eg rangeView
-	
-	//returns a new bitvector that is backed by the same data as this one
-	//equivalent to clone
-	public BitVector view() {
-		return duplicate(false, mutable);
-	}
-	
-	//returns a new bitvector that is backed by the same data as this one
-	public BitVector rangeView(int from, int to) {
-		return duplicate(from, to, false, mutable);
-	}
-	
-	//returns a new mutable bitvector that is backed by the same data as this one
-	public BitVector mutableView() {
-		return duplicate(false, true);
-	}
-	
-	//returns a new mutable bitvector that is backed by the same data as this one
-	public BitVector mutableRangeView(int from, int to) {
-		return duplicate(from, to, false, true);
-	}
-	
-	//returns a new immutable bitvector that is backed by the same data as this one
-	public BitVector immutableView() {
-		return duplicate(false, false);
-	}
-	
-	//returns a new immutable bitvector that is backed by the same data as this one
-	public BitVector immutableRangeView(int from, int to) {
-		return duplicate(from, to, false, false);
-	}
-	
-	// copies
-	
-	public BitVector copy() {
-		return duplicate(true, mutable);
-	}
-
-	public BitVector rangeCopy(int from, int to) {
-		return duplicate(from, to, true, mutable);
-	}
-	
-	public BitVector immutableCopy() {
-		return duplicate(true, false);
-	}
-
-	public BitVector immutableRangeCopy(int from, int to) {
-		return duplicate(from, to, true, false);
-	}
-	
-	public BitVector mutableCopy() {
-		return duplicate(true, true);
-	}
-
-	public BitVector mutableRangeCopy(int from, int to) {
-		return duplicate(from, to, true, true);
-	}
-	
-	// accessors
-	
-	public int size() {
-		return finish - start;
-	}
-
-	public boolean isAligned() {
-		return start == 0;
-	}
-	
-	public boolean isMutable() {
-		return mutable;
 	}
 	
 	// getters
@@ -553,6 +492,65 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public boolean testContains(BitVector vector) {
 		return compare(CONTAINS, vector);
+	}
+	
+	// convenience views
+	
+	//returns a new bitvector that is backed by the same data as this one
+	//equivalent to clone
+	public BitVector view() {
+		return duplicate(false, mutable);
+	}
+	
+	//returns a new bitvector that is backed by the same data as this one
+	public BitVector rangeView(int from, int to) {
+		return duplicate(from, to, false, mutable);
+	}
+	
+	//returns a new mutable bitvector that is backed by the same data as this one
+	public BitVector mutableView() {
+		return duplicate(false, true);
+	}
+	
+	//returns a new mutable bitvector that is backed by the same data as this one
+	public BitVector mutableRangeView(int from, int to) {
+		return duplicate(from, to, false, true);
+	}
+	
+	//returns a new immutable bitvector that is backed by the same data as this one
+	public BitVector immutableView() {
+		return duplicate(false, false);
+	}
+	
+	//returns a new immutable bitvector that is backed by the same data as this one
+	public BitVector immutableRangeView(int from, int to) {
+		return duplicate(from, to, false, false);
+	}
+	
+	// convenience copies
+	
+	public BitVector copy() {
+		return duplicate(true, mutable);
+	}
+
+	public BitVector rangeCopy(int from, int to) {
+		return duplicate(from, to, true, mutable);
+	}
+	
+	public BitVector immutableCopy() {
+		return duplicate(true, false);
+	}
+
+	public BitVector immutableRangeCopy(int from, int to) {
+		return duplicate(from, to, true, false);
+	}
+	
+	public BitVector mutableCopy() {
+		return duplicate(true, true);
+	}
+
+	public BitVector mutableRangeCopy(int from, int to) {
+		return duplicate(from, to, true, true);
 	}
 	
 	// number methods

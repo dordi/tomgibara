@@ -130,7 +130,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	//TODO consider adding a trimmed copy, or guarantee this is trimmed?
 	//only creates a new bit vector if necessary
 	public BitVector aligned() {
-		return start == 0 ? this : getVectorAdj(start, finish, true);
+		return start == 0 ? this : getVectorAdj(start, finish - start, true);
 	}
 
 	public BitVector duplicate(boolean copy, boolean mutable) {
@@ -156,6 +156,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	//only creates a new bit vector if necessary
 	public BitVector immutable() {
 		return mutable ? immutableCopy() : this;
+	}
+	
+	public BitVector alignedCopy(boolean mutable) {
+		return getVectorAdj(start, finish - start, mutable);
 	}
 	
 	// getters
@@ -988,7 +992,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return length == ADDRESS_SIZE ? b : b & ((1L << length) - 1);
 	}
 	private BitVector getVectorAdj(int position, int length, boolean mutable) {
-		position += start;
 		final long[] newBits;
 		if (length == finish) {
 			newBits = bits.clone();

@@ -368,8 +368,35 @@ public class BitVectorTest extends TestCase {
 	}
 
 	private void testCompare(BitVector v) {
+		int size = v.size();
 		assertTrue(v.testEquals(v));
 		assertTrue(v.testContains(v));
+		if (!v.isAllZeros()) assertTrue(v.testIntersects(v));
+		
+		BitVector w = v.alignedCopy(true);
+		assertTrue(v.testEquals(w));
+		assertTrue(w.testEquals(v));
+		assertTrue(v.testContains(w));
+		assertTrue(w.testContains(v));
+		if (!v.isAllZeros()) {
+			assertTrue(v.testIntersects(w));
+			assertTrue(w.testIntersects(v));
+		}
+		
+		w = v.alignedCopy(true);
+		for (int i = 0; i < size; i++) {
+			w.setBit(i, true);
+			assertTrue( w.testContains(v) );
+			assertTrue( v.testEquals(w) || !v.testContains(w) );
+		}
+		
+		w = v.alignedCopy(true);
+		for (int i = 0; i < size; i++) {
+			w.setBit(i, false);
+			assertTrue( v.testContains(w) );
+			assertTrue( w.testEquals(v) || !w.testContains(v) );
+		}
+		
 	}
 	
 }

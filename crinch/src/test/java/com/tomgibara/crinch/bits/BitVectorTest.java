@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -48,6 +49,36 @@ public class BitVectorTest extends TestCase {
 		return randomVector(random.nextInt(1000));
 	}
 	
+	public void testEqualityAndHash() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testEqualityAndHash(vs[j]);
+			}
+		}
+	}
+	
+	private void testEqualityAndHash(BitVector v) {
+		assertEquals(v, v);
+		int size = v.size();
+		BitVector w = new BitVector(size+1);
+		w.setVector(0, v);
+		assertFalse(w.equals(v));
+		assertFalse(v.equals(w));
+		BitVector x = new BitVector(size);
+		for (int i = 0; i < size; i++) x.setBit(i, v.getBit(i));
+		assertEquals(v, x);
+		assertEquals(x, v);
+		assertEquals(v.hashCode(), x.hashCode());
+		
+		for (int i = 0; i < size; i++) {
+			x.flipBit(i);
+			assertFalse(v.equals(x));
+			assertFalse(x.equals(v));
+			x.flipBit(i);
+		}
+	}
+
 	public void testToString() {
 		for (int i = 0; i < 10; i++) {
 			BitVector[] vs = randomVectorFamily(10);
@@ -153,6 +184,7 @@ public class BitVectorTest extends TestCase {
 	}
 
 	private void testGetSetBit(BitVector v) {
+		if (v.size() == 0) return;
 		BitVector c = v.copy();
 		int i = random.nextInt(v.size());
 		v.setBit(i, !v.getBit(i));

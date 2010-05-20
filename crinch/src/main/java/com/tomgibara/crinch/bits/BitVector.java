@@ -543,15 +543,15 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	// convenience comparisons
 	
-	public boolean equals(BitVector vector) {
+	public boolean testEquals(BitVector vector) {
 		return compare(EQUALS, vector);
 	}
 	
-	public boolean intersects(BitVector vector) {
+	public boolean testIntersects(BitVector vector) {
 		return compare(INTERSECTS, vector);
 	}
 	
-	public boolean contains(BitVector vector) {
+	public boolean testContains(BitVector vector) {
 		return compare(CONTAINS, vector);
 	}
 	
@@ -618,7 +618,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (!(obj instanceof BitVector)) return false;
 		final BitVector that = (BitVector) obj;
 		if (this.finish - this.start != that.finish - that.start) return false;
-		return equals(that);
+		return compare(EQUALS, that);
 	}
 	
 	@Override
@@ -629,7 +629,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		int h = 0;
 		//optimized case, starts at zero
 		if (start == 0) {
-			final int f = (finish-1) >> ADDRESS_BITS;
+			final int f = finish >> ADDRESS_BITS;
 			for (int i = 0; i < f; i++) {
 				final long l = bits[i];
 				h = h * 31 + ((int) l       );
@@ -642,7 +642,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				h = h * 31 + ((int)(l >> 32));
 			}
 		} else {
-			for (int i = 0; i < size; i += ADDRESS_SIZE) {
+			final int limit = size - ADDRESS_SIZE;
+			for (int i = 0; i <= limit; i += ADDRESS_SIZE) {
 				//TODO consider a getBitsImpl?
 				long l = getBits(i, 64);
 				h = h * 31 + ((int) l       );

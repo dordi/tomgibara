@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -111,7 +112,32 @@ public class BitVectorTest extends TestCase {
 		assertEquals((byte)new BigInteger("10010111", 2).intValue(), v.getByte(64));
 	}
 
+	public void testToByteArray() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testToByteArray(vs[j]);
+			}
+		}
+	}
+	
+	private void testToByteArray(BitVector v) {
+		String s = v.toString();
+		int d = s.length() % 8;
+		if (d != 0) {
+			StringBuilder sb = new StringBuilder(s.length() + 8 - d);
+			for (; d < 8; d++) sb.append('0');
+			s = sb.append(s).toString();
+		}
+		byte[] bytes = new byte[s.length()/8];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = (byte) Integer.parseInt(s.substring(i * 8, (i+1)*8), 2);
+		}
+		assertTrue(Arrays.equals(bytes, v.toByteArray()));
+	}
+
 	public void testNumberMethods() {
+		
 		//check short vector
 		BitVector v = new BitVector(1);
 		testNumberMethods(v, 0);
@@ -124,24 +150,44 @@ public class BitVectorTest extends TestCase {
 		v.set(true);
 		testNumberMethods(v, -1);
 		
-		//check view vector
-		v = v.rangeView(64, 128);
-		testNumberMethods(v, -1);
+		//check view vectors
+		BitVector w = v.rangeView(64, 128);
+		testNumberMethods(w, -1);
+		w = v.rangeView(63, 128);
+		testNumberMethods(w, -1);
 		
 		//check empty vector
 		v = new BitVector(0);
 		testNumberMethods(v, 0);
 		
 	}
-	
+
 	private void testNumberMethods(BitVector v, long value) {
 		assertEquals((byte) value, v.byteValue());
 		assertEquals((short) value, v.shortValue());
 		assertEquals((int) value, v.intValue());
 		assertEquals(value, v.longValue());
-		assertEquals(BigInteger.valueOf(value), v.bigIntValue());
-		assertEquals((float) value, v.floatValue());
-		assertEquals((double) value, v.doubleValue());
+	}
+
+	public void testBigIntValue() {
+		BitVector v = new BitVector(1024);
+		v.set(true);
+		int f = 512;
+		int t = 512;
+		BigInteger i = BigInteger.ONE;
+		while (f > 0 && t < 1024) {
+			//evens
+			BitVector e = v.rangeView(f, t);
+			assertEquals(i.subtract(BigInteger.ONE), e.bigIntValue());
+			i = i.shiftLeft(1);
+			f--;
+			//odds
+			BitVector o = v.rangeView(f, t);
+			assertEquals(i.subtract(BigInteger.ONE), o.bigIntValue());
+			i = i.shiftLeft(1);
+			t++;
+		}
+		
 	}
 	
 	public void testBitCounts() {

@@ -298,31 +298,31 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (length == 0) return bytes;
 		if ((start & ADDRESS_MASK) == 0) { //long aligned case
 			int i = start >> ADDRESS_BITS;
-			int j = 0;
-			for (; j < length - 7; i++) {
+			int j = length; //how many bytes we have left to process
+			for (; j > 8; i++) {
 				final long l = bits[i];
-				bytes[j++] = (byte) (  l        & 0xff);
-				bytes[j++] = (byte) ( (l >>  8) & 0xff);
-				bytes[j++] = (byte) ( (l >> 16) & 0xff);
-				bytes[j++] = (byte) ( (l >> 24) & 0xff);
-				bytes[j++] = (byte) ( (l >> 32) & 0xff);
-				bytes[j++] = (byte) ( (l >> 40) & 0xff);
-				bytes[j++] = (byte) ( (l >> 48) & 0xff);
-				bytes[j++] = (byte) ( (l >> 56) & 0xff);
+				bytes[--j] = (byte) (  l        & 0xff);
+				bytes[--j] = (byte) ( (l >>  8) & 0xff);
+				bytes[--j] = (byte) ( (l >> 16) & 0xff);
+				bytes[--j] = (byte) ( (l >> 24) & 0xff);
+				bytes[--j] = (byte) ( (l >> 32) & 0xff);
+				bytes[--j] = (byte) ( (l >> 40) & 0xff);
+				bytes[--j] = (byte) ( (l >> 48) & 0xff);
+				bytes[--j] = (byte) ( (l >> 56) & 0xff);
 			}
-			if (j < length) {
-				final long l = bits[i];
-				for (int k = 0; j < length; k++) {
-					bytes[j++] = (byte) ( (l >> (k*8)) & 0xff);
+			if (j > 0) {
+				long l = bits[i] & finishMask;
+				for (int k = 0; j > 0; k++) {
+					bytes[--j] = (byte) ( (l >> (k*8)) & 0xff);
 				}
 			}
 		} else { //general case
+			//TODO indexing could probably be tidied up
 			int i = 0;
 			for (; i < length - 1; i++) {
-				//TODO could use a getByteImpl?
-				bytes[i] = getByte(i * 8);
+				bytes[length - 1 - i] =  (byte) getBits(i << 3, 8);
 			}
-			bytes[i] = (byte) getBits(i * 8, size - i * 8);
+			bytes[0] = (byte) getBits(i * 8, size - (i << 3));
 		}
 		return bytes;
 	}
@@ -612,7 +612,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	public BigInteger bigIntValue() {
-		return start == finish ? BigInteger.ZERO : new BigInteger(toByteArray());
+		return start == finish ? BigInteger.ZERO : new BigInteger(1, toByteArray());
 	}
 	
 	@Override
@@ -914,7 +914,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				final long thatB = thatBits[t] & that.finishMask;
 				switch (comp) {
 				case EQUALS : return thisB == thatB;
-				case INTERSECTS : return (thisB & thatB) == 0;
+				case INTERSECTS : return (thisB & thatB) != 0;
 				case CONTAINS : return (thisB | thatB) == thisB;
 				default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
 				}
@@ -922,7 +922,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 		//TODO an additional optimization is possible when their starts differ by 64 
 		//partially optimal case - both are address aligned
-		if ((this.start & ADDRESS_MASK) == 0 && (that.start & ADDRESS_MASK) == 0 && (this.finish & ADDRESS_BITS) == 0) {
+		if ((this.start & ADDRESS_MASK) == 0 && (that.start & ADDRESS_MASK) == 0 && (this.finish & ADDRESS_MASK) == 0) {
 			final long[] thisBits = this.bits;
 			final long[] thatBits = that.bits;
 			final int f = this.start >> ADDRESS_BITS;
@@ -987,7 +987,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		} else if (s + length <= ADDRESS_SIZE) { //single long case
 			b = bits[i] >>> s;
 		} else {
-			b = (bits[i] >>> s) | (bits[i+1] << (s + length - ADDRESS_SIZE));
+			b = (bits[i] >>> s) | (bits[i+1] << (ADDRESS_SIZE - s));
 		}
 		return length == ADDRESS_SIZE ? b : b & ((1L << length) - 1);
 	}

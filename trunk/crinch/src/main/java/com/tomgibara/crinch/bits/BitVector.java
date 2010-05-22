@@ -158,6 +158,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return getVectorAdj(start, finish - start, mutable);
 	}
 	
+	public BitVector resizedCopy(int newSize) {
+		if (newSize < 0) throw new IllegalArgumentException();
+		final int size = finish - start;
+		if (newSize == size) return copy();
+		if (newSize < size) return rangeCopy(0, newSize);
+		final BitVector copy = new BitVector(newSize);
+		copy.setVector(0, this);
+		return copy;
+	}
+	
 	// getters
 	
 	public boolean getBit(int position) {

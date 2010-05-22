@@ -71,9 +71,9 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.bits = new long[length];
 		this.start = 0;
 		this.finish = size;
-		this.startMask = -1L; 
-		this.finishMask = -1L >>> (length * ADDRESS_SIZE - size) ;
 		this.mutable = true;
+		startMask = -1L; 
+		finishMask = -1L >>> (length * ADDRESS_SIZE - size) ;
 	}
 	
 	//TODO consider allowing different radixes
@@ -95,16 +95,9 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.start = start;
 		this.finish = finish;
 		this.bits = bits;
-		final long startMask = -1L << (start - startIndex * ADDRESS_SIZE);
-		final long finishMask = -1L >>> (finishIndex * ADDRESS_SIZE - finish);
-		//TODO necessary? confirm this should be copied to all
-		if (startIndex + 1 == finishIndex) {
-			this.finishMask = this.startMask = startMask & finishMask;
-		} else {
-			this.startMask = startMask;
-			this.finishMask = finishMask;
-		}
 		this.mutable = mutable;
+		startMask = -1L << (start - startIndex * ADDRESS_SIZE);
+		finishMask = -1L >>> (finishIndex * ADDRESS_SIZE - finish);
 	}
 	
 	private BitVector(Serial serial) {

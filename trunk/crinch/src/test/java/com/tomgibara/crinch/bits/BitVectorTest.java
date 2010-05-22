@@ -2,6 +2,7 @@ package com.tomgibara.crinch.bits;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
@@ -189,7 +190,7 @@ public class BitVectorTest extends TestCase {
 		}
 		
 	}
-	
+
 	public void testBitCounts() {
 		for (int i = 0; i < 10; i++) {
 			BitVector[] vs = randomVectorFamily(10);
@@ -444,5 +445,27 @@ public class BitVectorTest extends TestCase {
 		}
 		
 	}
+
+	public void testReadAndWrite() throws Exception {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testReadAndWrite(vs[j]);
+			}
+		}
+	}
+
+	private void testReadAndWrite(BitVector v) throws Exception {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		v.write(out);
+		byte[] bytes = out.toByteArray();
+		assertTrue(Arrays.equals(v.toByteArray(), bytes));
+		
+		BitVector w = new BitVector(v.size());
+		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+		w.read(in);
+		assertEquals(v, w);
+	}
 	
+
 }

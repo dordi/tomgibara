@@ -1,6 +1,9 @@
 package com.tomgibara.crinch.bits;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectStreamException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -318,6 +321,38 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			bytes[0] = (byte) getBits(i * 8, size - (i << 3));
 		}
 		return bytes;
+	}
+	
+	// IO
+	
+	public void write(OutputStream out) throws IOException {
+		//TODO could optimize for aligned instances
+		final int size = finish - start;
+		final int length = (size + 7) >> 3;
+		if (length == 0) return;
+		int p = size & 7;
+		final int q = finish - p;
+		if (p != 0) out.write((byte) getBitsAdj(q, p));
+		p = q;
+		while (p > start) {
+			p -= 8;
+			out.write((byte) getBitsAdj(p, 8));
+		}
+	}
+
+	public void read(InputStream in) throws IOException {
+		//TODO could optimize for aligned instances
+		final int size = finish - start;
+		final int length = (size + 7) >> 3;
+		if (length == 0) return;
+		int p = size & 7;
+		final int q = finish - p;
+		if (p != 0) performAdj(SET, q, (long) in.read(), p);
+		p = q;
+		while (p > start) {
+			p -= 8;
+			performAdj(SET, p, (long) in.read(), 8);
+		}
 	}
 	
 	// convenience setters
@@ -800,6 +835,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		position += start;
 		if (position + length > finish) throw new IllegalArgumentException();
 		if (!mutable) throw new IllegalStateException();
+		performAdj(operation, position, bs, length);
+	}
+
+	private void performAdj(int operation, int position, long bs, int length) {
 		if (length == 0) return;
 		final int i = position >> ADDRESS_BITS;
 		final int s = position & ADDRESS_MASK;
@@ -841,7 +880,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			}
 		}
 	}
-	
+
 	private void perform(int operation, BitVector that) {
 		if (this.size() != that.size()) throw new IllegalArgumentException("mismatched vector size");
 		perform(operation, 0, that);

@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -50,6 +51,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private static int stringLength(String str) {
 		if (str == null) throw new IllegalArgumentException();
 		return str.length();
+	}
+
+	private static int gcd(int a, int b) {
+		while (a != b) {
+			if (a > b) {
+				int na = a % b;
+				if (na == 0) return b;
+				a = na;
+			} else {
+				int nb = b % a;
+				if (nb == 0) return a;
+				b = nb;
+			}
+		}
+		return a;
 	}
 	
 	// fields
@@ -271,6 +287,28 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public void modifyVector(Operation operation, int position, BitVector vector) {
 		perform(operation.ordinal(), position, vector);
+	}
+	
+	// rotations
+	
+	public void rotate(int distance) {
+		final int size = finish - start;
+		if (size < 2) return;
+		distance = distance % size;
+		if (distance < 0) distance += size;
+		if (distance == 0) return;
+		
+		//TODO is this capable of optimization in some cases?
+		final int cycles = gcd(distance, size);
+		for (int i = start + cycles - 1; i >= start; i--) {
+			boolean m = getBitAdj(i); // the previously overwritten value
+			int j = i; // the index that is to be overwritten next
+			do {
+				j += distance;
+				if (j >= finish) j -= size;
+				m = getAndPerformAdj(SET, j, m);
+			} while (j != i);
+		}
 	}
 	
 	// comparisons
@@ -625,6 +663,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	public BitVector mutableRangeCopy(int from, int to) {
 		return duplicate(from, to, true, true);
+	}
+	
+	// convenience rotations
+	
+	public void rotateLeft(int distance) {
+		rotate(distance);
+	}
+	
+	public void rotateRight(int distance) {
+		rotate(-distance);
 	}
 	
 	// number methods
@@ -1159,6 +1207,46 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			break;
 		}
 
+	}
+	
+	//separate implementation from performAdj is an optimization
+	
+	private boolean getAndPerformAdj(int operation, int position, boolean value) {
+		if (!mutable) throw new IllegalStateException();
+		final int i = position >> ADDRESS_BITS;
+		final long m = 1L << (position & ADDRESS_MASK);
+		final long v = bits[i] & m;
+		switch(operation) {
+		case SET : 
+			if (value) {
+				bits[i] |=  m;
+			} else {
+				bits[i] &= ~m;
+			}
+			break;
+		case AND :
+			if (value) {
+				/* no-op */
+			} else {
+				bits[i] &= ~m;
+			}
+			break;
+		case OR :
+			if (value) {
+				bits[i] |=  m;
+			} else {
+				/* no-op */
+			}
+			break;
+		case XOR :
+			if (value) {
+				bits[i] ^=  m;
+			} else {
+				/* no-op */
+			}
+			break;
+		}
+		return v != 0;
 	}
 	
 	// inner classes

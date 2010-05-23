@@ -289,26 +289,19 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(operation.ordinal(), position, vector);
 	}
 	
-	// rotations
+	// rotations and shifts
 	
 	public void rotate(int distance) {
-		final int size = finish - start;
-		if (size < 2) return;
-		distance = distance % size;
-		if (distance < 0) distance += size;
-		if (distance == 0) return;
-		
-		//TODO is this capable of optimization in some cases?
-		final int cycles = gcd(distance, size);
-		for (int i = start + cycles - 1; i >= start; i--) {
-			boolean m = getBitAdj(i); // the previously overwritten value
-			int j = i; // the index that is to be overwritten next
-			do {
-				j += distance;
-				if (j >= finish) j -= size;
-				m = getAndPerformAdj(SET, j, m);
-			} while (j != i);
-		}
+		rotateAdj(start, finish, distance);
+	}
+
+	public void rotateRange(int from, int to, int distance) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		rotateAdj(start, finish, distance);
 	}
 	
 	// comparisons
@@ -1249,6 +1242,26 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return v != 0;
 	}
 	
+	public void rotateAdj(int from, int to, int distance) {
+		final int length = to - from;
+		if (length < 2) return;
+		distance = distance % length;
+		if (distance < 0) distance += length;
+		if (distance == 0) return;
+		
+		//TODO is this capable of optimization in some cases?
+		final int cycles = gcd(distance, length);
+		for (int i = from + cycles - 1; i >= from; i--) {
+			boolean m = getBitAdj(i); // the previously overwritten value
+			int j = i; // the index that is to be overwritten next
+			do {
+				j += distance;
+				if (j >= to) j -= length;
+				m = getAndPerformAdj(SET, j, m);
+			} while (j != i);
+		}
+	}
+
 	// inner classes
 	
 	private class BitIterator implements ListIterator<Boolean> {

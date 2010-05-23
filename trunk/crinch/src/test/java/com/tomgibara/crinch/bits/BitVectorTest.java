@@ -498,7 +498,7 @@ public class BitVectorTest extends TestCase {
 	public void testRotation() {
 		BitVector v = new BitVector(32);
 		v.setBit(0, true);
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 32; i++) {
 			assertEquals(1 << i, v.intValue());
 			v.rotate(1);
 		}

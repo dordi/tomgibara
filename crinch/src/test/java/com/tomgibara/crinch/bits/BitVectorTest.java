@@ -495,5 +495,27 @@ public class BitVectorTest extends TestCase {
 		assertEquals(v, w);
 	}
 	
+	public void testRotation() {
+		BitVector v = new BitVector(32);
+		v.setBit(0, true);
+		for (int i = 0; i < 16; i++) {
+			assertEquals(1 << i, v.intValue());
+			v.rotate(1);
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testRotation(vs[j]);
+			}
+		}
+	}
 
+	private void testRotation(BitVector v) {
+		BitVector w = v.copy();
+		int d = random.nextInt();
+		for (int i = 0; i < v.size(); i++) v.rotate(d);
+		assertEquals(w, v);
+	}
+	
 }

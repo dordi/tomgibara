@@ -304,6 +304,19 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		rotateAdj(start, finish, distance);
 	}
 	
+	public void shift(int distance, boolean fill) {
+		shiftAdj(start, finish, distance, fill);
+	}
+	
+	public void shiftRange(int from, int to, int distance, boolean fill) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		shiftAdj(start, finish, distance, fill);
+	}
+	
 	// comparisons
 	
 	public boolean compare(Comparison comparison, BitVector vector) {
@@ -658,7 +671,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return duplicate(from, to, true, true);
 	}
 	
-	// convenience rotations
+	// convenience rotations and shifts
+	// TODO consider removing these convenience methods
 	
 	public void rotateLeft(int distance) {
 		rotate(distance);
@@ -666,6 +680,14 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public void rotateRight(int distance) {
 		rotate(-distance);
+	}
+	
+	public void shiftLeft(int distance) {
+		shift(distance, false);
+	}
+	
+	public void shiftRight(int distance) {
+		shift(-distance, false);
 	}
 	
 	// number methods
@@ -823,7 +845,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	private void performAdj(int operation, int from, int to, boolean value) {
 		if (!mutable) throw new IllegalStateException();
-		if (start == finish) return; // nothing to do for an empty vector
+		if (from == to) return; // nothing to do for an empty vector
 		
 		//rationalize possible operations into SETs or INVERTs
 		switch (operation) {
@@ -832,11 +854,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		case XOR : if (value == false) return;
 		}
 		
-		final int f = start >> ADDRESS_BITS;
-		final int t = (finish-1) >> ADDRESS_BITS;
+		final int f = from >> ADDRESS_BITS;
+		final int t = (to-1) >> ADDRESS_BITS;
+		final long fm = -1L << (from - f * ADDRESS_SIZE);
+		final long tm = -1L >>> (t * ADDRESS_SIZE - to);
 		
 		if (f == t) { // change falls into one element
-			final long mask = startMask & finishMask;
+			final long mask = fm & tm;
 			switch (operation) {
 			case SET :
 				if (value) {
@@ -865,16 +889,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		switch (operation) {
 		case SET :
 			if (value) {
-				bits[f] |= startMask;
-				bits[t] |= finishMask;
+				bits[f] |= fm;
+				bits[t] |= tm;
 			} else {
-				bits[f] &= ~startMask;
-				bits[t] &= ~finishMask;
+				bits[f] &= ~fm;
+				bits[t] &= ~tm;
 			}
 			break;
 		case XOR :
-			bits[f] ^= startMask;
-			bits[t] ^= finishMask;
+			bits[f] ^= fm;
+			bits[t] ^= tm;
 			break;
 		}
 	}
@@ -1260,6 +1284,28 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				m = getAndPerformAdj(SET, j, m);
 			} while (j != i);
 		}
+	}
+
+	public void shiftAdj(int from, int to, int distance, boolean fill) {
+		if (from == to) return;
+		if (distance == 0) return;
+		
+		//TODO this capable of optimization in some cases
+		if (distance > 0) {
+			int j = to - 1;
+			for (int i = j - distance; i >= from; i--, j--) {
+				//TODO create a specialized implementation for this common case
+				performAdj(SET, j, getBitAdj(i));
+			}
+			performAdj(SET, from, j + 1, fill);
+		} else {
+			int j = from;
+			for (int i = j - distance; i < to; i++, j++) {
+				performAdj(SET, j, getBitAdj(i));
+			}
+			performAdj(SET, j, to, fill);
+		}
+		
 	}
 
 	// inner classes

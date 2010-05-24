@@ -517,5 +517,40 @@ public class BitVectorTest extends TestCase {
 		for (int i = 0; i < v.size(); i++) v.rotate(d);
 		assertEquals(w, v);
 	}
-	
+
+	public void testShift() {
+		BitVector v = new BitVector(32);
+		v.setBit(0, true);
+		for (int i = 0; i < 32; i++) {
+			assertEquals(1 << i, v.intValue());
+			v.shift(1, false);
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testShift(vs[j]);
+			}
+		}
+	}
+
+	private void testShift(BitVector v) {
+		int size = v.size();
+		int scope = size == 0 ? 4 : size * 3;
+		int d = random.nextInt(scope) - scope/2;
+		BitVector w = v.copy();
+		v.shift(d, true);
+		if (d > 0) {
+			if (d >= size) {
+				assertTrue(v.isAllOnes());
+			} else {
+				v.isRangeAllOnes(0, d);
+				v.rangeView(d, size).equals(w);
+			}
+		} else {
+			//TODO
+		}
+	}
+
+
 }

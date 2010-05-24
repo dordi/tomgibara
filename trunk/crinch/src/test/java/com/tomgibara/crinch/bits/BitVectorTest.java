@@ -544,11 +544,16 @@ public class BitVectorTest extends TestCase {
 			if (d >= size) {
 				assertTrue(v.isAllOnes());
 			} else {
-				v.isRangeAllOnes(0, d);
-				v.rangeView(d, size).equals(w);
+				assertTrue( v.isRangeAllOnes(0, d) );
+				assertTrue( v.rangeView(d, size).testEquals(w.rangeView(0, size - d)) );
 			}
 		} else {
-			//TODO
+			if (d <= -size) {
+				assertTrue(v.isAllOnes());
+			} else {
+				assertTrue( v.isRangeAllOnes(size + d, size));
+				assertTrue( v.rangeView(0, size + d).testEquals(w.rangeView(-d, size)));
+			}
 		}
 	}
 

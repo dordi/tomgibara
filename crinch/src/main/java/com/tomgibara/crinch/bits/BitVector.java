@@ -1320,6 +1320,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		BitIterator(int from, int to, int index) {
 			this.from = from;
 			this.to = to;
+			this.index = index;
 		}
 		
 		BitIterator(int index) {

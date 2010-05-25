@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ListIterator;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -557,5 +558,24 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
+	public void testListIterator() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testListIterator(vs[j]);
+			}
+		}
+	}
 
+	private void testListIterator(BitVector v) {
+		final BitVector w = new BitVector(v.size());
+		ListIterator<Boolean> i = v.listIterator();
+		while(i.hasNext()) {
+			w.setBit(i.nextIndex(), i.next());
+		}
+		assertEquals(v, w);
+	}
+
+	
+	
 }

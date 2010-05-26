@@ -602,6 +602,27 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
+	public void testReverse() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testReverse(vs[j]);
+			}
+		}
+	}
+
+	private void testReverse(BitVector v) {
+		BitVector w = v.copy();
+		w.reverse();
+		ListIterator<Boolean> i = v.listIterator();
+		ListIterator<Boolean> j = w.listIterator(v.size());
+		while (i.hasNext()) {
+			assertEquals(i.next(), j.previous());
+		}
+		w.reverse();
+		assertEquals(v, w);
+	}
+
 	
 	
 }

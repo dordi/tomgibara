@@ -289,7 +289,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(operation.ordinal(), position, vector);
 	}
 	
-	// rotations and shifts
+	// rotations and shifts & reversals
 	
 	public void rotate(int distance) {
 		rotateAdj(start, finish, distance);
@@ -301,7 +301,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		from += start;
 		to += start;
 		if (to > finish) throw new IllegalArgumentException();
-		rotateAdj(start, finish, distance);
+		rotateAdj(from, to, distance);
 	}
 	
 	public void shift(int distance, boolean fill) {
@@ -314,7 +314,20 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		from += start;
 		to += start;
 		if (to > finish) throw new IllegalArgumentException();
-		shiftAdj(start, finish, distance, fill);
+		shiftAdj(from, to, distance, fill);
+	}
+	
+	public void reverse() {
+		reverseAdj(start, finish);
+	}
+	
+	public void reverseRange(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		reverseAdj(from, to);
 	}
 	
 	// comparisons
@@ -1306,6 +1319,14 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			performAdj(SET, j, to, fill);
 		}
 		
+	}
+
+	private void reverseAdj(int from, int to) {
+		to--;
+		while (from < to) {
+			performAdj(SET, to, getAndPerformAdj(SET, from, getBitAdj(to)));
+			from++; to--;
+		}
 	}
 
 	// inner classes

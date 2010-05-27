@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -263,6 +262,44 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return to - from - countOnes(from, to);
 	}
 
+	// search methods
+
+	public int firstOneInRange(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return firstOneInRangeAdj(from, to);
+	}
+
+	public int firstZeroInRange(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return firstZeroInRangeAdj(from, to);
+	}
+
+	public int lastOneInRange(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return lastOneInRangeAdj(from, to);
+	}
+
+	public int lastZeroInRange(int from, int to) {
+		if (from < 0) throw new IllegalArgumentException();
+		if (to < from) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		return lastZeroInRangeAdj(from, to);
+	}
+
 	// operations
 	
 	public void modify(Operation operation, boolean value) {
@@ -424,6 +461,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	// convenience setters
 	
+	//TODO rename to invert
 	public void flip() {
 		performAdj(XOR, start, finish, true);
 	}
@@ -702,7 +740,77 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	public void shiftRight(int distance) {
 		shift(-distance, false);
 	}
+
+	// convenience searches
+
+	public int firstBitInRange(int from, int to, boolean value) {
+		return value ? firstOneInRange(from, to) : firstZeroInRange(from, to);
+	}
 	
+	public int firstBit(boolean value) {
+		return value ? firstOne() : firstZero();
+	}
+
+	public int firstOne() {
+		return firstOneInRangeAdj(start, finish);
+	}
+	
+	public int firstZero() {
+		return firstZeroInRangeAdj(start, finish);
+	}
+
+	public int nextBit(int position, boolean value) {
+		return value ? nextOne(position) : nextZero(position);
+	}
+
+	public int nextOne(int position) {
+		if (position < 0) throw new IllegalArgumentException();
+		position += start;
+		if (position > finish) throw new IllegalArgumentException();
+		return firstOneInRangeAdj(position, finish);
+	}
+
+	public int nextZero(int position) {
+		if (position < 0) throw new IllegalArgumentException();
+		position += start;
+		if (position > finish) throw new IllegalArgumentException();
+		return firstZeroInRangeAdj(position, finish);
+	}
+
+	public int lastBitInRange(int from, int to, boolean value) {
+		return value ? lastOneInRange(from, to) : lastZeroInRange(from, to);
+	}
+	
+	public int lastBit(boolean value) {
+		return value ? lastOne() : lastZero();
+	}
+
+	public int lastOne() {
+		return lastOneInRangeAdj(start, finish);
+	}
+	
+	public int lastZero() {
+		return lastZeroInRangeAdj(start, finish);
+	}
+
+	public int previousBit(int position, boolean value) {
+		return value ? nextOne(position) : nextZero(position);
+	}
+
+	public int previousOne(int position) {
+		if (position < 0) throw new IllegalArgumentException();
+		position += start;
+		if (position - 1 > finish) throw new IllegalArgumentException();
+		return lastOneInRangeAdj(start, position);
+	}
+
+	public int previousZero(int position) {
+		if (position < 0) throw new IllegalArgumentException();
+		position += start;
+		if (position - 1 > finish) throw new IllegalArgumentException();
+		return lastZeroInRangeAdj(start, position);
+	}
+
 	// number methods
 	
 	@Override
@@ -1329,6 +1437,146 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 
+	//TODO can eliminate calls to getBitsAdj from these methods
+	
+	private int firstOneInRangeAdj(int from, int to) {
+		// trivial case
+		if (from == to) return -1;
+		final int size = to - from;
+		//simple case
+		if (size <= ADDRESS_SIZE) {
+			final int j = Long.numberOfTrailingZeros( getBitsAdj(from, size) );
+			return j >= size ? -1 : from + j - start;
+		}
+		int i = from;
+		// check head
+		int a = i & ADDRESS_MASK;
+		if (a != 0) {
+			final int s = ADDRESS_SIZE - a;
+			final int j = Long.numberOfTrailingZeros( getBitsAdj(i, s) );
+			if (j < s) return from + j - start;
+			i += s;
+		}
+		// check body
+		final int b = to & ADDRESS_MASK;
+		final int t = to - b;
+		while (i < t) {
+			final int j = Long.numberOfTrailingZeros( bits[i >> ADDRESS_BITS] );
+			if (j < ADDRESS_SIZE) return i + j - start;
+			i += ADDRESS_SIZE;
+		}
+		// check tail
+		if (b != 0) {
+			final int j = Long.numberOfTrailingZeros( getBitsAdj(t, b) );
+			return j >= b ? -1 : i + j - start;
+		}
+		// give up
+		return -1;
+	}
+
+	private int firstZeroInRangeAdj(int from, int to) {
+		// trivial case
+		if (from == to) return -1;
+		final int size = to - from;
+		//simple case
+		if (size <= ADDRESS_SIZE) {
+			final int j = Long.numberOfTrailingZeros( ~getBitsAdj(from, size) );
+			return j >= size ? -1 : from + j - start;
+		}
+		int i = from;
+		// check head
+		int a = i & ADDRESS_MASK;
+		if (a != 0) {
+			final int s = ADDRESS_SIZE - a;
+			final int j = Long.numberOfTrailingZeros( ~getBitsAdj(i, s) );
+			if (j < s) return from + j - start;
+			i += s;
+		}
+		// check body
+		final int b = to & ADDRESS_MASK;
+		final int t = to - b;
+		while (i < t) {
+			final int j = Long.numberOfTrailingZeros( ~bits[i >> ADDRESS_BITS] );
+			if (j < ADDRESS_SIZE) return i + j - start;
+			i += ADDRESS_SIZE;
+		}
+		// check tail
+		if (b != 0) {
+			final int j = Long.numberOfTrailingZeros( ~getBitsAdj(t, b) );
+			return j >= b ? -1 : i + j - start;
+		}
+		// give up
+		return -1;
+	}
+
+	int lastOneInRangeAdj(int from, int to) {
+		// trivial case
+		if (from == to) return -1;
+		final int size = to - from;
+		//simple case
+		if (size <= ADDRESS_SIZE) {
+			final int j = Long.numberOfLeadingZeros( getBitsAdj(from, size) << (ADDRESS_SIZE - size) );
+			return j == ADDRESS_SIZE ? -1 : to - (j + 1) - start;
+		}
+		// check tail
+		final int b = to & ADDRESS_MASK;
+		int i = to - b;
+		if (b != 0) {
+			final int j = Long.numberOfLeadingZeros( getBitsAdj(i, b) << (ADDRESS_SIZE - b) );
+			if (j != ADDRESS_SIZE) return to - (j + 1) - start;
+		}
+		// check body
+		final int a = from & ADDRESS_MASK;
+		final int f = from + (ADDRESS_SIZE - a);
+		while (i >= f) {
+			i -= ADDRESS_SIZE;
+			final int j = Long.numberOfLeadingZeros( bits[i >> ADDRESS_BITS] );
+			if (j != ADDRESS_SIZE) return i + ADDRESS_SIZE - (j + 1) - start;
+		}
+		// check head
+		if (a != 0) {
+			final int s = ADDRESS_SIZE - a;
+			final int j = Long.numberOfLeadingZeros( getBitsAdj(from, s) << a );
+			if (j != ADDRESS_SIZE) return i - (j + 1) - start;
+		}
+		// give up
+		return -1;
+	}
+	
+	int lastZeroInRangeAdj(int from, int to) {
+		// trivial case
+		if (from == to) return -1;
+		final int size = to - from;
+		//simple case
+		if (size <= ADDRESS_SIZE) {
+			final int j = Long.numberOfLeadingZeros( ~getBitsAdj(from, size) << (ADDRESS_SIZE - size) );
+			return j == ADDRESS_SIZE ? -1 : to - (j + 1) - start;
+		}
+		// check tail
+		final int b = to & ADDRESS_MASK;
+		int i = to - b;
+		if (b != 0) {
+			final int j = Long.numberOfLeadingZeros( ~getBitsAdj(i, b) << (ADDRESS_SIZE - b) );
+			if (j != ADDRESS_SIZE) return to - (j + 1) - start;
+		}
+		// check body
+		final int a = from & ADDRESS_MASK;
+		final int f = from + (ADDRESS_SIZE - a);
+		while (i >= f) {
+			i -= ADDRESS_SIZE;
+			final int j = Long.numberOfLeadingZeros( ~bits[i >> ADDRESS_BITS] );
+			if (j != ADDRESS_SIZE) return i + ADDRESS_SIZE - (j + 1) - start;
+		}
+		// check head
+		if (a != 0) {
+			final int s = ADDRESS_SIZE - a;
+			final int j = Long.numberOfLeadingZeros( ~getBitsAdj(from, s) << a );
+			if (j != ADDRESS_SIZE) return i - (j + 1) - start;
+		}
+		// give up
+		return -1;
+	}
+	
 	// inner classes
 	
 	private class BitIterator implements ListIterator<Boolean> {

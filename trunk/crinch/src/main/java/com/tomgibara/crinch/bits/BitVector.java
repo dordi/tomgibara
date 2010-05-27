@@ -1509,7 +1509,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return -1;
 	}
 
-	int lastOneInRangeAdj(int from, int to) {
+	private int lastOneInRangeAdj(int from, int to) {
 		// trivial case
 		if (from == to) return -1;
 		final int size = to - from;
@@ -1543,7 +1543,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return -1;
 	}
 	
-	int lastZeroInRangeAdj(int from, int to) {
+	private int lastZeroInRangeAdj(int from, int to) {
 		// trivial case
 		if (from == to) return -1;
 		final int size = to - from;

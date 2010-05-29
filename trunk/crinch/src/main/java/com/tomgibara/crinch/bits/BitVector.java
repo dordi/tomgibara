@@ -210,10 +210,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private final int finish;
 	private final long[] bits;
 	private final boolean mutable;
-	//derived fields
-	//TODO consider eliminating these derived fields
-	private final long startMask;
-	private final long finishMask;
 	
 	// constructors
 	
@@ -227,8 +223,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.start = 0;
 		this.finish = size;
 		this.mutable = true;
-		startMask = -1L; 
-		finishMask = -1L >>> (length * ADDRESS_SIZE - size) ;
 	}
 	
 	//TODO consider allowing different radixes
@@ -245,14 +239,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	private BitVector(int start, int finish, long[] bits, boolean mutable) {
-		final int startIndex = start >> ADDRESS_BITS;
-		final int finishIndex = (finish + ADDRESS_MASK) >> ADDRESS_BITS;
 		this.start = start;
 		this.finish = finish;
 		this.bits = bits;
 		this.mutable = mutable;
-		startMask = -1L << (start - startIndex * ADDRESS_SIZE);
-		finishMask = -1L >>> (finishIndex * ADDRESS_SIZE - finish);
 	}
 	
 	private BitVector(Serial serial) {
@@ -548,7 +538,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				bytes[--j] = (byte) ( (l >> 56) & 0xff);
 			}
 			if (j > 0) {
-				long l = bits[i] & finishMask;
+				final long m = -1L >>> (ADDRESS_SIZE - finish & ADDRESS_MASK);
+				final long l = bits[i] & m;
 				for (int k = 0; j > 0; k++) {
 					bytes[--j] = (byte) ( (l >> (k*8)) & 0xff);
 				}
@@ -1030,7 +1021,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			}
 			//TODO equivalently finishMask != -1?
 			if ((finish & ADDRESS_MASK) != 0) {
-				final long l = bits[f] & finishMask;
+				final long m = -1L >>> (ADDRESS_SIZE - finish & ADDRESS_MASK);
+				final long l = bits[f] & m;
 				h = h * 31 + ((int) l       );
 				h = h * 31 + ((int)(l >> 32));
 			}
@@ -1275,8 +1267,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp); 
 			}
 			{
-				final long thisB = thisBits[t] & this.finishMask;
-				final long thatB = thatBits[t] & that.finishMask;
+				// same length & same start so same finish mask
+				final long m = -1L >>> (ADDRESS_SIZE - finish & ADDRESS_MASK);
+				final long thisB = thisBits[t] & m;
+				final long thatB = thatBits[t] & m;
 				switch (comp) {
 				case EQUALS : return thisB == thatB;
 				case INTERSECTS : return (thisB & thatB) != 0;

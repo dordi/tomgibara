@@ -663,5 +663,20 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 	
+	public void testFromBigInteger() {
+		for (int i = 0; i < 1000; i++) {
+			final int size = random.nextInt(1000);
+			final BigInteger bigInt = new BigInteger(size, random);
+			BitVector v = BitVector.fromBigInteger(bigInt);
+			assertTrue(v.size() <= size);
+			assertEquals(bigInt, v.bigIntValue());
+			
+			BitVector w = BitVector.fromBigInteger(bigInt, size / 2);
+			assertEquals(v.rangeView(0, w.size()), w);
+			
+			BitVector x = BitVector.fromBigInteger(bigInt, size * 2);
+			assertEquals(v, x.rangeView(0, v.size()));
+		}
+	}
 	
 }

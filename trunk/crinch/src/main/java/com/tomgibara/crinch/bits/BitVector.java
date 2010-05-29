@@ -71,7 +71,7 @@ import java.util.NoSuchElementException;
  * interface, an {@link #bigIntValue()} method is available that returns the
  * BitVector as a positive, arbitrarily sized integer. Combined with the
  * fromBigInteger() and setBigInteger() methods, this allows, with some loss of
- * performance, a range of arithmetic calculations to be performed,
+ * performance, a range of arithmetic calculations to be performed.
  * </p>
  * 
  * <p>
@@ -101,6 +101,7 @@ import java.util.NoSuchElementException;
  * <li>shifts, rotations and reversals</li>
  * <li>tests for bit-wise intersection, containment and equality</li>
  * <li>tests for all-zero and all-one ranges</li>
+ * <li>counting the number ones/zeros in a range</li>
  * <li>searches for first/last ones/zeros in a given range</li>
  * <li>searches for next/previous ones/zeros from a given index</li>
  * <li>copying and viewing bit ranges</li>
@@ -118,21 +119,21 @@ import java.util.NoSuchElementException;
  * than linear time and inner loops are mostly 'tight'. An implementation detail
  * (which may be important on some platforms) is that, with some exceptions,
  * none of the methods perform any object creation. The exceptions are: methods
- * that require an object to be returned, and situations where an operation is
- * applied with overlapping ranges of bits, in which case it may be necessary to
- * create a temporary copy of the {@link BitVector}.
+ * that require an object to be returned, {@link #floatValue()},
+ * {@link #doubleValue()}, and situations where an operation is applied with
+ * overlapping ranges of bits, in which case it may be necessary to create a
+ * temporary copy of the {@link BitVector}.
  * </p>
  * 
  * <p>
- * The class is marked as final to ensure that immutable instances can be
- * safely used in security sensitive code (eg. within a {@link PrivilegedAction}).
+ * The class is marked as final to ensure that immutable instances can be safely
+ * used in security sensitive code (eg. within a {@link PrivilegedAction}).
  * </p>
  * 
  * @author Tom Gibara
  * 
  */
 
-//stopping short of implementing List - so many more methods - many of which cannot be supported
 public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
 
 	// statics
@@ -149,7 +150,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		INTERSECTS,
 		CONTAINS
 	}
+
+	public static final BitVector fromBigInteger(BigInteger bigInt) {
+		return fromBigInteger(bigInt, bigInt.bitLength());
+	}
 	
+	public static BitVector fromBigInteger(BigInteger bigInt, int size) {
+		if (size < 0) throw new IllegalArgumentException();
+		final BitVector vector = new BitVector(size);
+		final int limit = Math.min(size, bigInt.bitLength());
+		for (int i = 0; i < limit; i++) {
+			vector.performSetAdj(i, bigInt.testBit(i));
+		}
+		return vector;
+	}
+
 	private static final int SET = 0;
 	private static final int AND = 1;
 	private static final int OR  = 2;
@@ -1468,7 +1483,20 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 
 	}
+
+	//specialized implementation for the common case of setting an individual bit
 	
+	private void performSetAdj(int position, boolean value) {
+		if (!mutable) throw new IllegalStateException();
+		final int i = position >> ADDRESS_BITS;
+		final long m = 1L << (position & ADDRESS_MASK);
+		if (value) {
+			bits[i] |=  m;
+		} else {
+			bits[i] &= ~m;
+		}
+	}
+
 	//separate implementation from performAdj is an optimization
 	
 	private boolean getAndPerformAdj(int operation, int position, boolean value) {
@@ -1537,14 +1565,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (distance > 0) {
 			int j = to - 1;
 			for (int i = j - distance; i >= from; i--, j--) {
-				//TODO create a specialized implementation for this common case
-				performAdj(SET, j, getBitAdj(i));
+				performSetAdj(j, getBitAdj(i));
 			}
 			performAdj(SET, from, j + 1, fill);
 		} else {
 			int j = from;
 			for (int i = j - distance; i < to; i++, j++) {
-				performAdj(SET, j, getBitAdj(i));
+				performSetAdj(j, getBitAdj(i));
 			}
 			performAdj(SET, j, to, fill);
 		}
@@ -1554,7 +1581,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private void reverseAdj(int from, int to) {
 		to--;
 		while (from < to) {
-			performAdj(SET, to, getAndPerformAdj(SET, from, getBitAdj(to)));
+			performSetAdj(to, getAndPerformAdj(SET, from, getBitAdj(to)));
 			from++; to--;
 		}
 	}

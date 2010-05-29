@@ -156,6 +156,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	public static BitVector fromBigInteger(BigInteger bigInt, int size) {
+		if (bigInt.signum() < 0) throw new IllegalArgumentException();
 		if (size < 0) throw new IllegalArgumentException();
 		final BitVector vector = new BitVector(size);
 		final int limit = Math.min(size, bigInt.bitLength());
@@ -227,7 +228,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this.mutable = true;
 	}
 	
-	//TODO consider allowing different radixes
+	//TODO consider changing String constructors to static methods
 	//creates a new bit vector from the supplied binary string
 	//naturally aligned
 	public BitVector(String str) {
@@ -240,6 +241,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
+	public BitVector(String str, int radix) {
+		this(new BigInteger(str, radix));
+	}
+	
 	private BitVector(int start, int finish, long[] bits, boolean mutable) {
 		this.start = start;
 		this.finish = finish;
@@ -249,6 +254,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	private BitVector(Serial serial) {
 		this(serial.start, serial.finish, serial.bits, serial.mutable);
+	}
+	
+	//only called to support parsing with a different radix
+	private BitVector(BigInteger bigInt) {
+		this(bigInt.bitLength());
+		//TODO ideally trap this earlier
+		if (bigInt.signum() < 0) throw new IllegalArgumentException();
+		for (int i = 0; i < finish; i++) {
+			performSetAdj(i, bigInt.testBit(i));
+		}
 	}
 	
 	// accessors

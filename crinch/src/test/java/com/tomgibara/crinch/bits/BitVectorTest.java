@@ -80,6 +80,14 @@ public class BitVectorTest extends TestCase {
 			assertFalse(x.equals(v));
 			x.flipBit(i);
 		}
+		
+		//check hashcode precomputation
+		BitVector y = v.mutable();
+		BitVector z = v.immutable();
+		assertEquals(y.hashCode(), z.hashCode());
+		assertEquals(y.hashCode(), z.hashCode());
+		//ensure that equality continues to work w/ precomputed hashes
+		assertEquals(y, z);
 	}
 
 	public void testToString() {
@@ -676,7 +684,20 @@ public class BitVectorTest extends TestCase {
 			
 			BitVector x = BitVector.fromBigInteger(bigInt, size * 2);
 			assertEquals(v, x.rangeView(0, v.size()));
+			
+			if (bigInt.signum() != 0)
+			try {
+				BitVector.fromBigInteger(bigInt.negate());
+				fail();
+			} catch (IllegalArgumentException e) {
+				/* expected */
+			}
 		}
+	}
+
+	public void testStringConstructor() {
+		assertEquals(new BitVector("10", 10), new BitVector("1010"));
+		//TODO beef-up these tests
 	}
 	
 }

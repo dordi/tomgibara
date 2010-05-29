@@ -1,3 +1,19 @@
+/*
+ * Copyright 2010 Tom Gibara
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ */
 package com.tomgibara.crinch.bits;
 
 import java.io.IOException;
@@ -6,10 +22,115 @@ import java.io.ObjectStreamException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+
+/**
+ * <p>
+ * Stores fixed-length bit sequences of arbitrary length and provides a number
+ * of bit-wise operations, and methods for exposing the bit sequences as
+ * established java types.
+ * </p>
+ * 
+ * <p>
+ * In keeping with Java standards, bits are operated-on and exposed as
+ * <em>big-endian</em>. This means that, where bit sequences are input/output
+ * from methods, the least-significant bit is always on the right and the most
+ * significant bit is on the left. So, for example, the {@link #toString()}
+ * method will contain the most significant bit in the character at index 0 in
+ * the string. Naturally, In the cases where this class is used without
+ * externalizing the bit representation, this distinction is irrelevant.
+ * </p>
+ * 
+ * <p>
+ * A consequence of this is that, in methods that are defined over ranges of
+ * bits, the <em>from</em> and <em>to</em> parameters define the rightmost and
+ * leftmost indices respectively. As per Java conventions, all <em>from</em>
+ * parameters are inclusive and all <em>to</em> parameters are exclusive.
+ * </p>
+ * 
+ * <p>
+ * Instances of this class may be aligned (see {@link #isAligned()} and
+ * {@link #aligned()}. Many operations will execute more efficiently on aligned
+ * instances. Instances may also be immutable (see {@link #isMutable()},
+ * {@link #mutable()} and {@link #immutable()}). In addition to a number of
+ * copying operations, the class also supports views; views create new
+ * {@link BitVector} instances that are backed by the same bit data, this allows
+ * applications to expose mutable {@link BitVector} instances 'safely' via
+ * immutable views.
+ * </p>
+ * 
+ * <p>
+ * The class extends {@link Number} which allows it to be treated as an extended
+ * length numeric type (albeit, one that doesn't support any arithmetic
+ * operations). In addition to the regular number value methods on the
+ * interface, an {@link #bigIntValue()} method is available that returns the
+ * BitVector as a positive, arbitrarily sized integer. Combined with the
+ * fromBigInteger() and setBigInteger() methods, this allows, with some loss of
+ * performance, a range of arithmetic calculations to be performed,
+ * </p>
+ * 
+ * <p>
+ * The class also implements {@link Iterable} and provides methods to obtain
+ * {@link ListIterator} as one would for a {@link List}, but stops short of
+ * implementing the {@link List} interface. This allows a {@link BitVector} to
+ * be used with a range of Java language constructs and standard library
+ * classes.
+ * </p>
+ * 
+ * <p>
+ * The class is {@link Serializable} and {@link Cloneable} too (clones are
+ * shallow and essentially behave as a view of the original instance). For
+ * instances where more control over serialization is needed,
+ * {@link #read(InputStream)} and {@link #write(OutputStream)} methods are
+ * available, though better performance may result from calling
+ * {@link #toByteArray()} and managing the writing outside this class.
+ * </p>
+ * 
+ * <p>
+ * In addition to all of the above methods outlined above, a full raft of
+ * bitwise operations are available, including:
+ * </p>
+ * 
+ * <ul>
+ * <li>set, and, or, xor operations over a variety of inputs</li>
+ * <li>shifts, rotations and reversals</li>
+ * <li>tests for bit-wise intersection, containment and equality</li>
+ * <li>tests for all-zero and all-one ranges</li>
+ * <li>searches for first/last ones/zeros in a given range</li>
+ * <li>searches for next/previous ones/zeros from a given index</li>
+ * <li>copying and viewing bit ranges</li>
+ * <li>obtaining bits as Java primitive types</li>
+ * <ul>
+ * 
+ * <p>
+ * Most such methods are available in both an operation specific version and
+ * operation parameterized version to cater for different application needs.
+ * </p>
+ * 
+ * <p>
+ * Performance should be adequate for most uses. There is scope to improve the
+ * performance of many methods, but none of the methods operate in anything more
+ * than linear time and inner loops are mostly 'tight'. An implementation detail
+ * (which may be important on some platforms) is that, with some exceptions,
+ * none of the methods perform any object creation. The exceptions are: methods
+ * that require an object to be returned, and situations where an operation is
+ * applied with overlapping ranges of bits, in which case it may be necessary to
+ * create a temporary copy of the {@link BitVector}.
+ * </p>
+ * 
+ * <p>
+ * The class is marked as final to ensure that immutable instances can be
+ * safely used in security sensitive code (eg. within a {@link PrivilegedAction}).
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
 //stopping short of implementing List - so many more methods - many of which cannot be supported
 public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
@@ -75,6 +196,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private final long[] bits;
 	private final boolean mutable;
 	//derived fields
+	//TODO consider eliminating these derived fields
 	private final long startMask;
 	private final long finishMask;
 	

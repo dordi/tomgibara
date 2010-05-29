@@ -106,7 +106,7 @@ import java.util.NoSuchElementException;
  * <li>searches for next/previous ones/zeros from a given index</li>
  * <li>copying and viewing bit ranges</li>
  * <li>obtaining bits as Java primitive types</li>
- * <ul>
+ * </ul>
  * 
  * <p>
  * Most such methods are available in both an operation specific version and

@@ -2,26 +2,18 @@ package com.tomgibara.crinch.bits;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.ListIterator;
 import java.util.Random;
-import java.util.regex.Pattern;
-
-import com.tomgibara.crinch.bits.BitVector;
 
 import junit.framework.TestCase;
 
 public class BitVectorTest extends TestCase {
 
-	private static final Pattern ONE = Pattern.compile("1");
-	private static final Pattern ZERO = Pattern.compile("0");
-	
 	private static final Random random = new Random(0);
 	
 	private static BitVector[] randomVectorFamily(int length, int size) {

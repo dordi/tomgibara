@@ -170,10 +170,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	private static BitVector fromBigIntegerImpl(BigInteger bigInt, int size, int length) {
 		final BitVector vector = new BitVector(size);
-		//TODO could optimize by accumulating longs
-		for (int i = 0; i < length; i++) {
-			vector.performSetAdj(i, bigInt.testBit(i));
+		final long[] bits = vector.bits;
+		long v = 0L;
+		int i = 0;
+		for (; i < length; i++) {
+			if (bigInt.testBit(i)) {
+				v = (v >>> 1) | Long.MIN_VALUE;
+			} else {
+				v >>>= 1;
+			}
+			if ((i & ADDRESS_MASK) == ADDRESS_MASK) {
+				bits[i >> ADDRESS_BITS] = v;
+				v = 0;
+			}
 		}
+		if (v != 0L) bits[i >> ADDRESS_BITS] = v >>> (ADDRESS_SIZE - (i & ADDRESS_MASK));
 		return vector;
 	}
 	
@@ -192,10 +203,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	private static BitVector fromBitSetImpl(BitSet bitSet, int size, int length) {
 		final BitVector vector = new BitVector(size);
-		//TODO could optimize by accumulating longs
-		for (int i = 0; i < length; i++) {
-			vector.performSetAdj(i, bitSet.get(i));
+		final long[] bits = vector.bits;
+		long v = 0L;
+		int i = 0;
+		for (; i < length; i++) {
+			if (bitSet.get(i)) {
+				v = (v >>> 1) | Long.MIN_VALUE;
+			} else {
+				v >>>= 1;
+			}
+			if ((i & ADDRESS_MASK) == ADDRESS_MASK) {
+				bits[i >> ADDRESS_BITS] = v;
+				v = 0;
+			}
 		}
+		if (v != 0L) bits[i >> ADDRESS_BITS] = v >>> (ADDRESS_SIZE - (i & ADDRESS_MASK));
 		return vector;
 	}
 

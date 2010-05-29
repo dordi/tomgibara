@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.ListIterator;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -679,7 +680,7 @@ public class BitVectorTest extends TestCase {
 			assertTrue(v.size() <= size);
 			assertEquals(bigInt, v.bigIntValue());
 			
-			BitVector w = BitVector.fromBigInteger(bigInt, size / 2);
+			BitVector w = BitVector.fromBigInteger(bigInt, v.size() / 2);
 			assertEquals(v.rangeView(0, w.size()), w);
 			
 			BitVector x = BitVector.fromBigInteger(bigInt, size * 2);
@@ -695,6 +696,25 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
+	public void testFromBitSet() {
+		for (int i = 0; i < 1000; i++) {
+			final int size = random.nextInt(1000);
+			BitSet bitSet = new BitSet(size);
+			for (int j = 0; j < size; j++) {
+				bitSet.set(j, random.nextBoolean());
+			}
+			BitVector v = BitVector.fromBitSet(bitSet);
+			assertTrue(v.size() <= size);
+			assertEquals(bitSet, v.toBitSet());
+			
+			BitVector w = BitVector.fromBitSet(bitSet, v.size() / 2);
+			assertEquals(v.rangeView(0, w.size()), w);
+			
+			BitVector x = BitVector.fromBitSet(bitSet, size * 2);
+			assertEquals(v, x.rangeView(0, v.size()));
+		}
+	}
+	
 	public void testStringConstructor() {
 		assertEquals(new BitVector("10", 10), new BitVector("1010"));
 

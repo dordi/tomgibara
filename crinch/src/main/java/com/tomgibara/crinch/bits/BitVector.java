@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -152,16 +153,48 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	public static final BitVector fromBigInteger(BigInteger bigInt) {
-		return fromBigInteger(bigInt, bigInt.bitLength());
+		if (bigInt == null) throw new IllegalArgumentException();
+		if (bigInt.signum() < 0) throw new IllegalArgumentException();
+		final int length = bigInt.bitLength();
+		return fromBigIntegerImpl(bigInt, length, length);
 	}
 	
 	public static BitVector fromBigInteger(BigInteger bigInt, int size) {
+		if (bigInt == null) throw new IllegalArgumentException();
 		if (bigInt.signum() < 0) throw new IllegalArgumentException();
 		if (size < 0) throw new IllegalArgumentException();
+		final int length = Math.min(size, bigInt.bitLength());
+		return fromBigIntegerImpl(bigInt, size, length);
+
+	}
+	
+	private static BitVector fromBigIntegerImpl(BigInteger bigInt, int size, int length) {
 		final BitVector vector = new BitVector(size);
-		final int limit = Math.min(size, bigInt.bitLength());
-		for (int i = 0; i < limit; i++) {
+		//TODO could optimize by accumulating longs
+		for (int i = 0; i < length; i++) {
 			vector.performSetAdj(i, bigInt.testBit(i));
+		}
+		return vector;
+	}
+	
+	public static BitVector fromBitSet(BitSet bitSet) {
+		if (bitSet == null) throw new IllegalArgumentException();
+		final int length = bitSet.length();
+		return fromBitSetImpl(bitSet, length, length);
+	}
+
+	public static BitVector fromBitSet(BitSet bitSet, int size) {
+		if (bitSet == null) throw new IllegalArgumentException();
+		if (size < 0) throw new IllegalArgumentException();
+		final int length = Math.min(size, bitSet.length());
+		return fromBitSetImpl(bitSet, size, length);
+	}
+
+	private static BitVector fromBitSetImpl(BitSet bitSet, int size, int length) {
+		final BitVector vector = new BitVector(size);
+		//TODO could optimize by accumulating longs
+		for (int i = 0; i < length; i++) {
+			vector.performSetAdj(i, bitSet.get(i));
 		}
 		return vector;
 	}
@@ -572,6 +605,15 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return bytes;
 	}
 	
+	public BitSet toBitSet() {
+		final int size = finish - start;
+		final BitSet bitSet = new BitSet(size);
+		for (int i = 0; i < size; i++) {
+			bitSet.set(i, getBitAdj(i + start));
+		}
+		return bitSet;
+	}
+	
 	// IO
 	
 	public void write(OutputStream out) throws IOException {
@@ -606,7 +648,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	// convenience setters
 	
-	//TODO rename to invert
+	//named flip for consistency with BigInteger and BitSet
 	public void flip() {
 		performAdj(XOR, start, finish, true);
 	}

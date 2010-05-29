@@ -70,8 +70,8 @@ import java.util.NoSuchElementException;
  * operations). In addition to the regular number value methods on the
  * interface, an {@link #bigIntValue()} method is available that returns the
  * BitVector as a positive, arbitrarily sized integer. Combined with the
- * fromBigInteger() and setBigInteger() methods, this allows, with some loss of
- * performance, a range of arithmetic calculations to be performed.
+ * fromBigInteger() method, this allows, with some loss of performance, a range
+ * of arithmetic calculations to be performed.
  * </p>
  * 
  * <p>

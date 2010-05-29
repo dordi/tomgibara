@@ -180,7 +180,7 @@ public class BitVectorTest extends TestCase {
 		assertEquals(value, v.longValue());
 	}
 
-	public void testBigIntValue() {
+	public void testToBigInteger() {
 		BitVector v = new BitVector(1024);
 		v.set(true);
 		int f = 512;
@@ -189,12 +189,12 @@ public class BitVectorTest extends TestCase {
 		while (f > 0 && t < 1024) {
 			//evens
 			BitVector e = v.rangeView(f, t);
-			assertEquals(i.subtract(BigInteger.ONE), e.bigIntValue());
+			assertEquals(i.subtract(BigInteger.ONE), e.toBigInteger());
 			i = i.shiftLeft(1);
 			f--;
 			//odds
 			BitVector o = v.rangeView(f, t);
-			assertEquals(i.subtract(BigInteger.ONE), o.bigIntValue());
+			assertEquals(i.subtract(BigInteger.ONE), o.toBigInteger());
 			i = i.shiftLeft(1);
 			t++;
 		}
@@ -678,7 +678,7 @@ public class BitVectorTest extends TestCase {
 			final BigInteger bigInt = new BigInteger(size, random);
 			BitVector v = BitVector.fromBigInteger(bigInt);
 			assertTrue(v.size() <= size);
-			assertEquals(bigInt, v.bigIntValue());
+			assertEquals(bigInt, v.toBigInteger());
 			
 			BitVector w = BitVector.fromBigInteger(bigInt, v.size() / 2);
 			assertEquals(v.rangeView(0, w.size()), w);

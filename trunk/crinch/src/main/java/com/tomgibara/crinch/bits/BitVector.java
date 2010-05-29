@@ -69,7 +69,7 @@ import java.util.NoSuchElementException;
  * The class extends {@link Number} which allows it to be treated as an extended
  * length numeric type (albeit, one that doesn't support any arithmetic
  * operations). In addition to the regular number value methods on the
- * interface, an {@link #bigIntValue()} method is available that returns the
+ * interface, a {@link #toBigInteger()} method is available that returns the
  * BitVector as a positive, arbitrarily sized integer. Combined with the
  * fromBigInteger() method, this allows, with some loss of performance, a range
  * of arithmetic calculations to be performed.
@@ -605,6 +605,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return bytes;
 	}
 	
+	public BigInteger toBigInteger() {
+		return start == finish ? BigInteger.ZERO : new BigInteger(1, toByteArray());
+	}
+	
 	public BitSet toBitSet() {
 		final int size = finish - start;
 		final BitSet bitSet = new BitSet(size);
@@ -1020,20 +1024,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return (long) getBitsAdj(start, Math.min(64, finish-start));
 	}
 	
-	public BigInteger bigIntValue() {
-		return start == finish ? BigInteger.ZERO : new BigInteger(1, toByteArray());
-	}
-	
 	@Override
 	public float floatValue() {
 		//TODO can make more efficient by writing a method that returns vector in base 10 string
-		return bigIntValue().floatValue();
+		return toBigInteger().floatValue();
 	}
 	
 	@Override
 	public double doubleValue() {
 		//TODO can make more efficient by writing a method that returns vector in base 10 string
-		return bigIntValue().doubleValue();
+		return toBigInteger().doubleValue();
 	}
 	
 	// iterable methods
@@ -1123,7 +1123,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	public String toString(int radix) {
-		return bigIntValue().toString(radix);
+		return toBigInteger().toString(radix);
 	}
 	
 	//shallow, externally identical to calling view();

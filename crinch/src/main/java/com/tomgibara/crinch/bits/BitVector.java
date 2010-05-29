@@ -120,9 +120,9 @@ import java.util.NoSuchElementException;
  * (which may be important on some platforms) is that, with some exceptions,
  * none of the methods perform any object creation. The exceptions are: methods
  * that require an object to be returned, {@link #floatValue()},
- * {@link #doubleValue()}, and situations where an operation is applied with
- * overlapping ranges of bits, in which case it may be necessary to create a
- * temporary copy of the {@link BitVector}.
+ * {@link #doubleValue()}, {@link #toString(int)}, and situations where an
+ * operation is applied with overlapping ranges of bits, in which case it may be
+ * necessary to create a temporary copy of the {@link BitVector}.
  * </p>
  * 
  * <p>
@@ -1078,6 +1078,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			}
 			return sb.toString();
 		}
+	}
+	
+	public String toString(int radix) {
+		return bigIntValue().toString(radix);
 	}
 	
 	//shallow, externally identical to calling view();

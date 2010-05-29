@@ -266,8 +266,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private final int finish;
 	private final long[] bits;
 	private final boolean mutable;
-	//computed fields
-	private int hashCode; //only used for immutable instances
 	
 	// constructors
 	
@@ -1083,7 +1081,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (!(obj instanceof BitVector)) return false;
 		final BitVector that = (BitVector) obj;
 		if (this.finish - this.start != that.finish - that.start) return false;
-		if (!this.mutable && !that.mutable && this.hashCode != 0 && that.hashCode != 0 && this.hashCode != that.hashCode) return false;
 		return compare(EQUALS, that);
 	}
 	
@@ -1092,8 +1089,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		final int size = finish - start;
 		//trivial case
 		if (size == 0) return size;
-		//pre-computed case
-		if (!mutable && hashCode != 0) return hashCode;
 		int h = 0;
 		//optimized case, starts at zero
 		if (start == 0) {
@@ -1124,9 +1119,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				h = h * 31 + ((int)(l >> 32));
 			}
 		}
-		h ^= size;
-		if (!mutable) hashCode = h;
-		return h;
+		return h ^ size;
 	}
 	
 	@Override

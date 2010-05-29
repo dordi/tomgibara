@@ -74,12 +74,9 @@ public class BitVectorTest extends TestCase {
 			x.flipBit(i);
 		}
 		
-		//check hashcode precomputation
 		BitVector y = v.mutable();
 		BitVector z = v.immutable();
 		assertEquals(y.hashCode(), z.hashCode());
-		assertEquals(y.hashCode(), z.hashCode());
-		//ensure that equality continues to work w/ precomputed hashes
 		assertEquals(y, z);
 	}
 

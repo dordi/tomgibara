@@ -697,7 +697,14 @@ public class BitVectorTest extends TestCase {
 
 	public void testStringConstructor() {
 		assertEquals(new BitVector("10", 10), new BitVector("1010"));
-		//TODO beef-up these tests
+
+		for (int i = 0; i < 1000; i++) {
+			BitVector v = randomVector();
+			int r = random.nextInt(14) + 2;
+			String str = v.toString(r);
+			BitVector w = new BitVector(str, r);
+			assertEquals(str, w.toString(r));
+		}
 	}
 	
 }

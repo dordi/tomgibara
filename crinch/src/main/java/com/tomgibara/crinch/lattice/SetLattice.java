@@ -76,12 +76,12 @@ public class SetLattice<E> implements Lattice<Set<E>> {
 		if (as > bs) {
 			if (bs == 0) return b;
 			HashSet<E> c = new HashSet<E>(a);
-			a.removeAll(b);
+			c.retainAll(b);
 			return c;
 		} else {
 			if (as == 0) return a;
 			HashSet<E> c = new HashSet<E>(b);
-			c.removeAll(a);
+			c.retainAll(a);
 			return c;
 		}
 	}

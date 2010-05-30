@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 public class OrderedLattice<E> implements Lattice<E> {
 
-	private final Comparator<E> comparator;
+	private final Comparator<? super E> comparator;
 	private final E top;
 	private final E bottom;
 	
@@ -13,7 +13,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 		this(null, null);
 	}
 
-	public OrderedLattice(Comparator<E> comparator) {
+	public OrderedLattice(Comparator<? super E> comparator) {
 		this(null, null, comparator);
 	}
 
@@ -24,7 +24,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 		comparator = null;
 	}
 	
-	public OrderedLattice(E top, E bottom, Comparator<E> comparator) {
+	public OrderedLattice(E top, E bottom, Comparator<? super E> comparator) {
 		if (comparator == null) throw new NullPointerException();
 		if (top != null && bottom != null && compare(top, bottom) < 0) throw new IllegalArgumentException();
 		this.top = top;
@@ -32,7 +32,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 		this.comparator = comparator;
 	}
 
-	public Comparator<E> getComparator() {
+	public Comparator<? super E> getComparator() {
 		return comparator;
 	}
 	
@@ -100,7 +100,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 	
 	private int compare(E a, E b) {
 		if (comparator == null) {
-			return ((Comparable<E>)a).compareTo(b);
+			return ((Comparable<? super E>)a).compareTo(b);
 		} else {
 			return comparator.compare(a, b);
 		}

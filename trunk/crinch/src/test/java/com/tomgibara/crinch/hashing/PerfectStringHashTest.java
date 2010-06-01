@@ -24,45 +24,45 @@ public class PerfectStringHashTest extends TestCase {
 
 	public void testEmpty() {
 		PerfectStringHash hash = new PerfectStringHash();
-		assertTrue( hash.hash("X") < 0 );
+		assertTrue( hash.hashAsInt("X") < 0 );
 	}
 
 	public void testOne() {
 		PerfectStringHash hash = new PerfectStringHash("a");
-		assertEquals(0, hash.hash("a"));
-		assertTrue( hash.hash("b") < 0 );
+		assertEquals(0, hash.hashAsInt("a"));
+		assertTrue( hash.hashAsInt("b") < 0 );
 	}
 	
 	public void testAbsentClashes() {
 		PerfectStringHash hash = new PerfectStringHash(new String[] {"a", "b"});
-		assertEquals(0, hash.hash("a"));
-		assertEquals(1, hash.hash("b"));
-		assertTrue(hash.hash("c") < 0);
+		assertEquals(0, hash.hashAsInt("a"));
+		assertEquals(1, hash.hashAsInt("b"));
+		assertTrue(hash.hashAsInt("c") < 0);
 		
 	}
 
 	public void testSingleClash() {
 		PerfectStringHash hash = new PerfectStringHash(new String[] {"Ab", "BC"});
-		assertEquals(0, hash.hash("Ab"));
-		assertEquals(1, hash.hash("BC"));
+		assertEquals(0, hash.hashAsInt("Ab"));
+		assertEquals(1, hash.hashAsInt("BC"));
 	}
 
 	public void testClashCombos() {
 		final String[] arr = new String[] {"Ab", "BC", "5u", "6V", "77"};
 		PerfectStringHash hash = new PerfectStringHash(arr);
 		for (int i = 0; i < arr.length; i++) {
-			assertEquals(i, hash.hash(arr[i]));
+			assertEquals(i, hash.hashAsInt(arr[i]));
 		}
 	}
 
 	public void testClashCombosPlus() {
 		final String[] arr = new String[] {"Ab", "BC", "5u", "6V", "77", "1", "A", "b", "C", "d", "11", "AA", "bb", "CC", "dd"};
 		PerfectStringHash hash = new PerfectStringHash(arr);
-		assertEquals(0, hash.hash("1"));
-		assertEquals(14, hash.hash("dd"));
+		assertEquals(0, hash.hashAsInt("1"));
+		assertEquals(14, hash.hashAsInt("dd"));
 		
 		for (int i = 0; i < arr.length; i++) {
-			assertEquals(i, hash.hash(arr[i]));
+			assertEquals(i, hash.hashAsInt(arr[i]));
 		}
 	}
 

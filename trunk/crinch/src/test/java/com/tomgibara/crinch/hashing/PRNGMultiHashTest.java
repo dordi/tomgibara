@@ -1,6 +1,6 @@
 package com.tomgibara.crinch.hashing;
 
-import java.util.Arrays;
+import java.math.BigInteger;
 
 import junit.framework.TestCase;
 
@@ -18,14 +18,20 @@ public class PRNGMultiHashTest extends TestCase {
 			}
 		};
 		
-		PRNGMultiHash<Integer> h = new PRNGMultiHash<Integer>("SHA1PRNG", s, 50);
-		int[] tmp = new int[10];
+		PRNGMultiHash<Integer> mh = new PRNGMultiHash<Integer>("SHA1PRNG", s, 50);
+		final HashRange r = mh.getRange();
+		final int m = 10;
+		final int[] tmp = new int[m];
 		for (int i = 0; i < 100; i++) {
-			HashList hashes = h.hashAsList(i, tmp.length);
+			HashList list = mh.hashAsList(i, m);
+			assertTrue(list.size() >= m);
 			for (int j = 0; j < tmp.length; j++) {
-				tmp[j] = hashes.getAsInt(j);
+				final int h = list.getAsInt(j);
+				assertTrue(BigInteger.valueOf(h).compareTo(r.getMaximum()) <= 0);
+				assertTrue(r.getMinimum().compareTo(BigInteger.valueOf(h)) <= 0);
+				tmp[j] = h;
 			}
-			System.out.println(Arrays.toString(tmp));
+			//TODO need to execute a statistical test for uniform distribution here
 		}
 		
 	}

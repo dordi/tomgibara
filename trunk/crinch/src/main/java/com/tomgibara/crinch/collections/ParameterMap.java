@@ -654,7 +654,7 @@ public final class ParameterMap<V> implements Map<String, V> {
 		}
 
 		int indexOf(final String key) {
-			final int index = mph.hash(key);
+			final int index = mph.hashAsInt(key);
 			return index >= 0 && keys[index].equals(key) ? index : -1;
 		}
 		

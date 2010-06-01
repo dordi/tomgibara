@@ -16,6 +16,7 @@
  */
 package com.tomgibara.crinch.hashing;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -29,7 +30,7 @@ import java.util.Comparator;
  * </p>
  * 
  * <p>
- * Howeever, the supplied array is <em>not</em> retained. This means that the
+ * However, the supplied array is <em>not</em> retained. This means that the
  * implementation cannot necessarily confirm that a string is not in the
  * supplied array. Where this implementation cannot distinguish that a string is
  * not in the array, a 'valid' hash value may be returned. Under no
@@ -54,7 +55,7 @@ import java.util.Comparator;
  * @author Tom Gibara
  */
 
-public class PerfectStringHash {
+public class PerfectStringHash implements Hash<String> {
 
 	// statics
 	
@@ -170,6 +171,12 @@ public class PerfectStringHash {
 	private final int[] pivots;
 
 	/**
+	 * Cache a range object which indicates the range of hash values generated.
+	 */
+	
+	private final HashRange range;
+	
+	/**
 	 * Constructs a minimal perfect string hashing over the supplied strings.
 	 * 
 	 * @param values
@@ -177,8 +184,10 @@ public class PerfectStringHash {
 	 *            such that <code>hash(values[i]) == i</code>.
 	 */
 	
-	public PerfectStringHash(String... values) {
+	public PerfectStringHash(final String... values) {
 		final int length = values.length;
+		if (length == 0) throw new IllegalArgumentException("No values supplied");
+		
 		final int[] hashes = new int[length];
 		final int[] offsets = new int[2 * length];
 		final int[] runLengths = new int[length];
@@ -191,7 +200,7 @@ public class PerfectStringHash {
 		
 		//test for unique hashes
 		int offset = 0;
-		if (values.length > 1) {
+		if (length > 1) {
 			int previousHash = hashes[0];
 			int runLength = 1;
 			for (int i = 1; i <= length; i++) {
@@ -225,6 +234,7 @@ public class PerfectStringHash {
 			this.hashes = hashes;
 			this.offsets = null;
 			this.pivots = null;
+			this.range = new HashRange(0, length - 1);
 			return;
 		}
 
@@ -240,6 +250,30 @@ public class PerfectStringHash {
 		this.pivots = pivots;
 		this.offsets = offsets;
 		this.hashes = hashes;
+		this.range = new HashRange(0, length - 1);
+	}
+	
+	// hash generator methods
+	
+	@Override
+	public HashRange getRange() {
+		return range;
+	}
+	
+	@Override
+	public BigInteger hashAsBigInt(String value) {
+		return BigInteger.valueOf(hash(value));
+	}
+	
+	//TODO decide whether to throw an IAE if -1 is returned from hash
+	@Override
+	public int hashAsInt(String value) {
+		return hash(value);
+	}
+	
+	@Override
+	public long hashAsLong(String value) {
+		return hash(value);
 	}
 	
 	/**
@@ -250,7 +284,7 @@ public class PerfectStringHash {
 	 * @return a minimal hashcode for the supplied string, or -1
 	 */
 
-	public int hash(String value) {
+	private int hash(String value) {
 		final int h = value.hashCode();
 		final int index = Arrays.binarySearch(hashes, h);
 		final int[] pivots = this.pivots;

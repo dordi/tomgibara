@@ -9,6 +9,7 @@ import java.math.BigInteger;
  *
  */
 
+//TODO really need to revisit the inclusivity of maximum bound
 public class HashRange {
 
 	// statics

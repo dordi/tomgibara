@@ -103,6 +103,7 @@ public class BitVectorLattice implements Lattice<BitVector> {
 	@Override
 	public boolean contains(BitVector vector) {
 		if (vector == null) throw new IllegalArgumentException("null vector");
+		if (vector.size() != top.size()) throw new IllegalArgumentException("incorrect vector size");
 		return top.testContains(vector) && vector.testContains(bottom);
 	}
 	
@@ -118,5 +119,11 @@ public class BitVectorLattice implements Lattice<BitVector> {
 		BitVector v = a.mutableCopy();
 		v.andVector(b);
 		return v;
+	}
+	
+	@Override
+	public boolean equalInLattice(BitVector a, BitVector b) {
+		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
+		return a.equals(b);
 	}
 }

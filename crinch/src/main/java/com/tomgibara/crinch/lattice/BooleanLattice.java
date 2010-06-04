@@ -59,6 +59,7 @@ public class BooleanLattice implements Lattice<Boolean> {
 	
 	@Override
 	public boolean contains(Boolean bool) {
+		if (bool == null) throw new IllegalArgumentException();
 		final boolean b = bool;
 		return b == top || b == bottom;
 	}
@@ -95,6 +96,12 @@ public class BooleanLattice implements Lattice<Boolean> {
 		final boolean c = a && b;
 		if (c != top && c != bottom) throw new IllegalArgumentException();
 		return c;
+	}
+	
+	@Override
+	public boolean equalInLattice(Boolean a, Boolean b) {
+		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
+		return a.booleanValue() == b.booleanValue();
 	}
 	
 }

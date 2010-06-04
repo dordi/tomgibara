@@ -77,35 +77,41 @@ public class OrderedLattice<E> implements Lattice<E> {
 		return top != null && bottom != null;
 	}
 	
+	@Override
 	public boolean contains(E e) {
 		if (e == null) throw new IllegalArgumentException();
 		return (top == null || compare(e, top) <= 0) && (bottom == null || compare(bottom, e) <= 0);
 	};
 	
+	@Override
 	public E join(E a, E b) {
 		checkBounds(a);
 		checkBounds(b);
 		return compare(a,b) >= 0 ? a : b;
 	};
 
+	@Override
 	public E meet(E a, E b) {
 		checkBounds(a);
 		checkBounds(b);
 		return compare(a,b) <= 0 ? a : b;
 	};
 	
+	@Override
 	public Lattice<E> boundedAbove(E top) {
 		final int cmp = this.top == null ? 1 : compare(this.top, top);
 		if (cmp < 0) throw new IllegalArgumentException();
 		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	}
 	
+	@Override
 	public Lattice<E> boundedBelow(E bottom) {
 		final int cmp = this.bottom == null ? 1 : compare(bottom, this.bottom);
 		if (cmp < 0) throw new IllegalArgumentException();
 		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
 	
+	@Override
 	public Lattice<E> bounded(E top, E bottom) {
 		final int cmpA = this.top == null ? 1 : compare(this.top, top);
 		if (cmpA < 0) throw new IllegalArgumentException();
@@ -113,6 +119,13 @@ public class OrderedLattice<E> implements Lattice<E> {
 		if (cmpB < 0) throw new IllegalArgumentException();
 		return cmpA == 0 && cmpB == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
+	
+	@Override
+	public boolean equalInLattice(E a, E b) {
+		checkBounds(a);
+		checkBounds(b);
+		return compare(a, b) == 0;
+	}
 	
 	private int compare(E a, E b) {
 		if (comparator == null) {

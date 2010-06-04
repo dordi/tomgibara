@@ -135,6 +135,16 @@ public class ProductLattice implements Lattice<Object[]> {
 		return tuple;
 	}
 	
+	@Override
+	public boolean equalInLattice(Object[] tupleA, Object[] tupleB) {
+		checkTuple(tupleA);
+		checkTuple(tupleB);
+		for (int i = 0; i < lattices.length; i++) {
+			if (!lattices[i].equalInLattice(tupleA[i], tupleB[i])) return false;
+		}
+		return true;
+	}
+	
 	private void checkTuple(Object[] tuple) {
 		if (tuple == null) throw new IllegalArgumentException("null tuple");
 		if (tuple.length != lattices.length) throw new IllegalArgumentException("wrong tuple length, expected " + lattices.length + " got " + tuple.length);

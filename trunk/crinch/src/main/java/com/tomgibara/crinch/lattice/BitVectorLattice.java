@@ -18,7 +18,7 @@ package com.tomgibara.crinch.lattice;
 
 import com.tomgibara.crinch.bits.BitVector;
 
-public class BitVectorLattice implements Lattice<BitVector> {
+public class BitVectorLattice extends AbstractLattice<BitVector> {
 
 	private static BitVector makeTop(int size) {
 		BitVector vector = new BitVector(size);
@@ -126,4 +126,11 @@ public class BitVectorLattice implements Lattice<BitVector> {
 		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
 		return a.equals(b);
 	}
+	
+	@Override
+	public boolean isOrdered(BitVector a, BitVector b) {
+		if (b == null) throw new IllegalArgumentException();
+		return b.testContains(a);
+	}
+	
 }

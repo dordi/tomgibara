@@ -16,9 +16,11 @@
  */
 package com.tomgibara.crinch.lattice;
 
+import com.tomgibara.crinch.poset.PartialOrder;
+
 //TODO can optimize implementation of bounded methods by checking for equality with top/bottom
 // no method on this interface can take nulls
-public interface Lattice<E> extends MeetSemiLattice<E>, JoinSemiLattice<E> {
+public interface Lattice<E> extends MeetSemiLattice<E>, JoinSemiLattice<E>, PartialOrder<E> {
 
 	// req. lattice top v supplied top = lattice top
 	// returns a new lattice bounded above by supplied top
@@ -39,6 +41,7 @@ public interface Lattice<E> extends MeetSemiLattice<E>, JoinSemiLattice<E> {
 	boolean isBounded();
 
 	//IAE if lattice doesn't contain e1 or e2
+	//equivalent to compare(e1, e2) == Comparison.EQUAL, but may be more efficient
 	boolean equalInLattice(E e1, E e2);
 	
 }

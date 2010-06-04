@@ -16,7 +16,7 @@
  */
 package com.tomgibara.crinch.lattice;
 
-public class BooleanLattice implements Lattice<Boolean> {
+public class BooleanLattice extends AbstractLattice<Boolean> {
 
 	private final boolean top;
 	private final boolean bottom;
@@ -102,6 +102,12 @@ public class BooleanLattice implements Lattice<Boolean> {
 	public boolean equalInLattice(Boolean a, Boolean b) {
 		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
 		return a.booleanValue() == b.booleanValue();
+	}
+	
+	@Override
+	public boolean isOrdered(Boolean a, Boolean b) {
+		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
+		return b || !a;
 	}
 	
 }

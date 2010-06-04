@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.tomgibara.crinch.poset.PartialOrder.Comparison;
+
 import junit.framework.TestCase;
 
 public class ProductLatticeTest extends TestCase {
@@ -47,6 +49,18 @@ public class ProductLatticeTest extends TestCase {
 		assertTrue(below.isBounded());
 		assertTrue(below.isBoundedAbove());
 		assertTrue(below.isBoundedBelow());
+	}
+	
+	public void testCompare() {
+		ProductLattice lattice = new ProductLattice(new SetLattice<Integer>(set(1,2,3)), new OrderedLattice<Integer>());
+		assertEquals(Comparison.EQUAL, lattice.compare(tuple(set(1,2),2), tuple(set(1,2),2)));
+		assertEquals(Comparison.LESS_THAN, lattice.compare(tuple(set(1,2),1), tuple(set(1,2),2)));
+		assertEquals(Comparison.LESS_THAN, lattice.compare(tuple(set(1),2), tuple(set(1,2),2)));
+		assertEquals(Comparison.LESS_THAN, lattice.compare(tuple(set(1),1), tuple(set(1,2),2)));
+		assertEquals(Comparison.GREATER_THAN, lattice.compare(tuple(set(1,2),2), tuple(set(1,2),1)));
+		assertEquals(Comparison.GREATER_THAN, lattice.compare(tuple(set(1,2),2), tuple(set(1),2)));
+		assertEquals(Comparison.GREATER_THAN, lattice.compare(tuple(set(1,2),2), tuple(set(1),1)));
+		assertEquals(Comparison.INCOMPARABLE, lattice.compare(tuple(set(1,2,3),1), tuple(set(1,2),2)));
 	}
 	
 }

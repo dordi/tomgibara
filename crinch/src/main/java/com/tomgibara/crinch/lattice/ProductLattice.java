@@ -16,7 +16,7 @@
  */
 package com.tomgibara.crinch.lattice;
 
-public class ProductLattice implements Lattice<Object[]> {
+public class ProductLattice extends AbstractLattice<Object[]> {
 
 	private final Lattice<Object>[] lattices;
 	
@@ -143,6 +143,29 @@ public class ProductLattice implements Lattice<Object[]> {
 			if (!lattices[i].equalInLattice(tupleA[i], tupleB[i])) return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isOrdered(Object[] tupleA, Object[] tupleB) {
+		checkTuple(tupleA);
+		checkTuple(tupleB);
+		for (int i = 0; i < lattices.length; i++) {
+			if (!lattices[i].isOrdered(tupleA[i], tupleB[i])) return false;
+		}
+		return true;
+	}
+
+	@Override
+	public Comparison compare(Object[] tupleA, Object[] tupleB) {
+		checkTuple(tupleA);
+		checkTuple(tupleB);
+		Comparison comp = null;
+		for (int i = 0; i < lattices.length; i++) {
+			Comparison c = lattices[i].compare(tupleA[i], tupleB[i]);
+			comp = comp == null ? c : comp.combine(c);
+			if (comp == Comparison.INCOMPARABLE) break;
+		}
+		return comp;
 	}
 	
 	private void checkTuple(Object[] tuple) {

@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 //TODO consider whether unbounded sets could be supported
-public class SetLattice<E> implements Lattice<Set<E>> {
+public class SetLattice<E> extends AbstractLattice<Set<E>> {
 
 	private final Set<E> top;
 	private final Set<E> bottom;
@@ -125,6 +125,12 @@ public class SetLattice<E> implements Lattice<Set<E>> {
 	public boolean equalInLattice(Set<E> a, Set<E> b) {
 		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
 		return a.equals(b);
+	}
+	
+	@Override
+	public boolean isOrdered(Set<E> a, Set<E> b) {
+		if (!contains(a) && !(contains(b))) throw new IllegalArgumentException();
+		return b.containsAll(a);
 	}
 	
 	// object methods

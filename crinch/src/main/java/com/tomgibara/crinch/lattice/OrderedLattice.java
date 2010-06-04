@@ -18,7 +18,7 @@ package com.tomgibara.crinch.lattice;
 
 import java.util.Comparator;
 
-public class OrderedLattice<E> implements Lattice<E> {
+public class OrderedLattice<E> extends AbstractLattice<E> {
 
 	private final Comparator<? super E> comparator;
 	private final E top;
@@ -34,7 +34,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 	}
 
 	public OrderedLattice(E top, E bottom) {
-		if (top != null && bottom != null && compare(top, bottom) < 0) throw new IllegalArgumentException();
+		if (top != null && bottom != null && comp(top, bottom) < 0) throw new IllegalArgumentException();
 		this.top = top;
 		this.bottom = bottom;
 		comparator = null;
@@ -42,7 +42,7 @@ public class OrderedLattice<E> implements Lattice<E> {
 	
 	public OrderedLattice(E top, E bottom, Comparator<? super E> comparator) {
 		if (comparator == null) throw new NullPointerException();
-		if (top != null && bottom != null && compare(top, bottom) < 0) throw new IllegalArgumentException();
+		if (top != null && bottom != null && comp(top, bottom) < 0) throw new IllegalArgumentException();
 		this.top = top;
 		this.bottom = bottom;
 		this.comparator = comparator;
@@ -80,42 +80,42 @@ public class OrderedLattice<E> implements Lattice<E> {
 	@Override
 	public boolean contains(E e) {
 		if (e == null) throw new IllegalArgumentException();
-		return (top == null || compare(e, top) <= 0) && (bottom == null || compare(bottom, e) <= 0);
+		return (top == null || comp(e, top) <= 0) && (bottom == null || comp(bottom, e) <= 0);
 	};
 	
 	@Override
 	public E join(E a, E b) {
 		checkBounds(a);
 		checkBounds(b);
-		return compare(a,b) >= 0 ? a : b;
+		return comp(a,b) >= 0 ? a : b;
 	};
 
 	@Override
 	public E meet(E a, E b) {
 		checkBounds(a);
 		checkBounds(b);
-		return compare(a,b) <= 0 ? a : b;
+		return comp(a,b) <= 0 ? a : b;
 	};
 	
 	@Override
 	public Lattice<E> boundedAbove(E top) {
-		final int cmp = this.top == null ? 1 : compare(this.top, top);
+		final int cmp = this.top == null ? 1 : comp(this.top, top);
 		if (cmp < 0) throw new IllegalArgumentException();
 		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	}
 	
 	@Override
 	public Lattice<E> boundedBelow(E bottom) {
-		final int cmp = this.bottom == null ? 1 : compare(bottom, this.bottom);
+		final int cmp = this.bottom == null ? 1 : comp(bottom, this.bottom);
 		if (cmp < 0) throw new IllegalArgumentException();
 		return cmp == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
 	
 	@Override
 	public Lattice<E> bounded(E top, E bottom) {
-		final int cmpA = this.top == null ? 1 : compare(this.top, top);
+		final int cmpA = this.top == null ? 1 : comp(this.top, top);
 		if (cmpA < 0) throw new IllegalArgumentException();
-		final int cmpB = this.bottom == null ? 1 : compare(bottom, this.bottom);
+		final int cmpB = this.bottom == null ? 1 : comp(bottom, this.bottom);
 		if (cmpB < 0) throw new IllegalArgumentException();
 		return cmpA == 0 && cmpB == 0 ? this : new OrderedLattice<E>(top, bottom);
 	};
@@ -124,17 +124,26 @@ public class OrderedLattice<E> implements Lattice<E> {
 	public boolean equalInLattice(E a, E b) {
 		checkBounds(a);
 		checkBounds(b);
-		return compare(a, b) == 0;
+		return comp(a, b) == 0;
 	}
 	
-	private int compare(E a, E b) {
-		if (comparator == null) {
-			return ((Comparable<? super E>)a).compareTo(b);
-		} else {
-			return comparator.compare(a, b);
-		}
+	@Override
+	public boolean isOrdered(E a, E b) {
+		checkBounds(a);
+		checkBounds(b);
+		return comp(a, b) <= 0;
 	}
-
+	
+	@Override
+	public Comparison compare(E a, E b) {
+		checkBounds(a);
+		checkBounds(b);
+		final int c = comp(a, b);
+		if (c < 0) return Comparison.LESS_THAN;
+		if (c > 0) return Comparison.GREATER_THAN;
+		return Comparison.EQUAL;
+	}
+	
 	private void checkBounds(E a) {
 		if (a == null) throw new IllegalArgumentException();
 		if (top != null) checkOrder(top, a);
@@ -142,7 +151,15 @@ public class OrderedLattice<E> implements Lattice<E> {
 	}
 	
 	private void checkOrder(E a, E b) {
-		if (a != null && compare(a, b) < 0) throw new IllegalArgumentException();
+		if (a != null && comp(a, b) < 0) throw new IllegalArgumentException();
 	}
 	
+	private int comp(E a, E b) {
+		if (comparator == null) {
+			return ((Comparable<? super E>)a).compareTo(b);
+		} else {
+			return comparator.compare(a, b);
+		}
+	}
+
 }

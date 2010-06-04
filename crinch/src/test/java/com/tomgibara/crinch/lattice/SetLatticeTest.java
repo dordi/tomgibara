@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.tomgibara.crinch.poset.PartialOrder.Comparison;
+
 import junit.framework.TestCase;
 
 public class SetLatticeTest extends TestCase {
@@ -56,5 +58,21 @@ public class SetLatticeTest extends TestCase {
 		assertEquals(set(1,2), lattice.join(set(1), set(2)));
 		assertEquals(set(1), lattice.join(set(1), set()));
 		assertEquals(set(1), lattice.join(set(), set(1)));
+	}
+	
+	public void testCompare() {
+		SetLattice<Integer> lattice = new SetLattice<Integer>(set(1,2,3,4));
+		assertEquals(Comparison.EQUAL, lattice.compare(set(1,2), set(1,2)));
+		assertEquals(Comparison.LESS_THAN, lattice.compare(set(1,2), set(1,2,3)));
+		assertEquals(Comparison.GREATER_THAN, lattice.compare(set(1,2,3), set(1,2)));
+		assertEquals(Comparison.INCOMPARABLE, lattice.compare(set(1,2), set(2,3)));
+	}
+	
+	public void testIsOrdered() {
+		SetLattice<Integer> lattice = new SetLattice<Integer>(set(1,2,3,4));
+		assertTrue(lattice.isOrdered(set(1,2), set(1,2)));
+		assertTrue(lattice.isOrdered(set(1,2), set(1,2,3)));
+		assertFalse(lattice.isOrdered(set(1,2,3), set(1,2)));
+		assertFalse(lattice.isOrdered(set(2,3), set(1,2)));
 	}
 }

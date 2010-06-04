@@ -18,6 +18,7 @@ package com.tomgibara.crinch.lattice;
 
 public interface SemiLattice<E> {
 
+	//throws an IAE if e is not a valid candidate for inclusion in the semi lattice
 	boolean contains(E e);
 	
 }

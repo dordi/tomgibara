@@ -732,4 +732,21 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 	
+	public void testNextOne() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testNextOne(vs[j]);
+			}
+		}
+	}
+
+	private void testNextOne(BitVector v) {
+		int count = 0;
+		for (int i = v.firstOne(); i >= 0; i = v.nextOne(i+1)) {
+			count++;
+		}
+		assertEquals(v.countOnes(), count);
+	}
+	
 }

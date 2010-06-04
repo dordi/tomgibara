@@ -17,14 +17,28 @@
 package com.tomgibara.crinch.lattice;
 
 //TODO can optimize implementation of bounded methods by checking for equality with top/bottom
+// no method on this interface can take nulls
 public interface Lattice<E> extends MeetSemiLattice<E>, JoinSemiLattice<E> {
 
+	// req. lattice top v supplied top = lattice top
+	// returns a new lattice bounded above by supplied top
+	@Override
 	Lattice<E> boundedAbove(E top);
 
+	// req  lattice bottom ^ supplied bottom = lattice bottom
+	// returns a new lattice bounded below by supplied top
+	@Override
 	Lattice<E> boundedBelow(E bottom);
 
+	// req. lattice top v supplied top = lattice top
+	// req  lattice bottom ^ supplied bottom = lattice bottom
+	// returns a new lattice bounded above and below by supplied top and bottom
 	Lattice<E> bounded(E top, E bottom);
 
+	// returns true if bounded above and below
 	boolean isBounded();
 
+	//IAE if lattice doesn't contain e1 or e2
+	boolean equalInLattice(E e1, E e2);
+	
 }

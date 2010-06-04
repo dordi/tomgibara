@@ -16,11 +16,11 @@
  */
 package com.tomgibara.crinch.lattice;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+//TODO consider whether unbounded sets could be supported
 public class SetLattice<E> implements Lattice<Set<E>> {
 
 	private final Set<E> top;
@@ -119,6 +119,12 @@ public class SetLattice<E> implements Lattice<Set<E>> {
 		if (!this.top.containsAll(top)) throw new IllegalArgumentException();
 		if (!bottom.containsAll(this.bottom)) throw new IllegalArgumentException();
 		return new SetLattice<E>(top, bottom);
+	}
+	
+	@Override
+	public boolean equalInLattice(Set<E> a, Set<E> b) {
+		if (!contains(a) || !contains(b)) throw new IllegalArgumentException();
+		return a.equals(b);
 	}
 	
 	// object methods

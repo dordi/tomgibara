@@ -18,6 +18,7 @@ package com.tomgibara.crinch.lattice;
 
 public interface MeetSemiLattice<E> extends SemiLattice<E> {
 
+	//if unbounded, must accept null arguments (representing bottom)
 	E meet(E a, E b);
 
 	MeetSemiLattice<E> boundedBelow(E bottom);

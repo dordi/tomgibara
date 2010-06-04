@@ -74,26 +74,11 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	}
 
 	@Override
-	public boolean containsAll(BloomFilter<?> filter) {
-		checkCompatible(filter);
-		return bits.testContains(filter.getBits());
-	}
-
-	@Override
 	public boolean addAll(BloomFilter<? extends E> filter) {
 		checkCompatible(filter);
 		boolean contains = bits.testContains(filter.getBits());
 		if (contains) return false;
 		bits.orVector(filter.getBits());
-		return true;
-	}
-	
-	@Override
-	public boolean mightContain(E element) {
-		final HashList hashList = multiHash.hashAsList(element, hashCount);
-		for (int i = 0; i < hashCount; i++) {
-			if (!bits.getBit( hashList.getAsInt(i) )) return false;
-		}
 		return true;
 	}
 	
@@ -135,11 +120,4 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 		return new BasicBloomFilter<E>(this);
 	}
 
-	// private methods
-	
-	private void checkCompatible(BloomFilter<?> filter) {
-		if (this.hashCount != filter.getHashCount()) throw new IllegalArgumentException("Incompatible filter, hashCount was " + filter.getHashCount() +", expected " + hashCount);
-		if (!this.getMultiHash().equals(filter.getMultiHash())) throw new IllegalArgumentException("Incompatible filter, multiHashes were not equal");
-	}
-	
 }

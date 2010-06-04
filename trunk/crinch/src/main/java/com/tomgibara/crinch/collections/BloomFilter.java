@@ -18,6 +18,7 @@ package com.tomgibara.crinch.collections;
 
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.Hash;
+import com.tomgibara.crinch.hashing.MultiHash;
 
 //see http://code.google.com/p/guava-libraries/issues/detail?id=12
 public interface BloomFilter<E> {
@@ -44,7 +45,7 @@ public interface BloomFilter<E> {
 	
 	int getHashCount();
 	
-	Hash<? super E> getMultiHash();
+	MultiHash<? super E> getMultiHash();
 	
 	//may be live, or may be a snapshot - no guarantee, use BitVector.copy() if you need certainty
 	BitVector getBits();

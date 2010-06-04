@@ -23,14 +23,14 @@ import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.MultiHash;
 
 
-public class BasicBloomFilter<E> implements BloomFilter<E>, Cloneable {
+public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Cloneable {
 
 	// fields
 	
 	private final MultiHash<? super E> multiHash;
 	private final int hashCount;
 	private final BitVector bits;
-	private BitVector publicBits = null;
+	private final BitVector publicBits;
 	
 	// constructors
 	
@@ -56,43 +56,17 @@ public class BasicBloomFilter<E> implements BloomFilter<E>, Cloneable {
 		this.multiHash = multiHash;
 		this.hashCount = hashCount;
 		this.bits = bits == null ? new BitVector(multiHash.getRange().getSize().intValue()) : bits.alignedCopy(true);
+		publicBits = this.bits.immutableView();
 	}
 	
 	private BasicBloomFilter(BasicBloomFilter<E> that) {
 		this.multiHash = that.multiHash;
 		this.hashCount = that.hashCount;
 		this.bits = that.bits.copy();
+		publicBits = this.bits.immutableView();
 	}
 	
 	// bloom filter methods
-	
-	@Override
-	public boolean isEmpty() {
-		return bits.isAllZeros();
-	}
-	
-	@Override
-	public double getFalsePositiveProbability() {
-		return Math.pow( (double) bits.countOnes() / bits.size(), hashCount);
-	}
-	
-	@Override
-	public int getCapacity() {
-		return bits.size();
-	}
-	
-	@Override
-	public boolean addAll(Iterable<? extends E> elements) {
-		boolean mutated = false;
-		for (E element : elements) if ( add(element) ) mutated = true;
-		return mutated;
-	}
-
-	@Override
-	public boolean mightContainAll(Iterable<? extends E> elements) {
-		for (E element : elements) if (!mightContain(element)) return false;
-		return true;
-	}
 	
 	@Override
 	public void clear() {
@@ -101,7 +75,8 @@ public class BasicBloomFilter<E> implements BloomFilter<E>, Cloneable {
 
 	@Override
 	public boolean containsAll(BloomFilter<?> filter) {
-		return false;
+		checkCompatible(filter);
+		return bits.testContains(filter.getBits());
 	}
 
 	@Override
@@ -140,7 +115,7 @@ public class BasicBloomFilter<E> implements BloomFilter<E>, Cloneable {
 	
 	@Override
 	public BitVector getBits() {
-		return publicBits == null ? publicBits = bits.immutableView() : publicBits;
+		return publicBits;
 	}
 	
 	@Override
@@ -154,27 +129,6 @@ public class BasicBloomFilter<E> implements BloomFilter<E>, Cloneable {
 	}
 	
 	// object methods
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this) return true;
-		if (!(obj instanceof BloomFilter<?>)) return false;
-		final BloomFilter<?> that = (BloomFilter<?>) obj;
-		if (this.hashCount != that.getHashCount()) return false;
-		if (!this.getMultiHash().equals(that.getMultiHash())) return false;
-		if (!this.bits.equals(that.getBits())) return false;
-		return true;
-	}
-	
-	@Override
-	public int hashCode() {
-		return bits.hashCode();
-	}
-	
-	@Override
-	public String toString() {
-		return bits.toString();
-	}
 	
 	@Override
 	public BasicBloomFilter<E> clone() {

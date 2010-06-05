@@ -284,7 +284,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 			checkCompatible(filter);
 			updateBitVector();
 			final BitVector thisBits = bitVector;
-			final BitVector thatBits = filter.getBits();
+			final BitVector thatBits = filter.getBitVector();
 			if (thisBits.testContains(thatBits)) return false;
 			//we can trounce the bit set now because we know modifications will be made
 			thisBits.flip();
@@ -302,7 +302,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 		}
 
 		@Override
-		public BitVector getBits() {
+		public BitVector getBitVector() {
 			updateBitVector();
 			return publicBitVector;
 		}

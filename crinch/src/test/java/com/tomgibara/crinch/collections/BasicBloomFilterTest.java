@@ -44,7 +44,7 @@ public class BasicBloomFilterTest extends TestCase {
 		assertEquals(10, bloom.getHashCount());
 		assertEquals(sha1Hash, bloom.getMultiHash());
 		assertEquals(true, bloom.isEmpty());
-		assertEquals(DEFAULT_SIZE, bloom.getBits().size());
+		assertEquals(DEFAULT_SIZE, bloom.getBitVector().size());
 	}
 	
 	public void testIsEmpty() {
@@ -121,7 +121,7 @@ public class BasicBloomFilterTest extends TestCase {
 			BasicBloomFilter<Object> b = bloom.clone();
 			assertFalse(b.add(i));
 			assertEquals(bloom, b);
-			final int newBitCount = bloom.getBits().countOnes();
+			final int newBitCount = bloom.getBitVector().countOnes();
 			assertTrue(newBitCount >= bitCount);
 			bitCount = newBitCount;
 		}

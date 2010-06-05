@@ -7,17 +7,17 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 
 	@Override
 	public boolean isEmpty() {
-		return getBits().isAllZeros();
+		return getBitVector().isAllZeros();
 	}
 	
 	@Override
 	public double getFalsePositiveProbability() {
-		return Math.pow( (double) getBits().countOnes() / getBits().size(), getHashCount());
+		return Math.pow( (double) getBitVector().countOnes() / getBitVector().size(), getHashCount());
 	}
 	
 	@Override
 	public int getCapacity() {
-		return getBits().size();
+		return getBitVector().size();
 	}
 	
 	@Override
@@ -31,7 +31,7 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	public boolean mightContain(E element) {
 		final int hashCount = getHashCount();
 		final HashList hashList = getMultiHash().hashAsList(element, hashCount);
-		final BitVector bitVector = getBits();
+		final BitVector bitVector = getBitVector();
 		for (int i = 0; i < hashCount; i++) {
 			if (!bitVector.getBit( hashList.getAsInt(i) )) return false;
 		}
@@ -47,7 +47,7 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	@Override
 	public boolean containsAll(BloomFilter<?> filter) {
 		checkCompatible(filter);
-		return getBits().testContains(filter.getBits());
+		return getBitVector().testContains(filter.getBitVector());
 	}
 
 	// object methods
@@ -59,18 +59,18 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 		final BloomFilter<?> that = (BloomFilter<?>) obj;
 		if (this.getHashCount() != that.getHashCount()) return false;
 		if (!this.getMultiHash().equals(that.getMultiHash())) return false;
-		if (!this.getBits().equals(that.getBits())) return false;
+		if (!this.getBitVector().equals(that.getBitVector())) return false;
 		return true;
 	}
 	
 	@Override
 	public int hashCode() {
-		return getBits().hashCode();
+		return getBitVector().hashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return getBits().toString();
+		return getBitVector().toString();
 	}
 
 	// package scoped methods

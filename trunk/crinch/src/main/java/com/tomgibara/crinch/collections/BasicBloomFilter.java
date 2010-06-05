@@ -76,9 +76,9 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	@Override
 	public boolean addAll(BloomFilter<? extends E> filter) {
 		checkCompatible(filter);
-		boolean contains = bits.testContains(filter.getBits());
+		boolean contains = bits.testContains(filter.getBitVector());
 		if (contains) return false;
-		bits.orVector(filter.getBits());
+		bits.orVector(filter.getBitVector());
 		return true;
 	}
 	
@@ -99,7 +99,7 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	}
 	
 	@Override
-	public BitVector getBits() {
+	public BitVector getBitVector() {
 		return publicBits;
 	}
 	

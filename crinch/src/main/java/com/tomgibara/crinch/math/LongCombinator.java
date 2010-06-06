@@ -20,40 +20,20 @@ import java.math.BigInteger;
 
 class LongCombinator implements Combinator {
 
-	static long choose(int n, int k) {
-		if (n < k) return 0;
-		if (n == k) return 1;
-		
-		final long delta, max;
-		if (k < n - k) {
-			delta = n - k;
-			max = k;
-		} else {
-			delta = k;
-			max = n - k;
-		}
-		
-		long c = delta + 1;
-		for (long i = 2; i <= max; i++) {
-			 c  = c * (delta + i) / i;
-		}
-		
-		return c;
-	}
-	
 	private final int n;
 	private final int k;
 	private final BigInteger size;
 	
 	private final long[][] cs;
 	
-	public LongCombinator(int n, int k) {
+	//relies on Combinators to validate arguments
+	LongCombinator(int n, int k) {
 		this.n = n;
 		this.k = k;
 		cs = new long[k + 1][n + 1];
 		for (int i = 0; i <= k; i++) {
 			for (int j = 0; j <= n; j++) {
-				cs[i][j] = choose(j, i);
+				cs[i][j] = Combinators.chooseAsLong(j, i);
 			}
 		}
 		size = BigInteger.valueOf(cs[k][n] /* choose(n, k) */);
@@ -75,6 +55,19 @@ class LongCombinator implements Combinator {
 	}
 	
 	@Override
+	public int[] getCombination(BigInteger m) throws IndexOutOfBoundsException, IllegalArgumentException {
+		return getCombination(m, new int[k]);
+	}
+	
+	@Override
+	public int[] getCombination(BigInteger m, int[] as) throws IndexOutOfBoundsException, IllegalArgumentException {
+		if (m.signum() < 0) throw new IndexOutOfBoundsException();
+		if (m.compareTo(BigInteger.valueOf(cs[k][n] /* choose(n, k) */)) >= 0) throw new IndexOutOfBoundsException();
+		if (as.length < k) throw new IllegalArgumentException();
+		return getCombinationImpl(m.longValue(), as);
+	}
+	
+	@Override
 	public int[] getCombination(long m) {
 		return getCombination(m, new int[k]);
 	}
@@ -85,7 +78,10 @@ class LongCombinator implements Combinator {
 		if (m < 0) throw new IndexOutOfBoundsException();
 		if (m >= cs[k][n] /* choose(n, k) */) throw new IndexOutOfBoundsException();
 		if (as.length < k) throw new IllegalArgumentException();
-		
+		return getCombinationImpl(m, as);
+	}
+	
+	private int[] getCombinationImpl(long m, int[] as) {
 		int a = n;
 		int b = k;
 		long x = cs[b][a] /*choose(a, b)*/ - 1 - m;
@@ -103,7 +99,7 @@ class LongCombinator implements Combinator {
 		
 		return as;
 	}
-	
+
 	private int largest(int a, int b, long x) {
 		int v;
 		for (v = a - 1; cs[b][v] /*choose(v, b)*/ > x; v--);

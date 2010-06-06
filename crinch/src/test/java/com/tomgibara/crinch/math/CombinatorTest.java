@@ -25,8 +25,6 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import com.tomgibara.crinch.bits.BitVector;
-
 public class CombinatorTest extends TestCase {
 
 	public void testGetSize() {
@@ -34,13 +32,12 @@ public class CombinatorTest extends TestCase {
 	}
 	
 	public void testGetCombination() {
-		testGetCombination(5, 3);
-		testGetCombination(1, 1);
-		testGetCombination(20, 10);
+		testGetCombination(new LongCombinator(5, 3));
+		testGetCombination(new LongCombinator(1, 1));
+		testGetCombination(new LongCombinator(20, 10));
 	}
 	
-	private void testGetCombination(int n, int k) {
-		Combinator c = new LongCombinator(n, k);
+	private void testGetCombination(Combinator c) {
 		Set<String> values = new HashSet<String>();
 		long size = c.getSize().longValue();
 		for (long i = 0; i < size; i++) {
@@ -50,6 +47,19 @@ public class CombinatorTest extends TestCase {
 			for (int j : arr) assertTrue( tmp.add(j) );
 			//check every combination is different
 			assertTrue( values.add(Arrays.toString(arr)) );
+		}
+	}
+
+	public void testConsistency() {
+		testConsistency(new LongCombinator(5, 3), new BigIntCombinator(5, 3));
+		testConsistency(new LongCombinator(20, 10), new BigIntCombinator(20, 10));
+	}
+	
+	private void testConsistency(Combinator c1, Combinator c2) {
+		assertEquals(c1.getSize(), c2.getSize());
+		long size = c1.getSize().longValue();
+		for (long i = 0; i < size; i++) {
+			assertTrue(Arrays.equals(c1.getCombination(i), c2.getCombination(i)));
 		}
 	}
 

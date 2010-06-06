@@ -31,4 +31,9 @@ public interface Combinator {
 	//for efficiency
 	int[] getCombination(long index, int[] array) throws IndexOutOfBoundsException, IllegalArgumentException;
 	
+	int[] getCombination(BigInteger index) throws IndexOutOfBoundsException, IllegalArgumentException;
+	
+	//for efficiency
+	int[] getCombination(BigInteger index, int[] array) throws IndexOutOfBoundsException, IllegalArgumentException;
+	
 }

@@ -40,7 +40,7 @@ class LongCombinator extends AbstractCombinator {
 	}
 	
 	@Override
-	public int getElementBound() {
+	public int getElementCount() {
 		return n;
 	}
 

@@ -42,7 +42,7 @@ class BigIntCombinator extends AbstractCombinator {
 	}
 	
 	@Override
-	public int getElementBound() {
+	public int getElementCount() {
 		return n;
 	}
 

@@ -46,7 +46,7 @@ public interface Combinator {
 	 * 
 	 * @return the number of elements chosen from
 	 */
-	int getElementBound();
+	int getElementCount();
 	
 	/**
 	 * The number of elements included in a combination

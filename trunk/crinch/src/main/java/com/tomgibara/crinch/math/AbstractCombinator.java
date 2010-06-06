@@ -8,18 +8,18 @@ abstract class AbstractCombinator implements Combinator {
 		if (obj == this) return true;
 		if (!(obj instanceof Combinator)) return false;
 		Combinator that = (Combinator) obj;
-		if (this.getElementBound() != that.getElementBound()) return false;
+		if (this.getElementCount() != that.getElementCount()) return false;
 		if (this.getTupleLength() != that.getTupleLength()) return false;
 		return true;
 	}
 	
 	@Override
 	public int hashCode() {
-		return getElementBound() ^ (getTupleLength() * 31);
+		return getElementCount() ^ (getTupleLength() * 31);
 	}
 	
 	@Override
 	public String toString() {
-		return getElementBound() + " choose " + getTupleLength();
+		return getElementCount() + " choose " + getTupleLength();
 	}
 }

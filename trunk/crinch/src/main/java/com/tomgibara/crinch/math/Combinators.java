@@ -16,14 +16,69 @@
  */
 package com.tomgibara.crinch.math;
 
+import static java.math.BigInteger.valueOf;
+
+import java.math.BigInteger;
+
 public class Combinators {
 
+	private static final BigInteger MAX_LONG_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
+	
 	public static Combinator newCombinator(int n, int k) {
 		if (k < 1) throw new IllegalArgumentException();
 		if (k > n) throw new IllegalArgumentException();
-		//TODO check range and use BigIntCombinator when necessary - when is that?
-		return new LongCombinator(n, k);
+		//TODO slight inefficiency here, (n,k) effectively gets computed twice
+		return chooseAsBigInt(n, k).compareTo(MAX_LONG_VALUE) > 0 ?
+			new BigIntCombinator(n, k) : new LongCombinator(n, k);
 	}
+	
+	static long chooseAsLong(int n, int k) {
+		if (n < 0) throw new IllegalArgumentException(); 
+		if (k < 0) throw new IllegalArgumentException(); 
+		if (n < k) return 0;
+		if (k == n || k == 0) return 1;
+		
+		final long delta, max;
+		if (k < n - k) {
+			delta = n - k;
+			max = k;
+		} else {
+			delta = k;
+			max = n - k;
+		}
+		
+		long c = delta + 1;
+		for (long i = 2; i <= max; i++) {
+			 c  = c * (delta + i) / i;
+		}
+		
+		return c;
+	}
+	
+	static BigInteger chooseAsBigInt(int n, int k) {
+		if (n < 0) throw new IllegalArgumentException(); 
+		if (k < 0) throw new IllegalArgumentException(); 
+		if (n < k) return BigInteger.ZERO;
+		if (k == n || k == 0) return BigInteger.ONE;
+		
+		final long delta, max;
+		if (k < n - k) {
+			delta = n - k;
+			max = k;
+		} else {
+			delta = k;
+			max = n - k;
+		}
+		
+		BigInteger c = valueOf(delta + 1);
+		for (long i = 2; i <= max; i++) {
+			 c  = c.multiply(BigInteger.valueOf(delta + i)).divide(valueOf(i));
+		}
+		
+		return c;
+	}
+	
+
 	
 	private Combinators() {}
 	

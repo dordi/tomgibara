@@ -24,6 +24,19 @@ public class Combinators {
 
 	private static final BigInteger MAX_LONG_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
 	
+	/**
+	 * Create a new combinator that returns combinations of k items selected
+	 * from n elements, without regard to order. The upfront costs of creating a
+	 * new combinator may be significant for large values of n and k.
+	 * 
+	 * @param n
+	 *            the number of elements chosen from
+	 * @param k
+	 *            the number of elements chosen
+	 * 
+	 * @return a new combinator
+	 */
+	
 	public static Combinator newCombinator(int n, int k) {
 		if (k < 1) throw new IllegalArgumentException();
 		if (k > n) throw new IllegalArgumentException();
@@ -31,8 +44,20 @@ public class Combinators {
 		return chooseAsBigInt(n, k).compareTo(MAX_LONG_VALUE) > 0 ?
 			new BigIntCombinator(n, k) : new LongCombinator(n, k);
 	}
+
+	/**
+	 * Computes the number of ways that k items can be selected from a set of n
+	 * elements. This method provides much better performance than
+	 * {@link #chooseAsBigInt(int, int)} but may overflow.
+	 * 
+	 * @param n
+	 *            the number of elements chosen from
+	 * @param k
+	 *            the number of elements chosen
+	 * @return n choose k
+	 */
 	
-	static long chooseAsLong(int n, int k) {
+	public static long chooseAsLong(int n, int k) {
 		if (n < 0) throw new IllegalArgumentException(); 
 		if (k < 0) throw new IllegalArgumentException(); 
 		if (n < k) return 0;
@@ -55,7 +80,18 @@ public class Combinators {
 		return c;
 	}
 	
-	static BigInteger chooseAsBigInt(int n, int k) {
+	/**
+	 * Computes the number of ways that k items can be selected from a set of n
+	 * elements.
+	 * 
+	 * @param n
+	 *            the number of elements chosen from
+	 * @param k
+	 *            the number of elements chosen
+	 * @return n choose k
+	 */
+	
+	public static BigInteger chooseAsBigInt(int n, int k) {
 		if (n < 0) throw new IllegalArgumentException(); 
 		if (k < 0) throw new IllegalArgumentException(); 
 		if (n < k) return BigInteger.ZERO;

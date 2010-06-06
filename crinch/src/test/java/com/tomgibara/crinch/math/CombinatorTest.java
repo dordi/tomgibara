@@ -28,7 +28,7 @@ import junit.framework.TestCase;
 public class CombinatorTest extends TestCase {
 
 	public void testGetSize() {
-		assertEquals(new BigInteger("10"), new LongCombinator(5, 3).getSize());
+		assertEquals(new BigInteger("10"), new LongCombinator(5, 3).size());
 	}
 	
 	public void testGetCombination() {
@@ -39,7 +39,7 @@ public class CombinatorTest extends TestCase {
 	
 	private void testGetCombination(Combinator c) {
 		Set<String> values = new HashSet<String>();
-		long size = c.getSize().longValue();
+		long size = c.size().longValue();
 		for (long i = 0; i < size; i++) {
 			//check the array contains distinct values
 			final int[] arr = c.getCombination(i);
@@ -56,8 +56,8 @@ public class CombinatorTest extends TestCase {
 	}
 	
 	private void testConsistency(Combinator c1, Combinator c2) {
-		assertEquals(c1.getSize(), c2.getSize());
-		long size = c1.getSize().longValue();
+		assertEquals(c1.size(), c2.size());
+		long size = c1.size().longValue();
 		for (long i = 0; i < size; i++) {
 			assertTrue(Arrays.equals(c1.getCombination(i), c2.getCombination(i)));
 		}
@@ -69,7 +69,7 @@ public class CombinatorTest extends TestCase {
 		Random r = SecureRandom.getInstance("SHA1PRNG");
 
 		Combinator c = new LongCombinator(200, 10);
-		long limit = c.getSize().longValue();
+		long limit = c.size().longValue();
 		int count = 0;
 		final int[] as = new int[c.getTupleLength()];
 		long start1 = System.currentTimeMillis();

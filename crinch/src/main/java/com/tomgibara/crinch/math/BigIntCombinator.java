@@ -52,7 +52,7 @@ class BigIntCombinator implements Combinator {
 	}
 	
 	@Override
-	public BigInteger getSize() {
+	public BigInteger size() {
 		return size;
 	}
 	

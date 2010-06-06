@@ -20,7 +20,7 @@ import static java.math.BigInteger.valueOf;
 
 import java.math.BigInteger;
 
-class BigIntCombinator implements Combinator {
+class BigIntCombinator extends AbstractCombinator {
 
 	private final int n;
 	private final int k;

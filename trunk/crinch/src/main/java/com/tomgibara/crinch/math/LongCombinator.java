@@ -18,7 +18,7 @@ package com.tomgibara.crinch.math;
 
 import java.math.BigInteger;
 
-class LongCombinator implements Combinator {
+class LongCombinator extends AbstractCombinator {
 
 	private final int n;
 	private final int k;

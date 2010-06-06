@@ -19,13 +19,21 @@ package com.tomgibara.crinch.math;
 import java.math.BigInteger;
 
 /**
+ * <p>
  * Provides indexed access to the set of all possible ways of choosing k items
  * from a set of n elements, disregarding order.
+ * </p>
  * 
+ * <p>
  * The elements of each combinations are numerically ordered. Furthermore, the
  * combinations themselves are indexed in strict numerical order, so that given
  * two combinations c1 and c2, that first differ at index i, c1[i] < c2[i]
  * implies c1 precedes c2.
+ * </p>
+ * 
+ * <p>
+ * Two combinators are equal if they generate the same sequence of combinations.
+ * </p>
  * 
  * @author tomgibara
  * 

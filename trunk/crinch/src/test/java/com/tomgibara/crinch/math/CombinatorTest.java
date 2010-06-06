@@ -56,6 +56,8 @@ public class CombinatorTest extends TestCase {
 	}
 	
 	private void testConsistency(Combinator c1, Combinator c2) {
+		assertEquals(c1, c2);
+		assertEquals(c2, c1);
 		assertEquals(c1.size(), c2.size());
 		long size = c1.size().longValue();
 		for (long i = 0; i < size; i++) {

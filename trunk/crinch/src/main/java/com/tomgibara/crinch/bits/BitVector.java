@@ -1492,12 +1492,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 		final long fm;
 		final long tm;
-		if (value) {
-			fm = -1L >>> (ADDRESS_SIZE -(from & ADDRESS_MASK));
-			tm = -1L << (to & ADDRESS_SIZE);
-		} else {
-			fm = -1L << (from & ADDRESS_MASK);
-			tm = -1L >>> (ADDRESS_SIZE - (to & ADDRESS_MASK));
+		{
+			final int fs = from & ADDRESS_MASK;
+			final int ts = to & ADDRESS_MASK;
+			if (value) {
+				fm = fs == 0 ? 0 : -1L >>> (ADDRESS_SIZE - fs);
+				tm = ts == 0 ? 0 : -1L << ts;
+			} else {
+				fm = -1L << fs;
+				tm = -1L >>> (ADDRESS_SIZE - ts);
+			}
 		}
 
 		if (f == t) { // bits fit into a single element

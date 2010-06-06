@@ -435,8 +435,10 @@ public class BitVectorTest extends TestCase {
 	private void testIsAll(BitVector v) {
 		v.set(false);
 		assertTrue(v.isAllZeros());
+		assertFalse(v.size() != 0 && v.isAllOnes());
 		v.set(true);
 		assertTrue(v.isAllOnes());
+		assertFalse(v.size() != 0 && v.isAllZeros());
 		int reps = v.size();
 		for (int i = 0; i < reps; i++) {
 			int a = random.nextInt(v.size()+1);

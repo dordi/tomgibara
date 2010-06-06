@@ -24,7 +24,7 @@ public interface Combinator {
 	
 	int getTupleLength();
 	
-	BigInteger getSize();
+	BigInteger size();
 	
 	int[] getCombination(long index) throws IndexOutOfBoundsException, IllegalArgumentException;
 	

@@ -44,12 +44,10 @@ public class CombinatorTest extends TestCase {
 		Set<String> values = new HashSet<String>();
 		long size = c.getSize().longValue();
 		for (long i = 0; i < size; i++) {
+			//check the array contains distinct values
 			final int[] arr = c.getCombination(i);
-			//TODO erroneous test, but passes due to a bug in BitVector?
-			//check the array contains every value
-			BitVector v = new BitVector(n);
-			for (int j : arr) v.setBit(j, true);
-			assertTrue(v.isAllOnes());
+			Set<Integer> tmp = new HashSet<Integer>();
+			for (int j : arr) assertTrue( tmp.add(j) );
 			//check every combination is different
 			assertTrue( values.add(Arrays.toString(arr)) );
 		}

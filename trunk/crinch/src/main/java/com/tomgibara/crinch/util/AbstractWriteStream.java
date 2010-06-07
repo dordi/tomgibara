@@ -19,6 +19,43 @@ package com.tomgibara.crinch.util;
 public abstract class AbstractWriteStream implements WriteStream {
 
 	@Override
+	public void writeBoolean(boolean v) {
+		writeByte( (byte) (v ? -1 : 0) );
+	}
+	
+	@Override
+	public void writeShort(short v) {
+		writeByte( (byte) (v >>  8) );
+		writeByte( (byte) (v      ) );
+	}
+	
+	@Override
+	public void writeChar(char v) {
+		writeByte( (byte) (v >>  8) );
+		writeByte( (byte) (v      ) );
+	}
+	
+	@Override
+	public void writeInt(int v) {
+		writeByte( (byte) (v >> 24) );
+		writeByte( (byte) (v >> 16) );
+		writeByte( (byte) (v >>  8) );
+		writeByte( (byte) (v      ) );
+	}
+	
+	@Override
+	public void writeLong(long v) {
+		writeByte( (byte) (v >> 56) );
+		writeByte( (byte) (v >> 48) );
+		writeByte( (byte) (v >> 40) );
+		writeByte( (byte) (v >> 32) );
+		writeByte( (byte) (v >> 24) );
+		writeByte( (byte) (v >> 16) );
+		writeByte( (byte) (v >>  8) );
+		writeByte( (byte) (v      ) );
+	}
+	
+	@Override
 	public void writeFloat(float v) {
 		writeInt(Float.floatToIntBits(v));
 	}
@@ -34,10 +71,22 @@ public abstract class AbstractWriteStream implements WriteStream {
 	}
 
 	@Override
+	public void writeBytes(byte[] bs, int off, int len) {
+		final int lim = off + len;
+		for (int i = off; i < lim; i++) writeByte(bs[i]);
+	}
+	
+	@Override
 	public void writeChars(char[] cs) {
 		writeChars(cs, 0, cs.length);
 	}
 
+	@Override
+	public void writeChars(char[] bs, int off, int len) {
+		final int lim = off + len;
+		for (int i = off; i < lim; i++) writeChar(bs[i]);
+	}
+	
 	@Override
 	public void writeString(String v) {
 		final int length = v.length();

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.util.Random;
 
 import com.tomgibara.crinch.util.ByteWriteStream;
 
@@ -42,6 +43,17 @@ public class PRNGMultiHash<T> implements MultiHash<T> {
 	private final HashSource<T> source;
 	private final int max;
 	private final HashRange range;
+
+	public PRNGMultiHash(HashSource<T> source, int max) {
+		if (source == null) throw new IllegalArgumentException("null source");
+		if (max < 0) throw new IllegalArgumentException("negative max");
+
+		this.algorithm = null;
+		this.provider = null;
+		this.source = source;
+		this.max = max;
+		this.range = new HashRange(BigInteger.ZERO,  BigInteger.valueOf(max) );
+	}
 
 	//max is inclusive
 	public PRNGMultiHash(String algorithm, HashSource<T> source, int max) {
@@ -94,7 +106,7 @@ public class PRNGMultiHash<T> implements MultiHash<T> {
 	@Override
 	public HashList hashAsList(final T value, final int multiplicity) {
 		final int[] hashes = new int[multiplicity];
-		final SecureRandom random = getRandom(value);
+		final Random random = getRandom(value);
 		if (max == Integer.MAX_VALUE) {
 			for (int i = 0; i < hashes.length; i++) {
 				hashes[i] = random.nextInt() & 0x7fffffff;
@@ -108,21 +120,31 @@ public class PRNGMultiHash<T> implements MultiHash<T> {
 		return Hashes.asHashList(hashes);
 	}
 
-	private SecureRandom getRandom(T value) {
-		final SecureRandom random = getRandom();
-		final ByteWriteStream out = new ByteWriteStream();
-		source.sourceData(value, out);
-		random.setSeed(out.getBytes());
+	private Random getRandom(T value) {
+		final Random random = getRandom();
+		if (algorithm == null) {
+			final CondensingWriteStream out = new CondensingWriteStream();
+			source.sourceData(value, out);
+			random.setSeed(out.getCondensedValue());
+		} else {
+			final ByteWriteStream out = new ByteWriteStream();
+			source.sourceData(value, out);
+			((SecureRandom)random).setSeed(out.getBytes());
+		}
 		return random;
 	}
 
-	private SecureRandom getRandom() {
-		try {
-			return provider == null ? SecureRandom.getInstance(algorithm) : SecureRandom.getInstance(algorithm, provider);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchProviderException e) {
-			throw new RuntimeException(e);
+	private Random getRandom() {
+		if (algorithm == null) {
+			return new Random();
+		} else {
+			try {
+				return provider == null ? SecureRandom.getInstance(algorithm) : SecureRandom.getInstance(algorithm, provider);
+			} catch (NoSuchAlgorithmException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchProviderException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

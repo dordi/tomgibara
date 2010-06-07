@@ -1,7 +1,24 @@
+/*
+ * Copyright 2010 Tom Gibara
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ */
 package com.tomgibara.crinch.collections;
 
 import com.tomgibara.crinch.hashing.MultiHash;
 import com.tomgibara.crinch.hashing.ObjectHashSource;
+import com.tomgibara.crinch.hashing.ObjectMultiHash;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
 
 public class BloomFilterAnalyzer {
@@ -14,12 +31,18 @@ public class BloomFilterAnalyzer {
 		final int max = Integer.parseInt(args[2]); // max number of elements to insert
 		final int step = Integer.parseInt(args[3]); // step size from zero to max
 		final int k = Integer.parseInt(args[4]); // number of hashes to use
-		final boolean useSha1 = Boolean.parseBoolean(args[5]);
+		final String algo = args[5].intern(); // the algorithms to use
 		
-		//use a sha1 hash because it should provide very good hashing
-		final MultiHash<Object> multiHash = useSha1 ?
-			new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), size - 1) :
-			new PRNGMultiHash<Object>(new ObjectHashSource(), size - 1);
+		final MultiHash<Object> multiHash;
+		if (algo == "sha1") {
+			multiHash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), size - 1);
+		} else if (algo == "rnd") {
+			multiHash = new PRNGMultiHash<Object>(new ObjectHashSource(), size - 1);
+		} else if (algo == "obj") {
+			multiHash = new ObjectMultiHash<Object>(size - 1);
+		} else {
+			throw new IllegalArgumentException(algo);
+		}
 		final BasicBloomFilter<Integer> bf = new BasicBloomFilter<Integer>(multiHash, k);
 		
 		final long startTime = System.currentTimeMillis();

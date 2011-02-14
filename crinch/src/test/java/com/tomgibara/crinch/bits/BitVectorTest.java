@@ -750,5 +750,37 @@ public class BitVectorTest extends TestCase {
 		}
 		assertEquals(v.countOnes(), count);
 	}
+
+	public void testFromByteArray() {
+		for (int i = 0; i < 1000; i++) {
+			testFromByteArray(randomVector());
+		}
+	}
 	
+	private void testFromByteArray(BitVector v) {
+		byte[] array = v.toByteArray();
+		BitVector w = BitVector.fromByteArray(array, v.size());
+		assertEquals(v, w);
+	}
+
+	public void testSetBytes() {
+		for (int i = 0; i < 1000; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testSetBytes(vs[j]);
+			}
+		}
+	}
+
+	private void testSetBytes(BitVector v) {
+		if (v.size() < 8) return;
+		BitVector r = randomVector(random.nextInt((v.size())/8*8));
+		byte[] bytes = r.toByteArray();
+		int position = random.nextInt( v.size() - r.size() + 1 );
+		int length = random.nextInt(r.size() + 1);
+		int offset = random.nextInt(r.size() - length + 1);
+		v.setBytes(position, bytes, offset, length);
+		assertEquals(r.rangeView(offset, offset + length), v.rangeView(position, position + length));
+	}
+
 }

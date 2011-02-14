@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.Random;
 
 /**
  * <p>
@@ -168,6 +169,15 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	}
 	
+	public static BitVector fromByteArray(byte[] bytes, int size) {
+		//TODO provide a more efficient implementation
+		if (bytes == null) throw new IllegalArgumentException("null bytes");
+		if (size < 0) throw new IllegalArgumentException("negative size");
+		BigInteger bigInt = new BigInteger(1, bytes);
+		final int length = Math.min(size, bigInt.bitLength());
+		return fromBigIntegerImpl(bigInt, size, length);
+	}
+	
 	private static BitVector fromBigIntegerImpl(BigInteger bigInt, int size, int length) {
 		final BitVector vector = new BitVector(size);
 		final long[] bits = vector.bits;
@@ -244,6 +254,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return str.length();
 	}
 
+	//duplicated here to avoid dependencies
 	private static int gcd(int a, int b) {
 		while (a != b) {
 			if (a > b) {
@@ -257,6 +268,20 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			}
 		}
 		return a;
+	}
+
+	//used to avoid direct dependence on Java6 methods
+	private final static ArrayCopier copier;
+	
+	static {
+		boolean canCopyRanges;
+		try {
+			Arrays.class.getMethod("copyOfRange", (new long[0]).getClass(), Integer.TYPE, Integer.TYPE);
+			canCopyRanges = true;
+		} catch (NoSuchMethodException e) {
+			canCopyRanges = false;
+		}
+		copier = canCopyRanges ? new RangeCopier() : new SystemCopier();
 	}
 	
 	// fields
@@ -296,6 +321,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public BitVector(String str, int radix) {
 		this(new BigInteger(str, radix));
+	}
+	
+	public BitVector(Random random, int size) {
+		this(size);
+		for (int i = 0; i < bits.length; i++) {
+			bits[i] = random.nextLong();
+		}
 	}
 	
 	private BitVector(int start, int finish, long[] bits, boolean mutable) {
@@ -523,6 +555,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(operation.ordinal(), position, vector);
 	}
 	
+	public void modifyBytes(Operation operation, int position, byte[] bytes, int offset, int length) {
+		perform(operation.ordinal(), position, bytes, offset, length);
+	}
+	
 	// rotations and shifts & reversals
 	
 	public void rotate(int distance) {
@@ -721,6 +757,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(SET, position, vector);
 	}
 
+	public void setBytes(int position, byte[] bytes, int offset, int length) {
+		perform(SET, position, bytes, offset, length);
+	}
+
 	public void and(boolean value) {
 		performAdj(AND, start, finish, value);
 	}
@@ -759,6 +799,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public void andVector(int position, BitVector vector) {
 		perform(AND, position, vector);
+	}
+
+	public void andBytes(int position, byte[] bytes, int offset, int length) {
+		perform(AND, position, bytes, offset, length);
 	}
 
 	public void or(boolean value) {
@@ -801,6 +845,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(OR, position, vector);
 	}
 
+	public void orBytes(int position, byte[] bytes, int offset, int length) {
+		perform(OR, position, bytes, offset, length);
+	}
+
 	public void xor(boolean value) {
 		performAdj(XOR, start, finish, value);
 	}
@@ -839,6 +887,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	public void xorVector(int position, BitVector vector) {
 		perform(XOR, position, vector);
+	}
+
+	public void xorBytes(int position, byte[] bytes, int offset, int length) {
+		perform(XOR, position, bytes, offset, length);
 	}
 
 	// convenience comparisons
@@ -1311,6 +1363,17 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
+	private void perform(int operation, int position, byte[] bytes, int offset, int length) {
+		if (bytes == null) throw new IllegalArgumentException("null bytes");
+		if (position < 0) throw new IllegalArgumentException("negative position");
+		if (offset < 0) throw new IllegalArgumentException("negative offset");
+		if (length == 0) return;
+		if (offset + length > (bytes.length << 3)) throw new IllegalArgumentException("length greater than number of bits in byte array");
+		position += start;
+		if (position + length > finish) throw new IllegalArgumentException("operation exceeds length of bit vector");
+		performAdj(operation, position, bytes, offset, length);
+	}
+	
 	private boolean compare(final int comp, final BitVector that) {
 		if (this.finish - this.start != that.finish - that.start) throw new IllegalArgumentException();
 		//trivial case
@@ -1442,7 +1505,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			final int from = position >> ADDRESS_BITS;
 			final int to = (position + length + ADDRESS_MASK) >> ADDRESS_BITS;
 			if ((position & ADDRESS_MASK) == 0) {
-				newBits = Arrays.copyOfRange(bits, from, to);
+				newBits = copier.copy(bits, from, to);
 			} else {
 				final int s = position & ADDRESS_MASK;
 				final int len = to - from;
@@ -1563,7 +1626,61 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 
 	}
-
+	
+	//TODO really needs a more efficient implementation (see below for a failure)
+	private void performAdj(int operation, int position, byte[] bytes, int offset, int length) {
+		if (!mutable) throw new IllegalStateException();
+		final int to = (bytes.length << 3) - offset;
+		final int from = to - length;
+		position += length;
+		for (int i = from; i < to; i++) {
+			boolean b = (bytes[i >> 3] & (128 >> (i & 7))) != 0;
+			performAdj(operation, --position, b);
+		}
+	}
+/*
+	// implementation that is totally bogus because array needs to considered bwards
+	private void performAdj(int operation, int position, byte[] bytes, int offset, int length) {
+		if (!mutable) throw new IllegalStateException();
+		final int limit = offset + length;
+		//knock off any initial unaligned bits
+		if ((offset & 7) != 0) {
+			int prelim = Math.min( (offset | 7) + 1, limit);
+			for (; offset < prelim; offset++) {
+				boolean b = ((bytes[offset >> 3] >> (offset & 7) ) & 1) != 0;
+				performAdj(operation, position++, b);
+			}
+			length = limit - offset;
+			if (length == 0) return;
+		}
+		//at this point we are byte aligned
+		final int byteLimit = limit >> 3;
+		int j = offset >> 3;
+		//bunch as many bytes as we can into longs and operate with those
+		for (; j + 8 <= byteLimit; j += 8) {
+			final long bs =
+				((bytes[j    ] & 0xff) << 56) |
+				((bytes[j + 1] & 0xff) << 48) |
+				((bytes[j + 2] & 0xff) << 40) |
+				((bytes[j + 3] & 0xff) << 32) |
+				((bytes[j + 4] & 0xff) << 24) |
+				((bytes[j + 5] & 0xff) << 16) |
+				((bytes[j + 6] & 0xff) <<  8) |
+				((bytes[j + 7] & 0xff)      );
+			performAdj(operation, position, bs, 64);
+			position += 64;
+		}
+		//now we have less than a long's worth of bits left, operate in bytes
+		for (; j < byteLimit; j++) {
+			performAdj(operation, position, bytes[j], 8);
+			position += 8;
+		}
+		//finally we may have less than a byte's worth of bits left - mop them up
+		offset = j << 3;
+		length = limit - offset;
+		if (length > 0) performAdj(operation, position, bytes[j], length);
+	}
+*/
 	//specialized implementation for the common case of setting an individual bit
 	
 	private void performSetAdj(int position, boolean value) {
@@ -1895,6 +2012,33 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 		private Object readResolve() throws ObjectStreamException {
 			return new BitVector(this);
+		}
+		
+	}
+
+	// classes to accomodate environments that don't have Arrays.copyOfRange
+	
+	private interface ArrayCopier {
+		
+		long[] copy(long[] array, int from, int to);
+	}
+	
+	private static class RangeCopier implements ArrayCopier {
+
+		@Override
+		public long[] copy(long[] array, int from, int to) {
+			return Arrays.copyOfRange(array, from, to);
+		}
+		
+	}
+
+	private static class SystemCopier implements ArrayCopier {
+		
+		@Override
+		public long[] copy(long[] array, int from, int to) {
+			long[] copy = new long[to - from];
+			System.arraycopy(array, from, copy, 0, to - from);
+			return copy;
 		}
 		
 	}

@@ -65,6 +65,34 @@ public class CombinatorTest extends TestCase {
 		}
 	}
 
+	public void testPackedConsistency() {
+		testPackedConsistency(new LongCombinator(5, 3, true));
+		testPackedConsistency(new LongCombinator(1000, 2, true));
+	}
+	
+	public void testBitsPerElement() {
+		assertEquals(3, new LongCombinator(5, 1, true).getBitsPerElement());
+		assertEquals(10, new LongCombinator(1000, 1, true).getBitsPerElement());
+		assertEquals(0, new LongCombinator(1, 1, true).getBitsPerElement());
+		assertEquals(8, new LongCombinator(256, 8, true).getBitsPerElement());
+		assertEquals(16, new LongCombinator(65536, 4, true).getBitsPerElement());
+		assertEquals(17, new LongCombinator(65537, 1, true).getBitsPerElement());
+	}
+	
+	private void testPackedConsistency(PackedCombinator c) {
+		long size = c.size().longValue();
+		for (long i = 0; i < size; i++) {
+			int[] as = c.getCombination(i);
+			long b = c.getPackedCombination(i);
+			int t = c.getTupleLength();
+			int[] bs = new int[t];
+			for (int j = 0; j < t; j++) {
+				bs[j] = c.getPackedElement(b, j);
+			}
+			assertTrue(Arrays.equals(as, bs));
+		}
+	}
+
 	//to have any chance of being useful for hashing,
 	//computing combinations should be faster than generating secure random nos.
 	public void testSpeed() throws Exception {

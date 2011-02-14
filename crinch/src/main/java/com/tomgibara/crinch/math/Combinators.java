@@ -39,12 +39,39 @@ public class Combinators {
 	
 	public static Combinator newCombinator(int n, int k) {
 		if (k < 1) throw new IllegalArgumentException();
-		if (k > n) throw new IllegalArgumentException();
+		if (k > n || n == Integer.MAX_VALUE) throw new IllegalArgumentException();
 		//TODO slight inefficiency here, (n,k) effectively gets computed twice
 		return chooseAsBigInt(n, k).compareTo(MAX_LONG_VALUE) > 0 ?
 			new BigIntCombinator(n, k) : new LongCombinator(n, k);
 	}
 
+	/**
+	 * <p>
+	 * Creates a new packed combinator which returns the same elements as a
+	 * regular {@link Combinator} with the option of packing them into a
+	 * single long. This can eliminates the need to allocate int arrays to
+	 * store tuples and may provide improved performance.
+	 * </p>
+	 * 
+	 * <p>
+	 * For the packing to be possible, n cannot equal {@link Integer.MAX_VALUE}
+	 * and k multiplied by the number of binary digits in n, cannot exceed 64. 
+	 * </p>
+	 * 
+	 * @param n
+	 *            the number of elements chosen from
+	 * @param k
+	 *            the number of elements chosen
+	 * 
+	 * @return a new packed combinator
+	 */
+	
+	public static PackedCombinator newPackedCombinator(int n, int k) {
+		if (k < 1) throw new IllegalArgumentException();
+		if (k > n || n == Integer.MAX_VALUE) throw new IllegalArgumentException();
+		return new LongCombinator(n, k, true);
+	}
+	
 	/**
 	 * Computes the number of ways that k items can be selected from a set of n
 	 * elements. This method provides much better performance than

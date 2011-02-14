@@ -32,4 +32,38 @@ public class CombinatorsTest extends TestCase {
 		}
 	}
 
+	public void testValidPackings() {
+		Combinators.newPackedCombinator(65536, 4);
+		Combinators.newPackedCombinator(256, 8);
+		Combinators.newPackedCombinator(16, 16);
+		Combinators.newPackedCombinator(1, 1);
+	}
+
+	public void testInvalidPackings() {
+		try {
+			Combinators.newPackedCombinator(65537, 4);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		try {
+			Combinators.newPackedCombinator(257, 8);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		try {
+			Combinators.newPackedCombinator(65536, 5);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+		try {
+			Combinators.newPackedCombinator(256, 9);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
+	}
+
 }

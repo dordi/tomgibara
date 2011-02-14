@@ -18,16 +18,18 @@ package com.tomgibara.crinch.math;
 
 import java.math.BigInteger;
 
-class LongCombinator extends AbstractCombinator {
+class LongCombinator extends AbstractCombinator implements PackedCombinator {
 
 	private final int n;
 	private final int k;
 	private final BigInteger size;
+	private final int nBits;
+	private final long nMask;
 	
 	private final long[][] cs;
 	
 	//relies on Combinators to validate arguments
-	LongCombinator(int n, int k) {
+	LongCombinator(int n, int k, boolean packed) {
 		this.n = n;
 		this.k = k;
 		cs = new long[k + 1][n + 1];
@@ -37,7 +39,21 @@ class LongCombinator extends AbstractCombinator {
 			}
 		}
 		size = BigInteger.valueOf(cs[k][n] /* choose(n, k) */);
+		if (packed) {
+			nMask = (n == 1 ? 1 : (Long.highestOneBit(n - 1) << 1)) - 1;
+			nBits = Long.bitCount(nMask);
+			if (nBits * k > 64) throw new IllegalArgumentException("Too many bits for packing");
+		} else {
+			nBits = -1;
+			nMask = -1L;
+		}
 	}
+
+	LongCombinator(int n, int k) {
+		this(n, k, false);
+	}
+
+	// combinator methods
 	
 	@Override
 	public int getElementCount() {
@@ -79,6 +95,39 @@ class LongCombinator extends AbstractCombinator {
 		if (m >= cs[k][n] /* choose(n, k) */) throw new IndexOutOfBoundsException();
 		if (as.length < k) throw new IllegalArgumentException();
 		return getCombinationImpl(m, as);
+	}
+	
+	// packed methods
+	
+	@Override
+	public int getBitsPerElement() {
+		return nBits;
+	}
+	
+	@Override
+	public long getPackedCombination(long m) throws IllegalStateException, IndexOutOfBoundsException {
+		final long[][] cs = this.cs;
+		if (m < 0) throw new IndexOutOfBoundsException();
+		if (m >= cs[k][n] /* choose(n, k) */) throw new IndexOutOfBoundsException();
+		int a = n;
+		int b = k;
+		long x = cs[b][a] /*choose(a, b)*/ - 1 - m;
+		long as = 0L;
+		
+		for (int i = 0; i < k; i++) {
+			a = largest(a, b, x);
+			x -= cs[b][a] /* choose(a, b) */;
+			as = (as << nBits) | (n - 1 - a);
+			b --;
+		}
+		
+		return as;
+	}
+	
+	@Override
+	public int getPackedElement(long packed, int i) throws IllegalArgumentException {
+		if (i < 0 || i >= k) throw new IllegalArgumentException("invalid tuple index");
+		return (int) ((packed >> ((k - i - 1) * nBits)) & nMask);
 	}
 	
 	private int[] getCombinationImpl(long m, int[] as) {

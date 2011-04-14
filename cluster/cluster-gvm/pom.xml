@@ -9,7 +9,6 @@
   <artifactId>cluster-gvm</artifactId>
   <packaging>jar</packaging>
   <name>GVM library</name>
-  <url>http://www.tomgibara.com/clustering/fast-spatial</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

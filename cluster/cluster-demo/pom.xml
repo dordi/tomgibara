@@ -7,7 +7,6 @@
   </parent>
   <artifactId>cluster-demo</artifactId>
   <name>Cluster demos</name>
-  <url>http://www.tomgibara.com/clustering/fast-spatial</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -277,13 +277,14 @@ public class GvmCluster<K> {
 		if (NUMBER.equal(m0, NUMBER.zero())) {
 			return 0.0;
 		} else {
-			//TODO make symmetric for this
+			final NUMBER[] tm1 = this.m1;
+			final NUMBER[] tm2 = this.m2;
 			final NUMBER[] cm1 = cluster.m1;
 			final NUMBER[] cm2 = cluster.m2;
 			NUMBER sum = NUMBER.zero();
 			for (int d = 0; d < m1.length; d++) {
-				final NUMBER m1 = NUMBER.sum(this.m1[d], cm1[d]);
-				final NUMBER m2 = NUMBER.sum(this.m2[d], cm2[d]);
+				final NUMBER m1 = NUMBER.sum(tm1[d], cm1[d]);
+				final NUMBER m2 = NUMBER.sum(tm2[d], cm2[d]);
 				//TODO accelerate add
 				sum = NUMBER.sum(sum, NUMBER.difference(NUMBER.product(m2, m0), NUMBER.square(m1)));
 			}

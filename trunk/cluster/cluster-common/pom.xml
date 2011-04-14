@@ -3,11 +3,10 @@
   <parent>
     <artifactId>cluster-all</artifactId>
     <groupId>com.tomgibara.cluster</groupId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
   </parent>
   <groupId>com.tomgibara.cluster</groupId>
   <artifactId>cluster-common</artifactId>
-  <version>0.1-SNAPSHOT</version>
   <name>Cluster common</name>
   <description>Common code for clustering</description>
   <dependencies>

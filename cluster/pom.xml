@@ -3,9 +3,8 @@
   <groupId>com.tomgibara.cluster</groupId>
   <artifactId>cluster-all</artifactId>
   <packaging>pom</packaging>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
   <name>Clustering</name>
-  <url>http://www.tomgibara.com/clustering</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -45,9 +44,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/cluster</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/cluster</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/cluster</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/cluster-all-1.0</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/cluster-all-1.0</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/cluster-all-1.0</url>
   </scm>
 
   <distributionManagement>

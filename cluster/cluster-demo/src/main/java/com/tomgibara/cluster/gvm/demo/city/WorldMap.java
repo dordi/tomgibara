@@ -42,6 +42,7 @@ class WorldMap extends JComponent {
 
     private static final Color DEFAULT_PIN_COLOR = Color.GRAY;
     private static final int DEFAULT_PIN_RADIUS = 10;
+    private static final int PIN_SCALE = 800;
     
     public int pinCount() {
         return pins.size();
@@ -119,8 +120,7 @@ class WorldMap extends JComponent {
 		int x = (int) (pin.getX() * d.width);
 		int y = (int) (pin.getY() * d.height);
         int radius = pin.getRadius() < 1 ? DEFAULT_PIN_RADIUS : pin.getRadius();
-        //TODO TEMPORARY HACK
-        radius = radius * d.width / 800;
+        radius = radius * d.width / PIN_SCALE;
         Color color = pin.getColor() == null ? DEFAULT_PIN_COLOR : pin.getColor();
         int b = Math.min(radius/2, 2);
         Pin child = pin.getChild();
@@ -129,8 +129,7 @@ class WorldMap extends JComponent {
         	int cx = (int) (child.getX() * d.width);
         	int cy = (int) (child.getY() * d.height);
         	int cr = child.getRadius() < 1 ? DEFAULT_PIN_RADIUS : child.getRadius();
-            //TODO TEMPORARY HACK
-            cr = cr * d.width / 800;
+            cr = cr * d.width / PIN_SCALE;
             int w = Math.min(cr, radius);
 
             g.setColor(color);
@@ -159,8 +158,7 @@ class WorldMap extends JComponent {
     	
     	if (pin.getLabel() != null) {
 	        int radius = pin.getRadius() < 1 ? DEFAULT_PIN_RADIUS : pin.getRadius();
-            //TODO TEMPORARY HACK
-	        radius = radius * d.width / 800;
+	        radius = radius * d.width / PIN_SCALE;
 	        Color color = pin.getColor() == null ? DEFAULT_PIN_COLOR : pin.getColor();
 	
 	        Color labelColor = Color.WHITE;

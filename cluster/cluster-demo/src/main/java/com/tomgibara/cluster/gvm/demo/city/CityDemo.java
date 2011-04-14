@@ -92,7 +92,6 @@ public class CityDemo {
         List<DblResult<City>> results = clusterCities(cities, slider.getValue());
         List<Pin> pins = pinsFromResults(results);
         map.addAllPins(pins);
-        //TODO tidy up
         map.repaint();
         map.setTitle(String.format("%,3d largest cities...", cities.size()));
         
@@ -314,7 +313,6 @@ public class CityDemo {
 	        map.clearPins();
 	        map.addAllPins(pins);
 	        map.setCaption(String.format("...into %d clusters (%,3d ms)", results.size(), finish - start));
-	        //TODO tidy up
 	        map.repaint();
 		}
 
@@ -326,7 +324,6 @@ public class CityDemo {
 	        map.clearPins();
 	        map.addAllPins(pins);
 	        map.setCaption(String.format("...into %d clusters (%,3d ms)", results.size(), finish - start));
-	        //TODO tidy up
 	        map.repaint();
         }
         

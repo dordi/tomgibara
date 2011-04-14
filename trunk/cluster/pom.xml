@@ -44,9 +44,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/cluster-all-1.0</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/cluster-all-1.0</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/cluster-all-1.0</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/cluster</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/cluster</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/cluster</url>
   </scm>
 
   <distributionManagement>

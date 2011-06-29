@@ -127,6 +127,16 @@ public class MoneyType implements MoneyCalcOrigin {
 		return locale;
 	}
 	
+	/**
+	 * The number of decimal places in this currencies presentation.
+	 * 
+	 * @return the number of decimal places
+	 */
+	
+	public int getPlaces() {
+		return places;
+	}
+	
 	// public methods
 	
 	/**

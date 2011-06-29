@@ -3,7 +3,7 @@
   <groupId>com.tomgibara.money</groupId>
   <artifactId>money</artifactId>
   <name>Money</name>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1</version>
   <description>Small collection of classes for handling monetary amounts.</description>
   <dependencies>
     <dependency>
@@ -36,9 +36,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/money</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/money</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/money</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/money-1.1</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/money-1.1</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/money-1.1</url>
   </scm>
   <build>
     <plugins>

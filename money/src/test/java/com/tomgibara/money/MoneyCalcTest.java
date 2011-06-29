@@ -17,6 +17,7 @@
 package com.tomgibara.money;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 
 import junit.framework.TestCase;
@@ -46,6 +47,22 @@ public class MoneyCalcTest extends TestCase {
 		} catch (IllegalArgumentException e) {
 			//expected
 		}
+	}
+
+	public void testScaling() {
+		MoneyType type = new MoneyType(Locale.US);
+		assertEquals(type.money(100), type.money(120).calc(0, null).money());
+		assertEquals(type.money(), type.calc(0, RoundingMode.DOWN).add(type.money(50)).add(type.money(50)).money());
+		assertEquals(type.money(33), type.money(100).calc(2, null).divide(BigDecimal.valueOf(3)).money());
+		assertEquals(type.money(10), type.money(11).calc(1, null).min(type.money(12)).money() );
+	}
+	
+	public void testGetScale() {
+		MoneyType type = new MoneyType(Locale.US);
+		assertEquals(-1, type.calc().getScale());
+		assertEquals(0, type.calc(0, null).getScale());
+		assertEquals(1, type.calc(1, null).getScale());
+		assertEquals(-1, type.calc(-2, null).getScale());
 	}
 	
 }

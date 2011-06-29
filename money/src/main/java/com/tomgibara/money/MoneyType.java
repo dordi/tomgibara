@@ -18,6 +18,7 @@ package com.tomgibara.money;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Currency;
@@ -39,7 +40,7 @@ import java.util.Locale;
  * 
  */
 
-public class MoneyType {
+public class MoneyType implements MoneyCalcOrigin {
 
 	// fields
 	
@@ -208,14 +209,27 @@ public class MoneyType {
 	}
 
 	/**
-	 * A convenience method that a monetary calculation with the initial value
-	 * of zero.
+	 * A convenience method that creates a new monetary calculation with the
+	 * initial value of zero.
 	 * 
 	 * @return a new monetary calculation initialized to zero
 	 */
-	
+
+	@Override
 	public MoneyCalc calc() {
 		return new MoneyCalc(this, BigDecimal.ZERO);
+	}
+
+	/**
+	 * A convenience method that creates a new monetary calculation with the
+	 * initial value of zero.
+	 * 
+	 * @return a new monetary calculation initialized to zero
+	 */
+
+	@Override
+	public MoneyCalc calc(int scale, RoundingMode roundingMode) {
+		return new MoneyCalc(scale, roundingMode, this, BigDecimal.ZERO);
 	}
 	
 	// object methods

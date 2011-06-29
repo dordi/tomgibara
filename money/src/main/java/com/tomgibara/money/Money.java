@@ -38,7 +38,7 @@ import java.util.Currency;
  * 
  */
 
-public class Money implements Comparable<Money> {
+public class Money implements MoneyCalcOrigin, Comparable<Money> {
 
 	// statics
 	
@@ -154,17 +154,31 @@ public class Money implements Comparable<Money> {
 		return amount.signum();
 	}
 	
-	// public methods
+	// calc origin methods
 	
 	/**
-	 * Open a new monetary calculation. The calculation's initial type and
-	 * amount will match those of this object.
+	 * Opens a calculation whose initial type and amount will match those of
+	 * this object.
 	 * 
 	 * @return a new monetary calculation
 	 */
 	
+	@Override
 	public MoneyCalc calc() {
 		return new MoneyCalc(type, amount);
+	}
+	
+	
+	/**
+	 * Opens a calculation whose initial type and amount will match those of
+	 * this object.
+	 * 
+	 * @return a new monetary calculation
+	 */
+
+	@Override
+	public MoneyCalc calc(int scale, RoundingMode roundingMode) {
+		return new MoneyCalc(scale, roundingMode, type, amount);
 	}
 	
 	// object methods

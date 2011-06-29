@@ -17,6 +17,7 @@
 package com.tomgibara.money;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * <p>
@@ -47,23 +48,64 @@ import java.math.BigDecimal;
  * 
  */
 
-public class MoneyCalc {
+public class MoneyCalc implements MoneyCalcOrigin {
+
+	// statics
+
+	/**
+	 * The default rounding mode used to limit precision in calculations.
+	 */
+	
+	public static final RoundingMode DEFAULT_ROUNDING_MODE = RoundingMode.HALF_UP;
+	
+	/* Invariant: when scale is non-negative, amount always has specified scale */
 
 	// fields
-	
+
+	private final int scale;
+	private final RoundingMode roundingMode;
+
 	private MoneyType type;
 	private BigDecimal amount;
 	
 	// constructors
 
-	MoneyCalc(MoneyType type, BigDecimal amount) {
+	MoneyCalc(int scale, RoundingMode roundingMode, MoneyType type, BigDecimal amount) {
 		if (type == null) throw new IllegalArgumentException("null type");
 		if (amount == null) throw new IllegalArgumentException("null amount");
+		this.scale = scale < 0 ? -1 : scale;
+		this.roundingMode = roundingMode == null ? DEFAULT_ROUNDING_MODE : roundingMode;
 		this.type = type;
-		this.amount = amount;
+		this.amount = scaled(amount);
 	}
+
+	MoneyCalc(MoneyType type, BigDecimal amount) {
+		this(-1, null, type, amount);
+	}
+
 	
 	// accessors
+	
+	/**
+	 * The rounding mode applied at each step in the calculation.
+	 * 
+	 * @return the rounding mode
+	 */
+	
+	public RoundingMode getRoundingMode() {
+		return roundingMode;
+	}
+	
+	/**
+	 * The number of decimal digits to which the calculation is rounded at every
+	 * step.
+	 * 
+	 * @return the decimal scale for the calculation, -1 if no scale is applied.
+	 */
+	
+	public int getScale() {
+		return scale;
+	}
 	
 	/**
 	 * The amount thus far computed.
@@ -135,7 +177,7 @@ public class MoneyCalc {
 	
 	public MoneyCalc add(Money money) throws IllegalArgumentException {
 		type = type.combine(money.type);
-		amount = amount.add(money.amount);
+		amount = amount.add(scaledAmount(money));
 		return this;
 	}
 
@@ -152,7 +194,7 @@ public class MoneyCalc {
 	
 	public MoneyCalc subtract(Money money) {
 		type = type.combine(money.type);
-		amount = amount.subtract(money.amount);
+		amount = amount.subtract(scaledAmount(money));
 		return this;
 	}
 	
@@ -166,19 +208,29 @@ public class MoneyCalc {
 	
 	public MoneyCalc multiply(BigDecimal value) {
 		amount = amount.multiply(value);
+		if (scale >= 0 && value.scale() == 0) amount = amount.setScale(scale, roundingMode);
 		return this;
 	}
 	
 	/**
-	 * Divides the current calculation amount by the supplied value.
+	 * Divides the current calculation amount by the supplied value. If no scale
+	 * has been set for this calculation, then the value must divide without
+	 * loss of precision, otherwise an ArithmeticException may be raised.
 	 * 
 	 * @param value
 	 *            the multiplicand
 	 * @return the current calculation object
+	 * @throws ArithmeticException
+	 *             if the division cannot be performed under the specified
+	 *             rounding mode
 	 */
 	
-	public MoneyCalc divide(BigDecimal value) {
-		amount = amount.divide(value);
+	public MoneyCalc divide(BigDecimal value) throws ArithmeticException {
+		if (scale >= 0) {
+			amount = amount.divide(value, scale, roundingMode);
+		} else {
+			amount = amount.divide(value);
+		}
 		return this;
 	}
 	
@@ -196,7 +248,7 @@ public class MoneyCalc {
 	
 	public MoneyCalc max(Money money) {
 		type = type.combine(money.type);
-		amount = amount.max(money.amount);
+		amount = amount.max(scaledAmount(money));
 		return this;
 	}
 	
@@ -214,7 +266,7 @@ public class MoneyCalc {
 	
 	public MoneyCalc min(Money money) {
 		type = type.combine(money.type);
-		amount = amount.min(money.amount);
+		amount = amount.min(scaledAmount(money));
 		return this;
 	}
 	
@@ -240,23 +292,61 @@ public class MoneyCalc {
 		return this;
 	}
 
+	// calc origin methods
+	
+	/**
+	 * Opens a new calculation whose initial type and amount are initially equal
+	 * to the current values of this calculation.
+	 * 
+	 * @return a new monetary calculation
+	 */
+	
+	@Override
+	public MoneyCalc calc() {
+		return new MoneyCalc(this.type, this.amount);
+	}
+	
+	/**
+	 * Opens a new calculation whose initial type and amount are initially equal
+	 * to the current values of this calculation.
+	 * 
+	 * @return a new monetary calculation
+	 */
+	
+	@Override
+	public MoneyCalc calc(int scale, RoundingMode roundingMode) {
+		return new MoneyCalc(scale, roundingMode, this.type, this.amount);
+	}
+	
 	// object methods
 
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
-		if (!(obj instanceof Money)) return false;
-		Money that = (Money) obj;
+		if (!(obj instanceof MoneyCalc)) return false;
+		MoneyCalc that = (MoneyCalc) obj;
+		if (this.scale != that.scale) return false;
+		if (this.roundingMode != that.roundingMode) return false;
 		if (!this.type.equals(that.type)) return false;
 		if (this.amount.compareTo(that.amount) != 0) return false;
 		return true;
 	}
 	
 	public int hashCode() {
-		return type.hashCode() ^ amount.hashCode();
+		return scale ^ roundingMode.hashCode() ^ type.hashCode() ^ amount.hashCode();
 	}
 	
 	public String toString() {
 		return type.format(money());
+	}
+	
+	// private utility methods
+	
+	private BigDecimal scaledAmount(Money money) {
+		return scaled(money.amount);
+	}
+	
+	private BigDecimal scaled(BigDecimal amount) {
+		return scale >= 0 ? amount.setScale(scale, roundingMode) : amount;
 	}
 	
 }

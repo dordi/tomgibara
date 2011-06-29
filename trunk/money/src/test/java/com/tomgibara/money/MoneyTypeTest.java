@@ -76,4 +76,9 @@ public class MoneyTypeTest extends TestCase {
 		assertNotNull(type.money().toString());
 	}
 	
+	public void testGetPlaces() {
+		assertEquals(2, new MoneyType(Locale.US).getPlaces());
+		assertTrue(new MoneyType().getPlaces() >= 0);
+	}
+	
 }

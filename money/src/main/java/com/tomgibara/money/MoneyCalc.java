@@ -18,6 +18,8 @@ package com.tomgibara.money;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <p>
@@ -162,6 +164,43 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	
 	public Money money() {
 		return new Money(type, amount);
+	}
+
+	
+	/**
+	 * Obtains the result of this calculation evenly split into an array of
+	 * monetary amounts. This method can only called if a scale has been set for
+	 * this calculation, otherwise an IllegalStateException arises.
+	 * 
+	 * Where the monetary amount cannot be split evenly, at the defined scale,
+	 * into the specified number of parts, the method minimizes the maximum
+	 * absolute error over the returned monetary amounts, under the constraint
+	 * that their sum is exactly equal to the value of the calculation.
+	 * 
+	 * @param parts
+	 *            the number of parts into which the calculation value should be
+	 *            split (at least one)
+	 * @return an array of monetary values that, as far as is possible, evenly
+	 *         split the value of the calculation
+	 * @throws IllegalStateException
+	 *             if no scale has been defined for the calculation
+	 */
+
+	public Money[] moneySplit(int parts) throws IllegalStateException {
+		if (scale < 0) throw new IllegalStateException("no scale set");
+		if (parts < 1) throw new IllegalArgumentException("parts not positive");
+		Money[] monies = new Money[parts];
+		BigDecimal remainder = amount;
+		for (int i = parts - 1; i >= 0; i--) {
+			if (i == 0) {
+				monies[i] = new Money(type, remainder);
+			} else {
+				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), scale, roundingMode);
+				monies[i] = new Money(type, share);
+				remainder = remainder.subtract(share);
+			}
+		}
+		return monies;
 	}
 	
 	/**

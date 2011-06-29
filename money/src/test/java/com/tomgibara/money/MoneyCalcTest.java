@@ -18,7 +18,9 @@ package com.tomgibara.money;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Random;
 
 import junit.framework.TestCase;
 
@@ -63,6 +65,27 @@ public class MoneyCalcTest extends TestCase {
 		assertEquals(0, type.calc(0, null).getScale());
 		assertEquals(1, type.calc(1, null).getScale());
 		assertEquals(-1, type.calc(-2, null).getScale());
+	}
+	
+	public void testSplit() {
+		Random r = new Random(0L);
+		MoneyType type = new MoneyType(Locale.US);
+		for (int i = 0; i < 100; i++) {
+			Money money = type.money(r.nextInt(1000));
+			for (int j = 0; j < 10; j++) { // parts
+				int parts = 1 + r.nextInt(10);
+				for (int k = 0; k < 3; k++) { // precision
+					testSplit(money.calc(k, null), parts);
+				}
+			}
+		}
+	}
+	
+	private void testSplit(MoneyCalc calc, int parts) {
+		Money[] split = calc.moneySplit(parts); // split it
+		calc = calc.calc(); // switch to arbirary precision
+		for (Money m : split) calc.subtract(m); // subtract away all parts
+		assertTrue(calc.getAmount().signum() == 0); // check we have no remainder
 	}
 	
 }

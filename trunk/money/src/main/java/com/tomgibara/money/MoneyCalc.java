@@ -203,6 +203,36 @@ public class MoneyCalc implements MoneyCalcOrigin {
 		return monies;
 	}
 	
+	public Money[] moneySplit(BigDecimal... proportions) throws IllegalStateException {
+		if (scale < 0) throw new IllegalStateException("no scale set");
+		final int count = proportions.length;
+		switch (count) {
+		case 0 : throw new IllegalArgumentException("no proportions");
+		case 1 : return new Money[] { money() };
+		default :
+			BigDecimal[] denominators = new BigDecimal[count];
+			{
+				BigDecimal denominator = null;
+				for (int i = 0; i < count; i++) {
+					denominator = i == 0 ? proportions[0] : denominator.add(proportions[i]);
+					denominators[i] = denominator;
+				}
+			}
+			Money[] monies = new Money[count];
+			BigDecimal remainder = amount;
+			for (int i = count - 1; i >= 0; i--) {
+				if (i == 0) {
+					monies[i] = new Money(type, remainder);
+				} else {
+					BigDecimal share = remainder.multiply(proportions[i]).divide(denominators[i], scale, roundingMode);
+					monies[i] = new Money(type, share);
+					remainder = remainder.subtract(share);
+				}
+			}
+			return monies;
+		}
+	}
+	
 	/**
 	 * Adds a monetary amount to this calculation.
 	 * 

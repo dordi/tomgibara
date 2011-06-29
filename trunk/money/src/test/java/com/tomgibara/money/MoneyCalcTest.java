@@ -87,5 +87,30 @@ public class MoneyCalcTest extends TestCase {
 		for (Money m : split) calc.subtract(m); // subtract away all parts
 		assertTrue(calc.getAmount().signum() == 0); // check we have no remainder
 	}
+
+	public void testSplitProportions() {
+		MoneyType type = new MoneyType(Locale.US);
+		Money money = type.money(100);
+		MoneyCalc calc = money.calc(2, null);
+		Money[] ms;
+		ms = calc.moneySplit(BigDecimal.valueOf(5));
+		assertEquals(money, ms[0]);
+		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(1));
+		assertEquals(type.money(50), ms[0]);
+		assertEquals(type.money(50), ms[1]);
+		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(4));
+		assertEquals(type.money(20), ms[0]);
+		assertEquals(type.money(80), ms[1]);
+		ms = calc.moneySplit(BigDecimal.valueOf(4), BigDecimal.valueOf(1));
+		assertEquals(type.money(80), ms[0]);
+		assertEquals(type.money(20), ms[1]);
+		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(9), BigDecimal.valueOf(90));
+		assertEquals(type.money(1), ms[0]);
+		assertEquals(type.money(9), ms[1]);
+		assertEquals(type.money(90), ms[2]);
+		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(1000));
+		assertEquals(type.money(0), ms[0]);
+		assertEquals(type.money(100), ms[1]);
+	}
 	
 }

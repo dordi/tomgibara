@@ -6,19 +6,19 @@
   <version>1.1-SNAPSHOT</version>
   <description>Small collection of classes for handling monetary amounts.</description>
   <dependencies>
-  	<dependency>
-  		<groupId>junit</groupId>
-  		<artifactId>junit</artifactId>
-  		<version>4.7</version>
-  		<type>jar</type>
-  		<scope>test</scope>
-  	</dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.7</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <url>http://www.tomgibara.com/projects/money</url>
   <inceptionYear>2010</inceptionYear>
   <issueManagement>
-  	<system>Google Code</system>
-  	<url>http://code.google.com/p/tomgibara/issues/list</url>
+    <system>Google Code</system>
+    <url>http://code.google.com/p/tomgibara/issues/list</url>
   </issueManagement>
   <licenses>
     <license>
@@ -28,17 +28,17 @@
     </license>
   </licenses>
   <developers>
-  	<developer>
-  		<id>tomgibara</id>
-  		<name>Tom Gibara</name>
-  		<email>me@tomgibara.com</email>
-  		<url>http://www.tomgibara.com</url>
-  	</developer>
+    <developer>
+      <id>tomgibara</id>
+      <name>Tom Gibara</name>
+      <email>me@tomgibara.com</email>
+      <url>http://www.tomgibara.com</url>
+    </developer>
   </developers>
   <scm>
-  	<connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/money</connection>
-  	<developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/money</developerConnection>
-  	<url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/money</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/money</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/money</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/money</url>
   </scm>
   <build>
     <plugins>

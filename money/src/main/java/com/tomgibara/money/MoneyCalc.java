@@ -203,20 +203,46 @@ public class MoneyCalc implements MoneyCalcOrigin {
 		return monies;
 	}
 	
+	/**
+	 * Obtains the result of this calculation split into an array of monetary
+	 * amounts in proportion to the supplied values. This method can only called
+	 * if a scale has been set for this calculation, otherwise an
+	 * IllegalStateException arises. Every proportion must be non-null and
+	 * non-negative and at least one proportion must be non-zero.
+	 * 
+	 * @param proportions
+	 *            the proportions according to which the value of this
+	 *            calculation must be split
+	 * @return a corresponding array of monetary values
+	 * @throws IllegalStateException
+	 *             if no scale has been defined for the calculation
+	 */
+
 	public Money[] moneySplit(BigDecimal... proportions) throws IllegalStateException {
 		if (scale < 0) throw new IllegalStateException("no scale set");
 		final int count = proportions.length;
 		switch (count) {
-		case 0 : throw new IllegalArgumentException("no proportions");
-		case 1 : return new Money[] { money() };
+		case 0 : {
+			throw new IllegalArgumentException("no proportions");
+		}
+		case 1 : {
+			BigDecimal proportion = proportions[0];
+			if (proportion == null) throw new IllegalArgumentException("null proportion");
+			if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
+			return new Money[] { money() };
+		}
 		default :
 			BigDecimal[] denominators = new BigDecimal[count];
 			{
 				BigDecimal denominator = null;
 				for (int i = 0; i < count; i++) {
-					denominator = i == 0 ? proportions[0] : denominator.add(proportions[i]);
+					BigDecimal proportion = proportions[i];
+					if (proportion == null) throw new IllegalArgumentException("null proportion");
+					if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
+					denominator = i == 0 ? proportion : denominator.add(proportion);
 					denominators[i] = denominator;
 				}
+				if (denominator.signum() == 0) throw new IllegalArgumentException("all proportions zero");
 			}
 			Money[] monies = new Money[count];
 			BigDecimal remainder = amount;

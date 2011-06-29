@@ -96,12 +96,12 @@
   <distributionManagement>
     <site>
       <id>tomgibara.com</id>
-      <url>scp://zetec.recipexperience.com/home/apache/public/www.tomgibara.com/projects/money/maven/</url>
+      <url>scp://cosworth.recipexperience.com/home/apache/public/www.tomgibara.com/projects/money/maven/</url>
     </site>
     <repository>
       <id>tomgibara.com</id>
       <name>Personal</name>
-      <url>scp://zetec.recipexperience.com/home/apache/public/www.tomgibara.com/maven/repo</url>
+      <url>scp://cosworth.recipexperience.com/home/apache/public/www.tomgibara.com/maven/repo</url>
     </repository>
   </distributionManagement>
 </project>

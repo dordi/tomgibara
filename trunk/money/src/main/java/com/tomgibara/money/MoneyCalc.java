@@ -62,8 +62,8 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 
 	// fields
 
-	private final int scale;
-	private final RoundingMode roundingMode;
+	final int scale;
+	final RoundingMode roundingMode;
 
 	private MoneyType type;
 	private BigDecimal amount;
@@ -164,6 +164,9 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 		return new Money(type, amount);
 	}
 
+	public MoneySplitter createSplitter() {
+		return new MoneySplitter(this);
+	}
 	
 	/**
 	 * Obtains the result of this calculation evenly split into an array of

@@ -40,7 +40,7 @@ import java.util.Locale;
  * 
  */
 
-public class MoneyType implements MoneyCalcOrigin {
+public class MoneyType implements MoneySource, MoneyCalcOrigin {
 
 	// fields
 	

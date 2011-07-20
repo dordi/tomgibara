@@ -38,7 +38,7 @@ import java.util.Currency;
  * 
  */
 
-public class Money implements MoneyCalcOrigin, Comparable<Money> {
+public class Money implements MoneySource, MoneyCalcOrigin, Comparable<Money> {
 
 	// statics
 	
@@ -179,6 +179,17 @@ public class Money implements MoneyCalcOrigin, Comparable<Money> {
 	@Override
 	public MoneyCalc calc(int scale, RoundingMode roundingMode) {
 		return new MoneyCalc(scale, roundingMode, type, amount);
+	}
+
+	/**
+	 * This money object.
+	 * 
+	 * @return this money object
+	 */
+	
+	@Override
+	public Money money() {
+		return this;
 	}
 	
 	// object methods

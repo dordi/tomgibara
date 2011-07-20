@@ -113,4 +113,19 @@ public class MoneyCalcTest extends TestCase {
 		assertEquals(type.money(100), ms[1]);
 	}
 	
+	public void testOwnMoneySource() {
+		MoneyType type = new MoneyType();
+		final Money money = type.money(10);
+		
+		MoneySource source = new MoneySource() {
+			
+			@Override
+			public Money money() {
+				return money;
+			}
+		};
+		
+		assertEquals(money, type.calc().add(source).money());
+	}
+	
 }

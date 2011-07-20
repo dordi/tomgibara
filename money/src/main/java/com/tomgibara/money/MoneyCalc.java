@@ -48,7 +48,7 @@ import java.math.RoundingMode;
  * 
  */
 
-public class MoneyCalc implements MoneyCalcOrigin {
+public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 
 	// statics
 
@@ -76,7 +76,7 @@ public class MoneyCalc implements MoneyCalcOrigin {
 		this.scale = scale < 0 ? -1 : scale;
 		this.roundingMode = roundingMode == null ? DEFAULT_ROUNDING_MODE : roundingMode;
 		this.type = type;
-		this.amount = scaled(amount);
+		this.amount = amount(amount);
 	}
 
 	MoneyCalc(MoneyType type, BigDecimal amount) {
@@ -268,9 +268,10 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	 *             with the type of the calculation
 	 */
 	
-	public MoneyCalc add(Money money) throws IllegalArgumentException {
-		type = type.combine(money.type);
-		amount = amount.add(scaledAmount(money));
+	public MoneyCalc add(MoneySource source) throws IllegalArgumentException {
+		if (source == null) throw new IllegalArgumentException("null source");
+		type = type.combine(type(source));
+		amount = amount.add(amount(source));
 		return this;
 	}
 
@@ -285,9 +286,10 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	 *             with the type of the calculation
 	 */
 	
-	public MoneyCalc subtract(Money money) {
-		type = type.combine(money.type);
-		amount = amount.subtract(scaledAmount(money));
+	public MoneyCalc subtract(MoneySource source) {
+		if (source == null) throw new IllegalArgumentException("null source");
+		type = type.combine(type(source));
+		amount = amount.subtract(amount(source));
 		return this;
 	}
 	
@@ -339,9 +341,10 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	 *             the type of the calculation
 	 */
 	
-	public MoneyCalc max(Money money) {
-		type = type.combine(money.type);
-		amount = amount.max(scaledAmount(money));
+	public MoneyCalc max(MoneySource source) {
+		if (source == null) throw new IllegalArgumentException("null source");
+		type = type.combine(type(source));
+		amount = amount.max(amount(source));
 		return this;
 	}
 	
@@ -357,9 +360,10 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	 *             the type of the calculation
 	 */
 	
-	public MoneyCalc min(Money money) {
-		type = type.combine(money.type);
-		amount = amount.min(scaledAmount(money));
+	public MoneyCalc min(MoneySource source) {
+		if (source == null) throw new IllegalArgumentException("null source");
+		type = type.combine(type(source));
+		amount = amount.min(amount(source));
 		return this;
 	}
 	
@@ -434,11 +438,21 @@ public class MoneyCalc implements MoneyCalcOrigin {
 	
 	// private utility methods
 	
-	private BigDecimal scaledAmount(Money money) {
-		return scaled(money.amount);
+	private MoneyType type(MoneySource source) {
+		if (source instanceof MoneyType) return (MoneyType) source;
+		if (source instanceof MoneyCalc) return ((MoneyCalc) source).type;
+		if (source instanceof Money) return ((Money) source).type;
+		return source.money().type;
 	}
 	
-	private BigDecimal scaled(BigDecimal amount) {
+	private BigDecimal amount(MoneySource source) {
+		if (source instanceof MoneyType) return amount(BigDecimal.ZERO);
+		if (source instanceof MoneyCalc) return amount(((MoneyCalc) source).amount);
+		if (source instanceof Money) return amount(((Money) source).amount);
+		return amount(source.money().amount);
+	}
+	
+	private BigDecimal amount(BigDecimal amount) {
 		return scale >= 0 ? amount.setScale(scale, roundingMode) : amount;
 	}
 	

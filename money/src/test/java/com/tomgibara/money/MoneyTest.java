@@ -17,6 +17,7 @@
 package com.tomgibara.money;
 
 import java.math.RoundingMode;
+import java.util.Currency;
 import java.util.Locale;
 
 import junit.framework.TestCase;
@@ -33,6 +34,13 @@ public class MoneyTest extends TestCase {
 		assertEquals("$0.00", type.money(-0.0001).toString());
 		final String negative = type.money(-5.00).toString();
 		assertTrue(negative.equals("-$5.00") || negative.equals("($5.00)"));
+
+		MoneyType de = new MoneyType(Locale.GERMANY, Currency.getInstance("EUR"));
+		assertEquals("1,00 €", de.money(100).toString());
+
+		MoneyType uk = new MoneyType(Locale.UK, Currency.getInstance("GBP"));
+		assertEquals("£1.00", uk.money(100).toString());
+
 	}
 	
 	public void testRounding() {

@@ -165,6 +165,7 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 	}
 
 	public MoneySplitter createSplitter() {
+		if (scale < 0) throw new IllegalStateException("no scale set");
 		return new MoneySplitter(this);
 	}
 	

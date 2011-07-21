@@ -2,6 +2,7 @@ package com.tomgibara.money;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -9,7 +10,25 @@ public class MoneySplitter {
 
 	// statics
 
-	private static final Partition FREE = new Partition();
+	private static final Partition FREE = new Partition(-1);
+
+	private static Money[] splitFree(MoneyCalc calc, BigDecimal amount, int parts) {
+		Money[] monies = new Money[parts];
+		BigDecimal remainder = amount;
+		for (int i = parts - 1; i >= 0; i--) {
+			if (i == 0) {
+				monies[i] = new Money(calc.getType(), remainder);
+			} else {
+				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), calc.scale, calc.roundingMode);
+				monies[i] = new Money(calc.getType(), share);
+				remainder = remainder.subtract(share);
+			}
+		}
+		return monies;
+
+	}
+	
+
 	
 	public static BigDecimal[] toBigDecimalArray(Long... longs) {
 		if (longs == null) throw new IllegalArgumentException("null longs");
@@ -94,44 +113,48 @@ public class MoneySplitter {
 	// methods
 
 	public Money[] split() {
-		if (isConstrained()) {
-			throw new UnsupportedOperationException();
-		} else {
-			return splitFree();
+		checkParts();
+		int constraintCount = countConstraints();
+		if (constraintCount == 0) return splitFree(calc, calc.getAmount(), parts);
+		Money[] monies = new Money[parts];
+		int count = 0;
+		while (count < constraintCount) {
+			for (int i = 0; i < monies.length; i++) {
+				if (monies[i] != null) continue;
+				
+			}
 		}
+		throw new UnsupportedOperationException();
 	}
 	
 	// private utility methods
-	
-	private Money[] splitFree() {
-		if (calc.scale < 0) throw new IllegalStateException("no scale set");
-		if (parts < 1) throw new IllegalArgumentException("parts not positive");
-		Money[] monies = new Money[parts];
-		BigDecimal remainder = calc.getAmount();
-		for (int i = parts - 1; i >= 0; i--) {
-			if (i == 0) {
-				monies[i] = new Money(calc.getType(), remainder);
-			} else {
-				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), calc.scale, calc.roundingMode);
-				monies[i] = new Money(calc.getType(), share);
-				remainder = remainder.subtract(share);
-			}
-		}
-		return monies;
-
-	}
 	
 	private Partition getPartition(int index) {
 		if (index < 0) throw new IllegalArgumentException("negative index");
 		if (partitions == null) partitions = new ArrayList<Partition>();
 		Partition partition = null;
 		while (partitions.size() <= index) {
-			partition = new Partition();
+			partition = new Partition(index);
 			partitions.add(partition);
 		}
 		return partition == null ? partitions.get(index) : partition;
 	}
 
+	private Partition[] getConstrainedPartitions() {
+		if (partitions == null) return new Partition[0];
+		List<Partition> partitions = new ArrayList<Partition>();
+		int limit = Math.min(partitions.size(), parts);
+		for (int i = 0; i < limit; i++) {
+			Partition partition = getEffectivePartition(i);
+			if (partition.isConstrained()) {
+				partitions.add(partition);
+			}
+		}
+		Partition[] array = (Partition[]) partitions.toArray(new Partition[partitions.size()]);
+		Arrays.sort(array);
+		return array;
+	}
+	
 	private MoneySplitter growParts(int size) {
 		return size <= parts ? this : setParts(size);
 	}
@@ -140,13 +163,16 @@ public class MoneySplitter {
 		if (parts == 0) throw new IllegalStateException("zero parts");
 	}
 
-	private boolean isConstrained() {
-		if (partitions == null) return false;
-		int limit = Math.min(partitions.size(), parts);
-		for (int i = 0; i < limit; i++) {
-			if (!getEffectivePartition(i).isUnconstrained()) return false;
+	private int countConstraints() {
+		int count = 0;
+		if (partitions != null) {
+			int limit = Math.min(partitions.size(), parts);
+			for (int i = 0; i < limit; i++) {
+				if (getEffectivePartition(i).isConstrained()) count++;
+			}
 		}
-		return true;
+		return count;
+		
 	}
 	
 	private Partition getEffectivePartition(int index) {
@@ -157,14 +183,26 @@ public class MoneySplitter {
 	
 	// inner classes
 	
-	private static class Partition {
+	private static class Partition implements Comparable<Partition> {
+		
+		final int index;
 		
 		BigDecimal minimum;
 		BigDecimal maximum;
 		BigDecimal proportion;
 		
-		boolean isUnconstrained() {
-			return minimum == null & maximum == null & proportion == null;
+		public Partition(int index) {
+			this.index = index;
+		}
+		
+		boolean isConstrained() {
+			return minimum != null && maximum != null && proportion != null;
+		}
+		
+		@Override
+		public int compareTo(Partition that) {
+			if (this == that) return 0;
+			throw new UnsupportedOperationException();
 		}
 		
 	}

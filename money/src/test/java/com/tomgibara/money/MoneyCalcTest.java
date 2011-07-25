@@ -19,6 +19,7 @@ package com.tomgibara.money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
@@ -26,6 +27,10 @@ import junit.framework.TestCase;
 
 public class MoneyCalcTest extends TestCase {
 
+	private static List<Money> list(Money[] money) {
+		return Arrays.asList(money);
+	}
+	
 	public void testSimpleCalculations() {
 		MoneyType type = new MoneyType(Locale.US);
 		assertEquals(type.money(100), type.money(80).calc().add(type.money(20)).money());
@@ -111,6 +116,16 @@ public class MoneyCalcTest extends TestCase {
 		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(1000));
 		assertEquals(type.money(0), ms[0]);
 		assertEquals(type.money(100), ms[1]);
+	}
+	
+	public void testSplitZeros() {
+		MoneyType type = new MoneyType(Locale.US);
+		Money zero = type.calc(2, null).money();
+		Money one = type.money(1).calc(2, null).money();
+		MoneyCalc calc = one.calc(2, null);
+		assertEquals(list(new Money[] {zero, zero, one}), list(calc.moneySplit(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ONE)));
+		assertEquals(list(new Money[] {zero, one, zero}), list(calc.moneySplit(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.ZERO)));
+		assertEquals(list(new Money[] {one, zero, zero}), list(calc.moneySplit(BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ZERO)));
 	}
 	
 	public void testOwnMoneySource() {

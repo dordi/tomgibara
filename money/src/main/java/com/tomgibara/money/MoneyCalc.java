@@ -48,6 +48,8 @@ import java.math.RoundingMode;
  * 
  */
 
+//TODO make cloneable
+//TODO add a set method that takes money?
 public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 
 	// statics
@@ -248,13 +250,20 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 			}
 			Money[] monies = new Money[count];
 			BigDecimal remainder = amount;
+			Money none = null; // lazily instantiated
 			for (int i = count - 1; i >= 0; i--) {
 				if (i == 0) {
 					monies[i] = new Money(type, remainder);
 				} else {
-					BigDecimal share = remainder.multiply(proportions[i]).divide(denominators[i], scale, roundingMode);
-					monies[i] = new Money(type, share);
-					remainder = remainder.subtract(share);
+					BigDecimal proportion = proportions[i];
+					if (proportion.signum() == 0) {
+						if (none == null) none = new Money(type, amount(BigDecimal.ZERO));
+						monies[i] = none;
+					} else {
+						BigDecimal share = remainder.multiply(proportions[i]).divide(denominators[i], scale, roundingMode);
+						monies[i] = new Money(type, share);
+						remainder = remainder.subtract(share);
+					}
 				}
 			}
 			return monies;

@@ -166,109 +166,121 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 		return new Money(type, amount);
 	}
 
-	public MoneySplitter createSplitter() {
+	/**
+	 * Obtains a splitter that can split the value of this calculation into a
+	 * number of separate monetary amounts. Calling this method requires a scale
+	 * to have been specified for the calculation; the scale will be applied to
+	 * all of the monetary values returned by the splitter. Values returned by
+	 * the splitter will reflect changes to the calculation value.
+	 * 
+	 * @return a new splitter for this calculation
+	 * @throws IllegalStateException
+	 *             if no scale has been specified for the calculation
+	 */
+	
+	public MoneySplitter splitter() throws IllegalStateException {
 		if (scale < 0) throw new IllegalStateException("no scale set");
 		return new MoneySplitter(this);
 	}
 	
-	/**
-	 * Obtains the result of this calculation evenly split into an array of
-	 * monetary amounts. This method can only called if a scale has been set for
-	 * this calculation, otherwise an IllegalStateException arises.
-	 * 
-	 * Where the monetary amount cannot be split evenly, at the defined scale,
-	 * into the specified number of parts, the method minimizes the maximum
-	 * absolute error over the returned monetary amounts, under the constraint
-	 * that their sum is exactly equal to the value of the calculation.
-	 * 
-	 * @param parts
-	 *            the number of parts into which the calculation value should be
-	 *            split (at least one)
-	 * @return an array of monetary values that, as far as is possible, evenly
-	 *         split the value of the calculation
-	 * @throws IllegalStateException
-	 *             if no scale has been defined for the calculation
-	 */
-
-	public Money[] moneySplit(int parts) throws IllegalStateException {
-		if (scale < 0) throw new IllegalStateException("no scale set");
-		if (parts < 1) throw new IllegalArgumentException("parts not positive");
-		Money[] monies = new Money[parts];
-		BigDecimal remainder = amount;
-		for (int i = parts - 1; i >= 0; i--) {
-			if (i == 0) {
-				monies[i] = new Money(type, remainder);
-			} else {
-				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), scale, roundingMode);
-				monies[i] = new Money(type, share);
-				remainder = remainder.subtract(share);
-			}
-		}
-		return monies;
-	}
-	
-	/**
-	 * Obtains the result of this calculation split into an array of monetary
-	 * amounts in proportion to the supplied values. This method can only called
-	 * if a scale has been set for this calculation, otherwise an
-	 * IllegalStateException arises. Every proportion must be non-null and
-	 * non-negative and at least one proportion must be non-zero.
-	 * 
-	 * @param proportions
-	 *            the proportions according to which the value of this
-	 *            calculation must be split
-	 * @return a corresponding array of monetary values
-	 * @throws IllegalStateException
-	 *             if no scale has been defined for the calculation
-	 */
-
-	public Money[] moneySplit(BigDecimal... proportions) throws IllegalStateException {
-		if (scale < 0) throw new IllegalStateException("no scale set");
-		final int count = proportions.length;
-		switch (count) {
-		case 0 : {
-			throw new IllegalArgumentException("no proportions");
-		}
-		case 1 : {
-			BigDecimal proportion = proportions[0];
-			if (proportion == null) throw new IllegalArgumentException("null proportion");
-			if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
-			return new Money[] { money() };
-		}
-		default :
-			BigDecimal[] denominators = new BigDecimal[count];
-			{
-				BigDecimal denominator = null;
-				for (int i = 0; i < count; i++) {
-					BigDecimal proportion = proportions[i];
-					if (proportion == null) throw new IllegalArgumentException("null proportion");
-					if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
-					denominator = i == 0 ? proportion : denominator.add(proportion);
-					denominators[i] = denominator;
-				}
-				if (denominator.signum() == 0) throw new IllegalArgumentException("all proportions zero");
-			}
-			Money[] monies = new Money[count];
-			BigDecimal remainder = amount;
-			Money none = null; // lazily instantiated
-			for (int i = count - 1; i >= 0; i--) {
-				if (i == 0) {
-					monies[i] = new Money(type, remainder);
-				} else {
-					BigDecimal proportion = proportions[i];
-					if (proportion.signum() == 0) {
-						if (none == null) none = new Money(type, amount(BigDecimal.ZERO));
-						monies[i] = none;
-					} else {
-						BigDecimal share = remainder.multiply(proportions[i]).divide(denominators[i], scale, roundingMode);
-						monies[i] = new Money(type, share);
-						remainder = remainder.subtract(share);
-					}
-				}
-			}
-			return monies;
-		}
-	}
+//	/**
+//	 * Obtains the result of this calculation evenly split into an array of
+//	 * monetary amounts. This method can only called if a scale has been set for
+//	 * this calculation, otherwise an IllegalStateException arises.
+//	 * 
+//	 * Where the monetary amount cannot be split evenly, at the defined scale,
+//	 * into the specified number of parts, the method minimizes the maximum
+//	 * absolute error over the returned monetary amounts, under the constraint
+//	 * that their sum is exactly equal to the value of the calculation.
+//	 * 
+//	 * @param parts
+//	 *            the number of parts into which the calculation value should be
+//	 *            split (at least one)
+//	 * @return an array of monetary values that, as far as is possible, evenly
+//	 *         split the value of the calculation
+//	 * @throws IllegalStateException
+//	 *             if no scale has been defined for the calculation
+//	 */
+//
+//	public Money[] moneySplit(int parts) throws IllegalStateException {
+//		if (scale < 0) throw new IllegalStateException("no scale set");
+//		if (parts < 1) throw new IllegalArgumentException("parts not positive");
+//		Money[] monies = new Money[parts];
+//		BigDecimal remainder = amount;
+//		for (int i = parts - 1; i >= 0; i--) {
+//			if (i == 0) {
+//				monies[i] = new Money(type, remainder);
+//			} else {
+//				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), scale, roundingMode);
+//				monies[i] = new Money(type, share);
+//				remainder = remainder.subtract(share);
+//			}
+//		}
+//		return monies;
+//	}
+//	
+//	/**
+//	 * Obtains the result of this calculation split into an array of monetary
+//	 * amounts in proportion to the supplied values. This method can only called
+//	 * if a scale has been set for this calculation, otherwise an
+//	 * IllegalStateException arises. Every proportion must be non-null and
+//	 * non-negative and at least one proportion must be non-zero.
+//	 * 
+//	 * @param proportions
+//	 *            the proportions according to which the value of this
+//	 *            calculation must be split
+//	 * @return a corresponding array of monetary values
+//	 * @throws IllegalStateException
+//	 *             if no scale has been defined for the calculation
+//	 */
+//
+//	public Money[] moneySplit(BigDecimal... proportions) throws IllegalStateException {
+//		if (scale < 0) throw new IllegalStateException("no scale set");
+//		final int count = proportions.length;
+//		switch (count) {
+//		case 0 : {
+//			throw new IllegalArgumentException("no proportions");
+//		}
+//		case 1 : {
+//			BigDecimal proportion = proportions[0];
+//			if (proportion == null) throw new IllegalArgumentException("null proportion");
+//			if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
+//			return new Money[] { money() };
+//		}
+//		default :
+//			BigDecimal[] denominators = new BigDecimal[count];
+//			{
+//				BigDecimal denominator = null;
+//				for (int i = 0; i < count; i++) {
+//					BigDecimal proportion = proportions[i];
+//					if (proportion == null) throw new IllegalArgumentException("null proportion");
+//					if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
+//					denominator = i == 0 ? proportion : denominator.add(proportion);
+//					denominators[i] = denominator;
+//				}
+//				if (denominator.signum() == 0) throw new IllegalArgumentException("all proportions zero");
+//			}
+//			Money[] monies = new Money[count];
+//			BigDecimal remainder = amount;
+//			Money none = null; // lazily instantiated
+//			for (int i = count - 1; i >= 0; i--) {
+//				if (i == 0) {
+//					monies[i] = new Money(type, remainder);
+//				} else {
+//					BigDecimal proportion = proportions[i];
+//					if (proportion.signum() == 0) {
+//						if (none == null) none = new Money(type, amount(BigDecimal.ZERO));
+//						monies[i] = none;
+//					} else {
+//						BigDecimal share = remainder.multiply(proportions[i]).divide(denominators[i], scale, roundingMode);
+//						monies[i] = new Money(type, share);
+//						remainder = remainder.subtract(share);
+//					}
+//				}
+//			}
+//			return monies;
+//		}
+//	}
 	
 	/**
 	 * Adds a monetary amount to this calculation.
@@ -447,6 +459,12 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 	
 	public String toString() {
 		return type.format(money());
+	}
+	
+	// package scoped methods
+	
+	Money money(BigDecimal amount) {
+		return new Money(type, amount(amount));
 	}
 	
 	// private utility methods

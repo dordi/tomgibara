@@ -50,7 +50,7 @@ import java.math.RoundingMode;
 
 //TODO make cloneable
 //TODO add a set method that takes money?
-public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
+public class MoneyCalc implements MoneySource, MoneyCalcSource {
 
 	// statics
 

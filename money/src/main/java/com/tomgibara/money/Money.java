@@ -38,7 +38,7 @@ import java.util.Currency;
  * 
  */
 
-public class Money implements MoneySource, MoneyCalcOrigin, Comparable<Money> {
+public class Money implements MoneySource, MoneyCalcSource, Comparable<Money> {
 
 	// statics
 	

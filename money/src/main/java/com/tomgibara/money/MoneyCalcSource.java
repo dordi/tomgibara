@@ -2,7 +2,7 @@ package com.tomgibara.money;
 
 import java.math.RoundingMode;
 
-public interface MoneyCalcOrigin {
+public interface MoneyCalcSource {
 
 	/**
 	 * Open a new monetary calculation. No rounding will be applied by the

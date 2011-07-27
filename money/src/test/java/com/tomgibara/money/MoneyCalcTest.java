@@ -27,10 +27,6 @@ import junit.framework.TestCase;
 
 public class MoneyCalcTest extends TestCase {
 
-	private static List<Money> list(Money[] money) {
-		return Arrays.asList(money);
-	}
-	
 	public void testSimpleCalculations() {
 		MoneyType type = new MoneyType(Locale.US);
 		assertEquals(type.money(100), type.money(80).calc().add(type.money(20)).money());
@@ -70,62 +66,6 @@ public class MoneyCalcTest extends TestCase {
 		assertEquals(0, type.calc(0, null).getScale());
 		assertEquals(1, type.calc(1, null).getScale());
 		assertEquals(-1, type.calc(-2, null).getScale());
-	}
-	
-	public void testSplit() {
-		Random r = new Random(0L);
-		MoneyType type = new MoneyType(Locale.US);
-		for (int i = 0; i < 100; i++) {
-			Money money = type.money(r.nextInt(1000));
-			for (int j = 0; j < 10; j++) { // parts
-				int parts = 1 + r.nextInt(10);
-				for (int k = 0; k < 3; k++) { // precision
-					testSplit(money.calc(k, null), parts);
-				}
-			}
-		}
-	}
-	
-	private void testSplit(MoneyCalc calc, int parts) {
-		Money[] split = calc.moneySplit(parts); // split it
-		calc = calc.calc(); // switch to arbirary precision
-		for (Money m : split) calc.subtract(m); // subtract away all parts
-		assertTrue(calc.getAmount().signum() == 0); // check we have no remainder
-	}
-
-	public void testSplitProportions() {
-		MoneyType type = new MoneyType(Locale.US);
-		Money money = type.money(100);
-		MoneyCalc calc = money.calc(2, null);
-		Money[] ms;
-		ms = calc.moneySplit(BigDecimal.valueOf(5));
-		assertEquals(money, ms[0]);
-		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(1));
-		assertEquals(type.money(50), ms[0]);
-		assertEquals(type.money(50), ms[1]);
-		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(4));
-		assertEquals(type.money(20), ms[0]);
-		assertEquals(type.money(80), ms[1]);
-		ms = calc.moneySplit(BigDecimal.valueOf(4), BigDecimal.valueOf(1));
-		assertEquals(type.money(80), ms[0]);
-		assertEquals(type.money(20), ms[1]);
-		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(9), BigDecimal.valueOf(90));
-		assertEquals(type.money(1), ms[0]);
-		assertEquals(type.money(9), ms[1]);
-		assertEquals(type.money(90), ms[2]);
-		ms = calc.moneySplit(BigDecimal.valueOf(1), BigDecimal.valueOf(1000));
-		assertEquals(type.money(0), ms[0]);
-		assertEquals(type.money(100), ms[1]);
-	}
-	
-	public void testSplitZeros() {
-		MoneyType type = new MoneyType(Locale.US);
-		Money zero = type.calc(2, null).money();
-		Money one = type.money(1).calc(2, null).money();
-		MoneyCalc calc = one.calc(2, null);
-		assertEquals(list(new Money[] {zero, zero, one}), list(calc.moneySplit(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ONE)));
-		assertEquals(list(new Money[] {zero, one, zero}), list(calc.moneySplit(BigDecimal.ZERO, BigDecimal.ONE, BigDecimal.ZERO)));
-		assertEquals(list(new Money[] {one, zero, zero}), list(calc.moneySplit(BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ZERO)));
 	}
 	
 	public void testOwnMoneySource() {

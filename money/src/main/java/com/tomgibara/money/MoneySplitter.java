@@ -3,7 +3,6 @@ package com.tomgibara.money;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class MoneySplitter {
@@ -17,15 +16,14 @@ public class MoneySplitter {
 		BigDecimal remainder = amount;
 		for (int i = parts - 1; i >= 0; i--) {
 			if (i == 0) {
-				monies[i] = new Money(calc.getType(), remainder);
+				monies[i] = calc.money(remainder);
 			} else {
 				BigDecimal share = remainder.divide(BigDecimal.valueOf(i + 1), calc.scale, calc.roundingMode);
-				monies[i] = new Money(calc.getType(), share);
+				monies[i] = calc.money(share);
 				remainder = remainder.subtract(share);
 			}
 		}
 		return monies;
-
 	}
 	
 
@@ -55,6 +53,7 @@ public class MoneySplitter {
 	private final MoneyCalc calc;
 	private List<Partition> partitions = null;
 	private int parts = 0;
+	private boolean boundedAbove = true;
 
 	// constructors
 	
@@ -67,6 +66,14 @@ public class MoneySplitter {
 	public int getParts() {
 		return parts;
 	}
+
+	public void setBoundedAbove(boolean boundedAbove) {
+		this.boundedAbove = boundedAbove;
+	}
+	
+	public boolean isBoundedAbove() {
+		return boundedAbove;
+	}
 	
 	public MoneySplitter setParts(int parts) {
 		if (parts < 0) throw new IllegalArgumentException("negative parts");
@@ -76,37 +83,28 @@ public class MoneySplitter {
 	
 	public MoneySplitter setProportions(BigDecimal... proportions) {
 		for (int i = 0; i < proportions.length; i++) {
-			getPartition(i).proportion = proportions[i];
+			BigDecimal proportion = proportions[i];
+			if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
+			getPartition(i).proportion = proportion;
 		}
 		return growParts(proportions.length);
 	}
 
-	public MoneySplitter setMinima(BigDecimal... minima) {
-		for (int i = 0; i < minima.length; i++) {
-			getPartition(i).minimum = minima[i];
+	public MoneySplitter setBounds(BigDecimal... bounds) {
+		for (int i = 0; i < bounds.length; i++) {
+			getPartition(i).bound = bounds[i];
 		}
-		return growParts(minima.length);
-	}
-	
-	public MoneySplitter setMaxima(BigDecimal... maxima) {
-		for (int i = 0; i < maxima.length; i++) {
-			getPartition(i).maximum = maxima[i];
-		}
-		return growParts(maxima.length);
+		return growParts(bounds.length);
 	}
 	
 	public MoneySplitter setProportion(int index, BigDecimal proportion) {
+		if (proportion.signum() < 0) throw new IllegalArgumentException("negative proportion");
 		getPartition(index).proportion = proportion;
 		return growParts(index + 1);
 	}
 	
-	public MoneySplitter setMinimum(int index, BigDecimal minimum) {
-		getPartition(index).minimum = minimum;
-		return growParts(index + 1);
-	}
-	
-	public MoneySplitter setMaximum(int index, BigDecimal maximum) {
-		getPartition(index).maximum = maximum;
+	public MoneySplitter setBound(int index, BigDecimal bound) {
+		getPartition(index).bound = bound;
 		return growParts(index + 1);
 	}
 	
@@ -114,20 +112,61 @@ public class MoneySplitter {
 
 	public Money[] split() {
 		checkParts();
-		int constraintCount = countConstraints();
-		if (constraintCount == 0) return splitFree(calc, calc.getAmount(), parts);
-		Money[] monies = new Money[parts];
-		int count = 0;
-		while (count < constraintCount) {
-			for (int i = 0; i < monies.length; i++) {
-				if (monies[i] != null) continue;
-				
-			}
-		}
+		boolean bounded = isBounded();
+		boolean proportioned = isProportioned();
+		if (!bounded && !proportioned) return splitFree();
+		if (!bounded) return splitProportioned();
+		if (!proportioned) return splitBounded();
 		throw new UnsupportedOperationException();
 	}
 	
 	// private utility methods
+	
+	private Money[] splitFree() {
+		return splitFree(calc, calc.getAmount(), parts);
+	}
+	
+	private Money[] splitProportioned() {
+		// trivial case
+		if (parts == 1) {
+			if (getEffectiveProportion(0).signum() == 0) throw new IllegalStateException("all proportions zero");
+			return new Money[] { calc.money() };
+		}
+		
+		BigDecimal[] denominators = new BigDecimal[parts];
+		{
+			BigDecimal denominator = null;
+			for (int i = 0; i < parts; i++) {
+				BigDecimal proportion = getEffectiveProportion(i);
+				denominator = i == 0 ? proportion : denominator.add(proportion);
+				denominators[i] = denominator;
+			}
+			if (denominator.signum() == 0) throw new IllegalArgumentException("all proportions zero");
+		}
+		Money[] monies = new Money[parts];
+		BigDecimal remainder = calc.getAmount();
+		Money none = null; // lazily instantiated
+		for (int i = parts - 1; i >= 0; i--) {
+			if (i == 0) {
+				monies[i] = calc.money(remainder);
+			} else {
+				BigDecimal proportion = getEffectiveProportion(i);
+				if (proportion.signum() == 0) {
+					if (none == null) none = calc.money(BigDecimal.ZERO);
+					monies[i] = none;
+				} else {
+					BigDecimal share = remainder.multiply(proportion).divide(denominators[i], calc.scale, calc.roundingMode);
+					monies[i] = calc.money(share);
+					remainder = remainder.subtract(share);
+				}
+			}
+		}
+		return monies;
+	}
+	
+	private Money[] splitBounded() {
+		throw new UnsupportedOperationException();
+	}
 	
 	private Partition getPartition(int index) {
 		if (index < 0) throw new IllegalArgumentException("negative index");
@@ -140,20 +179,20 @@ public class MoneySplitter {
 		return partition == null ? partitions.get(index) : partition;
 	}
 
-	private Partition[] getConstrainedPartitions() {
-		if (partitions == null) return new Partition[0];
-		List<Partition> partitions = new ArrayList<Partition>();
-		int limit = Math.min(partitions.size(), parts);
-		for (int i = 0; i < limit; i++) {
-			Partition partition = getEffectivePartition(i);
-			if (partition.isConstrained()) {
-				partitions.add(partition);
-			}
-		}
-		Partition[] array = (Partition[]) partitions.toArray(new Partition[partitions.size()]);
-		Arrays.sort(array);
-		return array;
-	}
+//	private Partition[] getConstrainedPartitions() {
+//		if (partitions == null) return new Partition[0];
+//		List<Partition> partitions = new ArrayList<Partition>();
+//		int limit = Math.min(partitions.size(), parts);
+//		for (int i = 0; i < limit; i++) {
+//			Partition partition = getEffectivePartition(i);
+//			if (partition.isConstrained()) {
+//				partitions.add(partition);
+//			}
+//		}
+//		Partition[] array = (Partition[]) partitions.toArray(new Partition[partitions.size()]);
+//		Arrays.sort(array);
+//		return array;
+//	}
 	
 	private MoneySplitter growParts(int size) {
 		return size <= parts ? this : setParts(size);
@@ -163,22 +202,47 @@ public class MoneySplitter {
 		if (parts == 0) throw new IllegalStateException("zero parts");
 	}
 
-	private int countConstraints() {
-		int count = 0;
+	private boolean isBounded() {
 		if (partitions != null) {
 			int limit = Math.min(partitions.size(), parts);
 			for (int i = 0; i < limit; i++) {
-				if (getEffectivePartition(i).isConstrained()) count++;
+				if (getEffectivePartition(i).isBounded()) return true;
 			}
 		}
-		return count;
-		
+		return false;
+	}
+	
+	private boolean isProportioned() {
+		if (partitions != null) {
+			int limit = Math.min(partitions.size(), parts);
+			for (int i = 0; i < limit; i++) {
+				if (getEffectivePartition(i).isProportioned()) return true;
+			}
+		}
+		return false;
+	}
+	
+//	private int countConstraints() {
+//		int count = 0;
+//		if (partitions != null) {
+//			int limit = Math.min(partitions.size(), parts);
+//			for (int i = 0; i < limit; i++) {
+//				if (getEffectivePartition(i).isConstrained()) count++;
+//			}
+//		}
+//		return count;
+//	}
+	
+	private BigDecimal getEffectiveProportion(int index) {
+		Partition partition = getEffectivePartition(index);
+		BigDecimal proportion = partition.proportion;
+		return proportion == null ? BigDecimal.ZERO : proportion;
 	}
 	
 	private Partition getEffectivePartition(int index) {
 		if (partitions == null) return FREE;
 		Partition partition = partitions.get(index);
-		return partition == null ? null : FREE;
+		return partition == null ? FREE : partition;
 	}
 	
 	// inner classes
@@ -187,16 +251,19 @@ public class MoneySplitter {
 		
 		final int index;
 		
-		BigDecimal minimum;
-		BigDecimal maximum;
+		BigDecimal bound;
 		BigDecimal proportion;
 		
 		public Partition(int index) {
 			this.index = index;
 		}
 		
-		boolean isConstrained() {
-			return minimum != null && maximum != null && proportion != null;
+		boolean isBounded() {
+			return bound != null;
+		}
+		
+		boolean isProportioned() {
+			return proportion != null;
 		}
 		
 		@Override

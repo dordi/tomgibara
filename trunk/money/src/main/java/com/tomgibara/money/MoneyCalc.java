@@ -283,6 +283,17 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 //	}
 	
 	/**
+	 * Sets the amount of the calculation to zero.
+	 * 
+	 * @return the current calculation object
+	 */
+	
+	public MoneyCalc zero() {
+		amount = amount(BigDecimal.ZERO);
+		return this;
+	}
+	
+	/**
 	 * Adds a monetary amount to this calculation.
 	 * 
 	 * @param money
@@ -297,6 +308,26 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 		if (source == null) throw new IllegalArgumentException("null source");
 		type = type.combine(type(source));
 		amount = amount.add(amount(source));
+		return this;
+	}
+	
+	/**
+	 * Adds an array of monetary amounts to this calculation.
+	 * 
+	 * @param sources
+	 *            the monetary amounts to add
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if any source is null, or if any source type cannot be
+	 *             reconciled with the type of the calculation
+	 */
+	
+	public MoneyCalc add(MoneySource... sources) throws IllegalArgumentException {
+		if (sources == null) throw new IllegalArgumentException("null sources");
+		MoneyType type = this.type;
+		for (MoneySource source : sources) type = type.combine(type(source));
+		this.type = type;
+		for (MoneySource source : sources) amount = amount.add(amount(source));
 		return this;
 	}
 
@@ -318,6 +349,26 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 		return this;
 	}
 	
+	/**
+	 * Subtracts an array of monetary amounts to this calculation.
+	 * 
+	 * @param sources
+	 *            the monetary amounts to subtract
+	 * @return the current calculation object
+	 * @throws IllegalArgumentException
+	 *             if any source is null, or if any source type cannot be
+	 *             reconciled with the type of the calculation
+	 */
+	
+	public MoneyCalc subtract(MoneySource... sources) throws IllegalArgumentException {
+		if (sources == null) throw new IllegalArgumentException("null sources");
+		MoneyType type = this.type;
+		for (MoneySource source : sources) type = type.combine(type(source));
+		this.type = type;
+		for (MoneySource source : sources) amount = amount.subtract(amount(source));
+		return this;
+	}
+
 	/**
 	 * Multiplies the current calculation amount by the supplied value.
 	 * 
@@ -470,6 +521,7 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 	// private utility methods
 	
 	private MoneyType type(MoneySource source) {
+		if (source == null) throw new IllegalArgumentException("null source");
 		if (source instanceof MoneyType) return (MoneyType) source;
 		if (source instanceof MoneyCalc) return ((MoneyCalc) source).type;
 		if (source instanceof Money) return ((Money) source).type;
@@ -477,6 +529,7 @@ public class MoneyCalc implements MoneySource, MoneyCalcOrigin {
 	}
 	
 	private BigDecimal amount(MoneySource source) {
+		if (source == null) throw new IllegalArgumentException("null source");
 		if (source instanceof MoneyType) return amount(BigDecimal.ZERO);
 		if (source instanceof MoneyCalc) return amount(((MoneyCalc) source).amount);
 		if (source instanceof Money) return amount(((Money) source).amount);

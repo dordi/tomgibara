@@ -39,6 +39,55 @@ public class MoneyCalcTest extends TestCase {
 		assertEquals(type.money(-80), type.money(80).calc().negate().money());
 	}
 	
+	public void testZero() {
+		MoneyType type = new MoneyType(Locale.US);
+		MoneyCalc calc = type.calc(3, null);
+		assertTrue(calc.money().isZero());
+		calc.add(type.money(1));
+		assertFalse(calc.money().isZero());
+		calc.zero();
+		assertTrue(calc.money().isZero());
+		assertEquals(3, calc.money().getAmount().scale());
+	}
+	
+	public void testArrayCalculations() {
+		MoneyType type = new MoneyType(Locale.US);
+		assertEquals(type.money(6), type.calc().add(type.money(1), type.money(2), type.money(3)).money());
+		assertEquals(type.money(0), type.calc().subtract(type.money(6)).add(type.money(1), type.money(2), type.money(3)).money());
+		assertEquals(type.money(-6), type.calc().subtract(type.money(1), type.money(2), type.money(3)).money());
+		assertEquals(type.money(0), type.calc().add(type.money(6)).subtract(type.money(1), type.money(2), type.money(3)).money());
+	}
+	
+	public void testArrayNotPartiallyApplied() {
+		MoneyType type1 = new MoneyType(Locale.US);
+		MoneyType type2 = new MoneyType(Locale.UK);
+		{
+			Money money = type1.money(20);
+			MoneyCalc calc = money.calc();
+			try {
+				calc.add(type2.money(10), type2.money(10));
+				fail();
+			} catch (IllegalArgumentException e) {
+				/* expected */
+			}
+			assertEquals(money, calc.money());
+		}
+		
+		MoneyType type3 = new MoneyType(new Locale("", "CA"), null);
+		MoneyType type4 = new MoneyType(new Locale("fr", "CA"), null);
+		{
+			Money money = type3.money(20);
+			MoneyCalc calc = money.calc();
+			try {
+				calc.add(type4.money(10), type2.money(10));
+				fail();
+			} catch (IllegalArgumentException e) {
+				/* expected */
+			}
+			assertEquals(type3, calc.getType());
+		}
+	}
+	
 	public void testTypeCombining() {
 		MoneyType a = new MoneyType(Locale.US, null);
 		MoneyType b = new MoneyType(Locale.US);

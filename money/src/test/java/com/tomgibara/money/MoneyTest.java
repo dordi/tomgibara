@@ -36,10 +36,10 @@ public class MoneyTest extends TestCase {
 		assertTrue(negative.equals("-$5.00") || negative.equals("($5.00)"));
 
 		MoneyType de = new MoneyType(Locale.GERMANY, Currency.getInstance("EUR"));
-		assertEquals("1,00 €", de.money(100).toString());
+		assertEquals("1,00 â‚¬", de.money(100).toString());
 
 		MoneyType uk = new MoneyType(Locale.UK, Currency.getInstance("GBP"));
-		assertEquals("£1.00", uk.money(100).toString());
+		assertEquals("Â£1.00", uk.money(100).toString());
 
 	}
 	

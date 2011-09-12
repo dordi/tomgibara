@@ -6,6 +6,9 @@
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>ImageIO Plugins</name>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <modules>
     <module>imageio-common</module>
     <module>imageio-tiff</module>

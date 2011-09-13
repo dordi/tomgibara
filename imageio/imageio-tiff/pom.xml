@@ -2,7 +2,7 @@
   <parent>
     <groupId>com.tomgibara.imageio</groupId>
     <artifactId>imageio-plugins</artifactId>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>imageio-tiff</artifactId>
@@ -27,7 +27,7 @@
     <dependency>
       <groupId>com.tomgibara.imageio</groupId>
       <artifactId>imageio-common</artifactId>
-      <version>1.0</version>
+      <version>1.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>

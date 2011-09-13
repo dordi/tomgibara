@@ -8,7 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>imageio-tiff</artifactId>
   <packaging>jar</packaging>
-  <name>ImageIO TIFF</name>
+  <name>ImageIO TIFF Plugin</name>
   <build>
     <plugins>
       <plugin>

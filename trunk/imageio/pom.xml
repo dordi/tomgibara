@@ -3,7 +3,7 @@
   <groupId>com.tomgibara.imageio</groupId>
   <artifactId>imageio-plugins</artifactId>
   <packaging>pom</packaging>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
   <name>ImageIO Plugins</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,9 +33,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/imageio-plugins-1.0</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/imageio-plugins-1.0</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/imageio-plugins-1.0</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/imageio</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/imageio</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/imageio</url>
   </scm>
   <build>
     <plugins>

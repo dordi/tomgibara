@@ -33,61 +33,108 @@ import java.math.BigInteger;
  */
 public abstract class AbstractMultiHash<T> implements MultiHash<T> {
 
+	private static final int[] EMPTY_INTS = {};
+	private static final long[] EMPTY_LONGS = {};
+	private static final BigInteger[] EMPTY_BIGINTS = {};
+
+	static long[] copy(int[] ints, long[] longs) {
+		for (int i = 0; i < longs.length; i++) {
+			longs[i] = ints[i];
+		}
+		return longs;
+	}
+	
+	static int[] copy(long[] longs, int[] ints) {
+		for (int i = 0; i < ints.length; i++) {
+			ints[i] = (int) longs[i];
+		}
+		return ints;
+	}
+	
+	static BigInteger[] copy(int[] ints, BigInteger[] bigInts) {
+		for (int i = 0; i < bigInts.length; i++) {
+			bigInts[i] = BigInteger.valueOf(ints[i]);
+		}
+		return bigInts;
+	}
+	
+	static int[] copy(BigInteger[] bigInts, int[] ints) {
+		for (int i = 0; i < ints.length; i++) {
+			ints[i] = bigInts[i].intValue();
+		}
+		return ints;
+	}
+	
+	static long[] copy(BigInteger[] bigInts, long[] longs) {
+		for (int i = 0; i < longs.length; i++) {
+			longs[i] = bigInts[i].longValue();
+		}
+		return longs;
+	}
+	
 	@Override
 	public int getMaxMultiplicity() {
 		return 1;
 	}
 	
 	@Override
-	public BigInteger hashAsBigInt(T value) {
-		return hashAsList(value, 1).get(0);
-	}
-
-	@Override
 	public int hashAsInt(T value) {
-		return hashAsList(value, 1).getAsInt(0);
+		return hashAsInts(value, 1)[0];
 	}
 
 	@Override
 	public long hashAsLong(T value) {
-		return hashAsList(value, 1).getAsLong(0);
+		return hashAsLongs(value, 1)[0];
 	}
 
 	@Override
-	public HashList hashAsList(final T value, final int multiplicity) {
-		if (multiplicity < 0) throw new IllegalArgumentException("Negative multiplicity");
-		if (multiplicity > 1) throw new IllegalArgumentException("Only one hash supported");
-
-		return new AbstractHashList() {
-			
-			@Override
-			public int size() {
-				return multiplicity;
-			}
-			
-			@Override
-			public BigInteger get(int index) {
-				checkIndex(index);
-				return hashAsBigInt(value);
-			}
-			
-			@Override
-			public int getAsInt(int index) throws IndexOutOfBoundsException {
-				checkIndex(index);
-				return hashAsInt(value);
-			}
-
-			@Override
-			public long getAsLong(int index) throws IndexOutOfBoundsException {
-				checkIndex(index);
-				return hashAsLong(value);
-			}
-			
-			private void checkIndex(int index) {
-				if (index < 0 || index >= multiplicity) throw new IndexOutOfBoundsException("index " + index);
-			}
-			
-		};
+	public BigInteger hashAsBigInt(T value) {
+		return hashAsBigInts(value, 1)[0];
 	}
-		
+
+	@Override
+	public int[] hashAsInts(T value, int multiplicity) throws IllegalArgumentException {
+		if (multiplicity < 0) throw new IllegalArgumentException("negative multiplicity");
+		if (multiplicity == 0) return EMPTY_INTS;
+		return hashAsInts(value, new int[multiplicity]);
+	}
+	
+	@Override
+	public int[] hashAsInts(T value, int[] array) throws IllegalArgumentException {
+		if (array == null) throw new IllegalArgumentException("null array");
+		if (array.length != 1) throw new IllegalArgumentException("only one hash supported");
+		array[0] = hashAsInt(value);
+		return array;
+	}
+	
+	@Override
+	public long[] hashAsLongs(T value, int multiplicity) throws IllegalArgumentException {
+		if (multiplicity < 0) throw new IllegalArgumentException("negative multiplicity");
+		if (multiplicity == 0) return EMPTY_LONGS;
+		return hashAsLongs(value, new long[multiplicity]);
+	}
+	
+	@Override
+	public long[] hashAsLongs(T value, long[] array) throws IllegalArgumentException {
+		if (array == null) throw new IllegalArgumentException("null array");
+		if (array.length != 1) throw new IllegalArgumentException("only one hash supported");
+		array[0] = hashAsLong(value);
+		return array;
+	}
+	
+	@Override
+	public BigInteger[] hashAsBigInts(T value, int multiplicity) throws IllegalArgumentException {
+		if (multiplicity < 0) throw new IllegalArgumentException("negative multiplicity");
+		if (multiplicity == 0) return EMPTY_BIGINTS;
+		return hashAsBigInts(value, new BigInteger[multiplicity]);
+	}
+	
+	@Override
+	public BigInteger[] hashAsBigInts(T value, BigInteger[] array) throws IllegalArgumentException {
+		if (array == null) throw new IllegalArgumentException("null array");
+		if (array.length != 1) throw new IllegalArgumentException("only one hash supported");
+		array[0] = hashAsBigInt(value);
+		return array;
+	}
+	
 }

@@ -16,6 +16,9 @@
  */
 package com.tomgibara.crinch.hashing;
 
+import java.math.BigInteger;
+import java.util.List;
+
 /**
  * Extends the {@link Hash} to allow implementations to return multiple hash
  * values for a single object. This is useful in data structures that require
@@ -58,6 +61,16 @@ public interface MultiHash<T> extends Hash<T> {
 	 *             hashed
 	 */
 
-    HashList hashAsList(T value, int multiplicity)throws IllegalArgumentException;
+    int[] hashAsInts(T value, int multiplicity) throws IllegalArgumentException;
+    
+    long[] hashAsLongs(T value, int multiplicity) throws IllegalArgumentException;
+
+    BigInteger[] hashAsBigInts(T value, int multiplicity) throws IllegalArgumentException;
+
+    int[] hashAsInts(T value, int[] array) throws IllegalArgumentException;
+    
+    long[] hashAsLongs(T value, long[] array) throws IllegalArgumentException;
+
+    BigInteger[] hashAsBigInts(T value, BigInteger[] array) throws IllegalArgumentException;
 
 }

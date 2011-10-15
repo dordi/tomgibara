@@ -16,6 +16,7 @@
  */
 package com.tomgibara.crinch.collections;
 
+import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.MultiHash;
 import com.tomgibara.crinch.hashing.ObjectHashSource;
 import com.tomgibara.crinch.hashing.ObjectMultiHash;
@@ -35,9 +36,9 @@ public class BloomFilterAnalyzer {
 		
 		final MultiHash<Object> multiHash;
 		if (algo == "sha1") {
-			multiHash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), size - 1);
+			multiHash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), new HashRange(0, size - 1));
 		} else if (algo == "rnd") {
-			multiHash = new PRNGMultiHash<Object>(new ObjectHashSource(), size - 1);
+			multiHash = new PRNGMultiHash<Object>(new ObjectHashSource(), new HashRange(0, size - 1));
 		} else if (algo == "obj") {
 			multiHash = new ObjectMultiHash<Object>(size - 1);
 		} else {

@@ -1,7 +1,6 @@
 package com.tomgibara.crinch.collections;
 
 import com.tomgibara.crinch.bits.BitVector;
-import com.tomgibara.crinch.hashing.HashList;
 
 public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 
@@ -30,10 +29,10 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	@Override
 	public boolean mightContain(E element) {
 		final int hashCount = getHashCount();
-		final HashList hashList = getMultiHash().hashAsList(element, hashCount);
+		final int[] hashes = getMultiHash().hashAsInts(element, hashCount);
 		final BitVector bitVector = getBitVector();
 		for (int i = 0; i < hashCount; i++) {
-			if (!bitVector.getBit( hashList.getAsInt(i) )) return false;
+			if (!bitVector.getBit(hashes[i])) return false;
 		}
 		return true;
 	}

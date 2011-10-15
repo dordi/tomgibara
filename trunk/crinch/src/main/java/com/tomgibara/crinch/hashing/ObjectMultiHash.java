@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.hashing;
 
+import java.math.BigInteger;
+
 /**
  * A MultiHash implementation that uses double-hashing to generate an arbitrary
  * number of hash-values based on the hashCode of an object. This implementation
@@ -50,18 +52,27 @@ public class ObjectMultiHash<T> extends AbstractMultiHash<T> {
 	public int getMaxMultiplicity() {
 		return Integer.MAX_VALUE;
 	}
-	
+
 	@Override
-	public HashList hashAsList(T value, int multiplicity) {
+	public int[] hashAsInts(T value, int[] array) {
         // Double hashing allows calculating multiple index locations
         int hashCode = value.hashCode();
         int probe = 1 + Math.abs(hashCode % size);
-        int[] indexes = new int[multiplicity];
         int h = spread(hashCode);
-        for (int i = 0; i < multiplicity; i++) {
-            indexes[i] = Math.abs(h ^ i * probe) % size;
+        for (int i = 0; i < array.length; i++) {
+            array[i] = Math.abs(h ^ i * probe) % size;
         }
-        return Hashes.asHashList(indexes);
+        return array;
+	}
+	
+	@Override
+	public long[] hashAsLongs(T value, long[] array) {
+		return copy(hashAsInts(value, array.length), array);
+	}
+	
+	@Override
+	public BigInteger[] hashAsBigInts(T value, BigInteger[] array) {
+		return copy(hashAsInts(value, array.length), array);
 	}
 	
     private int spread(int hashCode) {
@@ -73,4 +84,24 @@ public class ObjectMultiHash<T> extends AbstractMultiHash<T> {
         hashCode += (hashCode <<   2) + (hashCode << 14);
         return hashCode ^ (hashCode >>> 16);
     }
+    
+    @Override
+    public int hashCode() {
+    	return size;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	if (obj == this) return true;
+    	if (!(obj instanceof ObjectMultiHash<?>)) return false;
+    	ObjectMultiHash<?> that = (ObjectMultiHash<?>) obj;
+    	return this.size == that.size;
+    }
+    
+    @Override
+    public String toString() {
+    	return "ObjectMultiHash size: " + size;
+    }
+    
+    
 }

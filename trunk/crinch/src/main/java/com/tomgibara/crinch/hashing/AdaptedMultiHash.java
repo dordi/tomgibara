@@ -27,13 +27,12 @@ import java.math.BigInteger;
  * @param <T> the type of object over which hashes may be generated
  */
 
-public abstract class AdaptedMultiHash<T> implements MultiHash<T> {
+public class AdaptedMultiHash<T> implements MultiHash<T> {
 
 	protected final MultiHash<T> multiHash;
 
 	public AdaptedMultiHash(MultiHash<T> multiHash) {
-		if (multiHash == null)
-			throw new IllegalArgumentException("null multiHash");
+		if (multiHash == null) throw new IllegalArgumentException("null multiHash");
 		this.multiHash = multiHash;
 	}
 
@@ -43,64 +42,80 @@ public abstract class AdaptedMultiHash<T> implements MultiHash<T> {
 	}
 
 	@Override
-	public BigInteger hashAsBigInt(T value) {
-		return adaptedBigIntHash(value);
-	}
-
-	@Override
-	public int hashAsInt(T value) {
-		return adaptedIntHash(value);
-	}
-
-	@Override
-	public long hashAsLong(T value) {
-		return adaptedLongHash(value);
-	}
-
-	@Override
 	public int getMaxMultiplicity() {
 		return multiHash.getMaxMultiplicity();
 	}
 
 	@Override
-	public HashList hashAsList(T value, int multiplicity) {
-		final HashList hashList = multiHash.hashAsList(value, multiplicity);
-		return new AbstractHashList() {
-
-			@Override
-			public int size() {
-				return hashList.size();
-			}
-
-			@Override
-			public BigInteger get(int index) {
-				return adaptedBigIntHash(hashList, index);
-			}
-
-			@Override
-			public int getAsInt(int index) {
-				return adaptedIntHash(hashList, index);
-			}
-
-			@Override
-			public long getAsLong(int index) {
-				return adaptedLongHash(hashList, index);
-			}
-		};
+	public int hashAsInt(T value) {
+		return adapt(multiHash.hashAsInt(value));
 	}
 
-	// protected methods
+	@Override
+	public long hashAsLong(T value) {
+		return adapt(multiHash.hashAsLong(value));
+	}
 
-	protected abstract BigInteger adaptedBigIntHash(T value);
+	@Override
+	public BigInteger hashAsBigInt(T value) {
+		return adapt(multiHash.hashAsBigInt(value));
+	}
 
-	protected abstract BigInteger adaptedBigIntHash(HashList list, int index);
+	public int[] hashAsInts(T value, int multiplicity) {
+		return multiHash.hashAsInts(value, multiplicity);
+	}
+	
+	public int[] hashAsInts(T value, int[] array) {
+		return multiHash.hashAsInts(value, array);
+	}
+	
+	public long[] hashAsLongs(T value, int multiplicity) {
+		return multiHash.hashAsLongs(value, multiplicity);
+	}
+	
+	public long[] hashAsLongs(T value, long[] array) {
+		return multiHash.hashAsLongs(value, array);
+	}
+	
+	public BigInteger[] hashAsBigInts(T value, int multiplicity) {
+		return multiHash.hashAsBigInts(value, multiplicity);
+	}
+	
+	public BigInteger[] hashAsBigInts(T value, BigInteger[] array) {
+		return multiHash.hashAsBigInts(value, array);
+	}
 
-	protected abstract int adaptedIntHash(T value);
+	protected int adapt(int hash) {
+		return hash;
+	}
 
-	protected abstract int adaptedIntHash(HashList list, int index);
+	protected long adapt(long hash) {
+		return hash;
+	}
+	
+	protected BigInteger adapt(BigInteger hash) {
+		return hash;
+	}
+	
+	private int[] adapt(int[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = adapt(array[i]);
+		}
+		return array;
+	}
 
-	protected abstract long adaptedLongHash(T value);
+	private long[] adapt(long[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = adapt(array[i]);
+		}
+		return array;
+	}
 
-	protected abstract long adaptedLongHash(HashList list, int index);
+	private BigInteger[] adapt(BigInteger[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = adapt(array[i]);
+		}
+		return array;
+	}
 
 }

@@ -17,7 +17,6 @@
 package com.tomgibara.crinch.collections;
 
 import com.tomgibara.crinch.bits.BitVector;
-import com.tomgibara.crinch.hashing.HashList;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.MultiHash;
@@ -29,6 +28,7 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	
 	private final MultiHash<? super E> multiHash;
 	private final int hashCount;
+	private final int[] hashes; 
 	private final BitVector bits;
 	private final BitVector publicBits;
 	
@@ -49,12 +49,13 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 		} else { // ensure that the multiHash is small enough fit into bits
 			final HashRange range = multiHash.getRange();
 			if (range == null) throw new IllegalArgumentException("null multiHash range");
-			if (!range.isIntRange()) throw new IllegalArgumentException("multiHash not int ranged");
+			if (!range.isIntBounded()) throw new IllegalArgumentException("multiHash not int bounded");
 			multiHash = Hashes.rangeAdjust(range.zeroBased(), multiHash);
 		}
 		
 		this.multiHash = multiHash;
 		this.hashCount = hashCount;
+		hashes = new int[hashCount];
 		this.bits = bits == null ? new BitVector(multiHash.getRange().getSize().intValue()) : bits.alignedCopy(true);
 		publicBits = this.bits.immutableView();
 	}
@@ -62,6 +63,7 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	private BasicBloomFilter(BasicBloomFilter<E> that) {
 		this.multiHash = that.multiHash;
 		this.hashCount = that.hashCount;
+		hashes = new int[hashCount];
 		this.bits = that.bits.copy();
 		publicBits = this.bits.immutableView();
 	}
@@ -84,10 +86,10 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	
 	@Override
 	public boolean add(E element) {
-		final HashList hashList = multiHash.hashAsList(element, hashCount);
+		final int[] hashes = multiHash.hashAsInts(element, this.hashes);
 		boolean mutated = false;
 		for (int i = 0; i < hashCount; i++) {
-			final int hash = hashList.getAsInt(i);
+			final int hash = hashes[i];
 			if (mutated) {
 				bits.setBit(hash, true);
 			} else if (!bits.getBit(hash)) {

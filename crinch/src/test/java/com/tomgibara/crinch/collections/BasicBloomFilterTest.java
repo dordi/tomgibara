@@ -35,7 +35,7 @@ public class BasicBloomFilterTest extends TestCase {
 	static final int DEFAULT_MAX = 999;
 	static final int DEFAULT_SIZE = DEFAULT_MAX - DEFAULT_MIN + 1;
 	
-	MultiHash<Object> sha1Hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), DEFAULT_SIZE - 1);
+	MultiHash<Object> sha1Hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), new HashRange(0, DEFAULT_SIZE - 1));
 	MultiHash<Object> objHash = new SingletonMultiHash<Object>( Hashes.rangeAdjust(new HashRange(DEFAULT_MIN, DEFAULT_MAX), new ObjectHash<Object>()) );
 
 	public void testConstructor() {

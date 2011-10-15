@@ -18,60 +18,54 @@ package com.tomgibara.crinch.hashing;
 
 import java.math.BigInteger;
 
-class LongRerangedHash<T> extends BigIntRerangedHash<T> {
+class LongRerangedHash<T> extends RerangedHash<T> {
 
-	private final long oldMin;
-	private final long newMin;
-	private final long newSize;
-
+	private final long lngOldMin;
+	private final long lngNewMin;
+	private final long lngNewSize;
+	
 	public LongRerangedHash(MultiHash<T> hash, HashRange newRange) {
 		super(hash, newRange);
-		oldMin = oldRange.getMinimum().longValue();
-		newMin = newRange.getMinimum().longValue();
-		newSize = newRange.getSize().longValue();
+		lngOldMin = bigOldMin.longValue();
+		lngNewMin = bigNewMin.longValue();
+		lngNewSize = bigNewSize.longValue();
 	}
 
 	@Override
-	protected BigInteger adaptedBigIntHash(T value) {
-		return BigInteger.valueOf(adaptedLongHash(value));
+	public int hashAsInt(T value) {
+		return (int) hashAsLong(value);
 	}
-
-
+	
 	@Override
-	protected BigInteger adaptedBigIntHash(HashList list, int index) {
-		return BigInteger.valueOf(adaptedLongHash(list, index));
+	public int[] hashAsInts(T value, int multiplicity) {
+		long[] longs = multiHash.hashAsLongs(value, multiplicity);
+		int[] array = new int[longs.length];
+		return AbstractMultiHash.copy(longs, array);
 	}
-
-
+	
 	@Override
-	protected int adaptedIntHash(T value) {
-		return (int) adaptedLongHash(value);
+	public int[] hashAsInts(T value, int[] array) {
+		long[] longs = multiHash.hashAsLongs(value, new long[array.length]);
+		return AbstractMultiHash.copy(longs, array);
 	}
-
-
+	
 	@Override
-	protected int adaptedIntHash(HashList list, int index) {
-		return (int) adaptedIntHash(list, index);
-	}
-
-
-	@Override
-	protected long adaptedLongHash(T value) {
-		return reranged(multiHash.hashAsInt(value));
+	protected int adapt(int h) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	protected long adaptedLongHash(HashList list, int index) {
-		return reranged(list.getAsInt(index));
+	protected long adapt(long h) {
+		h -= lngOldMin;
+		if (isSmaller) h = h % lngNewSize;
+		return h + lngNewMin;
 	}
 
-	private long reranged(long h) {
-		h -= oldMin;
-		if (isSmaller) {
-			return (h % newSize) + newMin;
-		} else {
-			return h + newMin;
-		}
+	@Override
+	protected BigInteger adapt(BigInteger h) {
+		h = h.subtract(bigOldMin);
+		if (isSmaller) h = h.mod(bigNewSize);
+		return h.add(bigNewMin);
 	}
 	
 }

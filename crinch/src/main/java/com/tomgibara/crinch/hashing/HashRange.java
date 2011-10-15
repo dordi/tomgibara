@@ -42,7 +42,11 @@ public class HashRange {
 	
 	private final BigInteger minimum;
 	private final BigInteger maximum;
+	private final boolean intBounded;
+	private final boolean longBounded;
 	private BigInteger size = null;
+	private Boolean intSized = null;
+	private Boolean longSized = null;
 	
 	// constructors
 	
@@ -52,6 +56,9 @@ public class HashRange {
 		if (minimum.compareTo(maximum) > 0) throw new IllegalArgumentException();
 		this.minimum = minimum;
 		this.maximum = maximum;
+		intBounded = minimum.compareTo(INT_MINIMUM) >= 0 && maximum.compareTo(INT_MAXIMUM) <= 0;
+		longBounded = minimum.compareTo(LONG_MINIMUM) >= 0 && maximum.compareTo(LONG_MAXIMUM) <= 0;
+		// defer size related work - don't want to mem alloc in constructor
 	}
 
 	public HashRange(int minimum, int maximum) {
@@ -68,12 +75,12 @@ public class HashRange {
 		return minimum.signum() == 0;
 	}
 	
-	public boolean isIntRange() {
-		return minimum.compareTo(INT_MINIMUM) >= 0 && maximum.compareTo(INT_MAXIMUM) <= 0;
+	public boolean isIntBounded() {
+		return intBounded;
 	}
 	
-	public boolean isLongRange() {
-		return minimum.compareTo(LONG_MINIMUM) >= 0 && maximum.compareTo(LONG_MAXIMUM) <= 0;
+	public boolean isLongBounded() {
+		return longBounded;
 	}
 	
 	public BigInteger getMinimum() {
@@ -88,12 +95,14 @@ public class HashRange {
 		return size == null ? size = maximum.subtract(minimum).add(BigInteger.ONE) : size;
 	}
 	
-	public boolean isIntSize() {
-		return getSize().compareTo(INT_MAXIMUM) <= 0;
+	public boolean isIntSized() {
+		if (intSized == null) intSized = getSize().compareTo(INT_MAXIMUM) <= 0;
+		return intSized;
 	}
 	
-	public boolean isLongSize() {
-		return getSize().compareTo(LONG_MAXIMUM) <= 0;
+	public boolean isLongSized() {
+		if (longSized == null) longSized = getSize().compareTo(LONG_MAXIMUM) <= 0;
+		return longSized;
 	}
 	
 	// methods

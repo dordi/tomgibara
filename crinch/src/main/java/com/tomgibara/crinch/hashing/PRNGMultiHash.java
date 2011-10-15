@@ -36,42 +36,38 @@ import com.tomgibara.crinch.util.ByteWriteStream;
  *            the type of objects for which hashes will be generated
  */
 
-public class PRNGMultiHash<T> implements MultiHash<T> {
+public class PRNGMultiHash<T> extends AbstractMultiHash<T> {
 
+	private static final HashRange sFullIntRange = new HashRange(BigInteger.ZERO, BigInteger.valueOf(Integer.MAX_VALUE));
+	
 	private final String algorithm;
 	private final String provider;
 	private final HashSource<T> source;
-	private final int max;
 	private final HashRange range;
+	private final boolean isFullIntRange;
 
-	public PRNGMultiHash(HashSource<T> source, int max) {
-		if (source == null) throw new IllegalArgumentException("null source");
-		if (max < 0) throw new IllegalArgumentException("negative max");
-
-		this.algorithm = null;
-		this.provider = null;
-		this.source = source;
-		this.max = max;
-		this.range = new HashRange(BigInteger.ZERO,  BigInteger.valueOf(max) );
+	public PRNGMultiHash(HashSource<T> source, HashRange range) {
+		this(null, null, source, range);
 	}
 
 	//max is inclusive
-	public PRNGMultiHash(String algorithm, HashSource<T> source, int max) {
-		this(algorithm, null, source, max);
+	public PRNGMultiHash(String algorithm, HashSource<T> source, HashRange range) {
+		this(algorithm, null, source, range);
 	}
 
-	public PRNGMultiHash(String algorithm, String provider, HashSource<T> source, int max) {
-		if (algorithm == null) throw new IllegalArgumentException("null algorithm");
+	public PRNGMultiHash(String algorithm, String provider, HashSource<T> source, HashRange range) {
 		if (source == null) throw new IllegalArgumentException("null source");
-		if (max < 0) throw new IllegalArgumentException("negative max");
+		if (range == null) throw new IllegalArgumentException("null range");
 
 		this.algorithm = algorithm;
 		this.provider = provider;
 		this.source = source;
-		this.max = max;
-		this.range = new HashRange(BigInteger.ZERO,  BigInteger.valueOf(max) );
+		this.range = range;
+		
+		isFullIntRange = sFullIntRange.equals(range);
+		
 		//verify algorithm exists
-		getRandom();
+		if (algorithm != null) getRandom();
 	}
 
 	@Override
@@ -85,41 +81,75 @@ public class PRNGMultiHash<T> implements MultiHash<T> {
 	}
 
 	@Override
-	public BigInteger hashAsBigInt(T value) {
-		return BigInteger.valueOf(hashAsInt(value));
-	}
-	
-	@Override
 	public int hashAsInt(T value) {
-		if (max == Integer.MAX_VALUE) {
+		if (!range.isIntBounded()) throw new IllegalStateException("not int bounded");
+		if (isFullIntRange) {
 			return getRandom(value).nextInt() & 0x7fffffff;
 		} else {
-			return getRandom(value).nextInt(max + 1);
+			return range.getMinimum().intValue() + getRandom(value).nextInt(range.getSize().intValue());
 		}
 	}
 	
+	//TODO biased
 	@Override
 	public long hashAsLong(T value) {
-		return hashAsInt(value);
+		if (!range.isLongBounded()) throw new IllegalStateException("not long bounded");
+		return range.getMinimum().longValue() + getRandom(value).nextLong() % range.getSize().longValue();
+	}
+
+	//TODO biased
+	@Override
+	public BigInteger hashAsBigInt(T value) {
+		return hashAsBigInt(getRandom(value));
 	}
 	
 	@Override
-	public HashList hashAsList(final T value, final int multiplicity) {
-		final int[] hashes = new int[multiplicity];
+	public int[] hashAsInts(T value, int[] array) {
+		if (!range.isIntBounded()) throw new IllegalStateException("not int bounded");
 		final Random random = getRandom(value);
-		if (max == Integer.MAX_VALUE) {
-			for (int i = 0; i < hashes.length; i++) {
-				hashes[i] = random.nextInt() & 0x7fffffff;
+		if (isFullIntRange) {
+			for (int i = 0; i < array.length; i++) {
+				array[i] = random.nextInt() & 0x7fffffff;
 			}
 		} else {
-			final int m = max;
-			for (int i = 0; i < hashes.length; i++) {
-				hashes[i] = random.nextInt(m);
+			final int a = range.getMinimum().intValue();
+			final int b = range.getSize().intValue();
+			for (int i = 0; i < array.length; i++) {
+				array[i] = a + random.nextInt(b);
 			}
 		}
-		return Hashes.asHashList(hashes);
+		return array;
 	}
 
+	@Override
+	public long[] hashAsLongs(T value, long[] array) {
+		if (!range.isLongBounded()) throw new IllegalStateException("not int bounded");
+		final Random random = getRandom(value);
+		final long a = range.getMinimum().longValue();
+		final long b = range.getSize().longValue();
+		for (int i = 0; i < array.length; i++) {
+			array[i] = a + random.nextLong() % b;
+		}
+		return array;
+	}
+
+	@Override
+	public BigInteger[] hashAsBigInts(T value, BigInteger[] array) {
+		final Random random = getRandom(value);
+		for (int i = 0; i < array.length; i++) {
+			array[i] = hashAsBigInt(random);
+		}
+		return array;
+	}
+	
+	private BigInteger hashAsBigInt(Random random) {
+		BigInteger size = range.getSize();
+		int length = size.bitLength() + 7 / 8;
+		byte[] bytes = new byte[length];
+		random.nextBytes(bytes);
+		return range.getMinimum().add( new BigInteger(1, bytes).mod(size) );
+	}
+	
 	private Random getRandom(T value) {
 		final Random random = getRandom();
 		if (algorithm == null) {

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.RandomAccess;
 
 import com.tomgibara.crinch.bits.BitVector;
-import com.tomgibara.crinch.hashing.HashList;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.MultiHash;
@@ -18,6 +17,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 	private final ModCount modCount;
 	private final MultiHash<? super K> multiHash;
 	private final int hashCount;
+	private final int[] hashes;
 	private final Lattice<V> storeLattice;
 	private final Lattice<V> accessLattice;
 	private final V[] values;
@@ -29,7 +29,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 
 		final HashRange range = multiHash.getRange();
 		if (range == null) throw new IllegalArgumentException("null multiHash range");
-		if (!range.isIntRange()) throw new IllegalArgumentException("multiHash not int ranged");
+		if (!range.isIntBounded()) throw new IllegalArgumentException("multiHash not int bounded");
 		multiHash = Hashes.rangeAdjust(range.zeroBased(), multiHash);
 
 		this.modCount = new ModCount();
@@ -37,6 +37,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 		this.accessLattice = lattice;
 		this.multiHash = multiHash;
 		this.hashCount = hashCount;
+		hashes = new int[hashCount];
 		//TODO nasty - should use Array.newInstance() ?
 		values = (V[]) new Object[ multiHash.getRange().getSize().intValue() ];
 		clear();
@@ -49,6 +50,7 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 		accessLattice = that.accessLattice;
 		multiHash = that.multiHash;
 		hashCount = that.hashCount;
+		hashes = new int[hashCount];
 		values = that.values.clone();
 		valueList = createValueList(values);
 	}
@@ -59,16 +61,17 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 		this.accessLattice = accessLattice;
 		multiHash = that.multiHash;
 		hashCount = that.hashCount;
+		hashes = new int[hashCount];
 		values = that.values.clone();
 		valueList = createValueList(values);
 	}
 
 	public V put(K key, V value) {
 		if (!accessLattice.contains(value)) throw new IllegalArgumentException();
-		final HashList hashList = multiHash.hashAsList(key, hashCount);
+		final int[] hashes = multiHash.hashAsInts(key, this.hashes);
 		V previous = accessLattice.getTop();
 		for (int i = 0; i < hashCount; i++) {
-			final int hash = hashList.getAsInt(i);
+			final int hash = hashes[i];
 			final V v = values[hash];
 			previous = storeLattice.meet(previous, v);
 			values[hash] = storeLattice.join(value, v);
@@ -79,20 +82,20 @@ public class BasicCompactApproximator<K,V> implements CompactApproximator<K, V>,
 	}
 	
 	public V getSupremum(K key) {
-		final HashList hashList = multiHash.hashAsList(key, hashCount);
+		final int[] hashes = multiHash.hashAsInts(key, this.hashes);
 		V value = accessLattice.getTop();
 		for (int i = 0; i < hashCount; i++) {
-			final V v = values[hashList.getAsInt(i)];
+			final V v = values[hashes[i]];
 			value = storeLattice.meet(value, v);
 		}
 		return value;
 	}
 
 	public boolean mightContain(K key) {
-		final HashList hashList = multiHash.hashAsList(key, hashCount);
+		final int[] hashes = multiHash.hashAsInts(key, this.hashes);
 		V bottom = storeLattice.getBottom();
 		for (int i = 0; i < hashCount; i++) {
-			if (storeLattice.equalInLattice(values[hashList.getAsInt(i)], bottom)) return false;
+			if (storeLattice.equalInLattice(values[hashes[i]], bottom)) return false;
 		}
 		return true;
 	}

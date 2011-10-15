@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.MultiHash;
 import com.tomgibara.crinch.hashing.ObjectHashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
@@ -23,7 +24,7 @@ public class BasicCompactApproximatorTest extends TestCase {
 
 	public void testSet() {
 		int size = 1000;
-		MultiHash<Object> hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), size - 1);
+		MultiHash<Object> hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), new HashRange(0, size - 1));
 		Lattice<Set<Integer>> lattice = new SetLattice<Integer>(set(1,2,3,4));
 		CompactApproximator<String, Set<Integer>> ca = new BasicCompactApproximator<String, Set<Integer>>(lattice, hash, 10);
 		assertTrue(ca.isEmpty());

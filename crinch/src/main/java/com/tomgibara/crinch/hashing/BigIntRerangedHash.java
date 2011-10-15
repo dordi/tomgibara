@@ -18,68 +18,63 @@ package com.tomgibara.crinch.hashing;
 
 import java.math.BigInteger;
 
-class BigIntRerangedHash<T> extends AdaptedMultiHash<T> {
-
-	final HashRange oldRange;
-	final HashRange newRange;
-	final boolean isSmaller;
+class BigIntRerangedHash<T> extends RerangedHash<T> {
 
 	public BigIntRerangedHash(MultiHash<T> hash, HashRange newRange) {
-		super(hash);
-		this.newRange = newRange;
-		oldRange = hash.getRange();
-		isSmaller = newRange.getSize().compareTo(oldRange.getSize()) < 0;
+		super(hash, newRange);
 	}
 
 	@Override
-	public HashRange getRange() {
-		return newRange;
+	public int hashAsInt(T value) {
+		return hashAsBigInt(value).intValue();
 	}
 	
 	@Override
-	protected BigInteger adaptedBigIntHash(T value) {
-		return reranged(multiHash.hashAsBigInt(value));
+	public int[] hashAsInts(T value, int multiplicity) {
+		BigInteger[] bigInts = multiHash.hashAsBigInts(value, multiplicity);
+		int[] array = new int[bigInts.length];
+		return AbstractMultiHash.copy(bigInts, array);
 	}
-
+	
+	@Override
+	public int[] hashAsInts(T value, int[] array) {
+		BigInteger[] bigInts = multiHash.hashAsBigInts(value, new BigInteger[array.length]);
+		return AbstractMultiHash.copy(bigInts, array);
+	}
+	
+	@Override
+	public long hashAsLong(T value) {
+		return hashAsBigInt(value).longValue();
+	}
+	
+	@Override
+	public long[] hashAsLongs(T value, int multiplicity) {
+		BigInteger[] bigInts = multiHash.hashAsBigInts(value, multiplicity);
+		long[] array = new long[bigInts.length];
+		return AbstractMultiHash.copy(bigInts, array);
+	}
+	
+	@Override
+	public long[] hashAsLongs(T value, long[] array) {
+		BigInteger[] bigInts = multiHash.hashAsBigInts(value, new BigInteger[array.length]);
+		return AbstractMultiHash.copy(bigInts, array);
+	}
+	
+	@Override
+	protected int adapt(int h) {
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
-	protected BigInteger adaptedBigIntHash(HashList list, int index) {
-		return reranged(list.get(index));
+	protected long adapt(long h) {
+		throw new UnsupportedOperationException();
 	}
-
 
 	@Override
-	protected int adaptedIntHash(T value) {
-		return adaptedBigIntHash(value).intValue();
+	protected BigInteger adapt(BigInteger h) {
+		h = h.subtract(bigOldMin);
+		if (isSmaller) h = h.mod(bigNewSize);
+		return h.add(bigNewMin);
 	}
-
-
-	@Override
-	protected int adaptedIntHash(HashList list, int index) {
-		return adaptedBigIntHash(list, index).intValue();
-	}
-
-
-	@Override
-	protected long adaptedLongHash(T value) {
-		return adaptedBigIntHash(value).longValue();
-	}
-
-
-	@Override
-	protected long adaptedLongHash(HashList list, int index) {
-		return adaptedBigIntHash(list, index).intValue();
-	}
-
-
-	private BigInteger reranged(BigInteger h) {
-		h = h.subtract(oldRange.getMinimum());
-		if (isSmaller) {
-			return h.mod(newRange.getSize()).add(newRange.getMinimum());
-		} else {
-			return h.add(newRange.getMinimum());
-		}
-	}
-
 
 }

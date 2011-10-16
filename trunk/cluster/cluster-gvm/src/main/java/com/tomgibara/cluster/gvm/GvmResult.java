@@ -130,7 +130,7 @@ public class GvmResult<K> implements Serializable {
 	 */
 
 	public void setCoords(NUMBER[] coords) {
-		System.arraycopy(this.coords, 0, coords, 0, Math.min(this.coords.length, coords.length));
+		System.arraycopy(coords, 0, this.coords, 0, Math.min(this.coords.length, coords.length));
 	}
 
 	/**

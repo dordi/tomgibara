@@ -23,7 +23,7 @@ public class PermutableBitSet implements Permutable {
 	}
 	
 	@Override
-	public PermutableBitSet swap(int i, int j) {
+	public PermutableBitSet transpose(int i, int j) {
 		boolean b = bitSet.get(i);
 		bitSet.set(i, bitSet.get(j));
 		bitSet.set(j, b);

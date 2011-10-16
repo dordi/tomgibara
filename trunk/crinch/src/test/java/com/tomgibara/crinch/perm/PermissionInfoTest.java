@@ -33,8 +33,8 @@ public class PermissionInfoTest extends TestCase {
 	
 	public void testOdd() {
 		assertFalse( Permutation.identity(5).getInfo().isOdd() );
-		assertTrue( Permutation.identity(5).generator().swap(0, 1).permutation().getInfo().isOdd() );
-		assertFalse( Permutation.identity(5).generator().swap(0, 1).swap(1, 2).permutation().getInfo().isOdd() );
+		assertTrue( Permutation.identity(5).generator().transpose(0, 1).permutation().getInfo().isOdd() );
+		assertFalse( Permutation.identity(5).generator().transpose(0, 1).transpose(1, 2).permutation().getInfo().isOdd() );
 	}
 	
 	public void testIdentity() {
@@ -55,7 +55,7 @@ public class PermissionInfoTest extends TestCase {
 		assertEquals(0, new Permutation().getInfo().getNumberOfCycles());
 	}
 	
-	public void testCycles() {
+	public void testDisjointCycles() {
 		{
 			Permutation p = Permutation.identity(5);
 			assertTrue(p.getInfo().getDisjointCycles().isEmpty());
@@ -75,11 +75,12 @@ public class PermissionInfoTest extends TestCase {
 
 		Random random = new Random(0);
 		for (int i = 0; i < 1000; i++) {
-			final Permutation permutation = Permutation.identity(5).generator().shuffle(random).permutation();
+			int size = 1 + random.nextInt(20);
+			final Permutation permutation = Permutation.identity(size).generator().shuffle(random).permutation();
 			Permutation.Info info = permutation.getInfo();
 			Set<Permutation> cycles = info.getDisjointCycles();
 			assertEquals(info.getNumberOfCycles(), cycles.size());
-			PermutationGenerator generator = Permutation.identity(5).generator();
+			PermutationGenerator generator = Permutation.identity(size).generator();
 			for (Permutation p : cycles) {
 				p.permute(generator);
 			}

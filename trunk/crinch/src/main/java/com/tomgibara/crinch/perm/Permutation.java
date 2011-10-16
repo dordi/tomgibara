@@ -174,7 +174,7 @@ public final class Permutation {
 					next = -1 - next;
 					initial = -1;
 				}
-				p = p.swap(previous, next);
+				p = p.transpose(previous, next);
 			}
 			previous = next;
 		}
@@ -191,7 +191,7 @@ public final class Permutation {
 	public final class Info {
 		
 		// computed eagerly
-		private final int numberOfSwaps;
+		private final int numberOfTranspositions;
 		private final boolean identity;
 		private final boolean odd;
 		
@@ -203,17 +203,17 @@ public final class Permutation {
 			// ensure number of cycles has been computed
 			int[] cycles = getCycles();
 			// set properties that are cheap, eagerly
-			numberOfSwaps = cycles.length - numberOfCycles;
-			identity = numberOfSwaps == 0;
-			odd = (numberOfSwaps % 2) == 1;
+			numberOfTranspositions = cycles.length - numberOfCycles;
+			identity = numberOfTranspositions == 0;
+			odd = (numberOfTranspositions % 2) == 1;
 		}
 		
 		public boolean isIdentity() {
 			return identity;
 		}
 
-		public int getNumberOfSwaps() {
-			return numberOfSwaps;
+		public int getNumberOfTranspositions() {
+			return numberOfTranspositions;
 		}
 		
 		public boolean isOdd() {

@@ -24,7 +24,7 @@ public class PermutationTest extends TestCase {
 	
 	public void testSwapGeneration() {
 		List<Integer> a = list(1,2,3,4,5);
-		Permutation.identity(5).generator().swap(0, 1).permutation().permute(permutable(a));
+		Permutation.identity(5).generator().transpose(0, 1).permutation().permute(permutable(a));
 		assertEquals(list(2,1,3,4,5), a);
 	}
 	

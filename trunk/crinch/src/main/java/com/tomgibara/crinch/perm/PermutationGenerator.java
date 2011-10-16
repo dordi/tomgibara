@@ -72,7 +72,7 @@ public class PermutationGenerator implements Permutable {
 	
 	public PermutationGenerator shuffle(Random random) {
 		for (int i = correspondence.length - 1; i > 0 ; i--) {
-			swap(i, random.nextInt(i + 1));
+			transpose(i, random.nextInt(i + 1));
 		}
 		return this;
 	}
@@ -89,7 +89,7 @@ public class PermutationGenerator implements Permutable {
 	}
 	
 	@Override
-	public PermutationGenerator swap(int i, int j) {
+	public PermutationGenerator transpose(int i, int j) {
 		if (i < 0) throw new IllegalArgumentException("negative i");
 		if (j < 0) throw new IllegalArgumentException("negative j");
 		if (i > correspondence.length) throw new IllegalArgumentException("i greater than or equal to size");

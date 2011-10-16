@@ -63,9 +63,7 @@ public class PermutationGenerator implements Permutable {
 	public PermutationGenerator reverse() {
 		int h = correspondence.length / 2;
 		for (int i = 0, j = correspondence.length - 1; i < h; i++, j--) {
-			int t = correspondence[i];
-			correspondence[i] = correspondence[j];
-			correspondence[j] = t;
+			swap(i, j);
 		}
 		return this;
 	}
@@ -74,6 +72,12 @@ public class PermutationGenerator implements Permutable {
 		for (int i = correspondence.length - 1; i > 0 ; i--) {
 			transpose(i, random.nextInt(i + 1));
 		}
+		return this;
+	}
+	
+	// equivalent to: permutation.permute(generator);
+	public PermutationGenerator apply(Permutation permutation) {
+		permutation.permute(this);
 		return this;
 	}
 	
@@ -95,13 +99,14 @@ public class PermutationGenerator implements Permutable {
 		if (i > correspondence.length) throw new IllegalArgumentException("i greater than or equal to size");
 		if (j > correspondence.length) throw new IllegalArgumentException("j greater than or equal to size");
 		
-		if (j != i) {
-			int t = correspondence[i];
-			correspondence[i] = correspondence[j];
-			correspondence[j] = t;
-		}
+		if (j != i) swap(i, j);
+		
 		return this;
 	}
 	
-	
+	private void swap(int i, int j) {
+		int t = correspondence[i];
+		correspondence[i] = correspondence[j];
+		correspondence[j] = t;
+	}
 }

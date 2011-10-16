@@ -76,13 +76,6 @@ public final class Permutation {
 		return permutable;
 	}
 	
-	//convenience method
-	
-	// equivalent to: permutation.permute(generator()).permutation();
-	public Permutation compose(Permutation permutation) {
-		return permutation.permute(generator()).permutation(); 
-	}
-	
 	// object methods
 	
 	@Override

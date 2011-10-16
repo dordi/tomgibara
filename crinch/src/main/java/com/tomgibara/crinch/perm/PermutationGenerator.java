@@ -50,11 +50,22 @@ public class PermutationGenerator implements Permutable {
 		permutation.generator(this);
 		return this;
 	}
-	
+
 	public PermutationGenerator invert() {
+		int[] array = new int[correspondence.length];
+		for (int i = 0; i < array.length; i++) {
+			array[correspondence[i]] = i;
+		}
+		System.arraycopy(array, 0, correspondence, 0, array.length);
+		return this;
+	}
+	
+	public PermutationGenerator reverse() {
 		int h = correspondence.length / 2;
 		for (int i = 0, j = correspondence.length - 1; i < h; i++, j--) {
-			swap(i, j);
+			int t = correspondence[i];
+			correspondence[i] = correspondence[j];
+			correspondence[j] = t;
 		}
 		return this;
 	}

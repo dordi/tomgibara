@@ -28,6 +28,16 @@ public class PermutationTest extends TestCase {
 		assertEquals(list(2,1,3,4,5), a);
 	}
 	
+	public void testPermute() {
+		verifyPermute(list(), list());
+		verifyPermute(list(5,4,3,1,2), list(1,2,3,4,5), 4,3,2,0,1);
+		verifyPermute(list(3,4,5,2,1), list(1,2,3,4,5), 2,3,4,1,0);
+	}
+	
+	private void verifyPermute(List<Integer> expected, List<Integer> input, int... corr) {
+		assertEquals(expected, new Permutation(corr).permute(permutable(input)).getList());
+	}
+	
 	public void testCorrespondenceConstructor() {
 		verifyBadConstructor(0,1,2,3,3);
 		verifyBadConstructor(1);

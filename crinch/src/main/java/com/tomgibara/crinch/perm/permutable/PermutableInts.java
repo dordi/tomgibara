@@ -17,7 +17,7 @@ public class PermutableInts implements Permutable {
 	}
 	
 	@Override
-	public PermutableInts swap(int i, int j) {
+	public PermutableInts transpose(int i, int j) {
 		int v = values[i];
 		values[i] = values[j];
 		values[j] = v;

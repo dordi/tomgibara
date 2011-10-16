@@ -23,7 +23,7 @@ public class PermutableList<E> implements Permutable {
 	}
 	
 	@Override
-	public PermutableList<E> swap(int i, int j) {
+	public PermutableList<E> transpose(int i, int j) {
 		E e = list.get(i);
 		list.set(i, list.get(j));
 		list.set(j, e);

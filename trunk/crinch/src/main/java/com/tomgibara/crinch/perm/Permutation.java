@@ -13,17 +13,42 @@ public final class Permutation {
 	
 	public static Permutation identity(int size) {
 		if (size < 0) throw new IllegalArgumentException("negative size");
-		return new Permutation(size, false);
+		int[] correspondence = new int[size];
+		for (int i = 0; i < size; i++) {
+			correspondence[i] = i;
+		}
+		return new Permutation(correspondence, NO_CYCLES);
 	}
 
 	public static Permutation reverse(int size) {
 		if (size < 0) throw new IllegalArgumentException("negative size");
-		return new Permutation(size, true);
+		int[] correspondence = new int[size];
+		for (int i = 0; i < size; i++) {
+			correspondence[i] = size - i - 1;
+		}
+		int h = size / 2;
+		int[] cycles = new int[h * 2];
+		for (int i = 0, j = 0; i < h; i++) {
+			cycles[j++] = i;
+			cycles[j++] = i - size;
+		}
+		return new Permutation(correspondence, cycles);
 	}
 	
-	public static Permutation rotate(int size) {
-		//TODO
-		throw new UnsupportedOperationException();
+	public static Permutation rotate(int size, int distance) {
+		if (size < 0) throw new IllegalArgumentException("negative size");
+		if (size < 2) return identity(size);
+		distance = distance % size;
+		if (distance == 0) return identity(size);
+		int[] correspondence = new int[size];
+		if (distance < 0) distance += size;
+		//TODO lazy, remove repeated %
+		for (int i = 0; i < size; i++) {
+			correspondence[i] = (i + distance) % size;
+		}
+		int[] cycles = correspondence.clone();
+		cycles[size - 1] = -1 - cycles[size - 1];
+		return new Permutation(correspondence, cycles);
 	}
 	
 	private final int[] correspondence;
@@ -32,18 +57,13 @@ public final class Permutation {
 	//everything else is secondary, and we store it separately
 	private Info info = null;
 
-	Permutation(int size, boolean reverse) {
-		correspondence = new int[size];
-		if (reverse) {
-			for (int i = 0; i < size; i++) {
-				correspondence[i] = size - i - 1;
-			}
-		} else {
-			for (int i = 0; i < size; i++) {
-				correspondence[i] = i;
-			}
-			cycles = NO_CYCLES;
-		}
+	private Permutation(int[] correspondence, int[] cycles) {
+		this.correspondence = correspondence;
+		this.cycles = cycles;
+	}
+		
+	Permutation(PermutationGenerator generator) {
+		this.correspondence = generator.correspondence.clone();
 	}
 	
 	public Permutation(int... correspondence) {
@@ -51,13 +71,13 @@ public final class Permutation {
 		this.correspondence = correspondence;
 		cycles = computeCycles(true);
 	}
-	
-	Permutation(PermutationGenerator generator) {
-		this.correspondence = generator.correspondence.clone();
-	}
-	
+
 	public int getSize() {
 		return correspondence.length;
+	}
+
+	public int[] getCorrespondence() {
+		return correspondence.clone();
 	}
 	
 	public PermutationGenerator generator() {

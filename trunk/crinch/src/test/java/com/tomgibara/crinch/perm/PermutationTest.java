@@ -38,6 +38,38 @@ public class PermutationTest extends TestCase {
 		assertEquals(expected, new Permutation(corr).permute(permutable(input)).getList());
 	}
 	
+	public void testReverseConstructor() {
+		for (int size = 0; size < 100; size++) {
+			Permutation r = Permutation.reverse(size);
+			Permutation i = Permutation.identity(size);
+			if (size > 1) assertFalse(r.equals(i));
+			assertEquals(i, r.generator().apply(r).permutation());
+			if (size > 0) {
+				assertEquals(0, r.getCorrespondence()[size - 1]);
+				assertEquals(size - 1, r.getCorrespondence()[0]);
+			}
+		}
+	}
+	
+	public void testRotateConstructor() {
+		for (int size = 0; size < 100; size++) {
+			for (int dist = - 2 * size; dist < 2 * size; dist++) {
+				Permutation r = Permutation.rotate(size, dist);
+				if (size > 1) {
+					if ((dist % size) == 0) {
+						assertEquals(0, r.getInfo().getDisjointCycles().size());
+						assertTrue(r.getInfo().getFixedPoints().isAllOnes());
+					} else {
+						assertEquals(1, r.getInfo().getDisjointCycles().size());
+						assertTrue(r.getInfo().getFixedPoints().isAllZeros());
+					}
+				} else {
+					assertEquals(Permutation.identity(size), r);
+				}
+			}
+		}
+	}
+	
 	public void testCorrespondenceConstructor() {
 		verifyBadConstructor(0,1,2,3,3);
 		verifyBadConstructor(1);

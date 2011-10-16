@@ -51,6 +51,20 @@ public final class Permutation {
 		return new Permutation(correspondence, cycles);
 	}
 	
+	public static Permutation transpose(int size, int i, int j) {
+		if (size < 0) throw new IllegalArgumentException("negative size");
+		if (i < 0 || j < 0 || i >= size || j >= size) throw new IllegalArgumentException("invalid indices");
+		if (i == j) return identity(size);
+		int[] correspondence = new int[size];
+		for (int k = 0; k < size; k++) {
+			correspondence[k] = k;
+		}
+		correspondence[i] = j;
+		correspondence[j] = i;
+		int[] cycles = {i, -1 - j };
+		return new Permutation(correspondence, cycles);
+	}
+	
 	private final int[] correspondence;
 	//cycles is so important, we keep that on permutation
 	private int[] cycles = null;

@@ -2,7 +2,6 @@ package com.tomgibara.crinch.perm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -45,8 +44,6 @@ public class PermissionInfoTest extends TestCase {
 		assertTrue(p.getInfo().isIdentity());
 		p.permute(permutable(b));
 		assertEquals(b, a);
-		p.unpermute(permutable(b));
-		assertEquals(b, a);
 	}
 
 	public void testCyclic() {
@@ -61,36 +58,30 @@ public class PermissionInfoTest extends TestCase {
 	public void testCycles() {
 		{
 			Permutation p = Permutation.identity(5);
-			assertTrue(p.getInfo().getCycles().isEmpty());
+			assertTrue(p.getInfo().getDisjointCycles().isEmpty());
 		}
 		{
 			Permutation p = new Permutation(1,2,3,4,0);
-			assertEquals(set(p), p.getInfo().getCycles());
+			assertEquals(set(p), p.getInfo().getDisjointCycles());
 		}
 		{
 			Permutation p = new Permutation(1,0,2,4,3);
-			assertEquals(set(new Permutation(1,0,2,3,4), new Permutation(0,1,2,4,3)), p.getInfo().getCycles());
+			assertEquals(set(new Permutation(1,0,2,3,4), new Permutation(0,1,2,4,3)), p.getInfo().getDisjointCycles());
 		}
 		{
 			Permutation p = new Permutation(1,2,0,4,3);
-			assertEquals(set(new Permutation(1,2,0,3,4), new Permutation(0,1,2,4,3)), p.getInfo().getCycles());
+			assertEquals(set(new Permutation(1,2,0,3,4), new Permutation(0,1,2,4,3)), p.getInfo().getDisjointCycles());
 		}
 
 		Random random = new Random(0);
 		for (int i = 0; i < 1000; i++) {
 			final Permutation permutation = Permutation.identity(5).generator().shuffle(random).permutation();
 			Permutation.Info info = permutation.getInfo();
-			Set<Permutation> cycles = info.getCycles();
+			Set<Permutation> cycles = info.getDisjointCycles();
 			assertEquals(info.getNumberOfCycles(), cycles.size());
 			PermutationGenerator generator = Permutation.identity(5).generator();
-			System.out.println();
-			System.out.println(permutation.toString());
-			System.out.println(cycles);
-			System.out.println("**************");
 			for (Permutation p : cycles) {
-				System.out.println(p +" applied to " + generator.permutation());
 				p.permute(generator);
-				System.out.println("gave " + generator.permutation());
 			}
 			assertEquals(permutation, generator.permutation());
 		}

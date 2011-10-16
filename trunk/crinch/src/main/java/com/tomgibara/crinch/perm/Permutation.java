@@ -9,7 +9,7 @@ import com.tomgibara.crinch.bits.BitVector;
 
 public final class Permutation {
 
-	private static final int[] NO_SWAPS = {};
+	private static final int[] NO_CYCLES = {};
 	
 	public static Permutation identity(int size) {
 		if (size < 0) throw new IllegalArgumentException("negative size");
@@ -27,8 +27,9 @@ public final class Permutation {
 	}
 	
 	private final int[] correspondence;
-	//swaps is so important, we keep that on correspondence
-	private int[] swaps = null;
+	//cycles is so important, we keep that on permutation
+	private int[] cycles = null;
+	private int numberOfCycles;
 	//everything else is secondary, and we store it separately
 	private Info info = null;
 
@@ -42,14 +43,14 @@ public final class Permutation {
 			for (int i = 0; i < size; i++) {
 				correspondence[i] = i;
 			}
-			swaps = NO_SWAPS;
+			cycles = NO_CYCLES;
 		}
 	}
 	
 	public Permutation(int... correspondence) {
 		if (correspondence == null) throw new IllegalArgumentException("null correspondence");
 		this.correspondence = correspondence;
-		swaps = computeSwaps(true);
+		computeCycles(true);
 	}
 	
 	Permutation(PermutationGenerator generator) {
@@ -75,13 +76,6 @@ public final class Permutation {
 		return permutable;
 	}
 	
-	public <P extends Permutable> P unpermute(P permutable) {
-		if (permutable == null) throw new IllegalArgumentException("null permutable");
-		if (permutable.getPermutableSize() != correspondence.length) throw new IllegalArgumentException("size mismatched");
-		applyBackward(permutable);
-		return permutable;
-	}
-
 	//convenience method
 	
 	// equivalent to: permutation.permute(generator()).permutation();
@@ -106,7 +100,7 @@ public final class Permutation {
 	
 	@Override
 	public String toString() {
-		return Arrays.toString(correspondence) + " " + Arrays.toString(getSwaps());
+		return Arrays.toString(correspondence);
 	}
 
 	// package scoped methods
@@ -117,71 +111,79 @@ public final class Permutation {
 
 	// private utility methods
 	
-	private int[] getSwaps() {
-		if (swaps == null) {
-			swaps = computeSwaps(false);
+	private int[] getCycles() {
+		if (cycles == null) {
+			computeCycles(false);
 		}
-		return swaps;
+		return cycles;
 	}
 	
-	private int[] computeSwaps(boolean verify) {
-		final int[] array = correspondence.clone();
-		final int length = array.length;
-		int[] swaps = NO_SWAPS;
+	private void computeCycles(boolean verify) {
+		if (verify) {
+			for (int i = 0; i < correspondence.length; i++) {
+				int c = correspondence[i];
+				if (c < 0 || c >= correspondence.length) throw new IllegalArgumentException("invalid correspondence");
+			}
+		}
+		int[] array = correspondence.clone();
+		int[] cycles = new int[array.length + 1];
+		int count = 0;
 		int index = 0;
 		outer: while (true) {
-			// find a swap that moves two elements closer
-			for (int i = 0; i < length - 1; i++) {
+			for (int i = 0; i < array.length; i++) {
 				int a = array[i];
-				// only consider 'forward' swaps
-				if (a <= i) continue;
-				int limit = Math.min(2 * a - i, length);
-				for (int j = i + 1; j < limit; j++) {
-					int b = array[j];
-					if (Math.abs(b - i) < Math.abs(b - j)) {
-						if (index == swaps.length) {
-							swaps = Arrays.copyOf(swaps, Math.max(swaps.length * 2, 16));
-						}
-						swaps[index ++] = i;
-						swaps[index ++] = j;
-						array[i] = b;
-						array[j] = a;
-						continue outer;
-					}
+				if (a == -1) {
+					continue;
 				}
-			}
-			// find a swap that moves one element closer
-			for (int i = 0; i < length - 1; i++) {
-				int a = array[i];
-				// only consider 'forward' swaps
-				if (a <= i) continue;
-				array[i] = array[a];
-				array[a] = a;
+				if (a == i) {
+					array[i] = -1;
+					continue;
+				}
+				int[] correspondence = new int[array.length];
+				for (int k = 0; k < array.length; k++) {
+					correspondence[k] = k;
+				}
+				for (int j = i;;) {
+					int b = array[j];
+					if (verify && b == -1) throw new IllegalArgumentException("invalid correspondence");
+					array[j] = -1;
+					if (b == i) {
+						cycles[index++] = -1 - b;
+						break;
+					}
+					cycles[index++] = b;
+					j = b;
+				}
+				count ++;
 				continue outer;
 			}
-			// no swaps, we must be done
 			break;
 		}
-		if (verify) {
-			for (int i = 0; i < array.length; i++) {
-				if (array[i] != i) throw new IllegalArgumentException("invalid correspondence array");
-			}
-		}
-		return swaps.length > index ? Arrays.copyOf(swaps, index) : swaps;
+		this.cycles = cycles.length > index ? Arrays.copyOf(cycles, index) : cycles;
+		this.numberOfCycles = count;
 	}
 	
 	private void applyForward(Permutable p) {
-		int[] swaps = getSwaps();
-		for (int i = swaps.length; i > 0; i-=2) {
-			p = p.swap(swaps[i-1], swaps[i-2]);
+		int[] cycles = getCycles();
+		for (int i = 0, initial = -1, previous = -1; i < cycles.length; i++) {
+			int next = cycles[i];
+			if (initial < 0) {
+				initial = next;
+			} else {
+				if (next < 0) {
+					next = -1 - next;
+					initial = -1;
+				}
+				p = p.swap(previous, next);
+			}
+			previous = next;
 		}
 	}
 
 	private void applyBackward(Permutable p) {
-		int[] swaps = getSwaps();
-		for (int i = 0; i < swaps.length; i+=2) {
-			p = p.swap(swaps[i], swaps[i+1]);
-		}
+		int[] cycles = getCycles();
+		// TODO
+		throw new UnsupportedOperationException();
 	}
 
 	// innner classes
@@ -194,14 +196,14 @@ public final class Permutation {
 		private final boolean odd;
 		
 		// computed lazily
-		BitVector fixedElements;
-		int numberOfCycles = -1;
-		Set<Permutation> cycles;
+		BitVector fixedPoints;
+		Set<Permutation> disjointCycles;
 		
 		public Info() {
-			int[] swaps = getSwaps();
+			// ensure number of cycles has been computed
+			int[] cycles = getCycles();
 			// set properties that are cheap, eagerly
-			numberOfSwaps = swaps.length >> 1;
+			numberOfSwaps = cycles.length - numberOfCycles;
 			identity = numberOfSwaps == 0;
 			odd = (numberOfSwaps % 2) == 1;
 		}
@@ -218,67 +220,54 @@ public final class Permutation {
 			return odd;
 		}
 		
-		public BitVector getFixedElements() {
-			if (fixedElements == null) {
+		public BitVector getFixedPoints() {
+			if (fixedPoints == null) {
 				int[] array = correspondence;
-				fixedElements = new BitVector(array.length);
+				fixedPoints = new BitVector(array.length);
 				for (int i = 0; i < array.length; i++) {
-					fixedElements.setBit(i, array[i] == i);
+					fixedPoints.setBit(i, array[i] == i);
 				}
 			}
-			return fixedElements;
+			return fixedPoints;
 		}
 		
 		public int getNumberOfCycles() {
-			if (numberOfCycles == -1) {
-				numberOfCycles = correspondence.length - getFixedElements().countOnes() - numberOfSwaps;
-			}
 			return numberOfCycles;
 		}
 		
-		public Set<Permutation> getCycles() {
-			if (cycles == null) {
-				int numberOfCycles = getNumberOfCycles();
+		public Set<Permutation> getDisjointCycles() {
+			if (disjointCycles == null) {
 				switch (numberOfCycles) {
 				case 0 :
-					cycles = Collections.emptySet();
+					disjointCycles = Collections.emptySet();
 					break;
 				case 1 :
-					cycles = Collections.singleton(Permutation.this);
+					disjointCycles = Collections.singleton(Permutation.this);
 					break;
 				default :
 					Set<Permutation> set = new HashSet<Permutation>();
-					int[] array = correspondence.clone();
-					outer: while (true) {
-						for (int i = 0; i < array.length; i++) {
-							int a = array[i];
-							if (a == -1) {
-								continue;
+					int[] array = null;
+					for (int i = 0; i < cycles.length; i++) {
+						if (array == null) {
+							array = new int[correspondence.length];
+							for (int j = 0; j < array.length; j++) {
+								array[j] = j;
 							}
-							if (a == i) {
-								array[i] = -1;
-								continue;
-							}
-							int[] correspondence = new int[array.length];
-							for (int k = 0; k < array.length; k++) {
-								correspondence[k] = k;
-							}
-							for (int j = i;;) {
-								int b = array[j];
-								array[j] = -1;
-								correspondence[j] = b;
-								j = b;
-								if (j == i) break;
-							}
-							set.add(new Permutation(correspondence));
-							continue outer;
 						}
-						break;
+						int a = cycles[i];
+						if (a < 0) {
+							a = -1 - a;
+							array[a] = correspondence[a];
+							set.add(new Permutation(array));
+							array = null;
+						} else {
+							array[a] = correspondence[a];
+						}
 					}
-					cycles = Collections.unmodifiableSet(set);
+					disjointCycles = Collections.unmodifiableSet(set);
 				}
 			}
-			return cycles;
+			return disjointCycles;
 		}
 		
 	}

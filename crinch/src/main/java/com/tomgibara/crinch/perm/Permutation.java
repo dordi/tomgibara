@@ -29,7 +29,6 @@ public final class Permutation {
 	private final int[] correspondence;
 	//cycles is so important, we keep that on permutation
 	private int[] cycles = null;
-	private int numberOfCycles;
 	//everything else is secondary, and we store it separately
 	private Info info = null;
 
@@ -50,7 +49,7 @@ public final class Permutation {
 	public Permutation(int... correspondence) {
 		if (correspondence == null) throw new IllegalArgumentException("null correspondence");
 		this.correspondence = correspondence;
-		computeCycles(true);
+		cycles = computeCycles(true);
 	}
 	
 	Permutation(PermutationGenerator generator) {
@@ -106,12 +105,12 @@ public final class Permutation {
 	
 	private int[] getCycles() {
 		if (cycles == null) {
-			computeCycles(false);
+			cycles = computeCycles(false);
 		}
 		return cycles;
 	}
 	
-	private void computeCycles(boolean verify) {
+	private int[] computeCycles(boolean verify) {
 		if (verify) {
 			for (int i = 0; i < correspondence.length; i++) {
 				int c = correspondence[i];
@@ -120,7 +119,6 @@ public final class Permutation {
 		}
 		int[] array = correspondence.clone();
 		int[] cycles = new int[array.length + 1];
-		int count = 0;
 		int index = 0;
 		outer: while (true) {
 			for (int i = 0; i < array.length; i++) {
@@ -147,13 +145,11 @@ public final class Permutation {
 					cycles[index++] = b;
 					j = b;
 				}
-				count ++;
 				continue outer;
 			}
 			break;
 		}
-		this.cycles = cycles.length > index ? Arrays.copyOf(cycles, index) : cycles;
-		this.numberOfCycles = count;
+		return cycles.length > index ? Arrays.copyOf(cycles, index) : cycles;
 	}
 	
 	private void applyForward(Permutable p) {
@@ -184,6 +180,7 @@ public final class Permutation {
 	public final class Info {
 		
 		// computed eagerly
+		private final int numberOfCycles;
 		private final int numberOfTranspositions;
 		private final boolean identity;
 		private final boolean odd;
@@ -194,8 +191,13 @@ public final class Permutation {
 		
 		public Info() {
 			// ensure number of cycles has been computed
-			int[] cycles = getCycles();
 			// set properties that are cheap, eagerly
+			int numberOfCycles = 0;
+			int[] cycles = getCycles();
+			for (int i = 0; i < cycles.length; i++) {
+				if (cycles[i] < 0) numberOfCycles++;
+			}
+			this.numberOfCycles = numberOfCycles;
 			numberOfTranspositions = cycles.length - numberOfCycles;
 			identity = numberOfTranspositions == 0;
 			odd = (numberOfTranspositions % 2) == 1;

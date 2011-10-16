@@ -71,7 +71,23 @@ public final class Permutation {
 	public <P extends Permutable> P permute(P permutable) {
 		if (permutable == null) throw new IllegalArgumentException("null permutable");
 		if (permutable.getPermutableSize() != correspondence.length) throw new IllegalArgumentException("size mismatched");
-		applyForward(permutable);
+
+		int[] cycles = getCycles();
+		for (int i = 0, initial = -1, previous = -1; i < cycles.length; i++) {
+			int next = cycles[i];
+			if (initial < 0) {
+				initial = next;
+			} else {
+				if (next < 0) {
+					next = -1 - next;
+					initial = -1;
+				}
+				//TODO somewhat dicey assumption here
+				permutable = (P) permutable.transpose(previous, next);
+			}
+			previous = next;
+		}
+		
 		return permutable;
 	}
 	
@@ -152,29 +168,6 @@ public final class Permutation {
 		return cycles.length > index ? Arrays.copyOf(cycles, index) : cycles;
 	}
 	
-	private void applyForward(Permutable p) {
-		int[] cycles = getCycles();
-		for (int i = 0, initial = -1, previous = -1; i < cycles.length; i++) {
-			int next = cycles[i];
-			if (initial < 0) {
-				initial = next;
-			} else {
-				if (next < 0) {
-					next = -1 - next;
-					initial = -1;
-				}
-				p = p.transpose(previous, next);
-			}
-			previous = next;
-		}
-	}
-
-	private void applyBackward(Permutable p) {
-		int[] cycles = getCycles();
-		// TODO
-		throw new UnsupportedOperationException();
-	}
-
 	// innner classes
 	
 	public final class Info {

@@ -38,7 +38,7 @@ public class PermutationSequenceTest extends PermutationTestCase {
 				p = ps.previous().getGenerator().permutation();
 				set2.add(p);
 				list2.add(p);
-			} 
+			}
 			assertEquals(count, set2.size());
 			assertEquals(count, list2.size());
 			

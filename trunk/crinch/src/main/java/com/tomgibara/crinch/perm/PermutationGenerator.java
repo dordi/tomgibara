@@ -1,5 +1,6 @@
 package com.tomgibara.crinch.perm;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public final class PermutationGenerator implements Permutable {
@@ -81,6 +82,15 @@ public final class PermutationGenerator implements Permutable {
 		return this;
 	}
 	
+	// object methods
+
+	// equality predicated on strict object equality
+	
+	@Override
+	public String toString() {
+		return Arrays.toString(correspondence);
+	}
+	
 	// private utility methods
 	
 	private void swap(int i, int j) {
@@ -151,6 +161,11 @@ public final class PermutationGenerator implements Permutable {
 		@Override
 		public PermutationGenerator getGenerator() {
 			return PermutationGenerator.this;
+		}
+
+		@Override
+		public String toString() {
+			return "OrderSequence at " + PermutationGenerator.this.toString();
 		}
 		
 	}

@@ -1,5 +1,7 @@
 package com.tomgibara.crinch.perm;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -8,8 +10,12 @@ import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitVector;
 
-public final class Permutation implements Comparable<Permutation> {
+public final class Permutation implements Comparable<Permutation>, Serializable {
+	
+	// statics
 
+	static final long serialVersionUID = -9053863703146584610L;
+	
 	private static final int[] NO_CYCLES = {};
 	
 	public static Permutation identity(int size) {
@@ -66,12 +72,16 @@ public final class Permutation implements Comparable<Permutation> {
 		return new Permutation(correspondence, cycles);
 	}
 	
+	// fields
+	
 	private final int[] correspondence;
 	//cycles is so important, we keep that on permutation
 	private int[] cycles = null;
 	//everything else is secondary, and we store it separately
 	private Info info = null;
 
+	// constructors
+	
 	private Permutation(int[] correspondence, int[] cycles) {
 		this.correspondence = correspondence;
 		this.cycles = cycles;
@@ -87,6 +97,8 @@ public final class Permutation implements Comparable<Permutation> {
 		cycles = computeCycles(true);
 	}
 
+	// accessors
+	
 	public int getSize() {
 		return correspondence.length;
 	}
@@ -95,14 +107,16 @@ public final class Permutation implements Comparable<Permutation> {
 		return correspondence.clone();
 	}
 	
-	public Generator generator() {
-		return new Generator(correspondence.clone());
-	}
-	
 	public Info getInfo() {
 		return info == null ? info = new Info() : info;
 	}
 
+	// public methods
+	
+	public Generator generator() {
+		return new Generator(correspondence.clone());
+	}
+	
 	public <P extends Permutable> P permute(P permutable) {
 		if (permutable == null) throw new IllegalArgumentException("null permutable");
 		if (permutable.getPermutableSize() != correspondence.length) throw new IllegalArgumentException("size mismatched");
@@ -170,6 +184,12 @@ public final class Permutation implements Comparable<Permutation> {
 		System.arraycopy(this.correspondence, 0, generator.correspondence, 0, this.correspondence.length);
 	}
 
+	// serialization methods
+	
+	private Object writeReplace() throws ObjectStreamException {
+		return new Serial(correspondence);
+	}
+	
 	// private utility methods
 	
 	private int[] getCycles() {
@@ -223,6 +243,22 @@ public final class Permutation implements Comparable<Permutation> {
 	
 	// innner classes
 	
+	private static class Serial implements Serializable {
+		
+		private static final long serialVersionUID = -8684974003295220000L;
+		
+		int[] correspondence;
+		
+		Serial(int[] correspondence) {
+			this.correspondence = correspondence;
+		}
+		
+		private Object readResolve() throws ObjectStreamException {
+			return new Permutation(correspondence);
+		}
+		
+	}
+	
 	public final class Info {
 		
 		// computed eagerly
@@ -247,6 +283,10 @@ public final class Permutation implements Comparable<Permutation> {
 			numberOfTranspositions = cycles.length - numberOfCycles;
 			identity = numberOfTranspositions == 0;
 			odd = (numberOfTranspositions % 2) == 1;
+		}
+		
+		public Permutation getPermutation() {
+			return Permutation.this;
 		}
 		
 		public boolean isIdentity() {
@@ -309,6 +349,24 @@ public final class Permutation implements Comparable<Permutation> {
 				}
 			}
 			return disjointCycles;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Permutation.this.hashCode();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) return true;
+			if (!(obj instanceof Info)) return false;
+			Info that = (Info) obj;
+			return this.getPermutation().equals(that.getPermutation());
+		}
+		
+		@Override
+		public String toString() {
+			return "Permutation.Info for " + getPermutation().toString();
 		}
 		
 	}
@@ -477,7 +535,7 @@ public final class Permutation implements Comparable<Permutation> {
 
 			@Override
 			public String toString() {
-				return "OrderSequence at " + Generator.this.toString();
+				return "OrderedSequence at " + Generator.this.toString();
 			}
 			
 		}

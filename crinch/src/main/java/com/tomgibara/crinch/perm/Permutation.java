@@ -3,6 +3,7 @@ package com.tomgibara.crinch.perm;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitVector;
@@ -76,7 +77,7 @@ public final class Permutation {
 		this.cycles = cycles;
 	}
 		
-	Permutation(PermutationGenerator generator) {
+	Permutation(Generator generator) {
 		this.correspondence = generator.correspondence.clone();
 	}
 	
@@ -94,8 +95,8 @@ public final class Permutation {
 		return correspondence.clone();
 	}
 	
-	public PermutationGenerator generator() {
-		return new PermutationGenerator(correspondence.clone());
+	public Generator generator() {
+		return new Generator(correspondence.clone());
 	}
 	
 	public Info getInfo() {
@@ -147,7 +148,7 @@ public final class Permutation {
 
 	// package scoped methods
 
-	void generator(PermutationGenerator generator) {
+	void generator(Generator generator) {
 		System.arraycopy(this.correspondence, 0, generator.correspondence, 0, this.correspondence.length);
 	}
 
@@ -294,4 +295,174 @@ public final class Permutation {
 		
 	}
 	
+	// inner classes
+	
+	public static final class Generator implements Permutable {
+
+		final int[] correspondence;
+		private OrderedSequence orderedSequence = null;
+
+		Generator(int[] correspondence) {
+			this.correspondence = correspondence;
+		}
+		
+		// accessors
+		
+		public OrderedSequence getOrderedSequence() {
+			return orderedSequence == null ? orderedSequence = new OrderedSequence() : orderedSequence;
+		}
+		
+		// mutators
+		
+		public Generator set(Permutation permutation) {
+			if (permutation == null) throw new IllegalArgumentException("null permutation");
+			if (permutation.getSize() != correspondence.length) throw new IllegalArgumentException("incorrect size");
+			permutation.generator(this);
+			return this;
+		}
+
+		public Generator invert() {
+			int[] array = new int[correspondence.length];
+			for (int i = 0; i < array.length; i++) {
+				array[correspondence[i]] = i;
+			}
+			System.arraycopy(array, 0, correspondence, 0, array.length);
+			return this;
+		}
+		
+		public Generator reverse() {
+			int h = correspondence.length / 2;
+			for (int i = 0, j = correspondence.length - 1; i < h; i++, j--) {
+				swap(i, j);
+			}
+			return this;
+		}
+		
+		public Generator shuffle(Random random) {
+			for (int i = correspondence.length - 1; i > 0 ; i--) {
+				transpose(i, random.nextInt(i + 1));
+			}
+			return this;
+		}
+		
+		// equivalent to: permutation.permute(generator);
+		public Generator apply(Permutation permutation) {
+			permutation.permute(this);
+			return this;
+		}
+		
+		// factory methods
+		
+		public Permutation permutation() {
+			return new Permutation(this);
+		}
+		
+		// permutable interface
+		
+		@Override
+		public int getPermutableSize() {
+			return correspondence.length;
+		}
+		
+		@Override
+		public Generator transpose(int i, int j) {
+			if (i < 0) throw new IllegalArgumentException("negative i");
+			if (j < 0) throw new IllegalArgumentException("negative j");
+			if (i > correspondence.length) throw new IllegalArgumentException("i greater than or equal to size");
+			if (j > correspondence.length) throw new IllegalArgumentException("j greater than or equal to size");
+			
+			if (j != i) swap(i, j);
+			
+			return this;
+		}
+		
+		// object methods
+
+		// equality predicated on strict object equality
+		
+		@Override
+		public String toString() {
+			return Arrays.toString(correspondence);
+		}
+		
+		// private utility methods
+		
+		private void swap(int i, int j) {
+			int t = correspondence[i];
+			correspondence[i] = correspondence[j];
+			correspondence[j] = t;
+		}
+		
+		private void nextByNumber(boolean ascending) {
+			int len = correspondence.length;
+			
+			int j = -1;
+			for (int i = len - 2; i >= 0; i--) {
+				if (ascending ? correspondence[i] < correspondence[i + 1] : correspondence[i] > correspondence[i + 1]) {
+					j = i;
+					break;
+				}
+			}
+			if (j == -1) throw new IllegalStateException("no such permutation");
+			int c = correspondence[j];
+			
+			int k = 0;
+			for (int i = len - 1; i > j; i--) {
+				if (ascending ? c < correspondence[i] : c > correspondence[i]) {
+					k = i;
+					break;
+				}
+			}
+			
+			swap(j, k);
+			
+			int h = (j + 1 + len) / 2;
+			for (int i = j + 1, m = len - 1; i < h; i++, m--) {
+				swap(i, m);
+			}
+		}
+		
+		private class OrderedSequence implements PermutationSequence {
+
+			public boolean hasNext() {
+				int[] array = correspondence;
+				for (int i = 1; i < array.length; i++) {
+					if (array[i] > array[i - 1]) return true;
+				}
+				return false;
+			}
+			
+			public boolean hasPrevious() {
+				int[] array = correspondence;
+				for (int i = 1; i < array.length; i++) {
+					if (array[i] < array[i - 1]) return true;
+				}
+				return false;
+			}
+
+			@Override
+			public PermutationSequence next() {
+				nextByNumber(true);
+				return this;
+			}
+
+			@Override
+			public PermutationSequence previous() {
+				nextByNumber(false);
+				return this;
+			}
+
+			@Override
+			public Generator getGenerator() {
+				return Generator.this;
+			}
+
+			@Override
+			public String toString() {
+				return "OrderSequence at " + Generator.this.toString();
+			}
+			
+		}
+	}
+
 }

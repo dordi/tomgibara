@@ -12,7 +12,7 @@ public class PermutationSequenceTest extends PermutationTestCase {
 		int count = 1;
 		for (int size = 0; size < 5; size++) {
 			if (size > 0) count *= size;
-			PermutationGenerator pg = Permutation.identity(size).generator();
+			Permutation.Generator pg = Permutation.identity(size).generator();
 			PermutationSequence ps = pg.getOrderedSequence();
 			Permutation p;
 			

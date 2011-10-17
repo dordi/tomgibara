@@ -24,7 +24,7 @@ public class PermutableBytes implements Permutable {
 
 	private final byte[] values;
 	
-	public PermutableBytes(byte[] values) {
+	public PermutableBytes(byte... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

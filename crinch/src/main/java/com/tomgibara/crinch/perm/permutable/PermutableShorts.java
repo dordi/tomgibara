@@ -24,7 +24,7 @@ public class PermutableShorts implements Permutable {
 
 	private final short[] values;
 	
-	public PermutableShorts(short[] values) {
+	public PermutableShorts(short... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

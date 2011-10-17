@@ -24,7 +24,7 @@ public class PermutableInts implements Permutable {
 
 	private final int[] values;
 	
-	public PermutableInts(int[] values) {
+	public PermutableInts(int... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

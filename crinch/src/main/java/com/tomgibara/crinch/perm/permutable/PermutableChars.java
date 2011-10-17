@@ -24,7 +24,7 @@ public class PermutableChars implements Permutable {
 
 	private final char[] values;
 	
-	public PermutableChars(char[] values) {
+	public PermutableChars(char... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

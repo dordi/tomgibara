@@ -24,7 +24,7 @@ public class PermutableFloats implements Permutable {
 
 	private final float[] values;
 	
-	public PermutableFloats(float[] values) {
+	public PermutableFloats(float... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

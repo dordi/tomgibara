@@ -1,36 +1,11 @@
 package com.tomgibara.crinch.perm;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import junit.framework.TestCase;
+public class PermissionInfoTest extends PermutationTestCase {
 
-import com.tomgibara.crinch.perm.permutable.PermutableList;
-
-public class PermissionInfoTest extends TestCase {
-
-	private static List<Integer> list(Integer... ints) {
-		return Arrays.asList(ints);
-	}
-	
-	private static List<Integer> copy(List<Integer> list) {
-		return new ArrayList<Integer>(list);
-	}
-	
-	private static PermutableList<Integer> permutable(List<Integer> list) {
-		return new PermutableList<Integer>(list);
-	}
-	
-	private static Set<Permutation> set(Permutation... perms) {
-		HashSet<Permutation> set = new HashSet<Permutation>();
-		set.addAll(Arrays.asList(perms));
-		return set;
-	}
-	
 	public void testOdd() {
 		assertFalse( Permutation.identity(5).getInfo().isOdd() );
 		assertTrue( Permutation.identity(5).generator().transpose(0, 1).permutation().getInfo().isOdd() );

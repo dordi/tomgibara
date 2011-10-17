@@ -1,5 +1,6 @@
 package com.tomgibara.crinch.perm;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -51,7 +52,7 @@ public class PermutationInfoTest extends PermutationTestCase {
 		Random random = new Random(0);
 		for (int i = 0; i < 1000; i++) {
 			int size = 1 + random.nextInt(20);
-			final Permutation permutation = Permutation.identity(size).generator().shuffle(random).permutation();
+			Permutation permutation = Permutation.identity(size).generator().shuffle(random).permutation();
 			Permutation.Info info = permutation.getInfo();
 			Set<Permutation> cycles = info.getDisjointCycles();
 			assertEquals(info.getNumberOfCycles(), cycles.size());
@@ -60,6 +61,22 @@ public class PermutationInfoTest extends PermutationTestCase {
 				p.permute(generator);
 			}
 			assertEquals(permutation, generator.permutation());
+		}
+	}
+	
+	public void testLengthOfOrbit() {
+		Random random = new Random(0);
+		for (int n = 0; n < 1000; n++) {
+			int size = random.nextInt(11);
+			Permutation identity = Permutation.identity(size);
+			Permutation permutation = identity.generator().shuffle(random).permutation();
+			Permutation p = permutation;
+			int orbit = permutation.getInfo().getLengthOfOrbit().intValue();
+			for(int i = orbit - 1; i > 0; i--) {
+				p = p.generator().apply(permutation).permutation();
+				assertFalse(p.equals(permutation));
+			}
+			assertEquals(identity, p);
 		}
 	}
 	

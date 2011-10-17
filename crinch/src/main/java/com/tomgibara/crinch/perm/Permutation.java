@@ -2,6 +2,7 @@ package com.tomgibara.crinch.perm;
 
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitVector;
+import com.tomgibara.crinch.math.CrinchMath;
 
 public final class Permutation implements Comparable<Permutation>, Serializable {
 	
@@ -276,6 +278,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 		// computed lazily
 		BitVector fixedPoints;
 		Set<Permutation> disjointCycles;
+		BigInteger lengthOfOrbit;
 		
 		public Info() {
 			// ensure number of cycles has been computed
@@ -355,6 +358,29 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 				}
 			}
 			return disjointCycles;
+		}
+		
+		public BigInteger getLengthOfOrbit() {
+			if (lengthOfOrbit == null) {
+				if (numberOfCycles == 0) {
+					lengthOfOrbit = BigInteger.ONE;
+				} else {
+					BigInteger[] lengths = new BigInteger[numberOfCycles];
+					int[] cycles = getCycles();
+					int count = 0;
+					int length = 0;
+					for (int i = 0; i < cycles.length; i++) {
+						if (cycles[i] < 0) {
+							lengths[count++] = BigInteger.valueOf(length + 1);
+							length = 0;
+						} else {
+							length++;
+						}
+					}
+					lengthOfOrbit = CrinchMath.lcm(lengths);
+				}
+			}
+			return lengthOfOrbit;
 		}
 		
 		@Override

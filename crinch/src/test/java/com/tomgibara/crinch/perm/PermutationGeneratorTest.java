@@ -34,4 +34,13 @@ public class PermutationGeneratorTest extends PermutationTestCase {
 		assertEquals(new Permutation(1,2,0,3,4), p.generator().apply(p1).apply(p2).permutation());
 	}
 
+	public void testIdentity() {
+		assertTrue(Permutation.reverse(10).generator().identity().permutation().getInfo().isIdentity());
+	}
+
+	public void testRotate() {
+		assertTrue(Permutation.rotate(10, 2).generator().rotate(-2).permutation().getInfo().isIdentity());
+	}
+	
+
 }

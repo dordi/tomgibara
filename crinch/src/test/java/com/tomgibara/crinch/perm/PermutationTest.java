@@ -25,8 +25,8 @@ public class PermutationTest extends PermutationTestCase {
 		verifyPermute("dog", "god", Permutation.reverse(3));
 		verifyPermute("time", "time", Permutation.identity(4));
 		verifyPermute("emit", "time", Permutation.reverse(4));
-		verifyPermute("item", "time", Permutation.rotate(4,2).generator().reverse().permutation());
-		verifyPermute("mite", "time", Permutation.rotate(4,-1).generator().reverse().permutation());
+		verifyPermute("item", "time", Permutation.rotate(4,-2).generator().reverse().permutation());
+		verifyPermute("mite", "time", Permutation.rotate(4,1).generator().reverse().permutation());
 		
 	}
 	
@@ -52,6 +52,8 @@ public class PermutationTest extends PermutationTestCase {
 	}
 	
 	public void testRotateConstructor() {
+		assertEquals("DABC", Permutation.rotate(4, 1).permute(new PermutableString("ABCD")).toString());
+		assertEquals("BCDA", Permutation.rotate(4, -1).permute(new PermutableString("ABCD")).toString());
 		for (int size = 0; size < 100; size++) {
 			for (int dist = - 2 * size; dist < 2 * size; dist++) {
 				Permutation r = Permutation.rotate(size, dist);

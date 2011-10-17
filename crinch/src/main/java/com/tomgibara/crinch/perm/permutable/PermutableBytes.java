@@ -4,16 +4,16 @@ import java.util.Arrays;
 
 import com.tomgibara.crinch.perm.Permutable;
 
-public class PermutableInts implements Permutable {
+public class PermutableBytes implements Permutable {
 
-	private final int[] values;
+	private final byte[] values;
 	
-	public PermutableInts(int[] values) {
+	public PermutableBytes(byte[] values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}
 	
-	public int[] getValues() {
+	public byte[] getValues() {
 		return values;
 	}
 	
@@ -23,8 +23,8 @@ public class PermutableInts implements Permutable {
 	}
 	
 	@Override
-	public PermutableInts transpose(int i, int j) {
-		int v = values[i];
+	public PermutableBytes transpose(int i, int j) {
+		byte v = values[i];
 		values[i] = values[j];
 		values[j] = v;
 		return this;
@@ -38,8 +38,8 @@ public class PermutableInts implements Permutable {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) return true;
-		if (!(obj instanceof PermutableInts)) return false;
-		PermutableInts that = (PermutableInts) obj;
+		if (!(obj instanceof PermutableBytes)) return false;
+		PermutableBytes that = (PermutableBytes) obj;
 		return Arrays.equals(this.values, that.values);
 	}
 	

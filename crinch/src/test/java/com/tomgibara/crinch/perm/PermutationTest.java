@@ -1,5 +1,9 @@
 package com.tomgibara.crinch.perm;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -118,6 +122,25 @@ public class PermutationTest extends PermutationTestCase {
 			assertTrue(next.compareTo(prev) > 0);
 			assertTrue(prev.compareTo(next) < 0);
 		}
+		
+	}
+	
+	public void testSerialization() throws Exception {
+		
+		Random random = new Random(0L);
+		for (int i = 0; i < 1000; i++) {
+			Permutation p = Permutation.identity(random.nextInt(100)).generator().shuffle(random).permutation();
+			Permutation.Info pi = p.getInfo();
+			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bytes);
+			out.writeObject(p);
+			out.close();
+			ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+			Permutation q = (Permutation) in.readObject();
+			assertEquals(p, q);
+			assertEquals(pi, q.getInfo());
+		}
+		
 		
 	}
 	

@@ -8,7 +8,7 @@ import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitVector;
 
-public final class Permutation {
+public final class Permutation implements Comparable<Permutation> {
 
 	private static final int[] NO_CYCLES = {};
 	
@@ -124,6 +124,24 @@ public final class Permutation {
 		}
 		
 		return permutable;
+	}
+
+	// comparable methods
+	
+	public int compareTo(Permutation that) {
+		if (this == that) return 0;
+		int thisSize = this.correspondence.length;
+		int thatSize = that.correspondence.length;
+		if (thisSize < thatSize) return -1;
+		if (thisSize > thatSize) return 1;
+		int[] thisArray = this.correspondence;
+		int[] thatArray = that.correspondence;
+		for (int i = 0; i < thisSize; i++) {
+			int c = thisArray[i] - thatArray[i];
+			if (c == 0) continue;
+			return c;
+		}
+		return 0;
 	}
 	
 	// object methods

@@ -90,7 +90,22 @@ public class PermutationTest extends PermutationTestCase {
 		}
 	}
 	
-	public void testNumberOfCycles() {
+	public void testComparable() {
+		
+		assertTrue(Permutation.identity(6).compareTo(Permutation.identity(5)) > 0);
+		assertTrue(new Permutation().compareTo(Permutation.identity(1)) < 0);
+		assertTrue(new Permutation().compareTo(Permutation.identity(0)) == 0);
+		
+		Permutation.Generator pg = Permutation.identity(6).generator();
+		PermutationSequence ps = pg.getOrderedSequence();
+		Permutation prev = pg.permutation();
+		while (ps.hasNext()) {
+			Permutation next = ps.next().getGenerator().permutation();
+			Permutation next2 = pg.permutation();
+			assertEquals(0, next.compareTo(next2));
+			assertTrue(next.compareTo(prev) > 0);
+			assertTrue(prev.compareTo(next) < 0);
+		}
 		
 	}
 	

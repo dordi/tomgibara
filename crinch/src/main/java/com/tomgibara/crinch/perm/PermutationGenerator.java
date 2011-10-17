@@ -25,16 +25,16 @@ public class PermutationGenerator implements Permutable {
 	}
 	
 	public PermutationGenerator nextByNumber() {
-		// TODO
-		throw new UnsupportedOperationException();
-	}
-	
-	public PermutationGenerator nextBySwap() {
-		// TODO
-		throw new UnsupportedOperationException();
+		nextByNumber(true);
+		return this;
 	}
 	
 	public PermutationGenerator previousByNumber() {
+		nextByNumber(false);
+		return this;
+	}
+	
+	public PermutationGenerator nextBySwap() {
 		// TODO
 		throw new UnsupportedOperationException();
 	}
@@ -104,9 +104,40 @@ public class PermutationGenerator implements Permutable {
 		return this;
 	}
 	
+	// private utility methods
+	
 	private void swap(int i, int j) {
 		int t = correspondence[i];
 		correspondence[i] = correspondence[j];
 		correspondence[j] = t;
+	}
+	
+	private void nextByNumber(boolean ascending) {
+		int len = correspondence.length;
+		
+		int j = -1;
+		for (int i = len - 2; i >= 0; i--) {
+			if (ascending ? correspondence[i] < correspondence[i + 1] : correspondence[i] > correspondence[i + 1]) {
+				j = i;
+				break;
+			}
+		}
+		if (j == -1) throw new IllegalStateException("no such permutation");
+		int c = correspondence[j];
+		
+		int k = 0;
+		for (int i = len - 1; i > j; i--) {
+			if (ascending ? c < correspondence[i] : c > correspondence[i]) {
+				k = i;
+				break;
+			}
+		}
+		
+		swap(j, k);
+		
+		int h = (j + 1 + len) / 2;
+		for (int i = j + 1, m = len - 1; i < h; i++, m--) {
+			swap(i, m);
+		}
 	}
 }

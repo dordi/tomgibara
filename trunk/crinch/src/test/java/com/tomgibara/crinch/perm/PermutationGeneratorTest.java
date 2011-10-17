@@ -42,5 +42,12 @@ public class PermutationGeneratorTest extends PermutationTestCase {
 		assertTrue(Permutation.rotate(10, 2).generator().rotate(-2).permutation().getInfo().isIdentity());
 	}
 	
+	public void testPower() {
+		for (int i = 0; i < 100; i++) {
+			Permutation p = Permutation.rotate(10, 1);
+			assertEquals(Permutation.rotate(10, i), p.generator().power(i).permutation());
+		}
+	}
+	
 
 }

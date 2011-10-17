@@ -504,6 +504,32 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			return this;
 		}
 		
+		public Generator power(int power) {
+			if (power == 0) {
+				identity();
+				return this;
+			}
+
+			if (power < 0) {
+				invert();
+				power = -power;
+			}
+			
+			if (power == 1) {
+				return this;
+			}
+			
+			//TODO could be made more efficient
+			Permutation p = permutation();
+			identity();
+			while (power > 0) {
+				if ((power & 1) == 1) p.permute(this);
+				p = p.generator().apply(p).permutation();
+				power >>= 1;
+			}
+			return this;
+		}
+		
 		// factory methods
 		
 		public Permutation permutation() {

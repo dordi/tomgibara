@@ -12,5 +12,5 @@ public interface PermutationSequence {
 	
 	// the generator this sequence is manipluating
 	
-	PermutationGenerator getGenerator();
+	Permutation.Generator getGenerator();
 }

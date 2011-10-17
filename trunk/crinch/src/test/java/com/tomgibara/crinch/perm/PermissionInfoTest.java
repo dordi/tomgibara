@@ -55,7 +55,7 @@ public class PermissionInfoTest extends PermutationTestCase {
 			Permutation.Info info = permutation.getInfo();
 			Set<Permutation> cycles = info.getDisjointCycles();
 			assertEquals(info.getNumberOfCycles(), cycles.size());
-			PermutationGenerator generator = Permutation.identity(size).generator();
+			Permutation.Generator generator = Permutation.identity(size).generator();
 			for (Permutation p : cycles) {
 				p.permute(generator);
 			}

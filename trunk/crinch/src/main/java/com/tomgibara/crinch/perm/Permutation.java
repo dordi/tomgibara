@@ -45,16 +45,22 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 	public static Permutation rotate(int size, int distance) {
 		if (size < 0) throw new IllegalArgumentException("negative size");
 		if (size < 2) return identity(size);
-		distance = distance % size;
+		distance = -distance % size;
 		if (distance == 0) return identity(size);
+		
 		int[] correspondence = new int[size];
 		if (distance < 0) distance += size;
 		//TODO lazy, remove repeated %
 		for (int i = 0; i < size; i++) {
 			correspondence[i] = (i + distance) % size;
 		}
-		int[] cycles = correspondence.clone();
+
+		int[] cycles = new int[size];
+		for (int i = 0, j = i, c = correspondence[j]; c != 0; i++, j = c, c = correspondence[j]) {
+			cycles[i] = c;
+		}
 		cycles[size - 1] = -1 - cycles[size - 1];
+
 		return new Permutation(correspondence, cycles);
 	}
 	
@@ -397,6 +403,35 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			return this;
 		}
 
+		public Generator identity() {
+			for (int i = 0; i < correspondence.length; i++) {
+				correspondence[i] = i;
+			}
+			return this;
+		}
+		
+		public Generator rotate(int distance) {
+			int size = correspondence.length;
+	        if (size == 0) return this;
+	        distance = distance % size;
+	        if (distance == 0) return this;
+	        if (distance < 0) distance += size;
+
+	        for (int start = 0, count = 0; count != size; start++) {
+	        	int prev = correspondence[start];
+	            int i = start;
+	            do {
+	                i += distance;
+	                if (i >= size) i -= size;
+	                int next = correspondence[i];
+	                correspondence[i] = prev;
+	                prev = next;
+	                count ++;
+	            } while(i != start);
+	        }
+	        return this;
+		}
+		
 		public Generator invert() {
 			int[] array = new int[correspondence.length];
 			for (int i = 0; i < array.length; i++) {

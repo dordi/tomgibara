@@ -16,12 +16,24 @@ public class PermutationTest extends PermutationTestCase {
 		verifyPermute(list(), list());
 		verifyPermute(list(5,4,3,1,2), list(1,2,3,4,5), 4,3,2,0,1);
 		verifyPermute(list(3,4,5,2,1), list(1,2,3,4,5), 2,3,4,1,0);
+
+		assertEquals("dog", Permutation.reverse(3).permute(new PermutableString("god")).toString());
+		verifyPermute("dog", "god", Permutation.reverse(3));
+		verifyPermute("time", "time", Permutation.identity(4));
+		verifyPermute("emit", "time", Permutation.reverse(4));
+		verifyPermute("item", "time", Permutation.rotate(4,2).generator().reverse().permutation());
+		verifyPermute("mite", "time", Permutation.rotate(4,-1).generator().reverse().permutation());
+		
 	}
 	
 	private void verifyPermute(List<Integer> expected, List<Integer> input, int... corr) {
 		assertEquals(expected, new Permutation(corr).permute(permutable(input)).getList());
 	}
-	
+
+	private void verifyPermute(String expected, String input, Permutation p) {
+		assertEquals(expected, p.permute(new PermutableString(input)).toString());
+	}
+
 	public void testReverseConstructor() {
 		for (int size = 0; size < 100; size++) {
 			Permutation r = Permutation.reverse(size);

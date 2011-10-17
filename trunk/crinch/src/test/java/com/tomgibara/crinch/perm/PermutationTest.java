@@ -1,28 +1,11 @@
 package com.tomgibara.crinch.perm;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import com.tomgibara.crinch.perm.permutable.PermutableList;
+public class PermutationTest extends PermutationTestCase {
 
-import junit.framework.TestCase;
-
-public class PermutationTest extends TestCase {
-
-	private static List<Integer> list(Integer... ints) {
-		return Arrays.asList(ints);
-	}
-	
-	private static List<Integer> copy(List<Integer> list) {
-		return new ArrayList<Integer>(list);
-	}
-	
-	private static PermutableList<Integer> permutable(List<Integer> list) {
-		return new PermutableList<Integer>(list);
-	}
-	
 	public void testSwapGeneration() {
 		List<Integer> a = list(1,2,3,4,5);
 		Permutation.identity(5).generator().transpose(0, 1).permutation().permute(permutable(a));

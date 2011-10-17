@@ -2,47 +2,22 @@ package com.tomgibara.crinch.perm;
 
 import java.util.Random;
 
-public class PermutationGenerator implements Permutable {
+public final class PermutationGenerator implements Permutable {
 
 	final int[] correspondence;
+	private OrderedSequence orderedSequence = null;
 
 	PermutationGenerator(int[] correspondence) {
 		this.correspondence = correspondence;
 	}
 	
-	public boolean hasNext() {
-		for (int i = 1; i < correspondence.length; i++) {
-			if (correspondence[i] > correspondence[i - 1]) return true;
-		}
-		return false;
+	// accessors
+	
+	public OrderedSequence getOrderedSequence() {
+		return orderedSequence == null ? orderedSequence = new OrderedSequence() : orderedSequence;
 	}
 	
-	public boolean hasPrevious() {
-		for (int i = 1; i < correspondence.length; i++) {
-			if (correspondence[i] < correspondence[i - 1]) return true;
-		}
-		return false;
-	}
-	
-	public PermutationGenerator nextByNumber() {
-		nextByNumber(true);
-		return this;
-	}
-	
-	public PermutationGenerator previousByNumber() {
-		nextByNumber(false);
-		return this;
-	}
-	
-	public PermutationGenerator nextBySwap() {
-		// TODO
-		throw new UnsupportedOperationException();
-	}
-	
-	public PermutationGenerator previousBySwap() {
-		// TODO
-		throw new UnsupportedOperationException();
-	}
+	// mutators
 	
 	public PermutationGenerator set(Permutation permutation) {
 		if (permutation == null) throw new IllegalArgumentException("null permutation");
@@ -80,6 +55,8 @@ public class PermutationGenerator implements Permutable {
 		permutation.permute(this);
 		return this;
 	}
+	
+	// factory methods
 	
 	public Permutation permutation() {
 		return new Permutation(this);
@@ -139,5 +116,42 @@ public class PermutationGenerator implements Permutable {
 		for (int i = j + 1, m = len - 1; i < h; i++, m--) {
 			swap(i, m);
 		}
+	}
+	
+	private class OrderedSequence implements PermutationSequence {
+
+		public boolean hasNext() {
+			int[] array = correspondence;
+			for (int i = 1; i < array.length; i++) {
+				if (array[i] > array[i - 1]) return true;
+			}
+			return false;
+		}
+		
+		public boolean hasPrevious() {
+			int[] array = correspondence;
+			for (int i = 1; i < array.length; i++) {
+				if (array[i] < array[i - 1]) return true;
+			}
+			return false;
+		}
+
+		@Override
+		public PermutationSequence next() {
+			nextByNumber(true);
+			return this;
+		}
+
+		@Override
+		public PermutationSequence previous() {
+			nextByNumber(false);
+			return this;
+		}
+
+		@Override
+		public PermutationGenerator getGenerator() {
+			return PermutationGenerator.this;
+		}
+		
 	}
 }

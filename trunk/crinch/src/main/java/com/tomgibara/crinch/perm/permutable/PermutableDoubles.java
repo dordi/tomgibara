@@ -24,7 +24,7 @@ public class PermutableDoubles implements Permutable {
 
 	private final double[] values;
 	
-	public PermutableDoubles(double[] values) {
+	public PermutableDoubles(double... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

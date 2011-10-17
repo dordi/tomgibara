@@ -24,7 +24,7 @@ public class PermutableBooleans implements Permutable {
 
 	private final boolean[] values;
 	
-	public PermutableBooleans(boolean[] values) {
+	public PermutableBooleans(boolean... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

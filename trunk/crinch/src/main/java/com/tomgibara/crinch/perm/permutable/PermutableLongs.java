@@ -24,7 +24,7 @@ public class PermutableLongs implements Permutable {
 
 	private final long[] values;
 	
-	public PermutableLongs(long[] values) {
+	public PermutableLongs(long... values) {
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

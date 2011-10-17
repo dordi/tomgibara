@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public class PermissionInfoTest extends PermutationTestCase {
+public class PermutationInfoTest extends PermutationTestCase {
 
 	public void testOdd() {
 		assertFalse( Permutation.identity(5).getInfo().isOdd() );

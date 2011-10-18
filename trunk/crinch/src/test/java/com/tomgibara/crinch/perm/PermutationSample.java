@@ -46,7 +46,8 @@ public class PermutationSample {
 		 * Permutations.
 		 */
 		
-		String r0 = identity.permute(new PermutableString("smite")).toString(); // result: "smite"
+		String r0 = identity.permute(new PermutableString("smite")).toString();
+		assertEqual(r0, "smite"); // the identity permutation changes nothing
 		
 		/**
 		 * As per its definition, the identity permutation does nothing. Note
@@ -64,9 +65,10 @@ public class PermutationSample {
 		assertEqual(r1, "mites");
 		
 		/**
-		 * The identity permutation is one of a number of permutations that can be
-		 * constructed efficiently, and conveniently, via static methods on the
-		 * Permutation class. Rotations are another, so we could have written:
+		 * The identity permutation is one of a number of permutations that can
+		 * be constructed efficiently, and conveniently, via static methods on
+		 * the Permutation class. Rotations are another, so we could have
+		 * written:
 		 */
 
 		Permutation p2 = Permutation.rotate(5, -1);
@@ -76,8 +78,9 @@ public class PermutationSample {
 		
 		/**
 		 * All Permutations in this library operate by performing a sequence of
-		 * swaps, or "transpositions". So the simplest/fastest type of permutation (excluding the identity permutation) is
-		 * one that swaps just two elements, this is referred to as a transposition
+		 * swaps, or "transpositions". So the simplest/fastest type of
+		 * permutation (excluding the identity permutation) is one that swaps
+		 * just two elements, this is referred to as a transposition
 		 */
 		
 		Permutation p3 = Permutation.transpose(5, 0, 4);
@@ -85,8 +88,8 @@ public class PermutationSample {
 		assertEqual(r3, "emits"); // swapped first and last letters
 		
 		/**
-		 * It's also possible to coveniently construct a Permutation that reverses
-		 * a whole sequence of elements.
+		 * It's also possible to coveniently construct a Permutation that
+		 * reverses a whole sequence of elements.
 		 */
 		
 		Permutation p4 = Permutation.reverse(5);
@@ -100,7 +103,8 @@ public class PermutationSample {
 		 * possible to combine multiple permutations into a single permutation
 		 * that only has to be applied once using a Generator. Permutations are
 		 * immutable, but Generators are not and you can switch from one to the
-		 * other fluently as needed. The above could have been implemented using:
+		 * other fluently as needed. The above could have been implemented
+		 * using:
 		 */
 		
 		Permutation p5 = p4.generator().apply(p4).permutation();
@@ -117,17 +121,19 @@ public class PermutationSample {
 		assertEqual(r6, "items"); // reverses the string and then swaps the first and third characters
 
 		/**
-		 * Generators expose have many methods that allow Permutations to
-		 * be constructed in convenient ways. For example, there's a transpose method
-		 * that provides a faster and simpler way of doing the same thing:
+		 * Generators expose have many methods that allow Permutations to be
+		 * constructed in convenient ways. For example, there's a transpose
+		 * method that provides a faster and simpler way of doing the same
+		 * thing:
 		 */
 		
 		Permutation p7 = p4.generator().transpose(0,2).permutation();
 		assertEqual(p7, p6);
 		
 		/**
-		 * One of the most important methods on Generator is invert(). This inverts
-		 * the generator so that will generate a permutation that 'undoes' another.
+		 * One of the most important methods on Generator is invert(). This
+		 * inverts the generator so that will generate a permutation that
+		 * 'undoes' another.
 		 */
 		
 		Permutation p8 = p7.generator().invert().permutation();
@@ -135,8 +141,10 @@ public class PermutationSample {
 		assertEqual(r8, "smite"); // swaps the first and third characters and then reverses the string 
 
 		/**
-		 * A Permutation can be repeatedly applied to itself a specified number of times using the Generator's power() method.
-		 * It's also possible to invert the permutation by specifying a negative power. Zero always results in the identity permutation.
+		 * A Permutation can be repeatedly applied to itself a specified number
+		 * of times using the Generator's power() method. It's also possible to
+		 * invert the permutation by specifying a negative power. Zero always
+		 * results in the identity permutation.
 		 */
 		
 		Permutation p9 = new Permutation(4, 2, 1, 0, 3);
@@ -161,9 +169,10 @@ public class PermutationSample {
 		// SEQUENCES OF PERMUTATIONS
 		
 		/**
-		 * Permutations implement Comparable and are naturally ordered lexographically.
-		 * It doesn't usually make sense to compare two permutations of different orders,
-		 * but if you do, the smaller is always the lesser.
+		 * Permutations implement Comparable and are naturally ordered
+		 * lexographically. It doesn't usually make sense to compare two
+		 * permutations of different orders, but if you do, the smaller is
+		 * always the lesser.
 		 */
 		
 		assertLessThan(identity, p2);
@@ -174,9 +183,9 @@ public class PermutationSample {
 		assertLessThan(p3, p9); // (4,1,2,3,0) < (4,2,1,0,3)
 		
 		/**
-		 * Generators can also be used to create sequences over all Permutations via the
-		 * getOrderedSequence() method. This returns a Sequence that can step systematically
-		 * through Permutations in their natural order
+		 * Generators can also be used to create sequences over all Permutations
+		 * via the getOrderedSequence() method. This returns a Sequence that can
+		 * step systematically through Permutations in their natural order
 		 */
 		
 		// we're going to build a set of all permutations
@@ -205,10 +214,11 @@ public class PermutationSample {
 		// GETTING INFORMATION ABOUT PERMUTATIONS
 		
 		/**
-		 * Sometimes it's very useful to know more information about a permutation
-		 * and this is available through an Info object associated with each Permutation.
-		 * Info is created lazily so that the Permutation objects usually stay extremely compact.
-		 * Here is some of the information available:
+		 * Sometimes it's very useful to know more information about a
+		 * permutation and this is available through an Info object associated
+		 * with each Permutation. Info is created lazily so that the Permutation
+		 * objects usually stay extremely compact. Here is some of the
+		 * information available:
 		 */
 		
 		Permutation.Info info = p9.getInfo(); // let's investigate permutation p9.
@@ -231,13 +241,15 @@ public class PermutationSample {
 		assertTrue(p10.getInfo().isIdentity());
 
 		/**
-		 * Note that permutations are always applied with the minimum number of transpositions possible.
+		 * Note that permutations are always applied with the minimum number of
+		 * transpositions possible.
 		 */
 		
 		// ADDITIONAL OBSERVATIONS
 		
 		/**
-		 * It's valid, though not commonly useful, to have a zero length Permutation.
+		 * It's valid, though not commonly useful, to have a zero length
+		 * Permutation.
 		 */
 		
 		Permutation px1 = new Permutation();
@@ -251,8 +263,9 @@ public class PermutationSample {
 		Permutation.rotate(4, -1).permute(new PermutableChars('s', 'c', 'a', 't'));
 		
 		/**
-		 * Permutations are immutable, final, Serializable and validate their input when deserialized.
-		 * So they can be reliably used in security sensitive contexts.
+		 * Permutations are immutable, final, Serializable and validate their
+		 * input when deserialized. So they can be reliably used in security
+		 * sensitive contexts.
 		 */
 		
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -280,10 +293,5 @@ public class PermutationSample {
 	private static void assertLessThan(Permutation p1, Permutation p2) {
 		if (p1.compareTo(p2) >= 0) throw new IllegalStateException();
 	}
-
-	private static void assertLessThan(int comp) {
-		if (comp >= 0) throw new IllegalStateException();
-	}
-
 
 }

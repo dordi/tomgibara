@@ -28,24 +28,17 @@ public class EliasOmegaEncoding {
         return encode0(size-1, writer) + writer.write(value, size);
 	}
 	
-    //can only encode strictly positive values
-    public static int encode(int value, BitWriter writer) {
-        if (value == 0) throw new IllegalArgumentException();
-    	int c = encode0(value, writer);
-        writer.writeBit(0);
-        return c + 1;
-    }
-
 	private static int encodeLong0(long value, BitWriter writer) {
 		if (value == 1L) return 0;
         int size = 64 - Long.numberOfLeadingZeros(value); //position of leading 1
         return encodeLong0(size-1, writer) + writer.write(value, size);
 	}
 	
+	
     //can only encode strictly positive values
-    public static int encodeLong(long value, BitWriter writer) {
-        if (value == 0L) throw new IllegalArgumentException();
-    	int c = encodeLong0(value, writer);
+    public static int encode(int value, BitWriter writer) {
+        if (value <= 0) throw new IllegalArgumentException();
+    	int c = encode0(value, writer);
         writer.writeBit(0);
         return c + 1;
     }
@@ -53,12 +46,31 @@ public class EliasOmegaEncoding {
     public static int decode(BitReader reader) {
     	int value = 1;
     	while (true) {
-	    	int b = reader.readBit();
-	    	if (b == 0) return value;
+	    	if (!reader.readBoolean()) return value;
 	    	value = (1 << value) | reader.read(value);
     	}
     }
+
+    public static int encodeSigned(int value, BitWriter writer) {
+    	value = value > 0 ? value << 1 : 1 - (value << 1);
+    	int c = encode0(value, writer);
+        writer.writeBit(0);
+        return c + 1;
+    }
+
+    public static int decodeSigned(BitReader reader) {
+    	int value = decode(reader);
+    	return (value & 1) == 1 ? (1 - value) >> 1 : value >>> 1;
+    }
     
+    //can only encode strictly positive values
+    public static int encodeLong(long value, BitWriter writer) {
+        if (value <= 0L) throw new IllegalArgumentException();
+    	int c = encodeLong0(value, writer);
+        writer.writeBit(0);
+        return c + 1;
+    }
+
     public static long decodeLong(BitReader reader) {
     	long value = 1;
     	while (true) {

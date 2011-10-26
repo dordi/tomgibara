@@ -20,6 +20,13 @@ public class OutputStreamBitWriter extends AbstractBitWriter {
 	public int writeBit(int bit) {
 		buffer = (buffer << 1) | (bit & 1);
 		count++;
+		flush();
+		bitsWritten++;
+		return 1;
+	}
+	
+	@Override
+	public void flush() {
 		if (count == 8) {
 			try {
 				out.write(buffer);
@@ -28,17 +35,6 @@ public class OutputStreamBitWriter extends AbstractBitWriter {
 				throw new BitStreamException(e);
 			}
 			count = 0;
-		}
-		bitsWritten++;
-		return 1;
-	}
-	
-	@Override
-	public void flush() {
-		try {
-			out.flush();
-		} catch (IOException e) {
-			throw new BitStreamException(e);
 		}
 	}
 	

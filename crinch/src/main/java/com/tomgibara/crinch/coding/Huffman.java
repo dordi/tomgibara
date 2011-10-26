@@ -93,6 +93,7 @@ public class Huffman {
     private int[] cumm;
     private Nid root;
     
+    //NOTE: supplied array must have already been sorted in descending order
     public Huffman(long[] freqs) {
     	symbols = freqs.length;
 //      System.out.println( Arrays.toString(freqs) );

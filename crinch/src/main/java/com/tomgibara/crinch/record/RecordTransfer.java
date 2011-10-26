@@ -24,7 +24,7 @@ public class RecordTransfer<R> {
 				context.setProgress(recordNumber = 0);
 				while (sequence.hasNext()) {
 					consumer.consume(sequence.next());
-					context.setProgress(recordNumber++);
+					context.setProgress(++recordNumber);
 				}
 				consumer.endPass();
 			} finally {

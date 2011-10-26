@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class CharFrequencyRecorder {
 
-	private int[] frequencies = new int[128]; // assume ASCII to start
+	private long[] frequencies = new long[128]; // assume ASCII to start
 	
 	public void record(char c) {
 		ensureLength(c);
@@ -46,7 +46,7 @@ public class CharFrequencyRecorder {
 		}
 	}
 	
-	public int[] getFrequencies() {
+	public long[] getFrequencies() {
 		return frequencies;
 	}
 	

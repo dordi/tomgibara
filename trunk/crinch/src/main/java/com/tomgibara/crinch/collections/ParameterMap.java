@@ -453,7 +453,12 @@ public final class ParameterMap<V> implements Map<String, V> {
 
 		@Override
 		public boolean remove(Object o) {
-			return remove(o);
+			final int i = cons.indexOf(o);
+			if (i < 0) return false;
+			if (values[i] == NULL) return false;
+			values[i] = NULL;
+			size--;
+			return true;
 		}
 		
 		@Override

@@ -3,6 +3,8 @@
  */
 package com.tomgibara.crinch.bits;
 
+import java.math.BigInteger;
+
 /**
  * An interface for reading bits from a stream.
  * 
@@ -57,4 +59,30 @@ public interface BitReader {
 	 */
     
     long readLong(int count) throws BitStreamException;
+
+	/**
+	 * Read a number of bits from a stream of bits.
+	 * 
+	 * @param count
+	 *            the number of bits to read
+	 * @return the read bits as a big integer
+	 * @throws BitStreamException
+	 *             if an exception occurs when reading the stream
+	 */
+    
+    BigInteger readBigInt(int count) throws BitStreamException;
+    
+	/**
+	 * Fills the supplied bit vector with bits from the stream. Bits are
+	 * recorded from the most significant places down to the the least
+	 * significant places.
+	 * 
+	 * @param bits
+	 *            records the bits read
+	 * @throws BitStreamException
+	 *             if an exception occurs when reading the stream
+	 */
+    
+    void readBits(BitVector bits) throws BitStreamException;
+
 }

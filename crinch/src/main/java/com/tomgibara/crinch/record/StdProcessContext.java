@@ -1,11 +1,14 @@
 package com.tomgibara.crinch.record;
 
+import java.util.List;
+
 public class StdProcessContext implements ProcessContext {
 
-	private float progressStep = 0.01f;
-	private long progressScale = 0L;
-	private float lastProgress;
+	private float progressStep = 0.05f;
+	private long recordCount = 0L;
 	private float progress;
+	private float lastProgress;
+	private List<ColumnStats> columnStats;
 
 	public StdProcessContext() {
 		resetProgress();
@@ -17,26 +20,34 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	@Override
-	public void setProgress(long progress) {
-		if (progressScale == 0f) return;
-		float p;
-		if (progress <= 0) {
-			p = 0f;
-		} else if (progress >= progressScale) {
-			p = 1f;
+	public void setRecordsTransferred(long recordsTransferred) {
+		if (recordCount == 0f) return;
+		float progress;
+		if (recordsTransferred <= 0) {
+			progress = 0f;
+		} else if (recordsTransferred >= recordCount) {
+			progress = 1f;
 		} else {
-			p = (float)(progress / (double) progressScale);
+			progress = (float)(recordsTransferred / (double) recordCount);
 		}
-		if (p < this.progress || p > lastProgress + progressStep || p > lastProgress && p == 1f) {
-			reportProgress(p);
+		if (progress < this.progress || progress > lastProgress + progressStep || progress > lastProgress && progress == 1f) {
+			reportProgress(progress);
 		}
 	}
 	
 	@Override
-	public void setProgressScale(long progressScale) {
-		if (progressScale < 0L) throw new IllegalArgumentException("negative progress");
-		this.progressScale = progressScale;
-		if (progressScale == 0L) resetProgress();
+	public void setRecordCount(long recordCount) {
+		if (recordCount < 0L) throw new IllegalArgumentException("negative progress");
+		this.recordCount = recordCount;
+		if (recordCount == 0L) resetProgress();
+	}
+	
+	public void setColumnStats(List<ColumnStats> columnStats) {
+		this.columnStats = columnStats;
+	}
+	
+	public List<ColumnStats> getColumnStats() {
+		return columnStats;
 	}
 	
 	@Override

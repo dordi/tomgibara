@@ -62,7 +62,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			compactor = analyzer.compactor();
 			open();
 			System.out.println("Record count: " + analyzer.getRecordCount());
-			EliasOmegaEncoding.encodeLong(analyzer.getRecordCount() + 1, writer);
+			EliasOmegaEncoding.encodePositiveLong(analyzer.getRecordCount() + 1, writer);
 			RecordDecompactor.write(compactor.decompactor(), writer);
 			break;
 		}

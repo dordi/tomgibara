@@ -1,11 +1,13 @@
 package com.tomgibara.crinch.record.compact;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.EliasOmegaEncoding;
 import com.tomgibara.crinch.coding.Huffman;
+import com.tomgibara.crinch.record.ColumnStats;
 
 class ColumnCompactor {
 
@@ -50,55 +52,26 @@ class ColumnCompactor {
 		
 	}
 	
-	//TODO not entirely correct: huffman implementation may vary and produce different codes
-	static int write(ColumnCompactor cc, BitWriter writer) {
-		int c = EliasOmegaEncoding.encode(cc.type.ordinal() + 1, writer);
-		c += writer.writeBoolean(cc.nullable);
-		//TODO needs coding support for signed long values
-		//c += writer.write(cc.offset, 64);
-		c += writer.write((int) cc.offset, 32);
-		int freqCount = cc.freqs == null ? 0 : cc.freqs.length;
-		c += EliasOmegaEncoding.encode(freqCount + 1, writer);
-		for (int i = 0; i < freqCount; i++) {
-			c += EliasOmegaEncoding.encodeLong(cc.freqs[i] + 1, writer);
-		}
-		return c;
-	}
-	
-	static ColumnCompactor read(BitReader reader) {
-		int typeOrdinal = EliasOmegaEncoding.decode(reader) - 1;
-		ColumnType type = ColumnType.values()[typeOrdinal];
-		boolean nullable = reader.readBoolean();
-		//long offset = reader.readLong(64);
-		long offset = reader.read(32);
-		int freqCount = EliasOmegaEncoding.decode(reader) - 1;
-		long[] freqs;
-		if (freqCount == 0) {
-			freqs = null;
-		} else {
-			freqs = new long[freqCount];
-			for (int i = 0; i < freqs.length; i++) {
-				freqs[i] = EliasOmegaEncoding.decodeLong(reader) - 1;
-			}
-		}
-		return new ColumnCompactor(type, nullable, offset, freqs);
-	}
-	
-
-	private final ColumnType type;
+	private final ColumnStats stats;
+	// derived from stats
 	private final boolean nullable;
 	private final long offset;
-	private final long[] freqs;
 	
 	private final int[][] lookup;
 	private final Huffman huffman;
 	
-	ColumnCompactor(ColumnType type, boolean nullable, long offset, long[] freqs) {
-		if (freqs != null && freqs.length == 0) freqs = null;
-		this.type = type;
-		this.nullable = nullable;
-		this.offset = offset;
-		this.freqs = freqs;
+	ColumnCompactor(ColumnStats stats) {
+		this.stats = stats;
+		this.nullable = stats.isNullable();
+		switch (stats.getClassification()) {
+		case INTEGRAL:
+		case TEXTUAL:
+			this.offset = stats.getSum().divideToIntegralValue(BigDecimal.valueOf(stats.getCount())).longValue();
+			break;
+			default:
+				this.offset = 0L;
+		}
+		long[] freqs = stats.getFrequencies();
 		if (freqs == null) {
 			lookup = null;
 			huffman = null;
@@ -117,17 +90,13 @@ class ColumnCompactor {
 		}
 	}
 
-	public ColumnType getType() {
-		return type;
+	ColumnStats getStats() {
+		return stats;
 	}
 	
-	boolean isNullable() {
-		return nullable;
-	}
-
 	int encodeString(BitWriter writer, String value) {
 		int length = value.length();
-		int n = EliasOmegaEncoding.encodeSigned(length - (int) offset, writer);
+		int n = EliasOmegaEncoding.encodeSignedInt(length - (int) offset, writer);
 		for (int i = 0; i < length; i++) {
 			char c = value.charAt(i);
 			n += huffman.encode(lookup[1][c]+1, writer);
@@ -146,7 +115,7 @@ class ColumnCompactor {
 	}
 	
 	String decodeString(BitReader reader) {
-		int length = ((int) offset) + EliasOmegaEncoding.decodeSigned(reader);
+		int length = ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
 		StringBuilder sb = new StringBuilder(length);
 		for (; length > 0; length--) {
 			sb.append( (char) lookup[0][huffman.decode(reader)-1] );
@@ -155,20 +124,19 @@ class ColumnCompactor {
 	}
 	
 	int encodeInt(BitWriter writer, int value) {
-		return EliasOmegaEncoding.encodeSigned(value - (int) offset, writer);
+		return EliasOmegaEncoding.encodeSignedInt(value - (int) offset, writer);
 	}
 	
 	int decodeInt(BitReader reader) {
-		return ((int) offset) + EliasOmegaEncoding.decodeSigned(reader);
+		return ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
 	}
 	
-	// TODO not fully implemented
 	int encodeLong(BitWriter writer, long value) {
-		return EliasOmegaEncoding.encodeLong(value - offset, writer);
+		return EliasOmegaEncoding.encodeSignedLong(value - offset, writer);
 	}
 	
 	long decodeLong(BitReader reader) {
-		return offset + EliasOmegaEncoding.decodeLong(reader);
+		return offset + EliasOmegaEncoding.decodeSignedLong(reader);
 	}
 	
 	int encodeBoolean(BitWriter writer, boolean value) {
@@ -180,23 +148,25 @@ class ColumnCompactor {
 	}
 	
 	int encodeFloat(BitWriter writer, float value) {
-		return writer.write(Float.floatToIntBits(value), 32);
+		//TODO support float methods directly when made available
+		return EliasOmegaEncoding.encodeDouble(value, writer);
 	}
 	
 	float decodeFloat(BitReader reader) {
-		return Float.intBitsToFloat( reader.read(32) );
+		//TODO support float methods directly when made available
+		return (float) EliasOmegaEncoding.decodeDouble(reader);
 	}
 	
 	int encodeDouble(BitWriter writer, double value) {
-		return writer.write(Double.doubleToLongBits(value), 64);
+		return EliasOmegaEncoding.encodeDouble(value, writer);
 	}
 	
 	double decodeDouble(BitReader reader) {
-		return Double.longBitsToDouble( reader.readLong(64) );
+		return EliasOmegaEncoding.decodeDouble(reader);
 	}
 
 	@Override
 	public String toString() {
-		return "Nullable? " + nullable + " Offset: " + offset + " Freqs: " + Arrays.toString(freqs);
+		return stats.toString();
 	}
 }

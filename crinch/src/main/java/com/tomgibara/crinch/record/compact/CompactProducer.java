@@ -27,7 +27,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	@Override
 	public RecordSequence<LinearRecord> open(ProcessContext context) {
 		Sequence seq = new Sequence();
-		context.setProgressScale(seq.recordCount);
+		context.setRecordCount(seq.recordCount);
 		return seq;
 	}
 
@@ -47,7 +47,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 				throw new RuntimeException(e);
 			}
 			reader = new InputStreamBitReader(in);
-			recordCount = EliasOmegaEncoding.decodeLong(reader) - 1;
+			recordCount = EliasOmegaEncoding.decodePositiveLong(reader) - 1;
 			System.out.println("Record count: " + recordCount);
 			decompactor = RecordDecompactor.read(reader);
 		}

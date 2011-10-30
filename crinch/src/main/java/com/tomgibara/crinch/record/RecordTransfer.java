@@ -21,10 +21,10 @@ public class RecordTransfer<R> {
 			if (sequence == null) throw new RuntimeException("null record sequence from producer");
 			try {
 				consumer.beginPass();
-				context.setProgress(recordNumber = 0);
+				context.setRecordsTransferred(recordNumber = 0);
 				while (sequence.hasNext()) {
 					consumer.consume(sequence.next());
-					context.setProgress(++recordNumber);
+					context.setRecordsTransferred(++recordNumber);
 				}
 				consumer.endPass();
 			} finally {

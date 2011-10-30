@@ -1,6 +1,7 @@
 package com.tomgibara.crinch.record.compact;
 
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ValueParser;
 
@@ -8,10 +9,16 @@ class RecordCompactor {
 
 
 	private final ValueParser parser;
+	private final ColumnType[] types;
 	private final ColumnCompactor[] compactors;
 	
-	RecordCompactor(ValueParser parser, ColumnCompactor[] compactors) {
+	RecordCompactor(ValueParser parser, ColumnType[] types, ColumnStats[] stats) {
 		this.parser = parser;
+		this.types = types;
+		ColumnCompactor[] compactors = new ColumnCompactor[stats.length];
+		for (int i = 0; i < compactors.length; i++) {
+			compactors[i] = new ColumnCompactor(stats[i]);
+		}
 		this.compactors = compactors;
 	}
 
@@ -23,7 +30,7 @@ class RecordCompactor {
 			boolean isNull = str == null;
 			c += compactor.encodeNull(writer, isNull);
 			if (isNull) continue;
-			switch (compactor.getType()) {
+			switch (types[i]) {
 			case BOOLEAN_PRIMITIVE:
 			case BOOLEAN_WRAPPER:
 				c += compactor.encodeBoolean(writer, parser.parseBoolean(str));

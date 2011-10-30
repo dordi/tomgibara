@@ -23,6 +23,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	
 	private final ValueParser parser;
 	private final File outFile;
+	private ProcessContext context = null;
 	private int pass;
 	private RecordTyper typer;
 	private RecordAnalyzer analyzer;
@@ -41,6 +42,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		pass = PASS_TYPE;
+		this.context = context;
 	}
 
 	@Override
@@ -50,18 +52,19 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void beginPass() {
-		System.out.println("===== BEGINNING PASS " + pass + " =====");
 		switch (pass) {
 		case PASS_TYPE:
+			context.setPassName("Identifying types");
 			typer = new RecordTyper(parser);
 			break;
 		case PASS_STATS:
+			context.setPassName("Gathering statistics");
 			analyzer = typer.analyzer();
 			break;
 		case PASS_WRITE:
+			context.setPassName("Compacting data");
 			compactor = analyzer.compactor();
 			open();
-			System.out.println("Record count: " + analyzer.getRecordCount());
 			EliasOmegaEncoding.encodePositiveLong(analyzer.getRecordCount() + 1, writer);
 			RecordDecompactor.write(compactor.decompactor(), writer);
 			break;
@@ -80,7 +83,6 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			break;
 		case PASS_WRITE:
 			int c = compactor.compact(writer, record);
-			//System.out.println(c);
 			bitsWritten += c;
 			break;
 		}
@@ -90,10 +92,10 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	public void endPass() {
 		switch(pass) {
 		case PASS_TYPE:
-			System.out.println("Types identified as " + typer.getColumnTypes());
+			context.log("Types: " + typer.getColumnTypes());
 			break;
 		case PASS_STATS:
-			System.out.println(analyzer.toString());
+			context.setColumnStats(analyzer.stats());
 			break;
 		}
 		pass++;
@@ -125,7 +127,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 				writer.padToByteBoundary();
 				writer.flush();
 			} catch (RuntimeException e) {
-				e.printStackTrace();
+				context.log("Failed to flush writer", e);
 			} finally {
 				writer = null;
 			}
@@ -134,10 +136,13 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			try {
 				out.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				context.log("Failed to close file", e);
 			} finally {
 				out = null;
 			}
+		}
+		if (context != null) {
+			context = null;
 		}
 	}
 	

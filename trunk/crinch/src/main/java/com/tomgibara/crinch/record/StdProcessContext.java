@@ -4,10 +4,11 @@ import java.util.List;
 
 public class StdProcessContext implements ProcessContext {
 
-	private float progressStep = 0.05f;
+	private float progressStep = 1.0f;
 	private long recordCount = 0L;
 	private float progress;
 	private float lastProgress;
+	private String passName;
 	private List<ColumnStats> columnStats;
 
 	public StdProcessContext() {
@@ -37,15 +38,39 @@ public class StdProcessContext implements ProcessContext {
 	
 	@Override
 	public void setRecordCount(long recordCount) {
-		if (recordCount < 0L) throw new IllegalArgumentException("negative progress");
+		if (recordCount < 0L) throw new IllegalArgumentException("negative recordCount");
+		if (recordCount == this.recordCount) return;
 		this.recordCount = recordCount;
+		log("Record count: " + recordCount);
 		if (recordCount == 0L) resetProgress();
 	}
 	
-	public void setColumnStats(List<ColumnStats> columnStats) {
-		this.columnStats = columnStats;
+	@Override
+	public void setPassName(String passName) {
+		if (passName != null && !passName.equals(this.passName)) {
+			log("Pass: " + passName);
+		}
+		this.passName = passName;
 	}
 	
+	@Override
+	public String getPassName() {
+		return passName;
+	}
+	
+	@Override
+	public void setColumnStats(List<ColumnStats> columnStats) {
+		if (columnStats != null && !columnStats.equals(this.columnStats)) {
+			int col = 1;
+			for (ColumnStats stats : columnStats) {
+				log("Statistics - column " + col++ + ": " + stats);
+			}
+		}
+		this.columnStats = columnStats;
+		
+	}
+	
+	@Override
 	public List<ColumnStats> getColumnStats() {
 		return columnStats;
 	}
@@ -67,6 +92,7 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	private void reportProgress(float progress) {
+		if (progressStep >= 1.0f) return;
 		this.progress = progress;
 		lastProgress = progress;
 		log("Progress: " + Math.round(progress * 100f) + "%");

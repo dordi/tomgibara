@@ -71,6 +71,46 @@ public enum ColumnType {
 		list.addAll(OBJECT_TYPES);
 		ALL_TYPES = Collections.unmodifiableList(list);
 	}
-	
+
+	@Override
+	public String toString() {
+		switch (this) {
+		case BOOLEAN_PRIMITIVE:
+			return "boolean";
+		case BOOLEAN_WRAPPER:
+			return "Boolean";
+		case BYTE_PRIMITIVE:
+			return "byte";
+		case BYTE_WRAPPER:
+			return "Byte";
+		case CHAR_PRIMITIVE:
+			return "char";
+		case CHAR_WRAPPER:
+			return "Character";
+		case DOUBLE_PRIMITIVE:
+			return "double";
+		case DOUBLE_WRAPPER:
+			return "Double";
+		case FLOAT_PRIMITIVE:
+			return "float";
+		case FLOAT_WRAPPER:
+			return "Float";
+		case INT_PRIMITIVE:
+			return "int";
+		case INT_WRAPPER:
+			return "Integer";
+		case LONG_PRIMITIVE:
+			return "long";
+		case LONG_WRAPPER:
+			return "Long";
+		case SHORT_PRIMITIVE:
+			return "short";
+		case SHORT_WRAPPER:
+			return "Short";
+		case STRING_OBJECT:
+			return "String";
+			default: return name();
+		}
+	}
 
 }

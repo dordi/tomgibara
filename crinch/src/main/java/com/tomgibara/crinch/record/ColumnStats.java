@@ -134,7 +134,7 @@ public class ColumnStats {
 	
 	@Override
 	public String toString() {
-		return "Classification: " + classification + "  Nullable? " + nullable + "  Minimum: " + minimum + "  Maximum: " + maximum + "  Sum: " + sum + "  Count: " + count + "  Frequencies: " + Arrays.toString(frequencies);
+		return "classification: " + classification + ", nullable? " + nullable + ", minimum: " + minimum + ", maximum: " + maximum + " sum: " + sum + ", count: " + count + ", frequencies: " + Arrays.toString(frequencies);
 	}
 	
 }

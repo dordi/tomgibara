@@ -1,5 +1,6 @@
 package com.tomgibara.crinch.record.compact;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.tomgibara.crinch.record.ColumnStats;
@@ -43,6 +44,15 @@ class RecordAnalyzer {
 		return new RecordCompactor(parser, types, stats);
 	}
 
+	List<ColumnStats> stats() {
+		final int length = analyzers.length;
+		List<ColumnStats> stats = new ArrayList<ColumnStats>();
+		for (int i = 0; i < length; i++) {
+			stats.add( analyzers[i].stats() );
+		}
+		return stats;
+	}
+	
 	@Override
 	public String toString() {
 		String nl = String.format("%n");

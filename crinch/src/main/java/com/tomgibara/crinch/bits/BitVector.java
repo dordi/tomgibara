@@ -661,6 +661,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return bytes;
 	}
 	
+	//TODO consider renaming bigIntValue() for pseudo-consistency with Number
 	public BigInteger toBigInteger() {
 		return start == finish ? BigInteger.ZERO : new BigInteger(1, toByteArray());
 	}

@@ -96,37 +96,18 @@ class CompactRecord implements LinearRecord {
 	public void skipNext() {
 		ColumnCompactor next = next();
 		next.decodeNull(reader);
-		switch (next.getType()) {
-		case BYTE_PRIMITIVE:
-		case BYTE_WRAPPER:
-		case SHORT_PRIMITIVE:
-		case SHORT_WRAPPER:
-		case INT_PRIMITIVE:
-		case INT_WRAPPER:
-		case CHAR_PRIMITIVE:
-		case CHAR_WRAPPER:
-			next.decodeInt(reader);
-			break;
-		case LONG_PRIMITIVE:
-		case LONG_WRAPPER:
+		switch (next.getStats().getClassification()) {
+		case INTEGRAL:
 			next.decodeLong(reader);
 			break;
-		case BOOLEAN_PRIMITIVE:
-		case BOOLEAN_WRAPPER:
+		case ENUMERATED:
+			//TODO assumes boolean ATM
 			next.decodeBoolean(reader);
-			break;
-		case FLOAT_PRIMITIVE:
-		case FLOAT_WRAPPER:
-			next.decodeFloat(reader);
-			break;
-		case DOUBLE_PRIMITIVE:
-		case DOUBLE_WRAPPER:
-			next.decodeDouble(reader);
-			break;
-		case STRING_OBJECT:
+		case FLOATING:
+			//TODO no way of knowing correct encoding (float/double?)
+			throw new UnsupportedOperationException();
+		case TEXTUAL:
 			next.decodeString(reader);
-			break;
-		default: throw new IllegalStateException();
 		}
 	}
 	

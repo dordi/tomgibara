@@ -2,9 +2,9 @@ package com.tomgibara.crinch.record;
 
 public interface ProcessContext {
 
-	void setProgress(long progress);
+	void setRecordsTransferred(long recordsTransferred);
 	
-	void setProgressScale(long progressScale);
+	void setRecordCount(long recordCount);
 	
 	void log(String message);
 	

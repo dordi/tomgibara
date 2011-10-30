@@ -2,6 +2,7 @@ package com.tomgibara.crinch.record.compact;
 
 import java.util.List;
 
+import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ValueParser;
 
@@ -32,11 +33,14 @@ class RecordAnalyzer {
 	}
 	
 	RecordCompactor compactor() {
-		ColumnCompactor[] compactors = new ColumnCompactor[analyzers.length];
-		for (int i = 0; i < compactors.length; i++) {
-			compactors[i] = analyzers[i].compactor();
+		final int length = analyzers.length;
+		ColumnStats[] stats = new ColumnStats[length];
+		ColumnType[] types = new ColumnType[length];
+		for (int i = 0; i < length; i++) {
+			stats[i] = analyzers[i].stats();
+			types[i] = analyzers[i].type;
 		}
-		return new RecordCompactor(parser, compactors);
+		return new RecordCompactor(parser, types, stats);
 	}
 
 	@Override
@@ -45,7 +49,7 @@ class RecordAnalyzer {
 		StringBuilder sb = new StringBuilder();
 		for (ColumnAnalyzer analyzer : analyzers) {
 			if (sb.length() > 0) sb.append(nl);
-			sb.append(analyzer.compactor());
+			sb.append(analyzer.stats());
 		}
 		return sb.toString();
 	}

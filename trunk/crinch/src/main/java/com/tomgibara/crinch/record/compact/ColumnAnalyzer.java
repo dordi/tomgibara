@@ -126,7 +126,8 @@ abstract class ColumnAnalyzer {
 			stats.setMaximum(trues == 0L ? BigDecimal.ZERO : BigDecimal.ONE );
 			stats.setSum(BigDecimal.valueOf(trues));
 			stats.setCount(trues + falses);
-			stats.setFrequencies(null);
+			stats.setFrequencies(new long[] {falses, trues});
+			stats.setEnumeration(new String[] {"false", "true"});
 			return stats;
 		}
 		
@@ -241,8 +242,15 @@ abstract class ColumnAnalyzer {
 	
 	private static class StringAnalyzer extends ColumnAnalyzer {
 		
+		//TODO make configurable
+		private final static int MAX_ENUM = 1024;
+		
 		private final CharFrequencyRecorder cfr = new CharFrequencyRecorder();
-
+		
+		private int enumCount = 0;
+		private String[] enumValues = new String[MAX_ENUM];
+		private long[] enumFreqs = new long[MAX_ENUM];
+		
 		private long lengthSum = 0L;
 		private long count = 0L;
 		private int minValue = Integer.MAX_VALUE;
@@ -263,6 +271,26 @@ abstract class ColumnAnalyzer {
 				count++;
 				minValue = Math.min(value, minValue);
 				maxValue = Math.max(value, maxValue);
+				if (enumValues != null) {
+					//TODO make something more efficient
+					int i = Arrays.binarySearch(enumValues, 0, enumCount, str);
+					if (i < 0) {
+						if (enumCount == MAX_ENUM) {
+							enumValues = null;
+							enumFreqs = null;
+							enumCount = -1;
+						} else {
+							i =  -i - 1;
+							System.arraycopy(enumValues, i, enumValues, i+1, enumCount - i);
+							System.arraycopy(enumFreqs, i, enumFreqs, i+1, enumCount - i);
+							enumValues[i] = str;
+							enumFreqs[i] = 0L;
+							enumCount++;
+						}
+					} else {
+						enumFreqs[i]++;
+					}
+				}
 			}
 		}
 		
@@ -270,12 +298,18 @@ abstract class ColumnAnalyzer {
 		ColumnStats stats() {
 			ColumnStats stats = new ColumnStats();
 			stats.setNullable(nullable);
-			stats.setClassification(Classification.TEXTUAL);
 			stats.setMinimum(BigDecimal.valueOf(minValue));
 			stats.setMaximum(BigDecimal.valueOf(maxValue));
 			stats.setSum(BigDecimal.valueOf(lengthSum));
 			stats.setCount(count);
-			stats.setFrequencies(cfr.getFrequencies());
+			if (enumFreqs == null) {
+				stats.setClassification(Classification.TEXTUAL);
+				stats.setFrequencies(cfr.getFrequencies());
+			} else {
+				stats.setClassification(Classification.ENUMERATED);
+				stats.setEnumeration(Arrays.copyOfRange(enumValues, 0, enumCount));
+				stats.setFrequencies(Arrays.copyOfRange(enumFreqs, 0, enumCount));
+			}
 			return stats;
 		}
 

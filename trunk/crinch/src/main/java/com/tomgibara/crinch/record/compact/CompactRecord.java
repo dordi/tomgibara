@@ -95,19 +95,25 @@ class CompactRecord implements LinearRecord {
 	@Override
 	public void skipNext() {
 		ColumnCompactor next = next();
-		next.decodeNull(reader);
+		if (next.decodeNull(reader)) return;
 		switch (next.getStats().getClassification()) {
 		case INTEGRAL:
 			next.decodeLong(reader);
 			break;
 		case ENUMERATED:
-			//TODO assumes boolean ATM
-			next.decodeBoolean(reader);
+			//TODO very ugly hack - move into the record?
+			if (next.getStats().getEnumeration().length == 2) {
+				next.decodeBoolean(reader);
+			} else {
+				next.decodeString(reader);
+			}
+			break;
 		case FLOATING:
-			//TODO no way of knowing correct encoding (float/double?)
-			throw new UnsupportedOperationException();
+			next.decodeDouble(reader);
+			break;
 		case TEXTUAL:
 			next.decodeString(reader);
+			break;
 		}
 	}
 	

@@ -6,6 +6,7 @@ public class StdProcessContext implements ProcessContext {
 
 	private float progressStep = 1.0f;
 	private long recordCount = 0L;
+	private long recordsTransferred = 0L;
 	private float progress;
 	private float lastProgress;
 	private String passName;
@@ -34,6 +35,7 @@ public class StdProcessContext implements ProcessContext {
 		if (progress < this.progress || progress > lastProgress + progressStep || progress > lastProgress && progress == 1f) {
 			reportProgress(progress);
 		}
+		this.recordsTransferred = recordsTransferred;
 	}
 	
 	@Override
@@ -41,6 +43,7 @@ public class StdProcessContext implements ProcessContext {
 		if (recordCount < 0L) throw new IllegalArgumentException("negative recordCount");
 		if (recordCount == this.recordCount) return;
 		this.recordCount = recordCount;
+		recordsTransferred = Math.min(recordsTransferred, recordCount);
 		log("Record count: " + recordCount);
 		if (recordCount == 0L) resetProgress();
 	}
@@ -82,7 +85,7 @@ public class StdProcessContext implements ProcessContext {
 	
 	@Override
 	public void log(String message, Throwable t) {
-		System.err.println(message);
+		System.err.println(message + "(records transferred: " + recordsTransferred + ")");
 		t.printStackTrace();
 	}
 

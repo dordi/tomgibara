@@ -27,6 +27,24 @@ public class ColumnStats {
 		return reader.readBoolean() ? null : EliasOmegaEncoding.decodeDecimal(reader);
 	}
 	
+	private static int writeString(String str, BitWriter writer) {
+		int length = str.length();
+		int c = EliasOmegaEncoding.encodePositiveInt(length + 1, writer);
+		for (int i = 0; i < length; i++) {
+			c += EliasOmegaEncoding.encodePositiveInt(str.charAt(i) + 1, writer);
+		}
+		return c;
+	}
+	
+	private static String readString(BitReader reader) {
+		int length = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
+		StringBuilder sb = new StringBuilder(length);
+		for (int i = 0; i < length; i++) {
+			sb.append((char) (EliasOmegaEncoding.decodePositiveInt(reader) - 1));
+		}
+		return sb.toString();
+	}
+	
 	//TODO not entirely correct: huffman implementation may vary and produce different codes
 	public static int write(ColumnStats stats, BitWriter writer) {
 		int c = EliasOmegaEncoding.encodePositiveInt(stats.classification.ordinal() + 1, writer);
@@ -41,6 +59,12 @@ public class ColumnStats {
 		for (int i = 0; i < freqCount; i++) {
 			c += EliasOmegaEncoding.encodePositiveLong(freqs[i] + 1, writer);
 		}
+		final String[] enums = stats.enumeration;
+		int enumCount = enums == null ? 0 : enums.length;
+		c += EliasOmegaEncoding.encodePositiveInt(enumCount + 1, writer);
+		for (int i = 0; i < enumCount; i++) {
+			c += writeString(enums[i], writer);
+		}
 		return c;
 	}
 	
@@ -52,17 +76,31 @@ public class ColumnStats {
 		stats.setMinimum(readDecimal(reader));
 		stats.setSum(readDecimal(reader));
 		stats.setCount(EliasOmegaEncoding.decodePositiveLong(reader) - 1);
+		
 		int freqCount = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
 		long[] freqs;
 		if (freqCount == 0) {
 			freqs = null;
 		} else {
 			freqs = new long[freqCount];
-			for (int i = 0; i < freqs.length; i++) {
+			for (int i = 0; i < freqCount; i++) {
 				freqs[i] = EliasOmegaEncoding.decodePositiveLong(reader) - 1;
 			}
 		}
 		stats.setFrequencies(freqs);
+		
+		int enumCount = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
+		String[] enums;
+		if (enumCount == 0) {
+			enums = null;
+		} else {
+			enums = new String[enumCount];
+			for (int i = 0; i < enumCount; i++) {
+				enums[i] = readString(reader);
+			}
+		}
+		stats.setEnumeration(enums);
+		
 		return stats;
 	}
 	
@@ -74,6 +112,7 @@ public class ColumnStats {
 	private BigDecimal sum;
 	private long count;
 	private long[] frequencies;
+	private String[] enumeration;
 
 	public void setClassification(Classification classification) {
 		this.classification = classification;
@@ -123,18 +162,27 @@ public class ColumnStats {
 		return count;
 	}
 	
-	public long[] getFrequencies() {
-		return frequencies;
-	}
-	
 	public void setFrequencies(long[] frequencies) {
 		if (frequencies != null && frequencies.length == 0) frequencies = null;
 		this.frequencies = frequencies;
 	}
+
+	public long[] getFrequencies() {
+		return frequencies;
+	}
+	
+	public void setEnumeration(String[] enumeration) {
+		if (enumeration != null && enumeration.length == 0) enumeration = null;
+		this.enumeration = enumeration;
+	}
+	
+	public String[] getEnumeration() {
+		return enumeration;
+	}
 	
 	@Override
 	public String toString() {
-		return "classification: " + classification + ", nullable? " + nullable + ", minimum: " + minimum + ", maximum: " + maximum + " sum: " + sum + ", count: " + count + ", frequencies: " + Arrays.toString(frequencies);
+		return "classification: " + classification + ", nullable? " + nullable + ", minimum: " + minimum + ", maximum: " + maximum + " sum: " + sum + ", count: " + count + ", frequencies: " + Arrays.toString(frequencies) + ", enumeration: " + Arrays.toString(enumeration);
 	}
 	
 }

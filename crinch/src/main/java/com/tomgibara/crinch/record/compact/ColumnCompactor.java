@@ -8,6 +8,7 @@ import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.EliasOmegaEncoding;
 import com.tomgibara.crinch.coding.Huffman;
 import com.tomgibara.crinch.record.ColumnStats;
+import com.tomgibara.crinch.record.ColumnStats.Classification;
 
 class ColumnCompactor {
 
@@ -56,6 +57,7 @@ class ColumnCompactor {
 	// derived from stats
 	private final boolean nullable;
 	private final long offset;
+	private final String[] enumeration;
 	
 	private final int[][] lookup;
 	private final Huffman huffman;
@@ -63,6 +65,7 @@ class ColumnCompactor {
 	ColumnCompactor(ColumnStats stats) {
 		this.stats = stats;
 		this.nullable = stats.isNullable();
+		this.enumeration = stats.getClassification() == Classification.ENUMERATED ? stats.getEnumeration() : null;
 		switch (stats.getClassification()) {
 		case INTEGRAL:
 		case TEXTUAL:
@@ -94,16 +97,6 @@ class ColumnCompactor {
 		return stats;
 	}
 	
-	int encodeString(BitWriter writer, String value) {
-		int length = value.length();
-		int n = EliasOmegaEncoding.encodeSignedInt(length - (int) offset, writer);
-		for (int i = 0; i < length; i++) {
-			char c = value.charAt(i);
-			n += huffman.encode(lookup[1][c]+1, writer);
-		}
-		return n;
-	}
-	
 	int encodeNull(BitWriter writer, boolean isNull) {
 		if (!nullable) return 0;
 		return writer.writeBoolean(isNull);
@@ -114,13 +107,33 @@ class ColumnCompactor {
 		return reader.readBoolean();
 	}
 	
-	String decodeString(BitReader reader) {
-		int length = ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
-		StringBuilder sb = new StringBuilder(length);
-		for (; length > 0; length--) {
-			sb.append( (char) lookup[0][huffman.decode(reader)-1] );
+	int encodeString(BitWriter writer, String value) {
+		if (enumeration != null) {
+			int i = Arrays.binarySearch(enumeration, value);
+			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
+			return huffman.encode(lookup[1][i]+1, writer);
+		} else {
+			int length = value.length();
+			int n = EliasOmegaEncoding.encodeSignedInt(length - (int) offset, writer);
+			for (int i = 0; i < length; i++) {
+				char c = value.charAt(i);
+				n += huffman.encode(lookup[1][c]+1, writer);
+			}
+			return n;
 		}
-		return sb.toString();
+	}
+	
+	String decodeString(BitReader reader) {
+		if (enumeration != null) {
+			return enumeration[ lookup[0][huffman.decode(reader)-1] ];
+		} else {
+			int length = ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
+			StringBuilder sb = new StringBuilder(length);
+			for (; length > 0; length--) {
+				sb.append( (char) lookup[0][huffman.decode(reader)-1] );
+			}
+			return sb.toString();
+		}
 	}
 	
 	int encodeInt(BitWriter writer, int value) {

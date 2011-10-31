@@ -17,7 +17,6 @@
  */
 package com.tomgibara.crinch.coding;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.tomgibara.crinch.bits.BitReader;
@@ -25,42 +24,57 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
-public class EliasOmegaEncoding {
+final public class EliasOmegaEncoding extends AbstractCoding {
 
-	private static int encodeInt0(int value, BitWriter writer) {
+	// statics
+	
+	public static final EliasOmegaEncoding instance = new EliasOmegaEncoding();
+	public static final ExtendedCoding extended = new ExtendedCoding(instance);
+	
+	private static int encodeInt0(BitWriter writer, int value) {
 		if (value == 1) return 0;
         int size = 32 - Integer.numberOfLeadingZeros(value); //position of leading 1
-        return encodeInt0(size-1, writer) + writer.write(value, size);
+        return encodeInt0(writer, size-1) + writer.write(value, size);
 	}
 	
-	private static int encodeLong0(long value, BitWriter writer) {
+	private static int encodeLong0(BitWriter writer, long value) {
 		if (value == 1L) return 0;
         int size = 64 - Long.numberOfLeadingZeros(value); //position of leading 1
-        return encodeInt0(size-1, writer) + writer.write(value, size);
+        return encodeInt0(writer, size-1) + writer.write(value, size);
 	}
 
-	private static int encodeBigInt0(BigInteger value, BitWriter writer) {
+	private static int encodeBigInt0(BitWriter writer, BigInteger value) {
 		if (value.equals(BigInteger.ONE)) return 0;
 		int size = value.bitLength();
-		return encodeInt0(size - 1, writer) + writer.write(value, size);
+		return encodeInt0(writer, size - 1) + writer.write(value, size);
 	}
+
+	// constructors
 	
-    public static int encodePositiveInt(int value, BitWriter writer) {
+	private EliasOmegaEncoding() {}
+	
+	// coding methods
+	
+	@Override
+    public int encodePositiveInt(BitWriter writer, int value) {
         if (value <= 0) throw new IllegalArgumentException();
-    	return encodeInt0(value, writer) + writer.writeBit(0);
+    	return unsafeEncodePositiveInt(writer, value);
     }
 
-    public static int encodePositiveLong(long value, BitWriter writer) {
+	@Override
+    public int encodePositiveLong(BitWriter writer, long value) {
         if (value <= 0L) throw new IllegalArgumentException();
-    	return encodeLong0(value, writer) + writer.writeBit(0);
+    	return unsafeEncodePositiveLong(writer, value);
     }
 
-    public static int encodePositiveBigInt(BigInteger value, BitWriter writer) {
+	@Override
+    public int encodePositiveBigInt(BitWriter writer, BigInteger value) {
         if (value.signum() != 1) throw new IllegalArgumentException();
-    	return encodeBigInt0(value, writer) + writer.writeBit(0);
+    	return unsafeEncodePositiveBigInt(writer, value);
     }
 
-    public static int decodePositiveInt(BitReader reader) {
+	@Override
+    public int decodePositiveInt(BitReader reader) {
     	int value = 1;
     	while (reader.readBoolean()) {
 	    	value = (1 << value) | reader.read(value);
@@ -68,7 +82,8 @@ public class EliasOmegaEncoding {
     	return value;
     }
 
-    public static long decodePositiveLong(BitReader reader) {
+	@Override
+    public long decodePositiveLong(BitReader reader) {
     	long value = 1;
     	while (reader.readBoolean()) {
 	    	value = (1L << (int)value) | reader.readLong((int)value);
@@ -76,7 +91,8 @@ public class EliasOmegaEncoding {
     	return value;
     }
     
-    public static BigInteger decodePositiveBigInt(BitReader reader) {
+	@Override
+    public BigInteger decodePositiveBigInt(BitReader reader) {
     	int value = 1;
     	while (reader.readBoolean()) {
     		if (value < 32) {
@@ -91,82 +107,20 @@ public class EliasOmegaEncoding {
     	}
     	return BigInteger.valueOf(value & 0xffffffffL);
     }
-    
-    public static int encodeSignedInt(int value, BitWriter writer) {
-    	value = value > 0 ? value << 1 : 1 - (value << 1);
-    	return encodeInt0(value, writer) + writer.writeBit(0);
+
+    @Override
+    int unsafeEncodePositiveInt(BitWriter writer, int value) {
+    	return encodeInt0(writer, value) + writer.writeBit(0);
     }
 
-    public static int decodeSignedInt(BitReader reader) {
-    	int value = decodePositiveInt(reader);
-    	// the term ... | (value & (1 << 31) serves to restore sign bit
-    	// in the special case where decoding overflows
-    	// but we have enough info to reconstruct the correct value
-   		return (value & 1) == 1 ? ((1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
+    @Override
+    int unsafeEncodePositiveLong(BitWriter writer, long value) {
+    	return encodeLong0(writer, value) + writer.writeBit(0);
     }
     
-    public static int encodeSignedLong(long value, BitWriter writer) {
-    	value = value > 0L ? value << 1 : 1L - (value << 1);
-    	return encodeLong0(value, writer) + writer.writeBit(0);
-    }
-
-    public static long decodeSignedLong(BitReader reader) {
-    	long value = decodePositiveLong(reader);
-    	// see comments in decodeSignedInt
-   		return (value & 1L) == 1L ? ((1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
-    }
-    
-    public static int encodeSignedBigInt(BigInteger value, BitWriter writer) {
-    	value = value.signum() == 1 ? value = value.shiftLeft(1) : BigInteger.ONE.subtract(value.shiftLeft(1));
-    	return encodeBigInt0(value, writer) + writer.writeBit(0); 
-    }
-    
-    public static BigInteger decodeSignedBigInt(BitReader reader) {
-    	BigInteger value = decodePositiveBigInt(reader);
-    	return value.testBit(0) ? BigInteger.ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
-    }
-    
-    //TODO move off object - when methods are not static, can delegate
-    public static int encodeDouble(double value, BitWriter writer) {
-    	if (Double.isNaN(value) || Double.isInfinite(value)) throw new IllegalArgumentException();
-    	long bits = Double.doubleToLongBits(value);
-    	long sign = bits & 0x8000000000000000L;
-    	if (sign == bits) return encodePositiveInt(sign == 0L ? 1 : 2, writer);
-    	
-    	long mantissa = bits & 0x000fffffffffffffL;
-		if (sign == 0) {
-			mantissa = (mantissa << 1) + 3L;
-		} else {
-			mantissa = (mantissa << 1) + 4L;
-		}
-		int exponent = (int) ((bits & 0x7ff0000000000000L) >> 52) - 1023;
-    	return encodePositiveLong(mantissa, writer) + encodeSignedInt(exponent, writer);
-    }
-    
-    public static double decodeDouble(BitReader reader) {
-    	long mantissa = decodePositiveLong(reader);
-    	if (mantissa == 1L) return 0.0;
-    	if (mantissa == 2L) return -0.0;
-    	int exponent = decodeSignedInt(reader);
-    	long bits = (exponent + 1023L) << 52;
-    	if ((mantissa & 1L) == 0) {
-    		bits |= 0x8000000000000000L;
-    		mantissa = (mantissa - 4L) >> 1;
-    	} else {
-    		mantissa = (mantissa - 3L) >> 1;
-    	}
-    	bits |= mantissa;
-    	return Double.longBitsToDouble(bits);
-    }
-
-    public static int encodeDecimal(BigDecimal value, BitWriter writer) {
-    	return encodeSignedInt(value.scale(), writer) + encodeSignedBigInt(value.unscaledValue(), writer);
-    }
-    
-    public static BigDecimal decodeDecimal(BitReader reader) {
-    	int scale = decodeSignedInt(reader);
-    	BigInteger bigInt = decodeSignedBigInt(reader);
-    	return new BigDecimal(bigInt, scale);
+    @Override
+    int unsafeEncodePositiveBigInt(BitWriter writer, BigInteger value) {
+    	return encodeBigInt0(writer, value) + writer.writeBit(0);
     }
     
 }

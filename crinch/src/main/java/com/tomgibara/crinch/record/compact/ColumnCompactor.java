@@ -3,9 +3,9 @@ package com.tomgibara.crinch.record.compact;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import com.tomgibara.crinch.coding.CodedReader;
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.Huffman;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.ColumnStats.Classification;
@@ -97,85 +97,86 @@ class ColumnCompactor {
 		return stats;
 	}
 	
-	int encodeNull(BitWriter writer, boolean isNull) {
+	int encodeNull(CodedWriter writer, boolean isNull) {
 		if (!nullable) return 0;
-		return writer.writeBoolean(isNull);
+		return writer.getWriter().writeBoolean(isNull);
 	}
 	
-	boolean decodeNull(BitReader reader) {
+	boolean decodeNull(CodedReader reader) {
 		if (!nullable) return false;
-		return reader.readBoolean();
+		return reader.getReader().readBoolean();
 	}
 	
-	int encodeString(BitWriter writer, String value) {
+	int encodeString(CodedWriter writer, String value) {
+		BitWriter w = writer.getWriter();
 		if (enumeration != null) {
 			int i = Arrays.binarySearch(enumeration, value);
 			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
-			return huffman.encode(lookup[1][i]+1, writer);
+			return huffman.encode(lookup[1][i]+1, w);
 		} else {
 			int length = value.length();
-			int n = EliasOmegaEncoding.encodeSignedInt(length - (int) offset, writer);
+			int n = writer.writeSignedInt(length - (int) offset);
 			for (int i = 0; i < length; i++) {
 				char c = value.charAt(i);
-				n += huffman.encode(lookup[1][c]+1, writer);
+				n += huffman.encode(lookup[1][c]+1, w);
 			}
 			return n;
 		}
 	}
 	
-	String decodeString(BitReader reader) {
+	String decodeString(CodedReader reader) {
 		if (enumeration != null) {
-			return enumeration[ lookup[0][huffman.decode(reader)-1] ];
+			return enumeration[ lookup[0][huffman.decode(reader.getReader())-1] ];
 		} else {
-			int length = ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
+			int length = ((int) offset) + reader.readSignedInt();
 			StringBuilder sb = new StringBuilder(length);
 			for (; length > 0; length--) {
-				sb.append( (char) lookup[0][huffman.decode(reader)-1] );
+				sb.append( (char) lookup[0][huffman.decode(reader.getReader())-1] );
 			}
 			return sb.toString();
 		}
 	}
 	
-	int encodeInt(BitWriter writer, int value) {
-		return EliasOmegaEncoding.encodeSignedInt(value - (int) offset, writer);
+	int encodeInt(CodedWriter writer, int value) {
+		return writer.writeSignedInt(value - (int) offset);
 	}
 	
-	int decodeInt(BitReader reader) {
-		return ((int) offset) + EliasOmegaEncoding.decodeSignedInt(reader);
+	int decodeInt(CodedReader reader) {
+		return ((int) offset) + reader.readSignedInt();
 	}
 	
-	int encodeLong(BitWriter writer, long value) {
-		return EliasOmegaEncoding.encodeSignedLong(value - offset, writer);
+	int encodeLong(CodedWriter writer, long value) {
+		return writer.writeSignedLong(value - offset);
 	}
 	
-	long decodeLong(BitReader reader) {
-		return offset + EliasOmegaEncoding.decodeSignedLong(reader);
+	long decodeLong(CodedReader reader) {
+		return offset + reader.readSignedLong();
 	}
 	
-	int encodeBoolean(BitWriter writer, boolean value) {
-		return writer.writeBoolean(value);
+	int encodeBoolean(CodedWriter writer, boolean value) {
+		return writer.getWriter().writeBoolean(value);
 	}
 	
-	boolean decodeBoolean(BitReader reader) {
-		return reader.readBoolean();
+	boolean decodeBoolean(CodedReader reader) {
+		return reader.getReader().readBoolean();
 	}
 	
-	int encodeFloat(BitWriter writer, float value) {
+	int encodeFloat(CodedWriter writer, float value) {
 		//TODO support float methods directly when made available
-		return EliasOmegaEncoding.encodeDouble(value, writer);
+		return writer.writeDouble(value);
 	}
 	
-	float decodeFloat(BitReader reader) {
+	float decodeFloat(CodedReader reader) {
 		//TODO support float methods directly when made available
-		return (float) EliasOmegaEncoding.decodeDouble(reader);
+		return (float) reader.readDouble();
 	}
 	
-	int encodeDouble(BitWriter writer, double value) {
-		return EliasOmegaEncoding.encodeDouble(value, writer);
+	int encodeDouble(CodedWriter writer, double value) {
+		return writer.writeDouble(value);
 	}
 	
-	double decodeDouble(BitReader reader) {
-		return EliasOmegaEncoding.decodeDouble(reader);
+	double decodeDouble(CodedReader reader) {
+		return reader.readDouble();
 	}
 
 	@Override

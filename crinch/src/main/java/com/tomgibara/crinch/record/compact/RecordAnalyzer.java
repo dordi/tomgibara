@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.ValueParser;
 
 class RecordAnalyzer {
@@ -29,26 +30,22 @@ class RecordAnalyzer {
 		}
 	}
 	
-	long getRecordCount() {
-		return recordCount;
-	}
-	
 	RecordCompactor compactor() {
 		final int length = analyzers.length;
-		ColumnStats[] stats = new ColumnStats[length];
 		ColumnType[] types = new ColumnType[length];
 		for (int i = 0; i < length; i++) {
-			stats[i] = analyzers[i].stats();
 			types[i] = analyzers[i].type;
 		}
-		return new RecordCompactor(parser, types, stats);
+		return new RecordCompactor(parser, types, stats());
 	}
 
-	List<ColumnStats> stats() {
+	RecordStats stats() {
+		RecordStats stats = new RecordStats();
+		stats.setRecordCount(recordCount);
 		final int length = analyzers.length;
-		List<ColumnStats> stats = new ArrayList<ColumnStats>();
+		List<ColumnStats> list = stats.getColumnStats();
 		for (int i = 0; i < length; i++) {
-			stats.add( analyzers[i].stats() );
+			list.add( analyzers[i].stats() );
 		}
 		return stats;
 	}

@@ -1,20 +1,26 @@
 package com.tomgibara.crinch.record;
 
-import java.util.List;
+import com.tomgibara.crinch.coding.ExtendedCoding;
+
 
 public interface ProcessContext {
 
+	void setCoding(ExtendedCoding coding);
+	
+	ExtendedCoding getCoding();
+	
 	void setRecordsTransferred(long recordsTransferred);
 	
+	//TODO look at eliminating this redundant field
 	void setRecordCount(long recordCount);
 	
 	void setPassName(String passName);
 	
 	String getPassName();
 	
-	void setColumnStats(List<ColumnStats> columnStats);
+	void setRecordStats(RecordStats recordStats);
 	
-	List<ColumnStats> getColumnStats();
+	RecordStats getRecordStats();
 	
 	void log(String message);
 	

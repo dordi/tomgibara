@@ -1,16 +1,16 @@
 package com.tomgibara.crinch.record.compact;
 
-import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.record.LinearRecord;
 
 class CompactRecord implements LinearRecord {
 
 	private final ColumnCompactor[] compactors;
-	private final BitReader reader;
+	private final CodedReader reader;
 	private int index = 0;
 	private boolean nullFlag;
 	
-	CompactRecord(ColumnCompactor[] compactors, BitReader reader) {
+	CompactRecord(ColumnCompactor[] compactors, CodedReader reader) {
 		this.compactors = compactors;
 		this.reader = reader;
 	}

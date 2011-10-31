@@ -8,10 +8,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
+import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.ValueParser;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
@@ -30,6 +31,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private RecordCompactor compactor;
 	private OutputStream out;
 	private OutputStreamBitWriter writer;
+	private CodedWriter coded;
 	private long bitsWritten;
 	
 	public CompactConsumer(ValueParser parser, File outFile) {
@@ -65,13 +67,11 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			context.setPassName("Compacting data");
 			compactor = analyzer.compactor();
 			open();
-			EliasOmegaEncoding.encodePositiveLong(analyzer.getRecordCount() + 1, writer);
-			RecordDecompactor.write(compactor.decompactor(), writer);
+			RecordStats.write(coded, context.getRecordStats());
 			break;
 		}
 	}
 
-	int count = 0;
 	@Override
 	public void consume(LinearRecord record) {
 		switch (pass) {
@@ -82,7 +82,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			analyzer.analyze(record);
 			break;
 		case PASS_WRITE:
-			int c = compactor.compact(writer, record);
+			int c = compactor.compact(coded, record);
 			bitsWritten += c;
 			break;
 		}
@@ -95,7 +95,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			context.log("Types: " + typer.getColumnTypes());
 			break;
 		case PASS_STATS:
-			context.setColumnStats(analyzer.stats());
+			context.setRecordStats(analyzer.stats());
 			break;
 		}
 		pass++;
@@ -118,6 +118,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			throw new RuntimeException(e);
 		}
 		writer = new OutputStreamBitWriter(out);
+		coded = new CodedWriter(writer, context.getCoding());
 		bitsWritten = 0L;
 	}
 	
@@ -130,6 +131,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 				context.log("Failed to flush writer", e);
 			} finally {
 				writer = null;
+				coded = null;
 			}
 		}
 		if (out != null) {

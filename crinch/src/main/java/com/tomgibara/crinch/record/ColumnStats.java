@@ -5,9 +5,10 @@ import java.util.Arrays;
 
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.coding.CodedReader;
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.EliasOmegaEncoding;
 
-//TODO add enumerations array
 public class ColumnStats {
 
 	public enum Classification {
@@ -17,79 +18,79 @@ public class ColumnStats {
 		FLOATING
 	}
 
-	private static int writeDecimal(BigDecimal value, BitWriter writer) {
-		int c = writer.writeBoolean(value == null);
-		if (value != null) c+= EliasOmegaEncoding.encodeDecimal(value, writer);
+	private static int writeDecimal(CodedWriter writer, BigDecimal value) {
+		int c = writer.getWriter().writeBoolean(value == null);
+		if (value != null) c+= writer.writeDecimal(value);
 		return c;
 	}
 	
-	private static BigDecimal readDecimal(BitReader reader) {
-		return reader.readBoolean() ? null : EliasOmegaEncoding.decodeDecimal(reader);
+	private static BigDecimal readDecimal(CodedReader reader) {
+		return reader.getReader().readBoolean() ? null : reader.readDecimal();
 	}
 	
-	private static int writeString(String str, BitWriter writer) {
+	private static int writeString(CodedWriter writer, String str) {
 		int length = str.length();
-		int c = EliasOmegaEncoding.encodePositiveInt(length + 1, writer);
+		int c = writer.writePositiveInt(length + 1);
 		for (int i = 0; i < length; i++) {
-			c += EliasOmegaEncoding.encodePositiveInt(str.charAt(i) + 1, writer);
+			c += writer.writePositiveInt(str.charAt(i) + 1);
 		}
 		return c;
 	}
 	
-	private static String readString(BitReader reader) {
-		int length = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
+	private static String readString(CodedReader reader) {
+		int length = reader.readPositiveInt() - 1;
 		StringBuilder sb = new StringBuilder(length);
 		for (int i = 0; i < length; i++) {
-			sb.append((char) (EliasOmegaEncoding.decodePositiveInt(reader) - 1));
+			sb.append((char) (reader.readPositiveInt() - 1));
 		}
 		return sb.toString();
 	}
 	
 	//TODO not entirely correct: huffman implementation may vary and produce different codes
-	public static int write(ColumnStats stats, BitWriter writer) {
-		int c = EliasOmegaEncoding.encodePositiveInt(stats.classification.ordinal() + 1, writer);
-		c += writer.writeBoolean(stats.nullable);
-		c += writeDecimal(stats.maximum, writer);
-		c += writeDecimal(stats.minimum, writer);
-		c += writeDecimal(stats.sum, writer);
-		c += EliasOmegaEncoding.encodePositiveLong(stats.count + 1, writer);
+	public static int write(CodedWriter writer, ColumnStats stats) {
+		int c = writer.writePositiveInt(stats.classification.ordinal() + 1);
+		c += writer.getWriter().writeBoolean(stats.nullable);
+		c += writeDecimal(writer, stats.maximum);
+		c += writeDecimal(writer, stats.minimum);
+		c += writeDecimal(writer, stats.sum);
+		c += writer.writePositiveLong(stats.count + 1);
 		final long[] freqs = stats.frequencies;
 		int freqCount = freqs == null ? 0 : freqs.length;
-		c += EliasOmegaEncoding.encodePositiveInt(freqCount + 1, writer);
+		c += writer.writePositiveInt(freqCount + 1);
 		for (int i = 0; i < freqCount; i++) {
-			c += EliasOmegaEncoding.encodePositiveLong(freqs[i] + 1, writer);
+			c += writer.writePositiveLong(freqs[i] + 1);
 		}
 		final String[] enums = stats.enumeration;
 		int enumCount = enums == null ? 0 : enums.length;
-		c += EliasOmegaEncoding.encodePositiveInt(enumCount + 1, writer);
+		c += writer.writePositiveInt(enumCount + 1);
 		for (int i = 0; i < enumCount; i++) {
-			c += writeString(enums[i], writer);
+			c += writeString(writer, enums[i]);
 		}
 		return c;
 	}
 	
-	public static ColumnStats read(BitReader reader) {
+	public static ColumnStats read(CodedReader reader) {
 		ColumnStats stats = new ColumnStats();
-		stats.setClassification(ColumnStats.Classification.values()[EliasOmegaEncoding.decodePositiveInt(reader) - 1]);
-		stats.setNullable(reader.readBoolean());
+		stats.setClassification(ColumnStats.Classification.values()[reader.readPositiveInt() - 1]);
+		stats.setNullable(reader.getReader().readBoolean());
 		stats.setMaximum(readDecimal(reader));
 		stats.setMinimum(readDecimal(reader));
 		stats.setSum(readDecimal(reader));
-		stats.setCount(EliasOmegaEncoding.decodePositiveLong(reader) - 1);
+		stats.setCount(reader.readPositiveLong() - 1);
 		
-		int freqCount = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
+		int freqCount = reader.readPositiveInt() - 1;
 		long[] freqs;
 		if (freqCount == 0) {
 			freqs = null;
 		} else {
 			freqs = new long[freqCount];
 			for (int i = 0; i < freqCount; i++) {
-				freqs[i] = EliasOmegaEncoding.decodePositiveLong(reader) - 1;
+				freqs[i] = reader.readPositiveLong() - 1;
 			}
 		}
 		stats.setFrequencies(freqs);
 		
-		int enumCount = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
+		int enumCount = reader.readPositiveInt() - 1;
 		String[] enums;
 		if (enumCount == 0) {
 			enums = null;

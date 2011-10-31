@@ -1,24 +1,38 @@
 package com.tomgibara.crinch.record;
 
-import java.util.List;
+import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import com.tomgibara.crinch.coding.ExtendedCoding;
 
 public class StdProcessContext implements ProcessContext {
 
 	private float progressStep = 1.0f;
+	private ExtendedCoding coding = new ExtendedCoding(EliasOmegaEncoding.instance);
+	
 	private long recordCount = 0L;
 	private long recordsTransferred = 0L;
 	private float progress;
 	private float lastProgress;
 	private String passName;
-	private List<ColumnStats> columnStats;
+	private RecordStats recordStats;
 
 	public StdProcessContext() {
 		resetProgress();
 	}
-	
+
 	public void setProgressStep(float progressStep) {
 		if (progressStep < 0f) throw new IllegalArgumentException("negative progress");
 		this.progressStep = progressStep;
+	}
+
+	@Override
+	public void setCoding(ExtendedCoding coding) {
+		if (coding == null) throw new IllegalArgumentException("null coding");
+		this.coding = coding;
+	}
+
+	@Override
+	public ExtendedCoding getCoding() {
+		return coding;
 	}
 	
 	@Override
@@ -62,20 +76,20 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	@Override
-	public void setColumnStats(List<ColumnStats> columnStats) {
-		if (columnStats != null && !columnStats.equals(this.columnStats)) {
+	public void setRecordStats(RecordStats recordStats) {
+		if (recordStats != null && !recordStats.equals(this.recordStats)) {
 			int col = 1;
-			for (ColumnStats stats : columnStats) {
+			for (ColumnStats stats : recordStats.getColumnStats()) {
 				log("Statistics - column " + col++ + ": " + stats);
 			}
 		}
-		this.columnStats = columnStats;
+		this.recordStats = recordStats;
 		
 	}
 	
 	@Override
-	public List<ColumnStats> getColumnStats() {
-		return columnStats;
+	public RecordStats getRecordStats() {
+		return recordStats;
 	}
 	
 	@Override

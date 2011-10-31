@@ -3,7 +3,7 @@ package com.tomgibara.crinch.coding;
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
-public class EliasDeltaEncodingTest extends ExtendedCodingTest {
+public class EliasDeltaCodingTest extends ExtendedCodingTest {
 
 	@Override
 	ExtendedCoding getCoding() {

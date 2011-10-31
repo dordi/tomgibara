@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.coding;
 
 
-public class EliasOmegaEncodingTest extends ExtendedCodingTest {
+public class EliasOmegaCodingTest extends ExtendedCodingTest {
 
 	@Override
 	ExtendedCoding getCoding() {

@@ -11,7 +11,7 @@ import com.tomgibara.crinch.bits.MemoryBitWriter;
 
 public class EliasOmegaEncodingTest extends TestCase {
 
-	private final ExtendedCoding coding = EliasOmegaEncoding.extended;
+	private final ExtendedCoding coding = EliasOmegaCoding.extended;
 	
     public void testCorrectness() {
         int[] memory = new int[1];

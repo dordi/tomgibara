@@ -3,11 +3,8 @@ package com.tomgibara.crinch.record;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
 
 public class ColumnStats {
 

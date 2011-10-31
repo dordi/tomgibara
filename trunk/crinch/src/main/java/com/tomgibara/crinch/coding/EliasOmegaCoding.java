@@ -24,11 +24,11 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
-final public class EliasOmegaEncoding extends AbstractCoding {
+final public class EliasOmegaCoding extends AbstractCoding {
 
 	// statics
 	
-	public static final EliasOmegaEncoding instance = new EliasOmegaEncoding();
+	public static final EliasOmegaCoding instance = new EliasOmegaCoding();
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
 	private static int encodeInt0(BitWriter writer, int value) {
@@ -51,7 +51,7 @@ final public class EliasOmegaEncoding extends AbstractCoding {
 
 	// constructors
 	
-	private EliasOmegaEncoding() {}
+	private EliasOmegaCoding() {}
 	
 	// coding methods
 	

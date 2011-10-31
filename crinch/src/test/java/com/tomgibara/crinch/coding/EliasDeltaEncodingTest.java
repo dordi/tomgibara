@@ -3,9 +3,12 @@ package com.tomgibara.crinch.coding;
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
-import junit.framework.TestCase;
+public class EliasDeltaEncodingTest extends ExtendedCodingTest {
 
-public class EliasDeltaEncodingTest extends TestCase {
+	@Override
+	ExtendedCoding getCoding() {
+		return EliasOmegaCoding.extended;
+	}
 
     public void testCorrectness() {
         int[] memory = new int[1];
@@ -13,10 +16,10 @@ public class EliasDeltaEncodingTest extends TestCase {
         MemoryBitReader reader = new MemoryBitReader(memory, 32, 0);
         for (int i = 1; i <= 10; i++) {
             writer.setPosition(0);
-            EliasDeltaEncoding.encode(i, writer);
+            coding.encodePositiveInt(writer, i);
             writer.flush();
             reader.setPosition(0);
-            int j = EliasDeltaEncoding.decode(reader);
+            int j = coding.decodePositiveInt(reader);
             assertEquals(i, j);
         }
     }
@@ -31,7 +34,7 @@ public class EliasDeltaEncodingTest extends TestCase {
         int count = size;
         long start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
-        	EliasDeltaEncoding.encode((i % bound) + 1, writer);
+        	coding.encodePositiveInt(writer, (i % bound) + 1);
             //encode(i + 1, writer);
             //memory[i] = (i % bound) + 1;
             //memory[i] = i;
@@ -43,7 +46,7 @@ public class EliasDeltaEncodingTest extends TestCase {
         MemoryBitReader reader = new MemoryBitReader(memory, writer.getSize(), 0);
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
-            int v = EliasDeltaEncoding.decode(reader);
+            int v = coding.decodePositiveInt(reader);
             //int v = memory[i];
             if (v != (i % bound) + 1) throw new RuntimeException("on read " + i);
             //if (v != i) throw new RuntimeException("on read " + i);

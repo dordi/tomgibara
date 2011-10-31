@@ -7,7 +7,7 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
 
 	@Override
 	ExtendedCoding getCoding() {
-		return EliasOmegaCoding.extended;
+		return EliasDeltaCoding.extended;
 	}
 
     public void testCorrectness() {

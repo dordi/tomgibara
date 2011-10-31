@@ -9,16 +9,16 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
-public final class EliasDeltaEncoding extends AbstractCoding {
+public final class EliasDeltaCoding extends AbstractCoding {
 
 	// statics
 	
-	public static final EliasDeltaEncoding instance = new EliasDeltaEncoding();
+	public static final EliasDeltaCoding instance = new EliasDeltaCoding();
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
     // constructors
     
-    private EliasDeltaEncoding() { }
+    private EliasDeltaCoding() { }
 
     // abstract methods
     

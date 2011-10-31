@@ -1,12 +1,12 @@
 package com.tomgibara.crinch.record;
 
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 
 public class StdProcessContext implements ProcessContext {
 
 	private float progressStep = 1.0f;
-	private ExtendedCoding coding = new ExtendedCoding(EliasOmegaEncoding.instance);
+	private ExtendedCoding coding = EliasOmegaCoding.extended;
 	
 	private long recordCount = 0L;
 	private long recordsTransferred = 0L;

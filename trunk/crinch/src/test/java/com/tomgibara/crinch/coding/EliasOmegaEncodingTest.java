@@ -4,23 +4,25 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Random;
 
+import junit.framework.TestCase;
+
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
-import junit.framework.TestCase;
-
 public class EliasOmegaEncodingTest extends TestCase {
 
+	private final ExtendedCoding coding = EliasOmegaEncoding.extended;
+	
     public void testCorrectness() {
         int[] memory = new int[1];
         MemoryBitWriter writer = new MemoryBitWriter(memory, 32, 0);
         MemoryBitReader reader = new MemoryBitReader(memory, 32, 0);
         for (int i = 1; i <= 10; i++) {
             writer.setPosition(0);
-            EliasOmegaEncoding.encodePositiveInt(i, writer);
+            coding.encodePositiveInt(writer, i);
             writer.flush();
             reader.setPosition(0);
-            int j = EliasOmegaEncoding.decodePositiveInt(reader);
+            int j = coding.decodePositiveInt(reader);
             assertEquals(i, j);
         }
     }
@@ -52,10 +54,10 @@ public class EliasOmegaEncodingTest extends TestCase {
 
     private void checkInt(MemoryBitWriter writer, MemoryBitReader reader, int i) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodeSignedInt(i, writer);
+        coding.encodeSignedInt(writer, i);
         writer.flush();
         reader.setPosition(0);
-        int j = EliasOmegaEncoding.decodeSignedInt(reader);
+        int j = coding.decodeSignedInt(reader);
         assertEquals(i, j);
         reader.setPosition(0);
     }
@@ -87,10 +89,10 @@ public class EliasOmegaEncodingTest extends TestCase {
 
     private void checkLong(MemoryBitWriter writer, MemoryBitReader reader, long i) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodeSignedLong(i, writer);
+        coding.encodeSignedLong(writer, i);
         writer.flush();
         reader.setPosition(0);
-        long j = EliasOmegaEncoding.decodeSignedLong(reader);
+        long j = coding.decodeSignedLong(reader);
         assertEquals(i, j);
         reader.setPosition(0);
     }
@@ -114,20 +116,20 @@ public class EliasOmegaEncodingTest extends TestCase {
 
     private void checkPositiveBigInt(MemoryBitWriter writer, MemoryBitReader reader, BigInteger i) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodePositiveBigInt(i, writer);
+        coding.encodePositiveBigInt(writer, i);
         writer.flush();
         reader.setPosition(0);
-        BigInteger j = EliasOmegaEncoding.decodePositiveBigInt(reader);
+        BigInteger j = coding.decodePositiveBigInt(reader);
         assertEquals(i, j);
         reader.setPosition(0);
     }
     
     private void checkBigInt(MemoryBitWriter writer, MemoryBitReader reader, BigInteger i) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodeSignedBigInt(i, writer);
+        coding.encodeSignedBigInt(writer, i);
         writer.flush();
         reader.setPosition(0);
-        BigInteger j = EliasOmegaEncoding.decodeSignedBigInt(reader);
+        BigInteger j = coding.decodeSignedBigInt(reader);
         assertEquals(i, j);
         reader.setPosition(0);
     }
@@ -171,10 +173,10 @@ public class EliasOmegaEncodingTest extends TestCase {
 
     private long checkDouble(MemoryBitWriter writer, MemoryBitReader reader, double d) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodeDouble(d, writer);
+        coding.encodeDouble(writer, d);
         writer.flush();
         reader.setPosition(0);
-        double e = EliasOmegaEncoding.decodeDouble(reader);
+        double e = coding.decodeDouble(reader);
         assertEquals(d, e);
         return reader.getPosition();
     }
@@ -194,10 +196,10 @@ public class EliasOmegaEncodingTest extends TestCase {
 
     private void checkDecimal(MemoryBitWriter writer, MemoryBitReader reader, BigDecimal d) {
         writer.setPosition(0);
-        EliasOmegaEncoding.encodeDecimal(d, writer);
+        coding.encodeDecimal(writer, d);
         writer.flush();
         reader.setPosition(0);
-        BigDecimal e = EliasOmegaEncoding.decodeDecimal(reader);
+        BigDecimal e = coding.decodeDecimal(reader);
         assertEquals(d, e);
         reader.setPosition(0);
     }

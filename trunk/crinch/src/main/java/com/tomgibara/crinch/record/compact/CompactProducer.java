@@ -9,11 +9,12 @@ import java.util.NoSuchElementException;
 
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
+import com.tomgibara.crinch.record.RecordStats;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
@@ -26,7 +27,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public RecordSequence<LinearRecord> open(ProcessContext context) {
-		Sequence seq = new Sequence();
+		Sequence seq = new Sequence(context);
 		context.setRecordCount(seq.recordCount);
 		return seq;
 	}
@@ -35,21 +36,25 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		
 		final InputStream in;
 		final BitReader reader;
+		final CodedReader coded;
 		final long recordCount;
 		final RecordDecompactor decompactor;
 		
 		long recordsRead = 0;
 		
-		Sequence() {
+		Sequence(ProcessContext context) {
 			try {
 				in = new BufferedInputStream(new FileInputStream(file), 1024);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			reader = new InputStreamBitReader(in);
-			recordCount = EliasOmegaEncoding.decodePositiveLong(reader) - 1;
-			System.out.println("Record count: " + recordCount);
-			decompactor = RecordDecompactor.read(reader);
+			coded = new CodedReader(reader, context.getCoding());
+			RecordStats stats = RecordStats.read(coded);
+			context.setRecordStats(stats);
+			recordCount = stats.getRecordCount();
+			context.setRecordCount(recordCount);
+			decompactor = new RecordDecompactor(stats);
 		}
 		
 		@Override
@@ -66,7 +71,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		public LinearRecord next() {
 			if (recordsRead == recordCount) throw new NoSuchElementException();
 			recordsRead++;
-			return decompactor.decompact(reader);
+			return decompactor.decompact(coded);
 		}
 		
 		@Override

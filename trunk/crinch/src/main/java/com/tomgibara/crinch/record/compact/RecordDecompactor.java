@@ -1,38 +1,26 @@
 package com.tomgibara.crinch.record.compact;
 
-import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.BitWriter;
-import com.tomgibara.crinch.coding.EliasOmegaEncoding;
+import java.util.List;
+
+import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.record.ColumnStats;
+import com.tomgibara.crinch.record.RecordStats;
 
 class RecordDecompactor {
 
-	static int write(RecordDecompactor rc, BitWriter writer) {
-		ColumnCompactor[] compactors = rc.compactors;
-		int count = compactors.length;
-		int c = EliasOmegaEncoding.encodePositiveInt(count + 1, writer);
-		for (int i = 0; i < count; i++) {
-			c += ColumnStats.write(compactors[i].getStats(), writer);
-		}
-		return c;
-	}
-	
-	static RecordDecompactor read(BitReader reader) {
-		int length = EliasOmegaEncoding.decodePositiveInt(reader) - 1;
-		ColumnCompactor[] compactors = new ColumnCompactor[length];
-		for (int i = 0; i < length; i++) {
-			compactors[i] = new ColumnCompactor(ColumnStats.read(reader));
-		}
-		return new RecordDecompactor(compactors);
-	}
-
 	private final ColumnCompactor[] compactors;
 
-	RecordDecompactor(ColumnCompactor[] compactors) {
+	RecordDecompactor(RecordStats stats) {
+		List<ColumnStats> list = stats.getColumnStats();
+		int length = list.size();
+		ColumnCompactor[] compactors = new ColumnCompactor[length];
+		for (int i = 0; i < length; i++) {
+			compactors[i] = new ColumnCompactor(list.get(i));
+		}
 		this.compactors = compactors;
 	}
 
-	CompactRecord decompact(BitReader reader) {
+	CompactRecord decompact(CodedReader reader) {
 		return new CompactRecord(compactors, reader);
 	}
 	

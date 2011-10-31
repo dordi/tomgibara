@@ -1,8 +1,11 @@
 package com.tomgibara.crinch.record.compact;
 
-import com.tomgibara.crinch.bits.BitWriter;
+import java.util.List;
+
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.ValueParser;
 
 class RecordCompactor {
@@ -10,19 +13,22 @@ class RecordCompactor {
 
 	private final ValueParser parser;
 	private final ColumnType[] types;
+	private final RecordStats stats;
 	private final ColumnCompactor[] compactors;
 	
-	RecordCompactor(ValueParser parser, ColumnType[] types, ColumnStats[] stats) {
+	RecordCompactor(ValueParser parser, ColumnType[] types, RecordStats stats) {
 		this.parser = parser;
 		this.types = types;
-		ColumnCompactor[] compactors = new ColumnCompactor[stats.length];
+		this.stats = stats;
+		ColumnCompactor[] compactors = new ColumnCompactor[types.length];
+		List<ColumnStats> list = stats.getColumnStats();
 		for (int i = 0; i < compactors.length; i++) {
-			compactors[i] = new ColumnCompactor(stats[i]);
+			compactors[i] = new ColumnCompactor(list.get(i));
 		}
 		this.compactors = compactors;
 	}
 
-	int compact(BitWriter writer, LinearRecord record) {
+	int compact(CodedWriter writer, LinearRecord record) {
 		int c = 0;
 		for (int i = 0; i < compactors.length; i++) {
 			ColumnCompactor compactor = compactors[i];
@@ -73,7 +79,7 @@ class RecordCompactor {
 	}
 	
 	RecordDecompactor decompactor() {
-		return new RecordDecompactor(compactors);
+		return new RecordDecompactor(stats);
 	}
 	
 }

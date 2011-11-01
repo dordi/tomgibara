@@ -3,6 +3,7 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.PriorityQueue;
 
@@ -11,8 +12,10 @@ import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
-public class Huffman {
+public class HuffmanCoding implements Coding {
 
+	// statics
+	
     private static Node buildTree(PriorityQueue<Node> nodes) {
         while(true) {
             Node node1 = nodes.poll();
@@ -86,33 +89,97 @@ public class Huffman {
         return codes;
     }
     
-    //private Node root;
-    private int symbols;
-    private int[] counts;
-    private int[] codes;
-    private int[] cumm;
-    private Nid root;
+    // fields
+    
+    private final int symbols;
+    private final int[] counts;
+    private final int[] codes;
+    private final int[] cumm;
+    private final Nid root;
+    
+    // constructors
     
     //NOTE: supplied array must have already been sorted in descending order
-    public Huffman(long[] freqs) {
+    public HuffmanCoding(long[] freqs) {
     	symbols = freqs.length;
-//      System.out.println( Arrays.toString(freqs) );
         Node [] nodes = createNodes(freqs);
-//      System.out.println( Arrays.toString(nodes) );
         int[] lengths = calculateLengths(nodes);
-//        System.out.println( Arrays.toString(lengths) );
         counts = countLengths(lengths);
-//        System.out.println( Arrays.toString(counts) );
         codes = encodeCounts(counts);
-//        System.out.println( Arrays.toString(codes) );
         cumm = accumulateCounts(counts);
-//        System.out.println( Arrays.toString(cumm) );
         root = produceNids();
-        //System.out.println(root);
-        
-//        System.out.println();
     }
 
+    // methods
+    
+    public int getCodeLength(int value) {
+        int x = Arrays.binarySearch(cumm, value);
+        
+        //we may not have an exact match
+        if (x < 0) x = - 1 - x;
+        
+        //check value
+        if (x == 0) throw new IllegalArgumentException();
+        //if (x == cumm.length) throw new IllegalArgumentException();
+        //TODO what's the fix?
+        if (x == cumm.length) x--;
+        
+        //we may have missing lengths == dups in cumm
+        while( x > 1 && cumm[x] == cumm[x - 1] ) x--;
+        
+        return x;
+    }
+    
+    // coding methods
+    
+    @Override
+    public int encodePositiveInt(BitWriter writer, int value) {
+    	if (value <= 0) throw new IllegalArgumentException("non-positive value");
+    	if (value > symbols) throw new IllegalArgumentException("value exceeds number of symbols");
+    	return unsafeEncodePositiveInt(writer, value);
+    }
+    
+    @Override
+    public int encodePositiveLong(BitWriter writer, long value) {
+    	if (value <= 0) throw new IllegalArgumentException("non-positive value");
+    	if (value > symbols) throw new IllegalArgumentException("value exceeds number of symbols");
+    	return unsafeEncodePositiveInt(writer, (int) value);
+    }
+    
+    @Override
+    public int encodePositiveBigInt(BitWriter writer, BigInteger value) {
+    	if (value == null) throw new IllegalArgumentException("null value");
+    	if (value.signum() < 1) throw new IllegalArgumentException("non-positive value");
+    	if (value.compareTo(BigInteger.valueOf(symbols)) > 0) throw new IllegalArgumentException("value exceeds number of symbols");
+    	return unsafeEncodePositiveInt(writer, value.intValue());
+    }
+    
+    //TODO investigate possibilities for optimization:
+    //eg reading minimum number of bits available
+    public int decodePositiveInt(BitReader r) {
+    	Nid nid = root;
+    	while(nid.value == 0) {
+    		nid = r.readBoolean() ? nid.one: nid.zero;
+    	}
+    	return nid.value;
+    }
+    
+    @Override
+    public long decodePositiveLong(BitReader reader) {
+    	return decodePositiveInt(reader);
+    }
+    
+    @Override
+    public BigInteger decodePositiveBigInt(BitReader reader) {
+    	return BigInteger.valueOf(decodePositiveInt(reader));
+    }
+    
+    private int unsafeEncodePositiveInt(BitWriter writer, int value) {
+    	int x = getCodeLength(value);
+        writer.write(codes[x] + value - cumm[x - 1] - 1, x);
+        return x;
+    }
+    
     private Nid produceNids() {
     	int size = (codes.length+31)/32;
     	int[] mem = new int[size];
@@ -122,7 +189,7 @@ public class Huffman {
     	for (int i = 1; i <= symbols; i++) {
         	w.setPosition(0);
         	w.flush();
-        	encode(i, w);
+        	unsafeEncodePositiveInt(w, i);
         	int length = (int) w.getPosition();
         	r.setPosition(0);
         	Nid nid = root;
@@ -149,43 +216,7 @@ public class Huffman {
     	return root;
     }
 
-    public int getCodeLength(int i) {
-        int x = Arrays.binarySearch(cumm, i);
-        
-        //we may not have an exact match
-        if (x < 0) x = - 1 - x;
-        
-        //check value
-        if (x == 0) throw new IllegalArgumentException();
-        //if (x == cumm.length) throw new IllegalArgumentException();
-        //TODO what's the fix?
-        if (x == cumm.length) x--;
-        
-        //we may have missing lengths == dups in cumm
-        while( x > 1 && cumm[x] == cumm[x - 1] ) x--;
-        
-        return x;
-    }
-    
-    //expects i>=1
-    public int encode(int i, BitWriter writer) {
-    	int x = getCodeLength(i);
-        writer.write(codes[x] + i - cumm[x - 1] - 1, x);
-        return x;
-    }
-    
-    //TODO investigate possibilities for optimization:
-    //eg reading minimum number of bits available
-    public int decode(BitReader r) {
-    	Nid nid = root;
-    	while(nid.value == 0) {
-    		int bit = r.readBit();
-    		nid = bit == 0 ? nid.zero : nid.one;
-    	}
-    	return nid.value;
-    }
-    
-    private static class Node implements Comparable {
+    private static class Node implements Comparable<Node> {
 
         final long freq;
         final int value;
@@ -213,8 +244,7 @@ public class Huffman {
             return length;
         }
         
-        public int compareTo(Object o) {
-            Node that = (Node) o;
+        public int compareTo(Node that) {
             if (this.freq < that.freq) return -1;
             if (this.freq > that.freq) return 1;
             if (this.length < that.length) return -1;
@@ -232,29 +262,9 @@ public class Huffman {
 
 		@Override
 		public String toString() {
-			return value == 0 ? "(zero: " + zero + "  one: " + one + ")" : "" + value;
+			return value == 0 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(value);
 		}
 
     }
     
-    private static class Symbol implements Comparable {
-
-        final int value;
-        final int length;
-        
-        Symbol(int value, int length) {
-            this.value = value;
-            this.length = length;
-        }
-        
-        public int compareTo(Object o) {
-            Symbol that = (Symbol) o;
-            if (this.length < that.length) return -1;
-            if (this.length > that.length) return 1;
-            if (this.value < that.value) return -1;
-            if (this.value > that.value) return 1;
-            return 0;
-        }
-    
-    }
 }

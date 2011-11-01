@@ -6,7 +6,7 @@ import java.util.Arrays;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.coding.Huffman;
+import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.ColumnStats.Classification;
 
@@ -60,7 +60,7 @@ class ColumnCompactor {
 	private final String[] enumeration;
 	
 	private final int[][] lookup;
-	private final Huffman huffman;
+	private final HuffmanCoding huffman;
 	
 	ColumnCompactor(ColumnStats stats) {
 		this.stats = stats;
@@ -89,7 +89,7 @@ class ColumnCompactor {
 			}
 			//System.out.println("*** " + Arrays.toString(fs));
 			//fs = Arrays.copyOfRange(fs, 0, lookup[0].length);
-			huffman = new Huffman(fs);
+			huffman = new HuffmanCoding(fs);
 		}
 	}
 
@@ -112,13 +112,13 @@ class ColumnCompactor {
 		if (enumeration != null) {
 			int i = Arrays.binarySearch(enumeration, value);
 			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
-			return huffman.encode(lookup[1][i]+1, w);
+			return huffman.encodePositiveInt(w, lookup[1][i]+1);
 		} else {
 			int length = value.length();
 			int n = writer.writeSignedInt(length - (int) offset);
 			for (int i = 0; i < length; i++) {
 				char c = value.charAt(i);
-				n += huffman.encode(lookup[1][c]+1, w);
+				n += huffman.encodePositiveInt(w, lookup[1][c]+1);
 			}
 			return n;
 		}
@@ -126,12 +126,12 @@ class ColumnCompactor {
 	
 	String decodeString(CodedReader reader) {
 		if (enumeration != null) {
-			return enumeration[ lookup[0][huffman.decode(reader.getReader())-1] ];
+			return enumeration[ lookup[0][huffman.decodePositiveInt(reader.getReader())-1] ];
 		} else {
 			int length = ((int) offset) + reader.readSignedInt();
 			StringBuilder sb = new StringBuilder(length);
 			for (; length > 0; length--) {
-				sb.append( (char) lookup[0][huffman.decode(reader.getReader())-1] );
+				sb.append( (char) lookup[0][huffman.decodePositiveInt(reader.getReader())-1] );
 			}
 			return sb.toString();
 		}

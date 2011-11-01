@@ -14,11 +14,11 @@ import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
-public class FibonacciEncoding extends AbstractCoding {
+public class FibonacciCoding extends AbstractCoding {
 
 	// statics
 
-	public static final FibonacciEncoding instance = new FibonacciEncoding();
+	public static final FibonacciCoding instance = new FibonacciCoding();
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
 	private static final BigInteger LONG_ADJ = BigInteger.ONE.shiftLeft(64);
@@ -41,7 +41,7 @@ public class FibonacciEncoding extends AbstractCoding {
     
     // constructors
     
-    private FibonacciEncoding() {
+    private FibonacciCoding() {
 	}
     
     // abstract coding
@@ -163,7 +163,9 @@ public class FibonacciEncoding extends AbstractCoding {
         int last = reader.readBit();
         if (last != 0) throw new RuntimeException();
         int value = 0;
-        //45 is largest necessary index
+        //45 is largest fibonacci number supported as a +ve int
+        //46 is largest necessary index to support 'wrapped' unsigned ints
+        //47 gives an extra index to confirm that the last bit was set 
         for (int i = 0; i < 47; i++) {
             int bit = reader.readBit();
             if (bit == 1) {

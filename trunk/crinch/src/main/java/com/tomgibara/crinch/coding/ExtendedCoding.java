@@ -63,7 +63,6 @@ public class ExtendedCoding implements Coding {
     	// the term ... | (value & (1 << 31) serves to restore sign bit
     	// in the special case where decoding overflows
     	// but we have enough info to reconstruct the correct value
-   		//return (value & 1) == 1 ? ((1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
    		return (value & 1) == 1 ? ((1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
     }
     

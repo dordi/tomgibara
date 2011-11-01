@@ -12,7 +12,7 @@ import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
 
-public class HuffmanTest extends TestCase {
+public class HuffmanCodingTest extends TestCase {
     
     public static void main(String[] args) {
         testDecode(new long[] {10, 15, 30, 16, 29});
@@ -37,20 +37,20 @@ public class HuffmanTest extends TestCase {
     private static void testDecode(long[] freqs) {
 
         descendingSort(freqs);
-        Huffman huffman = new Huffman(freqs);
+        HuffmanCoding huffman = new HuffmanCoding(freqs);
 		int[] memory = new int[1000];
 		MemoryBitWriter w = new MemoryBitWriter(memory, 1000*8, 0);
 		BitDumper d = new BitDumper();
 		for (int i = 1; i <= freqs.length; i++) {
-			huffman.encode(i, w);
-			huffman.encode(i, d);
+			huffman.encodePositiveInt(w, i);
+			huffman.encodePositiveInt(d, i);
 		}
 		w.flush();
 		System.out.println();
 		
 		MemoryBitReader r = new MemoryBitReader(memory, 1000*8, 0);
 		for (int i = 1; i <= freqs.length; i++) {
-			int j = huffman.decode(r);
+			int j = huffman.decodePositiveInt(r);
 			if (j != i) throw new IllegalStateException(j + " != " + i);
 		}
         
@@ -62,12 +62,12 @@ public class HuffmanTest extends TestCase {
         for (int i = 0; i < uneven.length; i++) {
             uneven[i] = size - i;
         }
-        Huffman huffman = new Huffman(uneven);
+        HuffmanCoding huffman = new HuffmanCoding(uneven);
         System.out.println("==================");
         BitDumper dumper = new BitDumper();
         for (int i = size - 100; i <= size; i++) {
             System.out.print("(" + i + ") ");
-            huffman.encode(i, dumper);
+            huffman.encodePositiveInt(dumper, i);
             dumper.flush();
         }
         System.out.println();
@@ -78,12 +78,12 @@ public class HuffmanTest extends TestCase {
 
         descendingSort(freqs);
         
-        Huffman huffman = new Huffman(freqs);
+        HuffmanCoding huffman = new HuffmanCoding(freqs);
 
         System.out.println("==================");
         BitDumper dumper = new BitDumper();
         for (int i = 1; i <= freqs.length; i++) {
-            huffman.encode(i, dumper);
+            huffman.encodePositiveInt(dumper, i);
             dumper.flush();
         }
         System.out.println();

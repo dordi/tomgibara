@@ -31,9 +31,9 @@ public abstract class ExtendedCodingTest extends TestCase {
     }
 
     public void testSignedInt() {
-        int[] memory = new int[4];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, 128, 0);
-        MemoryBitReader reader = new MemoryBitReader(memory, 128, 0);
+        int[] memory = new int[16];
+        MemoryBitWriter writer = new MemoryBitWriter(memory, 512, 0);
+        MemoryBitReader reader = new MemoryBitReader(memory, 512, 0);
     	for (int i = -10000; i < 10000; i++) {
     		checkInt(writer, reader, i);
     	}
@@ -101,10 +101,14 @@ public abstract class ExtendedCodingTest extends TestCase {
     }
     
     public void testSignedBigInt() {
-    	int bits = 10240;
-        int[] memory = new int[bits / 8];
+    	int bits = 4096;
+        int[] memory = new int[bits / 32];
         MemoryBitWriter writer = new MemoryBitWriter(memory, bits, 0);
         MemoryBitReader reader = new MemoryBitReader(memory, bits, 0);
+
+    	for (long i = 1; i < 100L; i++) {
+    		checkPositiveBigInt(writer, reader, BigInteger.valueOf(i));
+    	}
 
     	for (long i = 1; i < 10000000000L; i+=1000000L) {
    			checkPositiveBigInt(writer, reader, BigInteger.valueOf(i));

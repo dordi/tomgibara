@@ -3,38 +3,53 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitStreamException;
+import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
-public class FibonacciEncoding {
+public class FibonacciEncoding extends AbstractCoding {
 
+	// statics
+
+	public static final FibonacciEncoding instance = new FibonacciEncoding();
+	public static final ExtendedCoding extended = new ExtendedCoding(instance);
+	
+	private static final BigInteger LONG_ADJ = BigInteger.ONE.shiftLeft(64);
+	private static final BigInteger BIG_INT_TWO = BigInteger.valueOf(2);
+	
     //92nd fib no is the largest that is representable with a long
     //because we're starting with 1,2,3,5 - and zero indexed - array index is upto 90
-    private static final long[] fib = new long[91];
+	private static final long[] fibLong = new long[91];
     
     static {
-        fib[0] = 1;
-        fib[1] = 2;
-        for (int i = 2; i < fib.length; i++) {
-            fib[i] = fib[i-1] + fib[i-2];
+        fibLong[0] = 1;
+        fibLong[1] = 2;
+        for (int i = 2; i < fibLong.length; i++) {
+            fibLong[i] = fibLong[i-1] + fibLong[i-2];
         }
     }
 
-    private static final int[] fibInt = new int[45];
-
-    static {
-        fibInt[0] = 1;
-        fibInt[1] = 2;
-        for (int i = 2; i < fibInt.length; i++) {
-            fibInt[i] = fibInt[i-1] + fibInt[i-2];
-        }
-    }
-
-    public static void encode(int value, BitWriter writer) {
-        int fi = Arrays.binarySearch(fibInt, value);
+    //TODO consider using instance variable instead
+    private ThreadLocal<ArrayList<BigInteger>> fibBigInt = new ThreadLocal<ArrayList<BigInteger>>();
+    
+    // constructors
+    
+    private FibonacciEncoding() {
+	}
+    
+    // abstract coding
+    
+    @Override
+    int unsafeEncodePositiveInt(BitWriter writer, int value) {
+    	if (value < 0) return unsafeEncodePositiveLong(writer, value & 0x00000000ffffffffL);
+        int fi = Arrays.binarySearch(fibLong, value);
         if (fi < 0) fi = -2 - fi;
         int count = fi + 3; //one for index adjustment, one for trailing 1, one for leading zero
 
@@ -47,7 +62,7 @@ public class FibonacciEncoding {
                 offset = 0;
                 o = true;
             }
-            long f = fib[fi--];
+            long f = fibLong[fi--];
             if (value >= f) {
                 value -= f;
                 if (o) {
@@ -62,16 +77,18 @@ public class FibonacciEncoding {
             offset = 0;
             o = true;
         }
-        
+
         if (o) {
-            writer.write(out0, count-32); writer.write(out1, 32);
+            return writer.write(out0, count-32) + writer.write(out1, 32);
         } else {
-            writer.write(out1, count);
+            return writer.write(out1, count);
         }
     }
 
-    public static void encode(long value, BitWriter writer) {
-        int fi = Arrays.binarySearch(fib, value);
+    @Override
+    int unsafeEncodePositiveLong(BitWriter writer, long value) {
+    	if (value < 0)return unsafeEncodePositiveBigInt(writer, LONG_ADJ.add(BigInteger.valueOf(value)));
+        int fi = Arrays.binarySearch(fibLong, value);
         if (fi < 0) fi = -2 - fi;
         int count = fi + 3; //one for index adjustment, one for trailing 1, one for leading zero
 
@@ -85,7 +102,7 @@ public class FibonacciEncoding {
                 offset = 0;
                 i--;
             }
-            long f = fib[fi--];
+            long f = fibLong[fi--];
             if (value >= f) {
                 value -= f;
                 switch(i) {
@@ -100,42 +117,114 @@ public class FibonacciEncoding {
             offset = 0;
             i --;
         }
-        
+
         switch(i) {
-        case 0 : writer.write(out0, count-64); writer.write(out1, 32); writer.write(out2, 32); break;
-        case 1 : writer.write(out1, count-32); writer.write(out2, 32); break;
-        case 2 : writer.write(out2, count); break;
+        case 0 : return writer.write(out0, count-64) + writer.write(out1, 32) + writer.write(out2, 32);
+        case 1 : return writer.write(out1, count-32) + writer.write(out2, 32);
+        case 2 : return writer.write(out2, count);
+        default: throw new IllegalStateException("Long could not be encoded!!");
         }
     }
 
-    public static int decode(BitReader reader) {
+    @Override
+    int unsafeEncodePositiveBigInt(BitWriter writer, BigInteger value) {
+    	ArrayList<BigInteger> fibs = getFibBigInt();
+    	
+        int fi = Collections.binarySearch(fibs, value);
+        int size = fibs.size();
+        if (fi == -1 - size) {
+        	BigInteger fib = fibs.get(size - 1);
+        	while (value.compareTo(fib) > 0) {
+        		fib = fib.add( fibs.get(size - 2) );
+            	fibs.add(fib);
+            	size++;
+        	}
+            fi = fib.equals(value) ? size - 1 : - size;
+        }
+        if (fi < 0) fi = -2 - fi;
+        int count = fi + 3; //one for index adjustment, one for trailing 1, one for leading zero
+        
+        BitVector bits = new BitVector(count);
+        while (fi >= 0) {
+            BigInteger f = fibs.get(fi);
+            if (value.compareTo(f) >= 0) {
+            	value = value.subtract(f);
+            	bits.setBit(count - fi - 2, true);
+            }
+            fi--;
+        }
+        bits.setBit(0, true);
+        
+        return writer.write(bits);
+    }
+    
+    @Override
+    public int decodePositiveInt(BitReader reader) {
         int last = reader.readBit();
         if (last != 0) throw new RuntimeException();
         int value = 0;
-        for (int i = 0; i <= fibInt.length; i++) {
+        //45 is largest necessary index
+        for (int i = 0; i < 47; i++) {
             int bit = reader.readBit();
             if (bit == 1) {
                 if (last == 1) return value;
-                value += fibInt[i];
+                value += (int) fibLong[i];
             }
             last = bit;
         }
-        return value;
+        throw new BitStreamException("Value too large for int");
     }
-    
-    public static long decodeLong(BitReader reader) {
+
+    @Override
+    public long decodePositiveLong(BitReader reader) {
         int last = reader.readBit();
         if (last != 0) throw new RuntimeException();
         long value = 0;
-        for (int i = 0; i <= fib.length; i++) {
+        for (int i = 0;; i++) {
             int bit = reader.readBit();
             if (bit == 1) {
                 if (last == 1) return value;
-                value += fib[i];
+                if (i == fibLong.length) {
+                	value += fibLong[i - 2] + fibLong[i - 1];
+                	if (!reader.readBoolean()) throw new BitStreamException("Value too large for long");
+                	return value;
+                } else {
+                	value += fibLong[i];
+                }
             }
             last = bit;
         }
-        return value;
+    }
+
+    @Override
+    public BigInteger decodePositiveBigInt(BitReader reader) {
+        boolean last = reader.readBoolean();
+        if (last) throw new BitStreamException();
+    	ArrayList<BigInteger> fibs = getFibBigInt();
+        int size = fibs.size();
+        BigInteger value = BigInteger.ZERO;
+        for (int i = 0;; i++) {
+            boolean bit = reader.readBoolean();
+            if (bit) {
+                if (last) return value;
+                if (i == size) {
+                	fibs.add( fibs.get(size - 1).add(fibs.get(size - 2)) );
+                	size++;
+                }
+            	value = value.add( fibs.get(i) );
+            }
+            last = bit;
+        }
+    }
+
+    private ArrayList<BigInteger> getFibBigInt() {
+    	ArrayList<BigInteger> fibs = fibBigInt.get();
+    	if (fibs != null) return fibs;
+		fibs = new ArrayList<BigInteger>();
+		fibs.add(BigInteger.ONE);
+		fibs.add(BIG_INT_TWO);
+		fibBigInt.set(fibs);
+		return fibs;
     }
     
 }

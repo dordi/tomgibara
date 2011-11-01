@@ -48,7 +48,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     @Override
     public int write(int bits, int count) {
         if (count == 0) return 0;
-        if (position + bufferSize + count > limit) throw new IllegalStateException();
+        if (position + bufferSize + count > limit) throw new BitStreamException("memory full");
 
         if (bufferSize == 0) {
             bufferBits = bits;
@@ -70,7 +70,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     @Override
     public int writeZeros(int count) {
         if (count == 0) return 0;
-        if (position + bufferSize + count > limit) throw new IllegalStateException();
+        if (position + bufferSize + count > limit) throw new BitStreamException("memory full");
 
 //        if (count == 32) {
 //            flushBuffer();

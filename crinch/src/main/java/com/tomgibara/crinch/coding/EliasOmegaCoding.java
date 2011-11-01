@@ -56,24 +56,6 @@ final public class EliasOmegaCoding extends AbstractCoding {
 	// coding methods
 	
 	@Override
-    public int encodePositiveInt(BitWriter writer, int value) {
-        if (value <= 0) throw new IllegalArgumentException();
-    	return unsafeEncodePositiveInt(writer, value);
-    }
-
-	@Override
-    public int encodePositiveLong(BitWriter writer, long value) {
-        if (value <= 0L) throw new IllegalArgumentException();
-    	return unsafeEncodePositiveLong(writer, value);
-    }
-
-	@Override
-    public int encodePositiveBigInt(BitWriter writer, BigInteger value) {
-        if (value.signum() != 1) throw new IllegalArgumentException();
-    	return unsafeEncodePositiveBigInt(writer, value);
-    }
-
-	@Override
     public int decodePositiveInt(BitReader reader) {
     	int value = 1;
     	while (reader.readBoolean()) {

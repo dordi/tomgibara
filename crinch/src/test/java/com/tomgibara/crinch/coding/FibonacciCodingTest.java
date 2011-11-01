@@ -5,11 +5,11 @@ import java.util.Random;
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
-public class FibonacciEncodingTest extends ExtendedCodingTest {
+public class FibonacciCodingTest extends ExtendedCodingTest {
 	
 	@Override
 	ExtendedCoding getCoding() {
-		return FibonacciEncoding.extended;
+		return FibonacciCoding.extended;
 	}
 	
     public void testGeneral() {

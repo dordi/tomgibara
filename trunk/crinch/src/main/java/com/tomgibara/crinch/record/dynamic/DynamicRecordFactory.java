@@ -113,7 +113,6 @@ public class DynamicRecordFactory {
 		this.definition = definition;
 		this.name = name;
 		source = generateSource();
-		System.out.println(source);
 		//TODO don't want to accumulate ClassLoaders!
 		SimpleCompiler compiler = new SimpleCompiler();
 		try {
@@ -165,7 +164,6 @@ public class DynamicRecordFactory {
 	}
 	
 	private String generateSource() {
-		//TODO move to ColumnType
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
 		sb.append("public class " + name).append(" extends " + AbstractRecord.class.getName() + " implements " + LinearRecord.class.getName() + ", Comparable {\n");

@@ -4,7 +4,7 @@ public class StringRecord extends AbstractRecord {
 
 	private final String[] values;
 	
-	public StringRecord(long recordOrdinal, long recordPosition, String[] values) {
+	public StringRecord(long recordOrdinal, long recordPosition, String... values) {
 		super(recordOrdinal, recordPosition);
 		if (values == null) throw new IllegalArgumentException("null value");
 		this.values = values;

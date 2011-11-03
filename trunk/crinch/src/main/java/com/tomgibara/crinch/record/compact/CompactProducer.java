@@ -9,7 +9,6 @@ import java.util.NoSuchElementException;
 
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
-import com.tomgibara.crinch.bits.ProfiledBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
@@ -28,9 +27,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public RecordSequence<LinearRecord> open(ProcessContext context) {
-		Sequence seq = new Sequence(context);
-		context.setRecordCount(seq.recordCount);
-		return seq;
+		return new Sequence(context);
 	}
 
 	private class Sequence implements RecordSequence<LinearRecord> {
@@ -49,13 +46,11 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-			//reader = new InputStreamBitReader(in);
-reader = new ProfiledBitReader(new InputStreamBitReader(in));
+			reader = new InputStreamBitReader(in);
 			coded = new CodedReader(reader, context.getCoding());
 			RecordStats stats = RecordStats.read(coded);
 			context.setRecordStats(stats);
 			recordCount = stats.getRecordCount();
-			context.setRecordCount(recordCount);
 			decompactor = new RecordDecompactor(stats);
 		}
 		
@@ -77,7 +72,6 @@ reader = new ProfiledBitReader(new InputStreamBitReader(in));
 		
 		@Override
 		public void close() {
-((ProfiledBitReader) reader).dumpProfile(System.out);
 			try {
 				in.close();
 			} catch (IOException e) {

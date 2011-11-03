@@ -1,6 +1,9 @@
 package com.tomgibara.crinch.record;
 
+import java.util.List;
+
 import com.tomgibara.crinch.coding.ExtendedCoding;
+import com.tomgibara.crinch.record.compact.ColumnType;
 
 
 public interface ProcessContext {
@@ -11,9 +14,6 @@ public interface ProcessContext {
 	
 	void setRecordsTransferred(long recordsTransferred);
 	
-	//TODO look at eliminating this redundant field
-	void setRecordCount(long recordCount);
-	
 	void setPassName(String passName);
 	
 	String getPassName();
@@ -21,6 +21,10 @@ public interface ProcessContext {
 	void setRecordStats(RecordStats recordStats);
 	
 	RecordStats getRecordStats();
+	
+	void setColumnTypes(List<ColumnType> columnTypes);
+	
+	List<ColumnType> getColumnTypes();
 	
 	void log(String message);
 	

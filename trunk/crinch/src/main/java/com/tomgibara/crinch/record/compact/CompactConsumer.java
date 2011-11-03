@@ -92,7 +92,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	public void endPass() {
 		switch(pass) {
 		case PASS_TYPE:
-			context.log("Types: " + typer.getColumnTypes());
+			context.setColumnTypes(typer.getColumnTypes());
 			break;
 		case PASS_STATS:
 			context.setRecordStats(analyzer.stats());

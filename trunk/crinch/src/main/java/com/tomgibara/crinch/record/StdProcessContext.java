@@ -1,7 +1,10 @@
 package com.tomgibara.crinch.record;
 
+import java.util.List;
+
 import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
+import com.tomgibara.crinch.record.compact.ColumnType;
 
 public class StdProcessContext implements ProcessContext {
 
@@ -14,6 +17,7 @@ public class StdProcessContext implements ProcessContext {
 	private float lastProgress;
 	private String passName;
 	private RecordStats recordStats;
+	private List<ColumnType> columnTypes;
 
 	public StdProcessContext() {
 		resetProgress();
@@ -53,16 +57,6 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	@Override
-	public void setRecordCount(long recordCount) {
-		if (recordCount < 0L) throw new IllegalArgumentException("negative recordCount");
-		if (recordCount == this.recordCount) return;
-		this.recordCount = recordCount;
-		recordsTransferred = Math.min(recordsTransferred, recordCount);
-		log("Record count: " + recordCount);
-		if (recordCount == 0L) resetProgress();
-	}
-	
-	@Override
 	public void setPassName(String passName) {
 		if (passName != null && !passName.equals(this.passName)) {
 			log("Pass: " + passName);
@@ -82,6 +76,7 @@ public class StdProcessContext implements ProcessContext {
 			for (ColumnStats stats : recordStats.getColumnStats()) {
 				log("Statistics - column " + col++ + ": " + stats);
 			}
+			setRecordCount(recordStats.getRecordCount());
 		}
 		this.recordStats = recordStats;
 		
@@ -90,6 +85,22 @@ public class StdProcessContext implements ProcessContext {
 	@Override
 	public RecordStats getRecordStats() {
 		return recordStats;
+	}
+
+	@Override
+	public void setColumnTypes(List<ColumnType> columnTypes) {
+		if (columnTypes != null && !columnTypes.equals(this.columnTypes)) {
+			int col = 1;
+			for (ColumnType type : columnTypes) {
+				log("Type - column " + col++ + ": " + type);
+			}
+		}
+		this.columnTypes = columnTypes;
+	}
+
+	@Override
+	public List<ColumnType> getColumnTypes() {
+		return columnTypes;
 	}
 	
 	@Override
@@ -103,6 +114,15 @@ public class StdProcessContext implements ProcessContext {
 		t.printStackTrace();
 	}
 
+	private void setRecordCount(long recordCount) {
+		if (recordCount < 0L) throw new IllegalArgumentException("negative recordCount");
+		if (recordCount == this.recordCount) return;
+		this.recordCount = recordCount;
+		recordsTransferred = Math.min(recordsTransferred, recordCount);
+		log("Record count: " + recordCount);
+		if (recordCount == 0L) resetProgress();
+	}
+	
 	private void resetProgress() {
 		progress = 0f;
 		lastProgress = -1f;

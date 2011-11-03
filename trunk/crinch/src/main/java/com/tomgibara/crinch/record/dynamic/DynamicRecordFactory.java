@@ -12,11 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.text.Position;
+
 import org.codehaus.janino.CompileException;
 import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
+import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
@@ -43,13 +46,32 @@ public class DynamicRecordFactory {
 	
 	public static class Definition {
 		
+		private final boolean ordinal;
+		private final boolean positional;
 		private final List<ColumnType> types;
 		private final List<Order> orders;
 	
-		public Definition(List<ColumnType> types, Order... orders) {
-			//TODO need to verify input
-			this.types = types;
-			this.orders = Arrays.asList(orders);
+		public Definition(boolean ordinal, boolean positional, List<ColumnType> types, Order... orders) {
+			if (types == null) throw new IllegalArgumentException("null types");
+			if (orders == null) throw new IllegalArgumentException("null orders");
+			
+			this.ordinal = ordinal;
+			this.positional = positional;
+			this.types = new ArrayList<ColumnType>(types);
+			this.orders = new ArrayList<Order>(Arrays.asList(orders));
+
+			// verify input
+			if (this.types.contains(null)) throw new IllegalArgumentException("null type");
+			if (this.orders.contains(null)) throw new IllegalArgumentException("null order");
+			
+			final int size = this.types.size();
+			BitVector vector = new BitVector(size);
+			for (Order order : this.orders) {
+				int index = order.index;
+				if (index < 0 || index >= size) throw new IllegalArgumentException("invalid order index: " + index);
+				if (vector.getBit(index)) throw new IllegalArgumentException("duplicate order index: " + index);
+				vector.setBit(index, true);
+			}
 		}
 		
 	}
@@ -58,6 +80,8 @@ public class DynamicRecordFactory {
 		
 		@Override
 		public void sourceData(Definition definition, WriteStream out) {
+			out.writeBoolean(definition.ordinal);
+			out.writeBoolean(definition.positional);
 			for (ColumnType type : definition.types) {
 				out.writeInt(type.ordinal());
 			}
@@ -189,10 +213,17 @@ public class DynamicRecordFactory {
 			sb.append("\t\tsuper(record);\n");
 			int field = 0;
 			for (ColumnType type : definition.types) {
-				sb.append("\t\tf_").append(field).append(" = record.next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("();\n");
+				if (type.typeClass.isPrimitive()) {
+					sb.append("\t\tf_").append(field).append(" = record.next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("();\n");
+				} else {
+					//TODO needs to know primitive type
+					sb.append("\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("();\n");
+					sb.append("\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");
+				}
 				field++;
 			}
 			sb.append("\t}\n");
+			System.out.println(sb.toString());
 		}
 		
 		// next methods

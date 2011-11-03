@@ -94,7 +94,7 @@ public class InputStreamBitReader extends AbstractBitReader {
 	}
 	
 	@Override
-	public long getPositionInStream() {
+	public long getPosition() {
 		return position;
 	}
 	

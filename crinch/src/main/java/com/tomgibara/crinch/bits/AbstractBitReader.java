@@ -78,12 +78,12 @@ public abstract class AbstractBitReader implements BitReader {
 	}
 	
 	@Override
-	public long getPositionInStream() {
+	public long getPosition() {
 		return -1;
 	}
 	
 	int bitsToBoundary(BitBoundary boundary) {
-		long position = getPositionInStream();
+		long position = getPosition();
 		if (position < 0) throw new UnsupportedOperationException("reader does not support position");
 		return -(int)position & boundary.mask;
 	}

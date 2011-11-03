@@ -47,7 +47,8 @@ public class MappedBitReader extends AbstractBitReader {
     	return size;
     }
     
-    long getPosition() {
+    @Override
+    public long getPosition() {
     	if (currentSet) {
         	return (buffer.position()-1) * 8L + offset;
     	} else {

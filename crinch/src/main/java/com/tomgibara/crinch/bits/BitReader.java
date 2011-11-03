@@ -85,10 +85,47 @@ public interface BitReader {
     
     void readBits(BitVector bits) throws BitStreamException;
 
-    long getPositionInStream();
+	/**
+	 * The position in the stream; usually (but not necessarily) the number of
+	 * bits read. Implementations that cannot report their position should
+	 * consistently return -1L.
+	 * 
+	 * @return the position in the stream, or -1L
+	 */
     
-    long skipBits(long count);
+    long getPosition();
 
-    int skipToBoundary(BitBoundary boundary);
+	/**
+	 * Skip the specified number of bits, possibly null. The number of bits
+	 * skipped will only be less than the number requested in the event that an
+	 * attempt is made to skip past the end of the stream.
+	 * 
+	 * @param count
+	 *            the number of bits to skip
+	 * @return the number of bit skipped
+	 * @throws BitStreamException
+	 *             if an exception occurs when skipping
+	 */
+    
+    long skipBits(long count) throws BitStreamException;
+
+	/**
+	 * Skips the number of bits necessary to align subsequent reads to a
+	 * boundary. Implementations that do not track their in-stream position may
+	 * throw an {@link UnsupportedOperationException}.
+	 * 
+	 * @param boundary
+	 *            the 'size' of boundary
+	 * @return the number of bits skipped to align input
+	 * @throws UnsupportedOperationException
+	 *             if the stream does not support alignment
+	 * @throws BitStreamException
+	 *             if an exception occurs when skipping
+	 * @throws EndOfBitStreamException
+	 *             if the end of the stream is encountered before the position
+	 *             can be aligned
+	 */
+    
+    int skipToBoundary(BitBoundary boundary) throws UnsupportedOperationException, BitStreamException, EndOfBitStreamException;
     
 }

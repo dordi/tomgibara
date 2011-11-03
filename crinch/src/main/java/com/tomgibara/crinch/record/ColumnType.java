@@ -1,4 +1,4 @@
-package com.tomgibara.crinch.record.compact;
+package com.tomgibara.crinch.record;
 
 import java.util.ArrayList;
 import java.util.Arrays;

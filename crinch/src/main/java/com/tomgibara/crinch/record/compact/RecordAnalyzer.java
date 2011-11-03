@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tomgibara.crinch.record.ColumnStats;
+import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ValueParser;
+import com.tomgibara.crinch.record.ColumnParser;
 
 class RecordAnalyzer {
 
-	private final ValueParser parser;
+	private final ColumnParser parser;
 	private final ColumnAnalyzer[] analyzers;
 	
 	private long recordCount = 0;
 	
-	RecordAnalyzer(ValueParser parser, List<ColumnType> types) {
+	RecordAnalyzer(ColumnParser parser, List<ColumnType> types) {
 		this.parser = parser;
 		analyzers = new ColumnAnalyzer[types.size()];
 		for (int i = 0; i < analyzers.length; i++) {

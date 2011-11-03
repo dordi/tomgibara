@@ -1,6 +1,6 @@
 package com.tomgibara.crinch.record;
 
-public interface ValueParser {
+public interface ColumnParser {
 
 	String parseString(String str);
 	

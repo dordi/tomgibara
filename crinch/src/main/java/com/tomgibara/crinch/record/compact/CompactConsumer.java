@@ -13,7 +13,7 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ValueParser;
+import com.tomgibara.crinch.record.ColumnParser;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
@@ -22,7 +22,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private static final int PASS_WRITE = 2;
 	private static final int PASS_DONE = 3;
 	
-	private final ValueParser parser;
+	private final ColumnParser parser;
 	private final File outFile;
 	private ProcessContext context = null;
 	private int pass;
@@ -34,7 +34,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private CodedWriter coded;
 	private long bitsWritten;
 	
-	public CompactConsumer(ValueParser parser, File outFile) {
+	public CompactConsumer(ColumnParser parser, File outFile) {
 		if (parser == null) throw new IllegalArgumentException("null parser");
 		if (outFile == null) throw new IllegalArgumentException("null outFile");
 		this.parser = parser;

@@ -4,19 +4,20 @@ import java.util.List;
 
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnStats;
+import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ValueParser;
+import com.tomgibara.crinch.record.ColumnParser;
 
 class RecordCompactor {
 
 
-	private final ValueParser parser;
+	private final ColumnParser parser;
 	private final ColumnType[] types;
 	private final RecordStats stats;
 	private final ColumnCompactor[] compactors;
 	
-	RecordCompactor(ValueParser parser, ColumnType[] types, RecordStats stats) {
+	RecordCompactor(ColumnParser parser, ColumnType[] types, RecordStats stats) {
 		this.parser = parser;
 		this.types = types;
 		this.stats = stats;

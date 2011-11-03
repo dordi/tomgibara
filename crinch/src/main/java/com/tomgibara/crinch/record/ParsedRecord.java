@@ -3,7 +3,7 @@ package com.tomgibara.crinch.record;
 
 public class ParsedRecord extends AbstractRecord implements LinearRecord {
 
-	private final ValueParser parser;
+	private final ColumnParser parser;
 	private final StringRecord record;
 	private final int length;
 	int index = 0;
@@ -15,7 +15,7 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 		return index < length;
 	}
 	
-	public ParsedRecord(ValueParser parser, StringRecord record) {
+	public ParsedRecord(ColumnParser parser, StringRecord record) {
 		super(record);
 		if (parser == null) throw new IllegalArgumentException("null parser");
 		if (record == null) throw new IllegalArgumentException("null record");

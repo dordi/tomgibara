@@ -1,31 +1,32 @@
 package com.tomgibara.crinch.record.compact;
 
-import static com.tomgibara.crinch.record.compact.ColumnType.ALL_TYPES;
-import static com.tomgibara.crinch.record.compact.ColumnType.BOOLEAN_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.BOOLEAN_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.BYTE_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.BYTE_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.CHAR_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.CHAR_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.DOUBLE_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.DOUBLE_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.FLOAT_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.FLOAT_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.INTEGRAL_TYPES;
-import static com.tomgibara.crinch.record.compact.ColumnType.INT_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.INT_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.LONG_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.PRIMITIVE_TYPES;
-import static com.tomgibara.crinch.record.compact.ColumnType.SHORT_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.SHORT_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.ALL_TYPES;
+import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.BYTE_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.BYTE_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.CHAR_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.CHAR_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.DOUBLE_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.DOUBLE_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.FLOAT_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.FLOAT_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.INTEGRAL_TYPES;
+import static com.tomgibara.crinch.record.ColumnType.INT_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.INT_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.LONG_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.PRIMITIVE_TYPES;
+import static com.tomgibara.crinch.record.ColumnType.SHORT_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.SHORT_WRAPPER;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ValueParser;
+import com.tomgibara.crinch.record.ColumnParser;
 
 //TODO use column parser when appropriate methods are available
 
@@ -33,14 +34,14 @@ import com.tomgibara.crinch.record.ValueParser;
 //TODO support BigDecimal and identify float accuracy loss
 public class RecordTyper {
 
-	private final ValueParser parser;
+	private final ColumnParser parser;
 	
 	private boolean first = true;
 	private final List<Set<ColumnType>> types = new ArrayList<Set<ColumnType>>();
 	//TODO use something like this for identifying enums
 	private final List<String[]> values = new ArrayList<String[]>();
 	
-	RecordTyper(ValueParser parser) {
+	RecordTyper(ColumnParser parser) {
 		this.parser = parser;
 	}
 	

@@ -85,4 +85,10 @@ public interface BitReader {
     
     void readBits(BitVector bits) throws BitStreamException;
 
+    long getPositionInStream();
+    
+    long skipBits(long count);
+
+    int skipToBoundary(BitBoundary boundary);
+    
 }

@@ -7,23 +7,23 @@ import java.util.List;
 
 public enum ColumnType {
 
-	BOOLEAN_PRIMITIVE,
-	BOOLEAN_WRAPPER,
-	BYTE_PRIMITIVE,
-	BYTE_WRAPPER,
-	SHORT_PRIMITIVE,
-	SHORT_WRAPPER,
-	INT_PRIMITIVE,
-	INT_WRAPPER,
-	LONG_PRIMITIVE,
-	LONG_WRAPPER,
-	FLOAT_PRIMITIVE,
-	FLOAT_WRAPPER,
-	DOUBLE_PRIMITIVE,
-	DOUBLE_WRAPPER,
-	CHAR_PRIMITIVE,
-	CHAR_WRAPPER,
-	STRING_OBJECT;
+	BOOLEAN_PRIMITIVE(boolean.class),
+	BOOLEAN_WRAPPER(Boolean.class),
+	BYTE_PRIMITIVE(byte.class),
+	BYTE_WRAPPER(Byte.class),
+	SHORT_PRIMITIVE(short.class),
+	SHORT_WRAPPER(Short.class),
+	INT_PRIMITIVE(int.class),
+	INT_WRAPPER(Integer.class),
+	LONG_PRIMITIVE(long.class),
+	LONG_WRAPPER(Long.class),
+	FLOAT_PRIMITIVE(float.class),
+	FLOAT_WRAPPER(Float.class),
+	DOUBLE_PRIMITIVE(double.class),
+	DOUBLE_WRAPPER(Double.class),
+	CHAR_PRIMITIVE(char.class),
+	CHAR_WRAPPER(Character.class),
+	STRING_OBJECT(String.class);
 
 	public static final List<ColumnType> INTEGRAL_TYPES = Collections.unmodifiableList(Arrays.asList(
 			BYTE_PRIMITIVE,
@@ -72,45 +72,19 @@ public enum ColumnType {
 		ALL_TYPES = Collections.unmodifiableList(list);
 	}
 
+	public final Class<?> typeClass;
+	private final String typeName;
+	
+	private ColumnType(Class<?> typeClass) {
+		this.typeClass = typeClass;
+		String className = typeClass.getName();
+		int i = className.lastIndexOf('.');
+		typeName = i < 0 ? className : className.substring(i + 1);
+	}
+	
 	@Override
 	public String toString() {
-		switch (this) {
-		case BOOLEAN_PRIMITIVE:
-			return "boolean";
-		case BOOLEAN_WRAPPER:
-			return "Boolean";
-		case BYTE_PRIMITIVE:
-			return "byte";
-		case BYTE_WRAPPER:
-			return "Byte";
-		case CHAR_PRIMITIVE:
-			return "char";
-		case CHAR_WRAPPER:
-			return "Character";
-		case DOUBLE_PRIMITIVE:
-			return "double";
-		case DOUBLE_WRAPPER:
-			return "Double";
-		case FLOAT_PRIMITIVE:
-			return "float";
-		case FLOAT_WRAPPER:
-			return "Float";
-		case INT_PRIMITIVE:
-			return "int";
-		case INT_WRAPPER:
-			return "Integer";
-		case LONG_PRIMITIVE:
-			return "long";
-		case LONG_WRAPPER:
-			return "Long";
-		case SHORT_PRIMITIVE:
-			return "short";
-		case SHORT_WRAPPER:
-			return "Short";
-		case STRING_OBJECT:
-			return "String";
-			default: return name();
-		}
+		return typeName;
 	}
 
 }

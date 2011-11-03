@@ -88,7 +88,7 @@ public class DynamicRecordFactoryTest extends TestCase {
 		Definition def = new Definition(true, false, Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER), new Order(0, true, false), new Order(1, true, false), new Order(2, false, true), new Order(3, true, false), new Order(4, true, false));
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
 		LinearRecord rec = fac.newRecord(new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")));
-		System.out.println(rec.toString());
+		assertEquals("[1,true,null,Tom,3847239847239843,null]", rec.toString());
 	}
 	
 }

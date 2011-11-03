@@ -25,9 +25,9 @@ public class ProfiledBitReader implements BitReader {
 	}
 
 	@Override
-	public long getPositionInStream() {
+	public long getPosition() {
 		calls[POIS]++;
-		return reader.getPositionInStream();
+		return reader.getPosition();
 	}
 
 	@Override

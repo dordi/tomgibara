@@ -57,6 +57,11 @@ public class MemoryBitReader extends AbstractBitReader {
         return value;
     }
 
+    @Override
+    public long getPosition() {
+        return position;
+    }
+    
     // accessors
     
     public int[] getMemory() {
@@ -72,10 +77,6 @@ public class MemoryBitReader extends AbstractBitReader {
     
     public long getSize() {
         return size;
-    }
-    
-    public long getPosition() {
-        return position;
     }
     
     public void setPosition(long position) {

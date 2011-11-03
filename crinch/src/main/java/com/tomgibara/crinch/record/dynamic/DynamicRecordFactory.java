@@ -235,7 +235,6 @@ public class DynamicRecordFactory {
 				field++;
 			}
 			sb.append("\t}\n");
-			System.out.println(sb.toString());
 		}
 		
 		// next methods

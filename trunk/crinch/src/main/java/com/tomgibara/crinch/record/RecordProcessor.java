@@ -19,7 +19,7 @@ public class RecordProcessor {
 		return context;
 	}
 	
-	public <R> boolean process(RecordProducer<R> producer, RecordConsumer<R> consumer) {
+	public <R extends Record> boolean process(RecordProducer<R> producer, RecordConsumer<R> consumer) {
 		if (context == null) throw new IllegalStateException("null context");
 		int state = 0;
 		try {

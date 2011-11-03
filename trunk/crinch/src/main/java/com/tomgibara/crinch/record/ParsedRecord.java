@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.record;
 
 
-public class ParsedRecord implements LinearRecord {
+public class ParsedRecord extends AbstractRecord implements LinearRecord {
 
 	private final ValueParser parser;
 	private final StringRecord record;
@@ -16,6 +16,7 @@ public class ParsedRecord implements LinearRecord {
 	}
 	
 	public ParsedRecord(ValueParser parser, StringRecord record) {
+		super(record);
 		if (parser == null) throw new IllegalArgumentException("null parser");
 		if (record == null) throw new IllegalArgumentException("null record");
 		this.parser = parser;

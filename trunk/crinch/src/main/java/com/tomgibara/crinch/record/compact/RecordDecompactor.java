@@ -20,8 +20,8 @@ class RecordDecompactor {
 		this.compactors = compactors;
 	}
 
-	CompactRecord decompact(CodedReader reader) {
-		return new CompactRecord(compactors, reader);
+	CompactRecord decompact(CodedReader reader, long recordOrdinal) {
+		return new CompactRecord(compactors, reader, recordOrdinal);
 	}
 	
 	

@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.record;
 
 
-public class RecordTransfer<R> {
+public class RecordTransfer<R extends Record> {
 
 	private final RecordProducer<R> producer;
 	private final RecordConsumer<R> consumer;

@@ -213,11 +213,23 @@ public class DynamicRecordFactory {
 			sb.append("\t\tsuper(record);\n");
 			int field = 0;
 			for (ColumnType type : definition.types) {
+				//TODO should be tackled at the type level
+				final String accessorName;
+				switch (type) {
+				case CHAR_WRAPPER:
+					accessorName = "Char";
+					break;
+				case INT_WRAPPER:
+					accessorName = "Int";
+					break;
+				default:
+					accessorName = Character.toUpperCase(type.toString().charAt(0)) + type.toString().substring(1);
+					break;
+				}
 				if (type.typeClass.isPrimitive()) {
-					sb.append("\t\tf_").append(field).append(" = record.next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("();\n");
+					sb.append("\t\tf_").append(field).append(" = record.next").append(accessorName).append("();\n");
 				} else {
-					//TODO needs to know primitive type
-					sb.append("\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("();\n");
+					sb.append("\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(accessorName).append("();\n");
 					sb.append("\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");
 				}
 				field++;

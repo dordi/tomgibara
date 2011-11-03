@@ -1,19 +1,19 @@
 package com.tomgibara.crinch.record.dynamic;
 
-import static com.tomgibara.crinch.record.compact.ColumnType.BOOLEAN_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.BOOLEAN_WRAPPER;
-import static com.tomgibara.crinch.record.compact.ColumnType.INT_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.LONG_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.STRING_OBJECT;
+import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_WRAPPER;
+import static com.tomgibara.crinch.record.ColumnType.INT_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.LONG_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.STRING_OBJECT;
 
 import java.util.Arrays;
 
+import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ParsedRecord;
-import com.tomgibara.crinch.record.StdValueParser;
+import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.StringRecord;
-import com.tomgibara.crinch.record.ValueParser;
-import com.tomgibara.crinch.record.compact.ColumnType;
+import com.tomgibara.crinch.record.ColumnParser;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Definition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Order;
 
@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 public class DynamicRecordFactoryTest extends TestCase {
 
-	private static final ValueParser parser = new StdValueParser();
+	private static final ColumnParser parser = new StdColumnParser();
 	
 	public void testGetName() {
 		

@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
-import com.tomgibara.crinch.record.compact.ColumnType;
 
 public class StdProcessContext implements ProcessContext {
 

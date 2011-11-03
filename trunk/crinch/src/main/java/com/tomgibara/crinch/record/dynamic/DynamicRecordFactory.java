@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.record.dynamic;
 
-import static com.tomgibara.crinch.record.compact.ColumnType.BOOLEAN_PRIMITIVE;
-import static com.tomgibara.crinch.record.compact.ColumnType.LONG_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.ColumnType.LONG_PRIMITIVE;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -21,8 +21,8 @@ import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
 import com.tomgibara.crinch.record.AbstractRecord;
+import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.compact.ColumnType;
 import com.tomgibara.crinch.util.WriteStream;
 
 public class DynamicRecordFactory {

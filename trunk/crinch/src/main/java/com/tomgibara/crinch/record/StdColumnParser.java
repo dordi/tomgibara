@@ -5,7 +5,7 @@ import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitVector;
 
-public class StdValueParser implements ValueParser {
+public class StdColumnParser implements ColumnParser {
 
 	private final static String sFalseChars = "0fn";
 	private final static String sTrueChars = "1ty";

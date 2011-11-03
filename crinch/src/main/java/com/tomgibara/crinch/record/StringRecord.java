@@ -1,10 +1,11 @@
 package com.tomgibara.crinch.record;
 
-public class StringRecord {
+public class StringRecord extends AbstractRecord {
 
 	private final String[] values;
 	
-	public StringRecord(String[] values) {
+	public StringRecord(long recordOrdinal, long recordPosition, String[] values) {
+		super(recordOrdinal, recordPosition);
 		if (values == null) throw new IllegalArgumentException("null value");
 		this.values = values;
 	}
@@ -26,7 +27,7 @@ public class StringRecord {
 			checkIndex(index);
 			mapped[i] = values[index];
 		}
-		return new StringRecord(mapped);
+		return new StringRecord(recordOrdinal, -1L, mapped);
 	}
 	
 	private void checkIndex(int index) {

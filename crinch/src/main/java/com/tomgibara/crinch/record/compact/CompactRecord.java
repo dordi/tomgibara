@@ -1,16 +1,18 @@
 package com.tomgibara.crinch.record.compact;
 
 import com.tomgibara.crinch.coding.CodedReader;
+import com.tomgibara.crinch.record.AbstractRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 
-class CompactRecord implements LinearRecord {
+class CompactRecord extends AbstractRecord implements LinearRecord {
 
 	private final ColumnCompactor[] compactors;
 	private final CodedReader reader;
 	private int index = 0;
 	private boolean nullFlag;
 	
-	CompactRecord(ColumnCompactor[] compactors, CodedReader reader) {
+	CompactRecord(ColumnCompactor[] compactors, CodedReader reader, long ordinal) {
+		super(ordinal, reader.getReader().getPosition());
 		this.compactors = compactors;
 		this.reader = reader;
 	}

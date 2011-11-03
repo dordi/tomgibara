@@ -1,6 +1,6 @@
 package com.tomgibara.crinch.record;
 
-public abstract class AdaptedProducer<R, S> implements RecordProducer<S> {
+public abstract class AdaptedProducer<R extends Record, S extends Record> implements RecordProducer<S> {
 
 	protected final RecordProducer<R> producer;
 	

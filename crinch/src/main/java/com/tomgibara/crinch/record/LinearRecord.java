@@ -1,6 +1,6 @@
 package com.tomgibara.crinch.record;
 
-public interface LinearRecord {
+public interface LinearRecord extends Record {
 
 	boolean hasNext();
 	

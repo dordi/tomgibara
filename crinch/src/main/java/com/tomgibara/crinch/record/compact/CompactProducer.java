@@ -72,8 +72,7 @@ reader = new ProfiledBitReader(new InputStreamBitReader(in));
 		@Override
 		public LinearRecord next() {
 			if (recordsRead == recordCount) throw new NoSuchElementException();
-			recordsRead++;
-			return decompactor.decompact(coded);
+			return decompactor.decompact(coded, recordsRead++);
 		}
 		
 		@Override

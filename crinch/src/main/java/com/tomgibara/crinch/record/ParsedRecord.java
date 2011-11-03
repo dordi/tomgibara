@@ -26,7 +26,17 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 	
 	@Override
 	public String nextString() {
-		return parser.parseString( record.get(index++) );
+		String next = next();
+		if (next == null) {
+			nullFlag = true;
+		} else {
+			try {
+				return parser.parseString(next);
+			} catch (IllegalArgumentException e) {
+				invalidCause = e;
+			}
+		}
+		return null;
 	}
 	
 	@Override
@@ -151,19 +161,19 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 	
 	@Override
 	public void skipNext() {
-		if (index == length) throw new IllegalStateException();
+		if (index == length) throw new IllegalStateException("fields exhausted");
 		index++;
 	}
 
 	@Override
 	public boolean wasInvalid() {
-		if (index == 0) throw new IllegalStateException();
+		if (index == 0) throw new IllegalStateException("no field read");
 		return invalidCause != null;
 	}
 	
 	@Override
 	public boolean wasNull() {
-		if (index == 0) throw new IllegalStateException();
+		if (index == 0) throw new IllegalStateException("no field read");
 		return nullFlag;
 	}
 	

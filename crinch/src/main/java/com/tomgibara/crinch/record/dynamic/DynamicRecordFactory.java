@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.text.Position;
-
 import org.codehaus.janino.CompileException;
 import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
@@ -23,11 +21,11 @@ import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
-import com.tomgibara.crinch.record.AbstractRecord;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.util.WriteStream;
 
+//TODO could persist nullables as primitives
 public class DynamicRecordFactory {
 
 	public static class Order {
@@ -190,10 +188,12 @@ public class DynamicRecordFactory {
 	private String generateSource() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
-		sb.append("public class " + name).append(" extends " + AbstractRecord.class.getName() + " implements " + LinearRecord.class.getName() + ", Comparable {\n");
+		sb.append("public class " + name).append(" implements " + LinearRecord.class.getName() + ", Comparable {\n");
 		sb.append("\tprivate static final int limit = ").append(definition.types.size()).append(";\n");
 		
 		// fields
+		if (definition.ordinal) sb.append("\tprivate final long recordOrdinal;\n");
+		if (definition.positional) sb.append("\tprivate final long recordPosition;\n");
 		sb.append("\tprivate int field = 0;\n");
 		{
 			int field = 0;
@@ -210,7 +210,8 @@ public class DynamicRecordFactory {
 		
 		{
 			sb.append("\tpublic ").append(name).append("(" + LinearRecord.class.getName() + " record) {\n");
-			sb.append("\t\tsuper(record);\n");
+			if (definition.ordinal) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
+			if (definition.positional) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
 			int field = 0;
 			for (ColumnType type : definition.types) {
 				//TODO should be tackled at the type level
@@ -237,6 +238,15 @@ public class DynamicRecordFactory {
 			sb.append("\t}\n");
 		}
 		
+		// accessors
+		sb.append("\tpublic long getRecordOrdinal() {\n");
+		sb.append("\t\treturn ").append(definition.ordinal ? "recordOrdinal" : "-1L").append(";\n");
+		sb.append("\t}\n");
+
+		sb.append("\tpublic long getRecordPosition() {\n");
+		sb.append("\t\treturn ").append(definition.positional ? "recordPosition" : "-1L").append(";\n");
+		sb.append("\t}\n");
+
 		// next methods
 		List<ColumnType> types = new ArrayList<ColumnType>();
 		types.addAll(ColumnType.PRIMITIVE_TYPES);
@@ -373,6 +383,7 @@ public class DynamicRecordFactory {
 		}
 
 		sb.append("}");
+		System.out.println(sb.toString());
 		return sb.toString();
 	}
 	

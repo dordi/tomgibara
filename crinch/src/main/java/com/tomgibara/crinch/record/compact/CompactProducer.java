@@ -15,14 +15,15 @@ import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Definition;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
-	private final File file;
+	private final Definition definition;
 	
-	public CompactProducer(File file) {
-		if (file == null) throw new IllegalArgumentException("null file");
-		this.file = file;
+	public CompactProducer(Definition definition) {
+		this.definition = definition;
 	}
 	
 	@Override
@@ -41,6 +42,13 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		long recordsRead = 0;
 		
 		Sequence(ProcessContext context) {
+			RecordStats stats = context.getRecordStats();
+			if (stats == null) throw new IllegalStateException("no statistics available");
+			recordCount = stats.getRecordCount();
+			decompactor = new RecordDecompactor(stats);
+
+			String suffix = definition == null ? "compact" : DynamicRecordFactory.nameFor(definition);
+			File file = new File(context.getOutputDir(), context.getDataName() + "." + suffix);
 			try {
 				in = new BufferedInputStream(new FileInputStream(file), 1024);
 			} catch (IOException e) {
@@ -48,10 +56,6 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			}
 			reader = new InputStreamBitReader(in);
 			coded = new CodedReader(reader, context.getCoding());
-			RecordStats stats = RecordStats.read(coded);
-			context.setRecordStats(stats);
-			recordCount = stats.getRecordCount();
-			decompactor = new RecordDecompactor(stats);
 		}
 		
 		@Override

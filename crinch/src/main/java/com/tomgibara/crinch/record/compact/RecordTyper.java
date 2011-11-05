@@ -27,6 +27,7 @@ import java.util.Set;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ColumnParser;
+import com.tomgibara.crinch.record.ProcessContext;
 
 //TODO use column parser when appropriate methods are available
 
@@ -41,8 +42,8 @@ public class RecordTyper {
 	//TODO use something like this for identifying enums
 	private final List<String[]> values = new ArrayList<String[]>();
 	
-	RecordTyper(ColumnParser parser) {
-		this.parser = parser;
+	RecordTyper(ProcessContext context) {
+		this.parser = context.getColumnParser();
 	}
 	
 	void type(LinearRecord r) {
@@ -117,11 +118,6 @@ public class RecordTyper {
 			index ++;
 		}
 		first = false;
-	}
-
-	RecordAnalyzer analyzer() {
-		//TODO use array
-		return new RecordAnalyzer(parser, getColumnTypes());
 	}
 
 	List<ColumnType> getColumnTypes() {

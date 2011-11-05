@@ -6,81 +6,121 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ColumnParser;
 
-class RecordCompactor {
+public class RecordCompactor {
 
 
-	private final ColumnParser parser;
 	private final ColumnType[] types;
-	private final RecordStats stats;
 	private final ColumnCompactor[] compactors;
 	
-	RecordCompactor(ColumnParser parser, ColumnType[] types, RecordStats stats) {
-		this.parser = parser;
-		this.types = types;
-		this.stats = stats;
-		ColumnCompactor[] compactors = new ColumnCompactor[types.length];
+	public RecordCompactor(ProcessContext context) {
+		List<ColumnType> types = context.getColumnTypes();
+		if (types == null) throw new IllegalArgumentException("context has no column types");
+		RecordStats stats = context.getRecordStats();
+		if (stats == null) throw new IllegalArgumentException("context has no record stats");
+		
+		
+		ColumnCompactor[] compactors = new ColumnCompactor[types.size()];
 		List<ColumnStats> list = stats.getColumnStats();
 		for (int i = 0; i < compactors.length; i++) {
 			compactors[i] = new ColumnCompactor(list.get(i));
 		}
+		
+		this.types = (ColumnType[]) types.toArray(new ColumnType[types.size()]);
 		this.compactors = compactors;
 	}
 
-	int compact(CodedWriter writer, LinearRecord record) {
+	public int compact(CodedWriter writer, LinearRecord record) {
 		int c = 0;
 		for (int i = 0; i < compactors.length; i++) {
 			ColumnCompactor compactor = compactors[i];
-			String str = record.nextString();
-			boolean isNull = str == null;
-			c += compactor.encodeNull(writer, isNull);
-			if (isNull) continue;
 			switch (types[i]) {
 			case BOOLEAN_PRIMITIVE:
 			case BOOLEAN_WRAPPER:
-				c += compactor.encodeBoolean(writer, parser.parseBoolean(str));
+			{
+				boolean value = record.nextBoolean();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeBoolean(writer, value);
 				break;
+			}
 			case BYTE_PRIMITIVE:
 			case BYTE_WRAPPER:
-				c += compactor.encodeInt(writer, parser.parseByte(str));
+			{
+				byte value = record.nextByte();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeInt(writer, value);
 				break;
+			}
 			case SHORT_PRIMITIVE:
 			case SHORT_WRAPPER:
-				c += compactor.encodeInt(writer, parser.parseShort(str));
+			{
+				short value = record.nextShort();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeInt(writer, value);
 				break;
+			}
 			case INT_PRIMITIVE:
 			case INT_WRAPPER:
-				c += compactor.encodeInt(writer, parser.parseInt(str));
+			{
+				int value = record.nextInt();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeInt(writer, value);
 				break;
+			}
 			case LONG_PRIMITIVE:
 			case LONG_WRAPPER:
-				c += compactor.encodeLong(writer, parser.parseLong(str));
+			{
+				long value = record.nextLong();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeLong(writer, value);
 				break;
+			}
 			case FLOAT_PRIMITIVE:
 			case FLOAT_WRAPPER:
-				c += compactor.encodeFloat(writer, parser.parseFloat(str));
+			{
+				float value = record.nextFloat();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeFloat(writer, value);
 				break;
+			}
 			case DOUBLE_PRIMITIVE:
 			case DOUBLE_WRAPPER:
-				c += compactor.encodeDouble(writer, parser.parseDouble(str));
+			{
+				double value = record.nextDouble();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeDouble(writer, value);
 				break;
+			}
 			case CHAR_PRIMITIVE:
 			case CHAR_WRAPPER:
-				c += compactor.encodeInt(writer, parser.parseChar(str));
+			{
+				char value = record.nextChar();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeInt(writer, value);
 				break;
+			}
 			case STRING_OBJECT:
-				c += compactor.encodeString(writer, parser.parseString(str));
+			{
+				String value = record.nextString();
+				boolean isNull = record.wasNull();
+				c += compactor.encodeNull(writer, isNull);
+				if (!isNull) c += compactor.encodeString(writer, value);
 				break;
+			}
 				default: throw new IllegalStateException("Unsupported type");
 			}
 		}
 		return c;
-	}
-	
-	RecordDecompactor decompactor() {
-		return new RecordDecompactor(stats);
 	}
 	
 }

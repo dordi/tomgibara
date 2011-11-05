@@ -5,9 +5,7 @@ import static com.tomgibara.crinch.record.ColumnType.LONG_PRIMITIVE;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,88 +15,14 @@ import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
-import com.tomgibara.crinch.bits.BitVector;
-import com.tomgibara.crinch.hashing.HashRange;
-import com.tomgibara.crinch.hashing.HashSource;
-import com.tomgibara.crinch.hashing.PRNGMultiHash;
+import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.util.WriteStream;
+import com.tomgibara.crinch.record.RecordDefinition;
 
 //TODO could persist nullables as primitives
 public class DynamicRecordFactory {
 
-	//TODO should probably move into the record package as ColumnOrder
-	public static class Order {
-		
-		final int index;
-		final boolean ascending;
-		final boolean nullFirst;
-		
-		public Order(int index, boolean ascending, boolean nullFirst) {
-			this.index = index;
-			this.ascending = ascending;
-			this.nullFirst = nullFirst;
-		}
-		
-	}
-	
-	//TODO may be good to make this a top level RecordDefinition type too
-	public static class Definition {
-		
-		private final boolean ordinal;
-		private final boolean positional;
-		private final List<ColumnType> types;
-		private final List<Order> orders;
-	
-		public Definition(boolean ordinal, boolean positional, List<ColumnType> types, Order... orders) {
-			if (types == null) throw new IllegalArgumentException("null types");
-			if (orders == null) throw new IllegalArgumentException("null orders");
-			
-			this.ordinal = ordinal;
-			this.positional = positional;
-			this.types = new ArrayList<ColumnType>(types);
-			this.orders = new ArrayList<Order>(Arrays.asList(orders));
-
-			// verify input
-			if (this.types.contains(null)) throw new IllegalArgumentException("null type");
-			if (this.orders.contains(null)) throw new IllegalArgumentException("null order");
-			
-			final int size = this.types.size();
-			BitVector vector = new BitVector(size);
-			for (Order order : this.orders) {
-				int index = order.index;
-				if (index < 0 || index >= size) throw new IllegalArgumentException("invalid order index: " + index);
-				if (vector.getBit(index)) throw new IllegalArgumentException("duplicate order index: " + index);
-				vector.setBit(index, true);
-			}
-		}
-		
-	}
-	
-	private static HashSource<Definition> hashSource = new HashSource<Definition>() {
-		
-		@Override
-		public void sourceData(Definition definition, WriteStream out) {
-			out.writeBoolean(definition.ordinal);
-			out.writeBoolean(definition.positional);
-			for (ColumnType type : definition.types) {
-				out.writeInt(type.ordinal());
-			}
-			for (Order order: definition.orders) {
-				out.writeInt(order.index);
-				out.writeBoolean(order.ascending);
-			}
-		}
-	};
-	
-	private static final int hashDigits = 10;
-	
-	private static HashRange hashRange = new HashRange(BigInteger.ZERO, BigInteger.ONE.shiftLeft(4 * hashDigits));
-	
-	private static PRNGMultiHash<Definition> hash = new PRNGMultiHash<Definition>(hashSource, hashRange);
-	
-	private static final String namePattern = "DynRec_%0" + hashDigits + "X";
 	
 	private static String packageName = "com.tomgibara.crinch.record.dynamic";
 	
@@ -106,12 +30,8 @@ public class DynamicRecordFactory {
 	
 	private static final Class<?>[] consParams = { LinearRecord.class };
 	
-	public static String nameFor(Definition definition) {
-		return String.format(namePattern, hash.hashAsBigInt(definition));
-	}
-	
-	public static DynamicRecordFactory getInstance(Definition definition) {
-		String name = nameFor(definition);
+	public static DynamicRecordFactory getInstance(RecordDefinition definition) {
+		String name = "DynRec_" + definition.getId();
 		DynamicRecordFactory factory;
 		synchronized (factories) {
 			factory = factories.get(name);
@@ -125,7 +45,7 @@ public class DynamicRecordFactory {
 	
 	// fields
 	
-	private final Definition definition;
+	private final RecordDefinition definition;
 	private final String name;
 	private final String source;
 	private final Class<? extends LinearRecord> clss;
@@ -133,7 +53,7 @@ public class DynamicRecordFactory {
 	
 	// constructors
 	
-	private DynamicRecordFactory(Definition definition, String name) {
+	private DynamicRecordFactory(RecordDefinition definition, String name) {
 		this.definition = definition;
 		this.name = name;
 		source = generateSource();
@@ -163,7 +83,7 @@ public class DynamicRecordFactory {
 		}
 	}
 
-	public Definition getDefinition() {
+	public RecordDefinition getDefinition() {
 		return definition;
 	}
 	
@@ -191,15 +111,15 @@ public class DynamicRecordFactory {
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
 		sb.append("public class " + name).append(" implements " + LinearRecord.class.getName() + ", Comparable {\n");
-		sb.append("\tprivate static final int limit = ").append(definition.types.size()).append(";\n");
+		sb.append("\tprivate static final int limit = ").append(definition.getTypes().size()).append(";\n");
 		
 		// fields
-		if (definition.ordinal) sb.append("\tprivate final long recordOrdinal;\n");
-		if (definition.positional) sb.append("\tprivate final long recordPosition;\n");
+		if (definition.isOrdinal()) sb.append("\tprivate final long recordOrdinal;\n");
+		if (definition.isPositional()) sb.append("\tprivate final long recordPosition;\n");
 		sb.append("\tprivate int field = 0;\n");
 		{
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				sb.append("\tfinal ").append(type).append(" f_").append(field++).append(";\n");
 			}
 		}
@@ -212,10 +132,10 @@ public class DynamicRecordFactory {
 		
 		{
 			sb.append("\tpublic ").append(name).append("(" + LinearRecord.class.getName() + " record) {\n");
-			if (definition.ordinal) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
-			if (definition.positional) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
+			if (definition.isOrdinal()) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
+			if (definition.isPositional()) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				//TODO should be tackled at the type level
 				final String accessorName;
 				switch (type) {
@@ -242,11 +162,11 @@ public class DynamicRecordFactory {
 		
 		// accessors
 		sb.append("\tpublic long getRecordOrdinal() {\n");
-		sb.append("\t\treturn ").append(definition.ordinal ? "recordOrdinal" : "-1L").append(";\n");
+		sb.append("\t\treturn ").append(definition.isOrdinal() ? "recordOrdinal" : "-1L").append(";\n");
 		sb.append("\t}\n");
 
 		sb.append("\tpublic long getRecordPosition() {\n");
-		sb.append("\t\treturn ").append(definition.positional ? "recordPosition" : "-1L").append(";\n");
+		sb.append("\t\treturn ").append(definition.isPositional() ? "recordPosition" : "-1L").append(";\n");
 		sb.append("\t}\n");
 
 		// next methods
@@ -258,7 +178,7 @@ public class DynamicRecordFactory {
 			sb.append("\t\tif (field == limit) throw new IllegalStateException(\"fields exhausted\");\n");
 			sb.append("\t\tswitch(field++) {\n");
 			int field = 0;
-			for (ColumnType t : definition.types) {
+			for (ColumnType t : definition.getTypes()) {
 				if (type == t) {
 					sb.append("\t\t\tcase ").append(field).append(": return f_").append(field).append(";\n");
 				}
@@ -289,7 +209,7 @@ public class DynamicRecordFactory {
 			sb.append("\t\tswitch(field) {\n");
 			sb.append("\t\t\tcase 0: throw new IllegalStateException(\"no field read\");\n");
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				sb.append("\t\t\tcase ").append(field + 1).append(": ");
 				if (type.typeClass.isPrimitive()) {
 					sb.append("return false;");
@@ -310,18 +230,18 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic int compareTo(Object obj) {\n");
 			sb.append("\t\t" + name + " that = (" + name + ") obj;\n");
-			for (Order order : definition.orders) {
-				int field = order.index;
-				ColumnType type = definition.types.get(field);
+			for (ColumnOrder order : definition.getOrders()) {
+				int field = order.getIndex();
+				ColumnType type = definition.getTypes().get(field);
 				if (type == BOOLEAN_PRIMITIVE) {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " ? -1 : 1;\n");
 				} else if (type.typeClass.isPrimitive()) {
-					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " " + (order.ascending ? '<' : '>') + " that.f_" + field + " ? -1 : 1;\n");
+					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " " + (order.isAscending() ? '<' : '>') + " that.f_" + field + " ? -1 : 1;\n");
 				} else {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") {\n");
-					sb.append("\t\t\tif (this.f_" + field + " == null) return " + (order.nullFirst ? "-1" : "1") + ";\n");
-					sb.append("\t\t\tif (that.f_" + field + " == null) return " + (order.nullFirst ? "1" : "-1") + ";\n");
-					sb.append("\t\t\treturn " + (order.ascending ? "this" : "that") + ".f_" + field + ".compareTo(" + (order.ascending ? "that" : "this") + ".f_" + field + ");\n");
+					sb.append("\t\t\tif (this.f_" + field + " == null) return " + (order.isNullFirst() ? "-1" : "1") + ";\n");
+					sb.append("\t\t\tif (that.f_" + field + " == null) return " + (order.isNullFirst() ? "1" : "-1") + ";\n");
+					sb.append("\t\t\treturn " + (order.isAscending() ? "this" : "that") + ".f_" + field + ".compareTo(" + (order.isAscending() ? "that" : "this") + ".f_" + field + ");\n");
 					sb.append("\t\t}\n");
 				}
 			}
@@ -335,7 +255,7 @@ public class DynamicRecordFactory {
 			
 			sb.append("\t\tint h = 0;\n");
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				if (type == BOOLEAN_PRIMITIVE) {
 					sb.append("\t\th = (31 * h) ^ (f_" + field + " ? 1231 : 1237);\n");
 				} else if (type == LONG_PRIMITIVE) {
@@ -357,7 +277,7 @@ public class DynamicRecordFactory {
 			sb.append("\t\tif (!(obj instanceof " + name +")) return false;\n");
 			sb.append("\t\t" + name + " that = (" + name + ") obj;\n");
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				if (type.typeClass.isPrimitive()) {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return false;\n");
 				} else {
@@ -377,7 +297,7 @@ public class DynamicRecordFactory {
 			
 			sb.append("\t\treturn new StringBuilder().append('[')");
 			int field = 0;
-			for (ColumnType type : definition.types) {
+			for (ColumnType type : definition.getTypes()) {
 				if (field > 0) sb.append(".append(',')");
 				sb.append(".append(f_" + field + ")");
 				field++;

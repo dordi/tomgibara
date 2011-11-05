@@ -11,27 +11,28 @@ import java.util.PriorityQueue;
 
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
+import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
+import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
-import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Definition;
-import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Order;
 
 public class SortConsumer implements RecordConsumer<LinearRecord> {
 
-	private final Order[] orders;
+	private final ColumnOrder[] orders;
 	
 	private ProcessContext context;
+	private RecordDefinition definition;
 	private DynamicRecordFactory factory;
 	private PriorityQueue<LinearRecord> queue; 
 	private OutputStream out;
 	private OutputStreamBitWriter writer;
 	private CodedWriter coded;
 	
-	public SortConsumer(Order... orders) {
+	public SortConsumer(ColumnOrder... orders) {
 		this.orders = orders;
 	}
 	
@@ -40,8 +41,7 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 		this.context = context;
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		Definition def = new Definition(false, false, types, orders);
-		factory = DynamicRecordFactory.getInstance(def);
+		definition = new RecordDefinition(false, false, types, orders);
 	}
 
 	@Override
@@ -54,6 +54,7 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 		//TODO splitting
 		//TODO need to size
 		queue = new PriorityQueue<LinearRecord>();
+		factory = DynamicRecordFactory.getInstance(definition);
 	}
 
 	@Override
@@ -70,6 +71,8 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 			RecordCompactor compactor = new RecordCompactor(context);
 			while (!queue.isEmpty()) compactor.compact(coded, queue.poll());
 		} finally {
+			queue = null;
+			factory = null;
 			close();
 		}
 	}
@@ -85,8 +88,7 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	private File file() {
-		//TODO append definition name?
-		return new File(context.getOutputDir(), context.getDataName() + "." + factory.getName());
+		return new File(context.getOutputDir(), context.getDataName() + "." + definition.getId());
 	}
 	
 	private void open() {
@@ -123,7 +125,6 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	private void cleanup() {
-		factory = null;
 		if (context != null) {
 			context = null;
 		}

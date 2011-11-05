@@ -12,17 +12,16 @@ import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
-import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.Definition;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
-	private final Definition definition;
+	private final RecordDefinition definition;
 	
-	public CompactProducer(Definition definition) {
+	public CompactProducer(RecordDefinition definition) {
 		this.definition = definition;
 	}
 	
@@ -47,7 +46,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			recordCount = stats.getRecordCount();
 			decompactor = new RecordDecompactor(stats);
 
-			String suffix = definition == null ? "compact" : DynamicRecordFactory.nameFor(definition);
+			String suffix = definition == null ? "compact" : definition.getId();
 			File file = new File(context.getOutputDir(), context.getDataName() + "." + suffix);
 			try {
 				in = new BufferedInputStream(new FileInputStream(file), 1024);

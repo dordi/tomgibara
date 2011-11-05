@@ -12,18 +12,14 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ColumnParser;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
-	private static final int PASS_TYPE = 0;
+	private static final int PASS_TYPES = 0;
 	private static final int PASS_STATS = 1;
-	private static final int PASS_WRITE = 2;
+	private static final int PASS_COMPACT = 2;
 	private static final int PASS_DONE = 3;
 	
-	private final ColumnParser parser;
-	private final File outFile;
 	private ProcessContext context = null;
 	private int pass;
 	private RecordTyper typer;
@@ -34,17 +30,21 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private CodedWriter coded;
 	private long bitsWritten;
 	
-	public CompactConsumer(ColumnParser parser, File outFile) {
-		if (parser == null) throw new IllegalArgumentException("null parser");
-		if (outFile == null) throw new IllegalArgumentException("null outFile");
-		this.parser = parser;
-		this.outFile = outFile;
+	public CompactConsumer() {
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		pass = PASS_TYPE;
 		this.context = context;
+		if (context.getColumnTypes() == null) {
+			pass = PASS_TYPES;
+		} else if (context.getRecordStats() == null) {
+			pass = PASS_STATS;
+		} else if (!file().isFile()) {
+			pass = PASS_COMPACT;
+		} else {
+			pass = PASS_DONE;
+		}
 	}
 
 	@Override
@@ -55,19 +55,18 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void beginPass() {
 		switch (pass) {
-		case PASS_TYPE:
+		case PASS_TYPES:
 			context.setPassName("Identifying types");
-			typer = new RecordTyper(parser);
+			typer = new RecordTyper(context);
 			break;
 		case PASS_STATS:
 			context.setPassName("Gathering statistics");
-			analyzer = typer.analyzer();
+			analyzer = new RecordAnalyzer(context);
 			break;
-		case PASS_WRITE:
+		case PASS_COMPACT:
 			context.setPassName("Compacting data");
-			compactor = analyzer.compactor();
+			compactor = new RecordCompactor(context);
 			open();
-			RecordStats.write(coded, context.getRecordStats());
 			break;
 		}
 	}
@@ -75,13 +74,13 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void consume(LinearRecord record) {
 		switch (pass) {
-		case PASS_TYPE:
+		case PASS_TYPES:
 			typer.type(record);
 			break;
 		case PASS_STATS:
 			analyzer.analyze(record);
 			break;
-		case PASS_WRITE:
+		case PASS_COMPACT:
 			int c = compactor.compact(coded, record);
 			bitsWritten += c;
 			break;
@@ -91,11 +90,11 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void endPass() {
 		switch(pass) {
-		case PASS_TYPE:
+		case PASS_TYPES:
 			context.setColumnTypes(typer.getColumnTypes());
 			break;
 		case PASS_STATS:
-			context.setRecordStats(analyzer.stats());
+			context.setRecordStats(analyzer.getStats());
 			break;
 		}
 		pass++;
@@ -111,9 +110,13 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 		close();
 	}
 
+	private File file() {
+		return new File(context.getOutputDir(), context.getDataName() + ".compact");
+	}
+	
 	private void open() {
 		try {
-			out = new BufferedOutputStream(new FileOutputStream(outFile), 1024);
+			out = new BufferedOutputStream(new FileOutputStream(file()), 1024);
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}

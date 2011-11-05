@@ -1,23 +1,22 @@
 package com.tomgibara.crinch.record.compact;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.ColumnParser;
 
 class RecordAnalyzer {
 
-	private final ColumnParser parser;
 	private final ColumnAnalyzer[] analyzers;
 	
 	private long recordCount = 0;
 	
-	RecordAnalyzer(ColumnParser parser, List<ColumnType> types) {
-		this.parser = parser;
+	RecordAnalyzer(ProcessContext context) {
+		List<ColumnType> types = context.getColumnTypes();
+		if (types == null) throw new IllegalArgumentException("context has no column types");
 		analyzers = new ColumnAnalyzer[types.size()];
 		for (int i = 0; i < analyzers.length; i++) {
 			analyzers[i] = ColumnAnalyzer.newInstance(types.get(i));
@@ -31,16 +30,7 @@ class RecordAnalyzer {
 		}
 	}
 	
-	RecordCompactor compactor() {
-		final int length = analyzers.length;
-		ColumnType[] types = new ColumnType[length];
-		for (int i = 0; i < length; i++) {
-			types[i] = analyzers[i].type;
-		}
-		return new RecordCompactor(parser, types, stats());
-	}
-
-	RecordStats stats() {
+	RecordStats getStats() {
 		RecordStats stats = new RecordStats();
 		stats.setRecordCount(recordCount);
 		final int length = analyzers.length;

@@ -1,7 +1,24 @@
 package com.tomgibara.crinch.record;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
+import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitStreamException;
+import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.bits.InputStreamBitReader;
+import com.tomgibara.crinch.bits.OutputStreamBitWriter;
+import com.tomgibara.crinch.coding.BitStreams;
+import com.tomgibara.crinch.coding.CodedReader;
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 
@@ -9,6 +26,9 @@ public class StdProcessContext implements ProcessContext {
 
 	private float progressStep = 1.0f;
 	private ExtendedCoding coding = EliasOmegaCoding.extended;
+	private ColumnParser columnParser = new StdColumnParser();
+	private File outputDir = new File("");
+	private String dataName = "default";
 	
 	private long recordCount = 0L;
 	private long recordsTransferred = 0L;
@@ -19,6 +39,7 @@ public class StdProcessContext implements ProcessContext {
 	private List<ColumnType> columnTypes;
 
 	public StdProcessContext() {
+		load();
 		resetProgress();
 	}
 
@@ -37,6 +58,50 @@ public class StdProcessContext implements ProcessContext {
 	public ExtendedCoding getCoding() {
 		return coding;
 	}
+	
+	@Override
+	public void setColumnParser(ColumnParser columnParser) {
+		if (columnParser == null) throw new IllegalArgumentException("null columnParser");
+		this.columnParser = columnParser;
+	}
+	
+	@Override
+	public ColumnParser getColumnParser() {
+		return columnParser;
+	}
+	
+	@Override
+	public void setOutputDir(File outputDir) {
+		if (outputDir == null) throw new IllegalArgumentException("null outputDir");
+		if (!outputDir.equals(this.outputDir)) {
+			log("Output directory: " + outputDir);
+			this.outputDir = outputDir;
+			load();
+		}
+	}
+	
+	@Override
+	public File getOutputDir() {
+		return outputDir;
+	}
+	
+	@Override
+	public void setDataName(String dataName) {
+		if (dataName == null) throw new IllegalArgumentException("null dataName");
+		if (dataName.isEmpty()) throw new IllegalArgumentException("empty dataName");
+		if (!dataName.equals(this.dataName)) {
+			log("Data name: " + dataName);
+			this.dataName = dataName;
+			load();
+		}
+	}
+	
+	@Override
+	public String getDataName() {
+		return dataName;
+	}
+	
+	
 	
 	@Override
 	public void setRecordsTransferred(long recordsTransferred) {
@@ -78,7 +143,8 @@ public class StdProcessContext implements ProcessContext {
 			setRecordCount(recordStats.getRecordCount());
 		}
 		this.recordStats = recordStats;
-		
+		//TODO should only write if changed
+		writeRecordStats();
 	}
 	
 	@Override
@@ -95,6 +161,8 @@ public class StdProcessContext implements ProcessContext {
 			}
 		}
 		this.columnTypes = columnTypes;
+		//TODO should only write if changed
+		writeColumnTypes();
 	}
 
 	@Override
@@ -132,6 +200,120 @@ public class StdProcessContext implements ProcessContext {
 		this.progress = progress;
 		lastProgress = progress;
 		log("Progress: " + Math.round(progress * 100f) + "%");
+	}
+	
+	private void load() {
+		readRecordStats();
+		readColumnTypes();
+	}
+	
+	private File getRecordStatsFile() {
+		return new File(outputDir, dataName + ".stats");
+	}
+	
+	private void writeRecordStats() {
+		write(new WriteOp() {
+			@Override
+			public boolean isNull() { return recordStats == null; }
+			@Override
+			public void write(CodedWriter coded) { RecordStats.write(coded, recordStats); }
+		}, getRecordStatsFile());
+	}
+	
+	private void readRecordStats() {
+		recordStats = read(new ReadOp<RecordStats>() {
+			@Override
+			public RecordStats read(CodedReader coded) {
+				return RecordStats.read(coded);
+			}
+		}, getRecordStatsFile());
+	}
+
+	private File getColumnTypesFile() {
+		return new File(outputDir, dataName + ".types");
+	}
+	
+	private void writeColumnTypes() {
+		write(new WriteOp() {
+			@Override
+			public boolean isNull() { return columnTypes == null; }
+			@Override
+			public void write(CodedWriter coded) { BitStreams.writeEnumList(coded, columnTypes); }
+		}, getColumnTypesFile());
+	}
+
+	private void readColumnTypes() {
+		columnTypes = read(new ReadOp<List<ColumnType>>() {
+			@Override
+			public List<ColumnType> read(CodedReader coded) {
+				return BitStreams.readEnumList(coded, ColumnType.class);
+			}
+		}, getColumnTypesFile());
+	}
+	
+	private <T> T read(ReadOp<T> op, File file) {
+		if (!file.isFile()) {
+			return null;
+		} else {
+			InputStream in = null;
+			try {
+				in = new BufferedInputStream(new FileInputStream(file), 1024);
+				BitReader reader = new InputStreamBitReader(in);
+				CodedReader coded = new CodedReader(reader, coding);
+				return op.read(coded);
+			} catch (IOException e) {
+				throw new BitStreamException(e);
+			} finally {
+				if (in != null) {
+					try {
+						in.close();
+					} catch (IOException e) {
+						log("problem closing file", e);
+					}
+				}
+			}
+		}
+	}
+	
+	private void write(WriteOp op, File file) {
+		if (op.isNull()) {
+			file.delete();
+		} else {
+			OutputStream out = null;
+			try {
+				out = new BufferedOutputStream(new FileOutputStream(file), 1024);
+				OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
+				CodedWriter coded = new CodedWriter(writer, coding);
+				op.write(coded);
+				//TODO must make this a method on BitWriter
+				writer.padToByteBoundary();
+				writer.flush();
+			} catch (IOException e) {
+				throw new BitStreamException(e);
+			} finally {
+				if (out != null) {
+					try {
+						out.close();
+					} catch (IOException e) {
+						log("problem closing file", e);
+					}
+				}
+			}
+		}
+	}
+	
+	private interface ReadOp<T> {
+		
+		T read(CodedReader coded);
+		
+	}
+	
+	private interface WriteOp {
+		
+		boolean isNull();
+		
+		void write(CodedWriter coded);
+		
 	}
 	
 }

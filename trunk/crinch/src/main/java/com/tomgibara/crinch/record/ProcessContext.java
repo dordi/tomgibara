@@ -1,5 +1,6 @@
 package com.tomgibara.crinch.record;
 
+import java.io.File;
 import java.util.List;
 
 import com.tomgibara.crinch.coding.ExtendedCoding;
@@ -10,6 +11,18 @@ public interface ProcessContext {
 	void setCoding(ExtendedCoding coding);
 	
 	ExtendedCoding getCoding();
+
+	void setOutputDir(File outputDir);
+	
+	File getOutputDir();
+	
+	void setDataName(String dataName);
+	
+	String getDataName();
+	
+	void setColumnParser(ColumnParser columnParser);
+	
+	ColumnParser getColumnParser();
 	
 	void setRecordsTransferred(long recordsTransferred);
 	

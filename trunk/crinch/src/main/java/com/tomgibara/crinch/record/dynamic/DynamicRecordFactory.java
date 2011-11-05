@@ -28,6 +28,7 @@ import com.tomgibara.crinch.util.WriteStream;
 //TODO could persist nullables as primitives
 public class DynamicRecordFactory {
 
+	//TODO should probably move into the record package as ColumnOrder
 	public static class Order {
 		
 		final int index;
@@ -42,6 +43,7 @@ public class DynamicRecordFactory {
 		
 	}
 	
+	//TODO may be good to make this a top level RecordDefinition type too
 	public static class Definition {
 		
 		private final boolean ordinal;
@@ -100,16 +102,16 @@ public class DynamicRecordFactory {
 	
 	private static String packageName = "com.tomgibara.crinch.record.dynamic";
 	
-	private static String name(Definition definition) {
-		return String.format(namePattern, hash.hashAsBigInt(definition));
-	}
-	
 	private static final Map<String, DynamicRecordFactory> factories = new HashMap<String, DynamicRecordFactory>();
 	
 	private static final Class<?>[] consParams = { LinearRecord.class };
 	
+	public static String nameFor(Definition definition) {
+		return String.format(namePattern, hash.hashAsBigInt(definition));
+	}
+	
 	public static DynamicRecordFactory getInstance(Definition definition) {
-		String name = name(definition);
+		String name = nameFor(definition);
 		DynamicRecordFactory factory;
 		synchronized (factories) {
 			factory = factories.get(name);
@@ -254,7 +256,7 @@ public class DynamicRecordFactory {
 		for (ColumnType type : types) {
 			sb.append("\tpublic ").append(type).append(" next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("() {\n");
 			sb.append("\t\tif (field == limit) throw new IllegalStateException(\"fields exhausted\");\n");
-			sb.append("\t\tswitch(field) {\n");
+			sb.append("\t\tswitch(field++) {\n");
 			int field = 0;
 			for (ColumnType t : definition.types) {
 				if (type == t) {
@@ -262,7 +264,9 @@ public class DynamicRecordFactory {
 				}
 				field++;
 			}
-			sb.append("\t\tdefault: throw new IllegalStateException(\"Field \" + field + \" not of type ").append(type).append("\");\n");
+			sb.append("\t\tdefault:\n");
+			sb.append("\t\t\tfield--;\n");
+			sb.append("\t\t\tthrow new IllegalStateException(\"Field \" + field + \" not of type ").append(type).append("\");\n");
 			sb.append("\t\t}\n");
 			sb.append("\t}\n");
 		}

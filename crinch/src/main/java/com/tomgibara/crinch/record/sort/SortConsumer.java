@@ -1,52 +1,33 @@
 package com.tomgibara.crinch.record.sort;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.PriorityQueue;
 
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnOrder;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
-public class SortConsumer implements RecordConsumer<LinearRecord> {
+public class SortConsumer extends OrderedConsumer {
 
-	private final ColumnOrder[] orders;
-	
-	private ProcessContext context;
-	private RecordDefinition definition;
-	private DynamicRecordFactory factory;
 	private PriorityQueue<LinearRecord> queue; 
 	private OutputStream out;
 	private OutputStreamBitWriter writer;
 	private CodedWriter coded;
 	
 	public SortConsumer(ColumnOrder... orders) {
-		this.orders = orders;
+		super(orders);
 	}
 	
 	@Override
-	public void prepare(ProcessContext context) {
-		this.context = context;
-		List<ColumnType> types = context.getColumnTypes();
-		if (types == null) throw new IllegalStateException("no types");
-		definition = new RecordDefinition(false, false, types, orders);
-	}
-
-	@Override
 	public int getRequiredPasses() {
-		return file().isFile() ? 0 : 1;
+		return sortedFile().isFile() ? 0 : 1;
 	}
 
 	@Override
@@ -87,13 +68,9 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 		cleanup();
 	}
 
-	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + "." + definition.getId());
-	}
-	
 	private void open() {
 		try {
-			out = new BufferedOutputStream(new FileOutputStream(file()), 1024);
+			out = new BufferedOutputStream(new FileOutputStream(sortedFile()), 1024);
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}

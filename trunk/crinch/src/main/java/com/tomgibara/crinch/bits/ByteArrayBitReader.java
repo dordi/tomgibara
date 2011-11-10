@@ -26,4 +26,15 @@ public class ByteArrayBitReader extends ByteBasedBitReader {
 		return count;
 	}
 	
+	@Override
+	protected long seekByte(long index) throws BitStreamException {
+		if (index >= bytes.length) {
+			this.index = bytes.length;
+			return bytes.length;
+		} else {
+			this.index = (int) index;
+			return index;
+		}
+	}
+	
 }

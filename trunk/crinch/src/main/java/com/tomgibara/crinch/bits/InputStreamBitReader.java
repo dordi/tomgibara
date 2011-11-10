@@ -28,5 +28,10 @@ public class InputStreamBitReader extends ByteBasedBitReader {
 			throw new BitStreamException(e);
 		}
 	}
+
+	@Override
+	protected long seekByte(long index) throws BitStreamException {
+		return -1L;
+	}
 	
 }

@@ -2,10 +2,10 @@ package com.tomgibara.crinch.bits;
 
 import java.io.ByteArrayInputStream;
 
-public class InputStreamBitReaderTest extends AbstractBitReaderTest {
+public class InputStreamBitReaderTest extends AbstractByteBasedBitReaderTest {
 
 	@Override
-	BitReader readerFor(BitVector vector) {
+	InputStreamBitReader readerFor(BitVector vector) {
 		vector = vector.mutableCopy();
 		vector.reverse();
 		return new InputStreamBitReader(new ByteArrayInputStream(vector.toByteArray()));

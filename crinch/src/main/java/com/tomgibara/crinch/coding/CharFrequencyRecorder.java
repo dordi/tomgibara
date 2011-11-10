@@ -50,6 +50,14 @@ public class CharFrequencyRecorder {
 		return frequencies;
 	}
 	
+	public long getFrequencyTotal() {
+		long total = 0L;
+		for (int i = 0; i < frequencies.length; i++) {
+			total += frequencies[i];
+		}
+		return total;
+	}
+	
 	private void ensureLength(int c) {
 		if (c >= frequencies.length) {
 			frequencies = Arrays.copyOfRange(frequencies, 0, c + 1);

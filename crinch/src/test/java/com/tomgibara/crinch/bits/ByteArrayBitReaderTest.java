@@ -1,10 +1,10 @@
 package com.tomgibara.crinch.bits;
 
 
-public class ByteArrayBitReaderTest extends AbstractBitReaderTest {
+public class ByteArrayBitReaderTest extends AbstractByteBasedBitReaderTest {
 
 	@Override
-	BitReader readerFor(BitVector vector) {
+	ByteArrayBitReader readerFor(BitVector vector) {
 		vector = vector.mutableCopy();
 		vector.reverse();
 		return new ByteArrayBitReader(vector.toByteArray());

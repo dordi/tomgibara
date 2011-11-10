@@ -21,7 +21,13 @@ public class MemoryBitReader extends AbstractBitReader {
     private long position;
     
     // constructors
-    
+
+    public MemoryBitReader(int[] memory) {
+    	this.memory = memory;
+    	size = ((long) memory.length) << 5;
+    	position = 0L;
+    }
+
     public MemoryBitReader(int[] memory, long size, long position) {
         this.memory = memory;
         setSize(size);
@@ -57,6 +63,14 @@ public class MemoryBitReader extends AbstractBitReader {
         return value;
     }
 
+    @Override
+    public long skipBits(long count) {
+    	if (count < 0) throw new IllegalArgumentException("negative count");
+    	count = Math.min(size - position, count);
+    	position += count;
+    	return count;
+    }
+    
     @Override
     public long getPosition() {
         return position;

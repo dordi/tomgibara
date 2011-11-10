@@ -1,13 +1,37 @@
 package com.tomgibara.crinch.coding;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.bits.InputStreamBitReader;
+import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 
+//TODO rename
 public class BitStreams {
 
+	public interface WriteTask {
+		
+		void writeTo(CodedWriter writer);
+		
+	}
+	
+	public interface ReadTask {
+		
+		void readFrom(CodedReader reader);
+		
+	}
+	
 	//TODO test
 	public static int writePrimitiveArray(CodedWriter writer, Object array) {
 		if (array == null) throw new IllegalArgumentException("null array");
@@ -52,12 +76,21 @@ public class BitStreams {
 		return c;
 	}
 
-	//TODO add other methods
 	public static int[] readIntArray(CodedReader reader) {
 		int length = reader.readPositiveInt() - 1;
 		int[] a = new int[length];
 		for (int i = 0; i < a.length; i++) {
 			a[i] = reader.readSignedInt();
+		}
+		return a;
+	}
+
+	//TODO add other methods
+	public static long[] readLongArray(CodedReader reader) {
+		int length = reader.readPositiveInt() - 1;
+		long[] a = new long[length];
+		for (int i = 0; i < a.length; i++) {
+			a[i] = reader.readSignedLong();
 		}
 		return a;
 	}
@@ -102,4 +135,47 @@ public class BitStreams {
 		return list;
 	}
 
+	public static void writeToFile(WriteTask task, ExtendedCoding coding, File file) {
+		OutputStream out = null;
+		try {
+			out = new BufferedOutputStream(new FileOutputStream(file), 1024);
+			OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
+			CodedWriter coded = new CodedWriter(writer, coding);
+			task.writeTo(coded);
+			//TODO must make this a method on BitWriter
+			writer.padToByteBoundary();
+			writer.flush();
+		} catch (IOException e) {
+			throw new BitStreamException(e);
+		} finally {
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	public static void readFromFile(ReadTask task, ExtendedCoding coding, File file) {
+		InputStream in = null;
+		try {
+			in = new BufferedInputStream(new FileInputStream(file), 1024);
+			InputStreamBitReader reader = new InputStreamBitReader(in);
+			CodedReader coded = new CodedReader(reader, coding);
+			task.readFrom(coded);
+		} catch (IOException e) {
+			throw new BitStreamException(e);
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 }

@@ -20,8 +20,9 @@ public class RecordDefinition {
 		
 		@Override
 		public void sourceData(RecordDefinition definition, WriteStream out) {
-			out.writeBoolean(definition.ordinal);
-			out.writeBoolean(definition.positional);
+			// whether or not records contain them is not really part of name
+//			out.writeBoolean(definition.ordinal);
+//			out.writeBoolean(definition.positional);
 			for (ColumnType type : definition.types) {
 				out.writeInt(type.ordinal());
 			}
@@ -43,6 +44,7 @@ public class RecordDefinition {
 
 	// fields
 	
+	//TODO consider moving off definition and onto factory constructor
 	private final boolean ordinal;
 	private final boolean positional;
 	private final List<ColumnType> types;

@@ -12,6 +12,7 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
+import com.tomgibara.crinch.record.RecordDefinition;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
@@ -111,7 +112,8 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + ".compact");
+		RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes());
+		return new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
 	}
 	
 	private void open() {

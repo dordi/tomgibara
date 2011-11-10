@@ -22,7 +22,7 @@ public class SortConsumer extends OrderedConsumer {
 	private CodedWriter coded;
 	
 	public SortConsumer(ColumnOrder... orders) {
-		super(orders);
+		super(false, false, orders);
 	}
 	
 	@Override

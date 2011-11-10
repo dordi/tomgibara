@@ -16,7 +16,7 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
-import com.tomgibara.crinch.coding.BitStreams;
+import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.EliasOmegaCoding;
@@ -238,7 +238,7 @@ public class StdProcessContext implements ProcessContext {
 			@Override
 			public boolean isNull() { return columnTypes == null; }
 			@Override
-			public void write(CodedWriter coded) { BitStreams.writeEnumList(coded, columnTypes); }
+			public void write(CodedWriter coded) { CodedStreams.writeEnumList(coded, columnTypes); }
 		}, getColumnTypesFile());
 	}
 
@@ -246,7 +246,7 @@ public class StdProcessContext implements ProcessContext {
 		columnTypes = read(new ReadOp<List<ColumnType>>() {
 			@Override
 			public List<ColumnType> read(CodedReader coded) {
-				return BitStreams.readEnumList(coded, ColumnType.class);
+				return CodedStreams.readEnumList(coded, ColumnType.class);
 			}
 		}, getColumnTypesFile());
 	}

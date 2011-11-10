@@ -17,6 +17,8 @@
  */
 package com.tomgibara.crinch.bits;
 
+import java.math.BigInteger;
+
 /**
  * A null bit stream that counts the number of bits written.
  * 
@@ -32,13 +34,60 @@ public class BitCounter extends AbstractBitWriter {
 	private long size = 0;
 	
 	@Override
+	public int writeBit(int bit) {
+		size ++;
+		return 1;
+	}
+
+	@Override
+	public int writeBoolean(boolean bit) {
+		size ++;
+		return 1;
+	}
+
+	@Override
 	public int write(int bits, int count) {
 		size += count;
 		return count;
 	}
 
+	@Override
+	public int writeOnes(int count) {
+		size += count;
+		return count;
+	}
+	
+	@Override
+	public int writeZeros(int count) {
+		size += count;
+		return count;
+	}
+	
+	@Override
+	public int write(long bits, int count) {
+		size += count;
+		return count;
+	}
+	
+	@Override
+	public int write(BigInteger bits, int count) {
+		size += count;
+		return count;
+	}
+	
+	@Override
+	public int write(BitVector bits) {
+		int count = bits.size();
+		size += count;
+		return count;
+	}
+	
 	public long getSize() {
 		return size;
 	}
-    
+
+	public void resetSize() {
+		size = 0L;
+	}
+	
 }

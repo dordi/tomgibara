@@ -18,7 +18,7 @@ import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 
 //TODO rename
-public class BitStreams {
+public class CodedStreams {
 
 	public interface WriteTask {
 		

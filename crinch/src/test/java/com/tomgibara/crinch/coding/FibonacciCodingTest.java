@@ -30,7 +30,7 @@ public class FibonacciCodingTest extends ExtendedCodingTest {
         reader.setPosition(0);
         coding.decodePositiveInt(reader);
         writer.setPosition(0);
-        writer.writeZeros(96);
+        writer.writeBooleans(false, 96);
         writer.setPosition(0);
         coding.encodePositiveInt(writer, 3005096);
         writer.setPosition(0);

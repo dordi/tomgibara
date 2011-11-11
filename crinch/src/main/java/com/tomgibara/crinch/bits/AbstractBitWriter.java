@@ -10,36 +10,24 @@ import java.math.BigInteger;
 public abstract class AbstractBitWriter implements BitWriter {
 
     @Override
-    public int writeBoolean(boolean bit) {
-        return writeBit(bit ? 1 : 0);
-    }
-
-    @Override
     public int writeBit(int bit) {
         return write(bit, 1);
     }
     
     @Override
-    public int writeZeros(int count) {
-        if (count == 0) return 0;
-        if (count <= 32) return write(0, count);
-
-        int c = 0;
-        while (count > 32) {
-            c += write(0, 32);
-            count -= 32;
-        }
-        return c;
+    public int writeBoolean(boolean bit) {
+        return writeBit(bit ? 1 : 0);
     }
 
     @Override
-    public int writeOnes(int count) {
+    public long writeBooleans(boolean value, long count) {
         if (count == 0) return 0;
-        if (count <= 32) return write(-1, count);
+        final int bits = value ? -1 : 0;
+        if (count <= 32) return write(bits, (int) count);
 
         int c = 0;
         while (count > 32) {
-            c += write(-1, 32);
+            c += write(bits, 32);
             count -= 32;
         }
         return c;
@@ -95,7 +83,7 @@ public abstract class AbstractBitWriter implements BitWriter {
 		if (boundary == null) throw new IllegalArgumentException("null boundary");
 		int bits = bitsToBoundary(boundary);
 		if (bits == 0) return 0;
-		return writeZeros(bits);
+		return (int) writeBooleans(false, bits);
 	}
 	
 	@Override

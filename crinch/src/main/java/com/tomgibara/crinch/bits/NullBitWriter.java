@@ -46,23 +46,17 @@ public class NullBitWriter extends AbstractBitWriter {
 	}
 
 	@Override
+	public long writeBooleans(boolean value, long count) {
+		position += count;
+		return count;
+	}
+	
+	@Override
 	public int write(int bits, int count) {
 		position += count;
 		return count;
 	}
 
-	@Override
-	public int writeOnes(int count) {
-		position += count;
-		return count;
-	}
-	
-	@Override
-	public int writeZeros(int count) {
-		position += count;
-		return count;
-	}
-	
 	@Override
 	public int write(long bits, int count) {
 		position += count;

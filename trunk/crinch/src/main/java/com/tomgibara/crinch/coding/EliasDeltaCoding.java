@@ -27,7 +27,7 @@ public final class EliasDeltaCoding extends AbstractCoding {
         int size = 32 - Integer.numberOfLeadingZeros(value); //position of leading 1
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
-        count += writer.writeZeros(sizeLength -1);
+        count += writer.writeBooleans(false, sizeLength -1);
         count += writer.write(size, sizeLength);
         count += writer.write(value, size - 1);
         return count;
@@ -39,7 +39,7 @@ public final class EliasDeltaCoding extends AbstractCoding {
         int size = 64 - Long.numberOfLeadingZeros(value); //position of leading 1
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
-        count += writer.writeZeros(sizeLength -1);
+        count += writer.writeBooleans(false, sizeLength -1);
         count += writer.write(size, sizeLength);
         count += writer.write(value, size - 1);
         return count;
@@ -50,7 +50,7 @@ public final class EliasDeltaCoding extends AbstractCoding {
     	int size = value.bitLength();
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
-        count += writer.writeZeros(sizeLength -1);
+        count += writer.writeBooleans(false, sizeLength -1);
         count += writer.write(size, sizeLength);
         count += writer.write(value, size - 1);
         return count;

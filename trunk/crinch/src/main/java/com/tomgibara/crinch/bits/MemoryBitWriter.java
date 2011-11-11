@@ -34,7 +34,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     
     // constructors
     
-    public MemoryBitWriter(int[] memory, int size, int position) {
+    public MemoryBitWriter(int[] memory, long size, int position) {
         this.memory = memory;
         this.limit = memory.length * 32;
         this.size = size;
@@ -68,78 +68,33 @@ public class MemoryBitWriter extends AbstractBitWriter {
     
     //optimized implementation
     @Override
-    public int writeZeros(int count) {
+    public long writeBooleans(boolean value, long count) {
+    	count = Math.min(count, limit - position - bufferSize);
         if (count == 0) return 0;
-        if (position + bufferSize + count > limit) throw new BitStreamException("memory full");
 
-//        if (count == 32) {
-//            flushBuffer();
-//            bufferBits = 0;
-//            bufferSize = 32;
-//            return 32;
-//        }
-        
-        int c = count;
+        final int bits = value ? -1 : 0;
+        long c = count;
         while (c >= 32) {
-            //writeZeros(32);
             flushBuffer();
-            bufferBits = 0;
+            bufferBits = bits;
             bufferSize = 32;
             c -= 32;
         }
 
-        if (c == 0) {
+        int d = (int) c;
+        if (d == 0) {
             /* do nothing */
-//no advantage in this case
-//        } else if (bufferSize == 0) {
-//            bufferBits <<= count;
-//            bufferSize = count;
-        } else if (bufferSize + c <= 32) {
-            bufferBits <<= c;
-            bufferSize += c;
+        } else if (bufferSize == 0) {
+            bufferBits = bits;
+            bufferSize = d;
+        } else if (bufferSize + d <= 32) {
+            bufferBits <<= d;
+            if (value) bufferBits |= preMask(d);
+            bufferSize += d;
         } else {
             flushBuffer();
-            bufferBits = 0;
-            bufferSize = c;
-        }
-
-        return count;
-    }
-    
-    //optimized implementation
-    @Override
-    public int writeOnes(int count) {
-        if (count == 0) return 0;
-        if (position + bufferSize + count > limit) throw new IllegalStateException(count + " " + position + " " + limit);
-
-//        if (count == 32) {
-//            flushBuffer();
-//            bufferBits = -1;
-//            bufferSize = 32;
-//            return 32;
-//        }
-        
-        int c = count;
-        while (c >= 32) {
-            //writeOnes(32);
-            flushBuffer();
-            bufferBits = -1;
-            bufferSize = 32;
-            c -= 32;
-        }
-
-        if (c == 0) {
-            /* do nothing */
-          } else if (bufferSize == 0) {
-            bufferBits = -1;
-            bufferSize = c;
-        } else if (bufferSize + c <= 32) {
-            bufferBits = (bufferBits << c) | preMask(count);
-            bufferSize += c;
-        } else {
-            flushBuffer();
-            bufferBits = -1;
-            bufferSize = c;
+            bufferBits = bits;
+            bufferSize = d;
         }
 
         return count;

@@ -136,7 +136,6 @@ public interface BitWriter {
     
     void flush() throws BitStreamException;
     
-    
 	/**
 	 * Pads the stream with zeros upto the specified boundary. If the stream is
 	 * already positioned on a boundary, zero bits will be written.
@@ -151,6 +150,14 @@ public interface BitWriter {
 	 */
     
     int padToBoundary(BitBoundary boundary) throws UnsupportedOperationException, BitStreamException;
+
+	/**
+	 * The position of the writer in the stream; usually, but not necessarily,
+	 * the number of bits written. Implementations that cannot report their
+	 * position should consistently return -1L.
+	 * 
+	 * @return the position in the stream, or -1L
+	 */
     
     long getPosition();
 }

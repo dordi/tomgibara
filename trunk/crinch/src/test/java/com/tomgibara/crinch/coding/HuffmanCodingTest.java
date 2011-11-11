@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
-import com.tomgibara.crinch.bits.BitDumper;
+import com.tomgibara.crinch.bits.PrintStreamBitWriter;
 import com.tomgibara.crinch.bits.MemoryBitReader;
 import com.tomgibara.crinch.bits.MemoryBitWriter;
 
@@ -40,7 +40,7 @@ public class HuffmanCodingTest extends TestCase {
         HuffmanCoding huffman = new HuffmanCoding(freqs);
 		int[] memory = new int[1000];
 		MemoryBitWriter w = new MemoryBitWriter(memory, 1000*8, 0);
-		BitDumper d = new BitDumper();
+		PrintStreamBitWriter d = new PrintStreamBitWriter();
 		for (int i = 1; i <= freqs.length; i++) {
 			huffman.encodePositiveInt(w, i);
 			huffman.encodePositiveInt(d, i);
@@ -64,7 +64,7 @@ public class HuffmanCodingTest extends TestCase {
         }
         HuffmanCoding huffman = new HuffmanCoding(uneven);
         System.out.println("==================");
-        BitDumper dumper = new BitDumper();
+        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
         for (int i = size - 100; i <= size; i++) {
             System.out.print("(" + i + ") ");
             huffman.encodePositiveInt(dumper, i);
@@ -81,7 +81,7 @@ public class HuffmanCodingTest extends TestCase {
         HuffmanCoding huffman = new HuffmanCoding(freqs);
 
         System.out.println("==================");
-        BitDumper dumper = new BitDumper();
+        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
         for (int i = 1; i <= freqs.length; i++) {
             huffman.encodePositiveInt(dumper, i);
             dumper.flush();

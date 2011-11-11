@@ -29,65 +29,67 @@ import java.math.BigInteger;
  * 
  */
 
-public class BitCounter extends AbstractBitWriter {
+public class NullBitWriter extends AbstractBitWriter {
 
-	private long size = 0;
+	private long position = 0;
 	
 	@Override
 	public int writeBit(int bit) {
-		size ++;
+		position ++;
 		return 1;
 	}
 
 	@Override
 	public int writeBoolean(boolean bit) {
-		size ++;
+		position ++;
 		return 1;
 	}
 
 	@Override
 	public int write(int bits, int count) {
-		size += count;
+		position += count;
 		return count;
 	}
 
 	@Override
 	public int writeOnes(int count) {
-		size += count;
+		position += count;
 		return count;
 	}
 	
 	@Override
 	public int writeZeros(int count) {
-		size += count;
+		position += count;
 		return count;
 	}
 	
 	@Override
 	public int write(long bits, int count) {
-		size += count;
+		position += count;
 		return count;
 	}
 	
 	@Override
 	public int write(BigInteger bits, int count) {
-		size += count;
+		position += count;
 		return count;
 	}
 	
 	@Override
 	public int write(BitVector bits) {
 		int count = bits.size();
-		size += count;
+		position += count;
 		return count;
 	}
 	
-	public long getSize() {
-		return size;
+	@Override
+	public long getPosition() {
+		return position;
 	}
 
-	public void resetSize() {
-		size = 0L;
+	public void setPosition(long position) {
+		if (position < 0L) throw new IllegalArgumentException("negative position");
+		this.position = position;
 	}
 	
 }

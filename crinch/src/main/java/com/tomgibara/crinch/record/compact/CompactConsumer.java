@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
@@ -130,7 +131,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private void close() {
 		if (writer != null) {
 			try {
-				writer.padToByteBoundary();
+				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
 				context.log("Failed to flush writer", e);

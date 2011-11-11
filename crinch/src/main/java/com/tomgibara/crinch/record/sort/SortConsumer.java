@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.PriorityQueue;
 
+import com.tomgibara.crinch.bits.BitBoundary;
+import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnOrder;
@@ -18,7 +20,7 @@ public class SortConsumer extends OrderedConsumer {
 
 	private PriorityQueue<LinearRecord> queue; 
 	private OutputStream out;
-	private OutputStreamBitWriter writer;
+	private BitWriter writer;
 	private CodedWriter coded;
 	
 	public SortConsumer(ColumnOrder... orders) {
@@ -81,7 +83,7 @@ public class SortConsumer extends OrderedConsumer {
 	private void close() {
 		if (writer != null) {
 			try {
-				writer.padToByteBoundary();
+				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
 				context.log("Failed to flush writer", e);

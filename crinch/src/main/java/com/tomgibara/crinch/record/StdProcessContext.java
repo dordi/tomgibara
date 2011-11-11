@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
@@ -282,11 +283,10 @@ public class StdProcessContext implements ProcessContext {
 			OutputStream out = null;
 			try {
 				out = new BufferedOutputStream(new FileOutputStream(file), 1024);
-				OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
+				BitWriter writer = new OutputStreamBitWriter(out);
 				CodedWriter coded = new CodedWriter(writer, coding);
 				op.write(coded);
-				//TODO must make this a method on BitWriter
-				writer.padToByteBoundary();
+				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (IOException e) {
 				throw new BitStreamException(e);

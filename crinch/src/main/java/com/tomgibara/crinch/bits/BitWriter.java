@@ -136,4 +136,21 @@ public interface BitWriter {
     
     void flush() throws BitStreamException;
     
+    
+	/**
+	 * Pads the stream with zeros upto the specified boundary. If the stream is
+	 * already positioned on a boundary, zero bits will be written.
+	 * 
+	 * @param boundary
+	 *            the 'size' of boundary
+	 * @return the number of zero bits written to the stream
+	 * @throws UnsupportedOperationException
+	 *             if the stream does not support alignment
+	 * @throws BitStreamException
+	 *             if an exception occurs when padding
+	 */
+    
+    int padToBoundary(BitBoundary boundary) throws UnsupportedOperationException, BitStreamException;
+    
+    long getPosition();
 }

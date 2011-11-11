@@ -12,6 +12,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
@@ -139,11 +140,10 @@ public class CodedStreams {
 		OutputStream out = null;
 		try {
 			out = new BufferedOutputStream(new FileOutputStream(file), 1024);
-			OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
+			BitWriter writer = new OutputStreamBitWriter(out);
 			CodedWriter coded = new CodedWriter(writer, coding);
 			task.writeTo(coded);
-			//TODO must make this a method on BitWriter
-			writer.padToByteBoundary();
+			writer.padToBoundary(BitBoundary.BYTE);
 			writer.flush();
 		} catch (IOException e) {
 			throw new BitStreamException(e);

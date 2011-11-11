@@ -145,12 +145,13 @@ public class MemoryBitWriter extends AbstractBitWriter {
         return count;
     }
     
-    // accessors
-    
+    @Override
     public long getPosition() {
         flushBuffer();
         return position;
     }
+    
+    // accessors
     
     public void setPosition(long position) {
         if (position < 0) throw new IllegalArgumentException();

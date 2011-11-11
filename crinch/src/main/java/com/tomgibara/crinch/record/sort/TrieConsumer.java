@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.tomgibara.crinch.bits.BitBoundary;
-import com.tomgibara.crinch.bits.BitCounter;
+import com.tomgibara.crinch.bits.NullBitWriter;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedStreams;
@@ -141,7 +141,7 @@ public class TrieConsumer extends OrderedConsumer {
 	private class Offsetter {
 		
 		private final HuffmanCoding huffmanCoding;
-		private final BitCounter writer;
+		private final NullBitWriter writer;
 		private final CodedWriter coded;
 		
 		private long lastOffset = 0L;
@@ -149,7 +149,7 @@ public class TrieConsumer extends OrderedConsumer {
 		public Offsetter() {
 			this.huffmanCoding = TrieConsumer.this.huffmanCoding;
 			ExtendedCoding coding = context.getCoding();
-			writer = new BitCounter();
+			writer = new NullBitWriter();
 			coded = new CodedWriter(writer, coding);
 		}
 		
@@ -176,7 +176,7 @@ public class TrieConsumer extends OrderedConsumer {
 			if (hasSibling) node.sibling.offset = node.sibling.offset - lastOffset;
 			
 			// now measure the bits needed to write this node
-			writer.resetSize();
+			writer.setPosition(0L);
 			if (node != root) huffmanCoding.encodePositiveInt(writer, node.c + 1);
 			// add 2 to the value because -1 indicates absent value
 			coded.writePositiveLong(node.value + 2L);
@@ -185,7 +185,7 @@ public class TrieConsumer extends OrderedConsumer {
 			if (hasChild) coded.writePositiveLong(node.child.offset + 1L);
 			coded.getWriter().writeBoolean(hasSibling);
 			if (hasSibling) coded.writePositiveLong(node.sibling.offset + 1L);
-			long offset = lastOffset - writer.getSize();
+			long offset = lastOffset - writer.getPosition();
 			
 			// record the negative offset on this node and in the lastOffset
 			// ready for a node that references us

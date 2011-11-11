@@ -89,5 +89,25 @@ public abstract class AbstractBitWriter implements BitWriter {
     
     public void flush() {
     }
+
+	@Override
+	public int padToBoundary(BitBoundary boundary) throws BitStreamException {
+		if (boundary == null) throw new IllegalArgumentException("null boundary");
+		int bits = bitsToBoundary(boundary);
+		if (bits == 0) return 0;
+		return writeZeros(bits);
+	}
 	
+	@Override
+	public long getPosition() {
+		return -1L;
+	}
+
+	int bitsToBoundary(BitBoundary boundary) {
+		long position = getPosition();
+		if (position < 0) throw new UnsupportedOperationException("writer does not support position");
+		return -(int)position & boundary.mask;
+	}
+
+
 }

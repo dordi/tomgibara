@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitCounter;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
@@ -197,7 +198,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 		private final HuffmanCoding huffmanCoding;
 		private final OutputStream out;
-		private final OutputStreamBitWriter writer;
+		private final BitWriter writer;
 		private final CodedWriter coded;
 		
 		public Writer() {
@@ -228,7 +229,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 		void close() {
 			try {
-				writer.padToByteBoundary();
+				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
 				context.log("Failed to flush writer", e);

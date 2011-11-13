@@ -2,8 +2,8 @@ package com.tomgibara.crinch.coding;
 
 import java.util.Random;
 
-import com.tomgibara.crinch.bits.MemoryBitReader;
-import com.tomgibara.crinch.bits.MemoryBitWriter;
+import com.tomgibara.crinch.bits.IntArrayBitReader;
+import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 public class FibonacciCodingTest extends ExtendedCodingTest {
 	
@@ -14,8 +14,8 @@ public class FibonacciCodingTest extends ExtendedCodingTest {
 	
     public void testGeneral() {
         int[] memory = new int[3];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, 96);
-        MemoryBitReader reader = new MemoryBitReader(memory, 96);
+        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 96);
+        IntArrayBitReader reader = new IntArrayBitReader(memory, 96);
         for (int i = 1; i <= 12; i++) {
             coding.encodePositiveInt(writer, i);
             writer.setPosition(0);

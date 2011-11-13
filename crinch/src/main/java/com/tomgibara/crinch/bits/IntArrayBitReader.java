@@ -4,7 +4,7 @@
 package com.tomgibara.crinch.bits;
 
 
-public class MemoryBitReader extends AbstractBitReader {
+public class IntArrayBitReader extends AbstractBitReader {
 
     // statics
     
@@ -16,20 +16,25 @@ public class MemoryBitReader extends AbstractBitReader {
     
     // fields
     
-    private final int[] memory;
-    private long size;
+    private final int[] ints;
+    private final long size;
     private long position = 0L;
     
     // constructors
 
-    public MemoryBitReader(int[] memory) {
-    	this.memory = memory;
-    	size = ((long) memory.length) << 5;
+    public IntArrayBitReader(int[] ints) {
+    	if (ints == null) throw new IllegalArgumentException("null ints");
+    	this.ints = ints;
+    	size = ((long) ints.length) << 5;
     }
 
-    public MemoryBitReader(int[] memory, long size) {
-        this.memory = memory;
-        setSize(size);
+    public IntArrayBitReader(int[] ints, long size) {
+    	if (ints == null) throw new IllegalArgumentException("null ints");
+        if (size < 0) throw new IllegalArgumentException("negative size");
+        long maxSize = ((long) ints.length) << 5;
+        if (size > maxSize) throw new IllegalArgumentException("size exceeds maximum permitted by array length");
+        this.ints = ints;
+        this.size = size;
     }
 
     // bit reader methods
@@ -37,7 +42,7 @@ public class MemoryBitReader extends AbstractBitReader {
     @Override
     public int readBit() {
         if (position >= size) throw new IllegalStateException();
-        int k = (memory[(int)(position >> 5)] >> (31 - (((int)position) & 31))) & 1;
+        int k = (ints[(int)(position >> 5)] >> (31 - (((int)position) & 31))) & 1;
         position++;
         return k;
     }
@@ -52,9 +57,9 @@ public class MemoryBitReader extends AbstractBitReader {
 
         int sumBits = count + frontBits;
         if (sumBits <= 32) {
-            value = (memory[firstInt] >> (32 - sumBits)) & mask(count);
+            value = (ints[firstInt] >> (32 - sumBits)) & mask(count);
         } else {
-            value = ((memory[firstInt] << (sumBits - 32)) | (memory[firstInt + 1] >>> (64 - sumBits))) & mask(count);
+            value = ((ints[firstInt] << (sumBits - 32)) | (ints[firstInt + 1] >>> (64 - sumBits))) & mask(count);
         }
 
         position += count;
@@ -76,17 +81,10 @@ public class MemoryBitReader extends AbstractBitReader {
     
     // accessors
     
-    public int[] getMemory() {
-        return memory;
+    public int[] getInts() {
+        return ints;
     }
 
-    public void setSize(long size) {
-        if (size < 0) throw new IllegalArgumentException();
-        if (size > memory.length << 5) throw new IllegalArgumentException();
-        if (size < position) position = size;
-        this.size = size;
-    }
-    
     public long getSize() {
         return size;
     }

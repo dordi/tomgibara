@@ -18,20 +18,18 @@ public class MemoryBitReader extends AbstractBitReader {
     
     private final int[] memory;
     private long size;
-    private long position;
+    private long position = 0L;
     
     // constructors
 
     public MemoryBitReader(int[] memory) {
     	this.memory = memory;
     	size = ((long) memory.length) << 5;
-    	position = 0L;
     }
 
-    public MemoryBitReader(int[] memory, long size, long position) {
+    public MemoryBitReader(int[] memory, long size) {
         this.memory = memory;
         setSize(size);
-        setPosition(position);
     }
 
     // bit reader methods

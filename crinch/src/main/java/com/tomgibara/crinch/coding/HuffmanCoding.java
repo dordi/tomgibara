@@ -183,8 +183,8 @@ public class HuffmanCoding implements Coding {
     private Nid produceNids() {
     	int size = (codes.length+31)/32;
     	int[] mem = new int[size];
-    	MemoryBitWriter w = new MemoryBitWriter(mem, size*32, 0);
-    	MemoryBitReader r = new MemoryBitReader(mem, size*32, 0);
+    	MemoryBitWriter w = new MemoryBitWriter(mem, size*32);
+    	MemoryBitReader r = new MemoryBitReader(mem, size*32);
     	Nid root = new Nid();
     	for (int i = 1; i <= symbols; i++) {
         	w.setPosition(0);

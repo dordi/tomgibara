@@ -39,7 +39,7 @@ public class HuffmanCodingTest extends TestCase {
         descendingSort(freqs);
         HuffmanCoding huffman = new HuffmanCoding(freqs);
 		int[] memory = new int[1000];
-		MemoryBitWriter w = new MemoryBitWriter(memory, 1000*8, 0);
+		MemoryBitWriter w = new MemoryBitWriter(memory, 1000*8);
 		PrintStreamBitWriter d = new PrintStreamBitWriter();
 		for (int i = 1; i <= freqs.length; i++) {
 			huffman.encodePositiveInt(w, i);
@@ -48,7 +48,7 @@ public class HuffmanCodingTest extends TestCase {
 		w.flush();
 		System.out.println();
 		
-		MemoryBitReader r = new MemoryBitReader(memory, 1000*8, 0);
+		MemoryBitReader r = new MemoryBitReader(memory, 1000*8);
 		for (int i = 1; i <= freqs.length; i++) {
 			int j = huffman.decodePositiveInt(r);
 			if (j != i) throw new IllegalStateException(j + " != " + i);

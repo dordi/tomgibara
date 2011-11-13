@@ -12,8 +12,8 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
 
     public void testCorrectness() {
         int[] memory = new int[1];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, 32, 0);
-        MemoryBitReader reader = new MemoryBitReader(memory, 32, 0);
+        MemoryBitWriter writer = new MemoryBitWriter(memory, 32);
+        MemoryBitReader reader = new MemoryBitReader(memory, 32);
         for (int i = 1; i <= 10; i++) {
             writer.setPosition(0);
             coding.encodePositiveInt(writer, i);
@@ -30,7 +30,7 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
     
     private void testSpeed(int size, int bound) {
         int[] memory = new int[size];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, size * 32, 0);
+        MemoryBitWriter writer = new MemoryBitWriter(memory, size * 32);
         int count = size;
         long start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
@@ -43,7 +43,7 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
         long finish = System.currentTimeMillis();
         System.out.println(finish-start + " ms to write first " + count + " integers");
         
-        MemoryBitReader reader = new MemoryBitReader(memory, writer.getSize(), 0);
+        MemoryBitReader reader = new MemoryBitReader(memory, writer.getSize());
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
             int v = coding.decodePositiveInt(reader);

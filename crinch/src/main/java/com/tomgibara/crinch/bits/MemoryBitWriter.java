@@ -28,19 +28,16 @@ public class MemoryBitWriter extends AbstractBitWriter {
     private final int[] memory;
     private final long limit;
     private long size;
-    private long position;
-    private int bufferSize;
-    private int bufferBits;
+    private long position = 0;
+    private int bufferSize = 0;
+    private int bufferBits = 0;
     
     // constructors
     
-    public MemoryBitWriter(int[] memory, long size, int position) {
+    public MemoryBitWriter(int[] memory, long size) {
         this.memory = memory;
         this.limit = memory.length * 32;
         this.size = size;
-        this.position = position;
-        bufferSize = 0;
-        bufferBits = 0;
     }
 
     // bit writer methods
@@ -145,7 +142,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     public String toString() {
     	int length = (int) Math.min(size, 100);
         StringBuilder sb = new StringBuilder(length);
-        MemoryBitReader reader = new MemoryBitReader(memory, length, 0);
+        MemoryBitReader reader = new MemoryBitReader(memory, length);
         for (int i = 0; i < length; i++) {
             sb.append( reader.readBit() == 0 ? "0" : "1" );
         }

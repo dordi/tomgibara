@@ -8,13 +8,13 @@ public class MemoryWriterTest extends AbstractByteBasedBitWriterTest {
 
 	@Override
 	BitWriter newBitWriter(long size) {
-		return new MemoryBitWriter(new int[(int) ((size + 31) / 32)], size, 0);
+		return new MemoryBitWriter(new int[(int) ((size + 31) / 32)], size);
 	}
 
 	@Override
 	BitReader bitReaderFor(BitWriter writer) {
 		MemoryBitWriter mw = (MemoryBitWriter) writer;
-		return new MemoryBitReader(mw.getMemory(), mw.getSize(), 0);
+		return new MemoryBitReader(mw.getMemory(), mw.getSize());
 	}
 	
 }

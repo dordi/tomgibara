@@ -25,9 +25,10 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 		int bits = value ? -1 : 0;
 		if (count <= boundary) return write(bits, (int) count);
 		
-		long c;
-		c = write(bits, boundary);
-		c += padBytes(value, (count - c) >> 3) << 3;
+		long c = write(bits, boundary);
+		long d = padBytes(value, (count - c) >> 3) << 3;
+		position += d;
+		c += d;
 		c += write(bits, (int) (count - c));
 
 		return c;

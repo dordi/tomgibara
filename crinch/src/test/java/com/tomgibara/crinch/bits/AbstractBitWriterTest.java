@@ -27,14 +27,16 @@ public abstract class AbstractBitWriterTest extends TestCase {
         BitWriter writer = newBitWriter(size * 32);
         ArrayList<Point> list = new ArrayList<Point>(size);
         
-        Random r = new Random(1);
+        Random r = new Random(seed);
         for (int i = 0; i < size; i++) {
             int x = r.nextInt(33);
-            int y = x == 0 ? 0 : r.nextInt(x);
+            int y = r.nextInt() & ((1 << x) - 1);
             writer.write(y, x);
             list.add( new Point(x, y) );
         }
         long pos = writer.getPosition();
+        writer.padToBoundary(BitBoundary.BYTE);
+        writer.flush();
         
         BitReader reader = bitReaderFor(writer);
         for (int i = 0; i < size; i++) {
@@ -60,13 +62,18 @@ public abstract class AbstractBitWriterTest extends TestCase {
         
         Random r = new Random(1);
         for (int i = 0; i < size; i++) {
+        	long pos = writer.getPosition();
             int x = r.nextInt(maxrunlength);
             int y = r.nextInt(maxrunlength);
             writer.writeBooleans(false, x);
+            assertEquals(pos + x, writer.getPosition());
             writer.writeBooleans(true, y);
+            assertEquals(pos + x + y, writer.getPosition());
             list.add( new Point(x, y) );
         }
         long pos = writer.getPosition();
+        writer.padToBoundary(BitBoundary.BYTE);
+        writer.flush();
         
         BitReader reader = bitReaderFor(writer);							
         for (int i = 0; i < size; i++) {
@@ -79,7 +86,7 @@ public abstract class AbstractBitWriterTest extends TestCase {
                 if (v != 1) throw new RuntimeException("Failed at " + i + ": expected 1, got " + v);
             }
         }
-        if (reader.getPosition() != pos) throw new RuntimeException();
+        assertEquals(pos, reader.getPosition());
     }
 
 	

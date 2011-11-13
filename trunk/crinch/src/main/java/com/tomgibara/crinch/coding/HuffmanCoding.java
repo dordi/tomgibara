@@ -9,8 +9,8 @@ import java.util.PriorityQueue;
 
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
-import com.tomgibara.crinch.bits.MemoryBitReader;
-import com.tomgibara.crinch.bits.MemoryBitWriter;
+import com.tomgibara.crinch.bits.IntArrayBitReader;
+import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 public class HuffmanCoding implements Coding {
 
@@ -183,8 +183,8 @@ public class HuffmanCoding implements Coding {
     private Nid produceNids() {
     	int size = (codes.length+31)/32;
     	int[] mem = new int[size];
-    	MemoryBitWriter w = new MemoryBitWriter(mem, size*32);
-    	MemoryBitReader r = new MemoryBitReader(mem, size*32);
+    	IntArrayBitWriter w = new IntArrayBitWriter(mem, size*32);
+    	IntArrayBitReader r = new IntArrayBitReader(mem, size*32);
     	Nid root = new Nid();
     	for (int i = 1; i <= symbols; i++) {
         	w.setPosition(0);

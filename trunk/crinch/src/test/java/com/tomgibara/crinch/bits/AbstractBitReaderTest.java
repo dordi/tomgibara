@@ -11,7 +11,7 @@ public abstract class AbstractBitReaderTest extends TestCase {
 	public void testReadBoolean() {
 		Random r = new Random(0L);
 		for (int i = 0; i < 1000; i++) {
-			int size = r.nextInt(100) * 8;
+			int size = r.nextInt(25) * 32;
 			BitVector source = new BitVector(r, size);
 			BitReader reader = readerFor(source);
 
@@ -25,7 +25,7 @@ public abstract class AbstractBitReaderTest extends TestCase {
 		Random r = new Random(0L);
 		for (int i = 0; i < 1000; i++) {
 			
-			int size = r.nextInt(10000) * 8;
+			int size = r.nextInt(2500) * 32;
 			BitVector source = new BitVector(r, size);
 			BitReader reader = readerFor(source);
 			
@@ -52,7 +52,7 @@ public abstract class AbstractBitReaderTest extends TestCase {
 	public void testRead() {
 		Random r = new Random(0L);
 		for (int i = 0; i < 1000; i++) {
-			int size = r.nextInt(100) * 8;
+			int size = r.nextInt(25) * 32;
 			BitVector source = new BitVector(r, size);
 			BitVector reverse = source.mutableCopy();
 			reverse.reverse();

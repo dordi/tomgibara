@@ -4,7 +4,7 @@
 package com.tomgibara.crinch.bits;
 
 
-public class MemoryBitWriter extends AbstractBitWriter {
+public class IntArrayBitWriter extends AbstractBitWriter {
 
     // statics
     
@@ -25,18 +25,26 @@ public class MemoryBitWriter extends AbstractBitWriter {
 
     // fields
     
-    private final int[] memory;
-    private final long limit;
-    private long size;
+    private final int[] ints;
+    private final long size;
     private long position = 0;
     private int bufferSize = 0;
     private int bufferBits = 0;
     
     // constructors
     
-    public MemoryBitWriter(int[] memory, long size) {
-        this.memory = memory;
-        this.limit = memory.length * 32;
+    public IntArrayBitWriter(int[] ints) {
+    	if (ints == null) throw new IllegalArgumentException("null ints");
+        this.ints = ints;
+    	size = ((long) ints.length) << 5;
+    }
+
+    public IntArrayBitWriter(int[] ints, long size) {
+    	if (ints == null) throw new IllegalArgumentException("null ints");
+        if (size < 0) throw new IllegalArgumentException("negative size");
+        long maxSize = ((long) ints.length) << 5;
+        if (size > maxSize) throw new IllegalArgumentException("size exceeds maximum permitted by array length");
+        this.ints = ints;
         this.size = size;
     }
 
@@ -45,7 +53,9 @@ public class MemoryBitWriter extends AbstractBitWriter {
     @Override
     public int write(int bits, int count) {
         if (count == 0) return 0;
-        if (position + bufferSize + count > limit) throw new BitStreamException("memory full");
+        //TODO what is the correct behaviour here?
+        //throw EOBSE or return reduced count
+        if (position + bufferSize + count > size) throw new BitStreamException("array full");
 
         if (bufferSize == 0) {
             bufferBits = bits;
@@ -66,7 +76,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     //optimized implementation
     @Override
     public long writeBooleans(boolean value, long count) {
-    	count = Math.min(count, limit - position - bufferSize);
+    	count = Math.min(count, size - position - bufferSize);
         if (count == 0) return 0;
 
         final int bits = value ? -1 : 0;
@@ -113,23 +123,11 @@ public class MemoryBitWriter extends AbstractBitWriter {
     }
     
     public long getSize() {
-    	flushBuffer();
         return size;
     }
     
-    public void setSize(int size) {
-        if (size < 0) throw new IllegalArgumentException();
-        if (size > limit) throw new IllegalArgumentException();
-        if (size < getPosition()) setPosition(size);
-        this.size = size;
-    }
-    
-    public long getLimit() {
-        return limit;
-    }
-    
     public int[] getMemory() {
-        return memory;
+        return ints;
     }
     
     public void flush() {
@@ -142,7 +140,7 @@ public class MemoryBitWriter extends AbstractBitWriter {
     public String toString() {
     	int length = (int) Math.min(size, 100);
         StringBuilder sb = new StringBuilder(length);
-        MemoryBitReader reader = new MemoryBitReader(memory, length);
+        IntArrayBitReader reader = new IntArrayBitReader(ints, length);
         for (int i = 0; i < length; i++) {
             sb.append( reader.readBit() == 0 ? "0" : "1" );
         }
@@ -156,7 +154,6 @@ public class MemoryBitWriter extends AbstractBitWriter {
         if (bufferSize == 0) return;
         doWrite(bufferBits, bufferSize);
         position += bufferSize;
-        if (position > size) size = position;
         //bufferBits = 0; we leave the buffer dirty
         bufferSize = 0;
     }
@@ -169,24 +166,24 @@ public class MemoryBitWriter extends AbstractBitWriter {
         
         int sumBits = count + frontBits;
         if (sumBits <= 32) {
-            int i = memory[firstInt];
+            int i = ints[firstInt];
             int mask = frontMask(frontBits) | backMask(sumBits);
             i &= mask;
             i |= (bits << (32 - sumBits)) & ~mask;
-            memory[firstInt] = i;
+            ints[firstInt] = i;
         } else {
-            int i = memory[firstInt];
+            int i = ints[firstInt];
             int mask = frontMask(frontBits);
             i &= mask;
             int lostBits = sumBits - 32;
             i |= (bits >> lostBits) & ~mask;
-            memory[firstInt] = i;
+            ints[firstInt] = i;
             
-            i = memory[firstInt + 1];
+            i = ints[firstInt + 1];
             mask = backMask(lostBits);
             i &= mask;
             i |= (bits << (32 - lostBits)) & ~mask;
-            memory[firstInt + 1] = i;
+            ints[firstInt + 1] = i;
         }
     }
     

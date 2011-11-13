@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.coding;
 
-import com.tomgibara.crinch.bits.MemoryBitReader;
-import com.tomgibara.crinch.bits.MemoryBitWriter;
+import com.tomgibara.crinch.bits.IntArrayBitReader;
+import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 public class EliasDeltaCodingTest extends ExtendedCodingTest {
 
@@ -12,8 +12,8 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
 
     public void testCorrectness() {
         int[] memory = new int[1];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, 32);
-        MemoryBitReader reader = new MemoryBitReader(memory, 32);
+        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 32);
+        IntArrayBitReader reader = new IntArrayBitReader(memory, 32);
         for (int i = 1; i <= 10; i++) {
             writer.setPosition(0);
             coding.encodePositiveInt(writer, i);
@@ -30,7 +30,7 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
     
     private void testSpeed(int size, int bound) {
         int[] memory = new int[size];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, size * 32);
+        IntArrayBitWriter writer = new IntArrayBitWriter(memory, size * 32);
         int count = size;
         long start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
@@ -43,7 +43,7 @@ public class EliasDeltaCodingTest extends ExtendedCodingTest {
         long finish = System.currentTimeMillis();
         System.out.println(finish-start + " ms to write first " + count + " integers");
         
-        MemoryBitReader reader = new MemoryBitReader(memory, writer.getSize());
+        IntArrayBitReader reader = new IntArrayBitReader(memory, writer.getSize());
         start = System.currentTimeMillis();
         for (int i = 0; i < count; i++) {
             int v = coding.decodePositiveInt(reader);

@@ -14,8 +14,6 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 	
 	protected abstract long padBytes(boolean padWithOnes, long count) throws BitStreamException;
 	
-	protected abstract long seekByte(long index) throws BitStreamException;
-	
 	// bit writer methods
 	
 	@Override

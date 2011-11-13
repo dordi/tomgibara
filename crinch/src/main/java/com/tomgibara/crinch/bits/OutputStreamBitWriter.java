@@ -49,11 +49,6 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 		return count;
 	}
 	
-	@Override
-	protected long seekByte(long index) throws BitStreamException {
-		return -1L;
-	}
-
 	private byte[] getBuffer(boolean withOnes) {
 		byte[] buffer = withOnes ? sOnesBuffer : sZerosBuffer;
 		if (buffer == null) {

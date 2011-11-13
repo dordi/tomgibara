@@ -29,13 +29,6 @@ public class ByteArrayBitWriter extends ByteBasedBitWriter {
 		return count;
 	}
 
-	@Override
-	protected long seekByte(long index) throws BitStreamException {
-		index = Math.min(bytes.length, index);
-		this.index = (int) index;
-		return index;
-	}
-
 	public byte[] getBytes() {
 		return bytes;
 	}

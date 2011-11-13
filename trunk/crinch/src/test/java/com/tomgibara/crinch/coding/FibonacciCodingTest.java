@@ -14,8 +14,8 @@ public class FibonacciCodingTest extends ExtendedCodingTest {
 	
     public void testGeneral() {
         int[] memory = new int[3];
-        MemoryBitWriter writer = new MemoryBitWriter(memory, 96, 0);
-        MemoryBitReader reader = new MemoryBitReader(memory, 96, 0);
+        MemoryBitWriter writer = new MemoryBitWriter(memory, 96);
+        MemoryBitReader reader = new MemoryBitReader(memory, 96);
         for (int i = 1; i <= 12; i++) {
             coding.encodePositiveInt(writer, i);
             writer.setPosition(0);

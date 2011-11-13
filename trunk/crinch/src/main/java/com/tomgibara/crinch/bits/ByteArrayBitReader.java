@@ -8,6 +8,7 @@ public class ByteArrayBitReader extends ByteBasedBitReader {
 	public ByteArrayBitReader(byte[] bytes) {
 		if (bytes == null) throw new IllegalArgumentException("null bytes");
 		this.bytes = bytes;
+		index = 0;
 	}
 	
 	@Override
@@ -35,6 +36,10 @@ public class ByteArrayBitReader extends ByteBasedBitReader {
 			this.index = (int) index;
 			return index;
 		}
+	}
+	
+	public byte[] getBytes() {
+		return bytes;
 	}
 	
 }

@@ -15,6 +15,160 @@ import com.tomgibara.crinch.bits.IntArrayBitWriter;
 public class HuffmanCoding implements Coding {
 
 	// statics
+
+	public interface Correspondence {
+		
+		int count();
+		
+		int getIndex(int value);
+		
+		int getValue(int index);
+		
+	}
+	
+	public interface Frequencies {
+		
+		long getFrequency(int index);
+		
+		Correspondence getCorrespondence();
+		
+	}
+	
+	private static class DirectCorrespondence implements Correspondence {
+
+		private final int count;
+		
+		DirectCorrespondence(int count) {
+			this.count = count;
+		}
+		
+		@Override
+		public int count() {
+			return count;
+		}
+		
+		@Override
+		public int getIndex(int value) {
+			return value - 1;
+		}
+		
+		@Override
+		public int getValue(int index) {
+			return index + 1;
+		}
+		
+	}
+	
+	private static class DenseCorrespondence implements Correspondence {
+		
+		private final int[] values;
+		private final int[] indices;
+
+		DenseCorrespondence(int[] values, int[] indices) {
+			this.values = values;
+			this.indices = indices;
+		}
+		
+		@Override
+		public int count() {
+			return values.length;
+		}
+		
+		@Override
+		public int getIndex(int value) {
+			return indices[value -1];
+		}
+		
+		public int getValue(int index) {
+			return values[index];
+		}
+		
+	}
+	
+	public static class DescendingFrequencyValues implements Frequencies {
+		
+		private final long[] frequencies;
+
+		public DescendingFrequencyValues(long[] frequencies) {
+			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
+			this.frequencies = frequencies;
+		}
+		
+		@Override
+		public long getFrequency(int index) {
+			return frequencies[index];
+		}
+		
+		@Override
+		public Correspondence getCorrespondence() {
+			return new DirectCorrespondence(frequencies.length);
+		}
+
+	}
+
+	public static class UnorderedFrequencyValues implements Frequencies {
+
+		private final long[] frequencies;
+		private final Correspondence correspondence;
+		
+		public UnorderedFrequencyValues(long[] frequencies) {
+			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
+			int count = frequencies.length;
+			El[] els = new El[count];
+			for (int i = 0; i < count; i++) {
+				els[i] = new El(i, frequencies[i]);
+			}
+			Arrays.sort(els);
+			int limit;
+			for (limit = 0; limit < count; limit++) {
+				//TODO support 'non-dense' lookups
+				//if (els[lim].freq == 0) break;
+			}
+			
+			frequencies = new long[count];
+			int[] values = new int[count];
+			int[] indices = new int[count];
+			for (int i = 0; i < limit; i++) {
+				El el = els[i];
+				frequencies[i] = el.freq;
+				int j = el.index;
+				values[i] = j + 1;
+				indices[j] = i;
+			}
+			
+			this.frequencies = frequencies;
+			correspondence = new DenseCorrespondence(values, indices);
+		}
+		
+		@Override
+		public long getFrequency(int index) {
+			return frequencies[index];
+		}
+		
+		@Override
+		public Correspondence getCorrespondence() {
+			return correspondence;
+		}
+		
+		private static class El implements Comparable<El> {
+			
+			int index;
+			long freq;
+			
+			El(int index, long freq) {
+				this.index = index;
+				this.freq = freq;
+			}
+			
+			@Override
+			public int compareTo(El that) {
+				if (this.freq == that.freq) return 0;
+				return this.freq < that.freq ? 1 : -1;
+			}
+			
+		}
+
+	}
 	
     private static Node buildTree(PriorityQueue<Node> nodes) {
         while(true) {
@@ -26,15 +180,19 @@ public class HuffmanCoding implements Coding {
         }
     }
     
-    private static Node[] createNodes(long[] freqs) {
-        PriorityQueue<Node> nodes = new PriorityQueue<Node>(freqs.length);
-        Node[] array = new Node[freqs.length];
-        for (int i = 0; i < freqs.length; i++) {
-            Node leaf = new Node(freqs[i], i+1);
+    private static Node[] createNodes(Frequencies frequencies) {
+        final int count = frequencies.getCorrespondence().count();
+        PriorityQueue<Node> nodes = new PriorityQueue<Node>(count);
+        Node[] array = new Node[count];
+        long lastFreq = 0L;
+        for (int i = 0; i < count; i++) {
+        	long freq = frequencies.getFrequency(i);
+        	if (i > 0 && lastFreq < freq) throw new IllegalArgumentException("frequencies not descending");
+            Node leaf = new Node(freq);
             array[i] = leaf;
             nodes.add(leaf);
+        	lastFreq = freq;
         }
-
         buildTree(nodes);
         return array;
     }
@@ -91,6 +249,7 @@ public class HuffmanCoding implements Coding {
     
     // fields
     
+    private final Correspondence correspondence;
     private final int symbols;
     private final int[] counts;
     private final int[] codes;
@@ -100,9 +259,11 @@ public class HuffmanCoding implements Coding {
     // constructors
     
     //NOTE: supplied array must have already been sorted in descending order
-    public HuffmanCoding(long[] freqs) {
-    	symbols = freqs.length;
-        Node [] nodes = createNodes(freqs);
+    public HuffmanCoding(Frequencies frequencies) {
+    	if (frequencies == null) throw new IllegalArgumentException("null frequencies");
+    	correspondence = frequencies.getCorrespondence();
+    	symbols = correspondence.count();
+        Node [] nodes = createNodes(frequencies);
         int[] lengths = calculateLengths(nodes);
         counts = countLengths(lengths);
         codes = encodeCounts(counts);
@@ -113,21 +274,7 @@ public class HuffmanCoding implements Coding {
     // methods
     
     public int getCodeLength(int value) {
-        int x = Arrays.binarySearch(cumm, value);
-        
-        //we may not have an exact match
-        if (x < 0) x = - 1 - x;
-        
-        //check value
-        if (x == 0) throw new IllegalArgumentException();
-        //if (x == cumm.length) throw new IllegalArgumentException();
-        //TODO what's the fix?
-        if (x == cumm.length) x--;
-        
-        //we may have missing lengths == dups in cumm
-        while( x > 1 && cumm[x] == cumm[x - 1] ) x--;
-        
-        return x;
+    	return getCodeLengthForIndex(correspondence.getIndex(value));
     }
     
     // coding methods
@@ -158,10 +305,10 @@ public class HuffmanCoding implements Coding {
     //eg reading minimum number of bits available
     public int decodePositiveInt(BitReader r) {
     	Nid nid = root;
-    	while(nid.value == 0) {
+    	while(nid.index == -1) {
     		nid = r.readBoolean() ? nid.one: nid.zero;
     	}
-    	return nid.value;
+    	return correspondence.getValue(nid.index);
     }
     
     @Override
@@ -175,21 +322,39 @@ public class HuffmanCoding implements Coding {
     }
     
     private int unsafeEncodePositiveInt(BitWriter writer, int value) {
-    	int x = getCodeLength(value);
+    	int x = getCodeLengthForIndex(correspondence.getIndex(value));
         writer.write(codes[x] + value - cumm[x - 1] - 1, x);
         return x;
     }
     
+    private int getCodeLengthForIndex(int index) {
+        int x = Arrays.binarySearch(cumm, index + 1);
+        
+        //we may not have an exact match
+        if (x < 0) x = - 1 - x;
+        
+        //check value
+        if (x == 0) throw new IllegalArgumentException();
+        //if (x == cumm.length) throw new IllegalArgumentException();
+        //TODO what's the fix?
+        if (x == cumm.length) x--;
+        
+        //we may have missing lengths == dups in cumm
+        while( x > 1 && cumm[x] == cumm[x - 1] ) x--;
+        
+        return x;
+    }
+
     private Nid produceNids() {
     	int size = (codes.length+31)/32;
     	int[] mem = new int[size];
     	IntArrayBitWriter w = new IntArrayBitWriter(mem, size*32);
     	IntArrayBitReader r = new IntArrayBitReader(mem, size*32);
     	Nid root = new Nid();
-    	for (int i = 1; i <= symbols; i++) {
+    	for (int i = 0; i < symbols; i++) {
         	w.setPosition(0);
         	w.flush();
-        	unsafeEncodePositiveInt(w, i);
+        	unsafeEncodePositiveInt(w, i + 1);
         	int length = (int) w.getPosition();
         	r.setPosition(0);
         	Nid nid = root;
@@ -211,7 +376,7 @@ public class HuffmanCoding implements Coding {
 				}
 				nid = n;
 			}
-        	nid.value = i;
+        	nid.index = i;
 		}
     	return root;
     }
@@ -219,13 +384,11 @@ public class HuffmanCoding implements Coding {
     private static class Node implements Comparable<Node> {
 
         final long freq;
-        final int value;
         int length;
         Node parent;
         
-        Node(long freq, int value) {
+        Node(long freq) {
             this.freq = freq;
-            this.value = value;
             this.length = -1;
         }
         
@@ -233,7 +396,6 @@ public class HuffmanCoding implements Coding {
             left.parent = this;
             right.parent = this;
             freq = left.freq + right.freq;
-            this.value = 0;
             length = 0;
         }
         
@@ -256,13 +418,13 @@ public class HuffmanCoding implements Coding {
 
     private static class Nid {
 
-        int value;
+        int index = -1;
         Nid zero;
         Nid one;
 
 		@Override
 		public String toString() {
-			return value == 0 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(value);
+			return index == -1 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(index);
 		}
 
     }

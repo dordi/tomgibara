@@ -37,7 +37,7 @@ public class HuffmanCodingTest extends TestCase {
     private static void testDecode(long[] freqs) {
 
         descendingSort(freqs);
-        HuffmanCoding huffman = new HuffmanCoding(freqs);
+        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(freqs));
 		int[] memory = new int[1000];
 		IntArrayBitWriter w = new IntArrayBitWriter(memory, 1000*8);
 		PrintStreamBitWriter d = new PrintStreamBitWriter();
@@ -62,7 +62,7 @@ public class HuffmanCodingTest extends TestCase {
         for (int i = 0; i < uneven.length; i++) {
             uneven[i] = size - i;
         }
-        HuffmanCoding huffman = new HuffmanCoding(uneven);
+        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(uneven));
         System.out.println("==================");
         PrintStreamBitWriter dumper = new PrintStreamBitWriter();
         for (int i = size - 100; i <= size; i++) {
@@ -78,7 +78,7 @@ public class HuffmanCodingTest extends TestCase {
 
         descendingSort(freqs);
         
-        HuffmanCoding huffman = new HuffmanCoding(freqs);
+        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(freqs));
 
         System.out.println("==================");
         PrintStreamBitWriter dumper = new PrintStreamBitWriter();

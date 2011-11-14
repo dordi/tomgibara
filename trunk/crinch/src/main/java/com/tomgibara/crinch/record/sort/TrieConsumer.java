@@ -97,7 +97,7 @@ public class TrieConsumer extends OrderedConsumer {
 		CharFreqRec rec = new CharFreqRec();
 		rec.record(root);
 		frequencies = rec.getFrequencies();
-		huffmanCoding = new HuffmanCoding(frequencies);
+		huffmanCoding = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(frequencies));
 		new Offsetter().offset(root);
 		writeStats();
 		Writer writer = new Writer();

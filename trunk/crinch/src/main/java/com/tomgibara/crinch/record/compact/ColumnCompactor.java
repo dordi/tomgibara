@@ -89,7 +89,7 @@ class ColumnCompactor {
 			}
 			//System.out.println("*** " + Arrays.toString(fs));
 			//fs = Arrays.copyOfRange(fs, 0, lookup[0].length);
-			huffman = new HuffmanCoding(fs);
+			huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(fs));
 		}
 	}
 

@@ -181,11 +181,8 @@ public class TrieConsumer extends OrderedConsumer {
 			if (node != root) huffmanCoding.encodePositiveInt(writer, node.c + 1);
 			// add 2 to the value because -1 indicates absent value
 			coded.writePositiveLong(node.value + 2L);
-			//TODO find a better encoding
-			coded.getWriter().writeBoolean(hasChild);
-			if (hasChild) coded.writePositiveLong(node.child.offset + 1L);
-			coded.getWriter().writeBoolean(hasSibling);
-			if (hasSibling) coded.writePositiveLong(node.sibling.offset + 1L);
+			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
+			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
 			long offset = lastOffset - writer.getPosition();
 			
 			// record the negative offset on this node and in the lastOffset
@@ -219,10 +216,8 @@ public class TrieConsumer extends OrderedConsumer {
 
 			if (node != root) huffmanCoding.encodePositiveInt(writer, node.c + 1);
 			coded.writePositiveLong(node.value + 2L);
-			coded.getWriter().writeBoolean(hasChild);
-			if (hasChild) coded.writePositiveLong(node.child.offset + 1L);
-			coded.getWriter().writeBoolean(hasSibling);
-			if (hasSibling) coded.writePositiveLong(node.sibling.offset + 1L);
+			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
+			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
 
 			if (hasSibling) write(node.sibling);
 			if (hasChild) write(node.child);

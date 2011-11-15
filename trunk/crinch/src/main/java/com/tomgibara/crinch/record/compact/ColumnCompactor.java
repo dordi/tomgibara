@@ -78,7 +78,7 @@ class ColumnCompactor {
 			int length = ((int) offset) + reader.readSignedInt();
 			StringBuilder sb = new StringBuilder(length);
 			for (; length > 0; length--) {
-				sb.append((char) huffman.decodePositiveInt(reader.getReader()) - 1);
+				sb.append((char) (huffman.decodePositiveInt(reader.getReader()) - 1));
 			}
 			return sb.toString();
 		}

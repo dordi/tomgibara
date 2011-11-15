@@ -23,8 +23,6 @@ abstract class ColumnAnalyzer {
 		case BYTE_WRAPPER:
 		case SHORT_PRIMITIVE:
 		case SHORT_WRAPPER:
-		case CHAR_PRIMITIVE:
-		case CHAR_WRAPPER:
 			return new SmallIntAnalyzer(type);
 		case INT_PRIMITIVE:
 		case INT_WRAPPER:
@@ -36,6 +34,9 @@ abstract class ColumnAnalyzer {
 		case DOUBLE_PRIMITIVE:
 		case DOUBLE_WRAPPER:
 			return new DoubleAnalyzer(type);
+		case CHAR_PRIMITIVE:
+		case CHAR_WRAPPER:
+			return new CharAnalyzer(type);
 		case STRING_OBJECT:
 			return new StringAnalyzer(type);
 			default: throw new IllegalArgumentException("Unsupported type: " + type);
@@ -241,6 +242,40 @@ abstract class ColumnAnalyzer {
 
 	}
 	
+	private static class CharAnalyzer extends ColumnAnalyzer {
+
+		private final CharFrequencyRecorder cfr = new CharFrequencyRecorder();
+		
+		CharAnalyzer(ColumnType type) {
+			super(type);
+		}
+		
+		@Override
+		void analyze(String str) {
+			if (str == null) {
+				nullable = true;
+			} else {
+				char c = str.charAt(0);
+				cfr.record(c);
+			}
+		}
+		
+		@Override
+		ColumnStats stats() {
+			ColumnStats stats = new ColumnStats();
+			stats.setNullable(nullable);
+			stats.setMinimum(BigDecimal.ONE);
+			stats.setMaximum(BigDecimal.ONE);
+			long count = cfr.getFrequencyTotal();
+			stats.setCount(count);
+			stats.setSum(BigDecimal.valueOf(count));
+			stats.setClassification(Classification.ENUMERATED);
+			stats.setFrequencies(cfr.getFrequencies());
+			return stats;
+		}
+		
+	}
+	
 	private static class StringAnalyzer extends ColumnAnalyzer {
 		
 		//TODO make configurable
@@ -257,7 +292,7 @@ abstract class ColumnAnalyzer {
 		private int minValue = Integer.MAX_VALUE;
 		private int maxValue = Integer.MIN_VALUE;
 
-		public StringAnalyzer(ColumnType type) {
+		StringAnalyzer(ColumnType type) {
 			super(type);
 		}
 		
@@ -285,7 +320,7 @@ abstract class ColumnAnalyzer {
 							System.arraycopy(enumValues, i, enumValues, i+1, enumCount - i);
 							System.arraycopy(enumFreqs, i, enumFreqs, i+1, enumCount - i);
 							enumValues[i] = str;
-							enumFreqs[i] = 0L;
+							enumFreqs[i] = 1L;
 							enumCount++;
 						}
 					} else {

@@ -43,7 +43,7 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 		ColumnCompactor next = next();
 		nullFlag = next.decodeNull(reader);
 		if (nullFlag) return '\0';
-		return (char) next.decodeInt(reader);
+		return (char) next.decodeChar(reader);
 	}
 
 	@Override
@@ -103,12 +103,7 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 			next.decodeLong(reader);
 			break;
 		case ENUMERATED:
-			//TODO very ugly hack - move into the record?
-			if (next.getStats().getEnumeration().length == 2) {
-				next.decodeBoolean(reader);
-			} else {
-				next.decodeString(reader);
-			}
+			next.decodeString(reader);
 			break;
 		case FLOATING:
 			next.decodeDouble(reader);

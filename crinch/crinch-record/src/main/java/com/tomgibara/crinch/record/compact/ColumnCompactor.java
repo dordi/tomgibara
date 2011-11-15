@@ -16,14 +16,17 @@ class ColumnCompactor {
 	// derived from stats
 	private final boolean nullable;
 	private final long offset;
+	private final boolean enumerated;
 	private final String[] enumeration;
 	
 	private final HuffmanCoding huffman;
 	
 	ColumnCompactor(ColumnStats stats) {
 		this.stats = stats;
-		this.nullable = stats.isNullable();
-		this.enumeration = stats.getClassification() == Classification.ENUMERATED ? stats.getEnumeration() : null;
+		nullable = stats.isNullable();
+		enumerated = stats.getClassification() == Classification.ENUMERATED;
+		enumeration = enumerated ? stats.getEnumeration() : null;
+		
 		switch (stats.getClassification()) {
 		case INTEGRAL:
 		case TEXTUAL:
@@ -56,8 +59,13 @@ class ColumnCompactor {
 	
 	int encodeString(CodedWriter writer, String value) {
 		BitWriter w = writer.getWriter();
-		if (enumeration != null) {
-			int i = Arrays.binarySearch(enumeration, value);
+		if (enumerated) {
+			int i;
+			if (enumeration == null) {
+				i = value.charAt(0);
+			} else {
+				i = Arrays.binarySearch(enumeration, value);
+			}
 			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
 			return huffman.encodePositiveInt(w, i + 1);
 		} else {
@@ -72,8 +80,13 @@ class ColumnCompactor {
 	}
 	
 	String decodeString(CodedReader reader) {
-		if (enumeration != null) {
-			return enumeration[huffman.decodePositiveInt(reader.getReader()) - 1];
+		if (enumerated) {
+			int value = huffman.decodePositiveInt(reader.getReader()) - 1;
+			if (enumeration == null) {
+				return Character.toString((char) value);
+			} else {
+				return enumeration[value];
+			}
 		} else {
 			int length = ((int) offset) + reader.readSignedInt();
 			StringBuilder sb = new StringBuilder(length);
@@ -82,6 +95,14 @@ class ColumnCompactor {
 			}
 			return sb.toString();
 		}
+	}
+	
+	int encodeChar(CodedWriter writer, char value) {
+		return huffman.encodePositiveInt(writer.getWriter(), value + 1);
+	}
+	
+	char decodeChar(CodedReader reader) {
+		return (char) (huffman.decodePositiveInt(reader.getReader()) - 1);
 	}
 	
 	int encodeInt(CodedWriter writer, int value) {
@@ -101,11 +122,11 @@ class ColumnCompactor {
 	}
 	
 	int encodeBoolean(CodedWriter writer, boolean value) {
-		return writer.getWriter().writeBoolean(value);
+		return huffman.encodePositiveInt(writer.getWriter(), value ? 1 : 2);
 	}
 	
 	boolean decodeBoolean(CodedReader reader) {
-		return reader.getReader().readBoolean();
+		return huffman.decodePositiveInt(reader.getReader()) == 1;
 	}
 	
 	int encodeFloat(CodedWriter writer, float value) {

@@ -36,7 +36,7 @@ public class TrieIndex {
 		RecordDefinition def = new RecordDefinition(false, false, types, orders);
 		
 		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + def.getId());
-		final Object[] arr = new Object[2];
+		final Object[] arr = new Object[3];
 		CodedStreams.readFromFile(new CodedStreams.ReadTask() {
 			@Override
 			public void readFrom(CodedReader reader) {
@@ -70,6 +70,7 @@ public class TrieIndex {
 	}
 	
 	public long getValue(String key) {
+		if (key == null) throw new IllegalArgumentException("null key");
 		reader.setPosition(0L);
 		boolean root = true;
 		int index = 0;
@@ -96,6 +97,10 @@ public class TrieIndex {
 		}
 	}
 
+	public boolean contains(String key) {
+		return getValue(key) >= 0;
+	}
+	
 	public void dump() {
 		reader.setPosition(0L);
 		dump(null);

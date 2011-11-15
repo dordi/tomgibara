@@ -83,13 +83,17 @@ public class HuffmanCoding implements Coding {
 		@Override
 		public int getIndex(int value) {
 			if (value <= 0) throw new IllegalArgumentException("non-positive value");
-			if (value > indices.length) throw new IllegalArgumentException("invalid value");
-			return indices[value - 1];
+			if (value > indices.length) throw new IllegalArgumentException("invalid value: " + value);
+			int index = indices[value - 1];
+			if (index < 0) throw new IllegalArgumentException("invalid value: " + value);
+			return index;
 		}
 		
 		public int getValue(int index) {
 			if (index >= values.length) throw new BitStreamException("invalid huffman encoding: " + index);
-			return values[index];
+			int value = values[index];
+			if (value < 0) throw new BitStreamException("invalid huffman encoding: " + index);
+			return value;
 		}
 		
 	}
@@ -285,7 +289,7 @@ public class HuffmanCoding implements Coding {
     public HuffmanCoding(Frequencies frequencies) {
     	if (frequencies == null) throw new IllegalArgumentException("null frequencies");
     	correspondence = frequencies.getCorrespondence();
-    	symbols = correspondence.getCount();
+    	symbols = frequencies.getCount();
         Node [] nodes = createNodes(frequencies);
         int[] lengths = calculateLengths(nodes);
         counts = countLengths(lengths);
@@ -304,23 +308,17 @@ public class HuffmanCoding implements Coding {
     
     @Override
     public int encodePositiveInt(BitWriter writer, int value) {
-    	if (value <= 0) throw new IllegalArgumentException("non-positive value");
-    	if (value > symbols) throw new IllegalArgumentException("value exceeds number of symbols");
     	return unsafeEncodePositiveInt(writer, value);
     }
     
     @Override
     public int encodePositiveLong(BitWriter writer, long value) {
-    	if (value <= 0) throw new IllegalArgumentException("non-positive value");
-    	if (value > symbols) throw new IllegalArgumentException("value exceeds number of symbols");
     	return unsafeEncodePositiveInt(writer, (int) value);
     }
     
     @Override
     public int encodePositiveBigInt(BitWriter writer, BigInteger value) {
-    	if (value == null) throw new IllegalArgumentException("null value");
-    	if (value.signum() < 1) throw new IllegalArgumentException("non-positive value");
-    	if (value.compareTo(BigInteger.valueOf(symbols)) > 0) throw new IllegalArgumentException("value exceeds number of symbols");
+    	if (value.compareTo(BigInteger.valueOf(correspondence.getCount())) > 0) throw new IllegalArgumentException("value exceeds number of symbols");
     	return unsafeEncodePositiveInt(writer, value.intValue());
     }
     
@@ -345,7 +343,7 @@ public class HuffmanCoding implements Coding {
     }
     
     private int unsafeEncodePositiveInt(BitWriter writer, int value) {
-    	return encodeIndex(writer, correspondence.getIndex(value));
+		return encodeIndex(writer, correspondence.getIndex(value));
     }
     
     private int encodeIndex(BitWriter writer, int index) {
@@ -356,7 +354,6 @@ public class HuffmanCoding implements Coding {
     
     private int getCodeLengthForIndex(int index) {
         int x = Arrays.binarySearch(cumm, index + 1);
-        
         //we may not have an exact match
         if (x < 0) x = - 1 - x;
         

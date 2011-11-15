@@ -56,6 +56,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void beginPass() {
+		context.setPassName("Building trie");
 		root = new Node('\0');
 	}
 
@@ -103,6 +104,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void endPass() {
+		context.log("Node count: " + nodeCount);
 		CharFreqRec rec = new CharFreqRec();
 		rec.record(root);
 		frequencies = rec.getFrequencies();

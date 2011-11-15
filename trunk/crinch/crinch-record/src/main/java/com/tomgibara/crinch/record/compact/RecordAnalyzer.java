@@ -26,7 +26,8 @@ class RecordAnalyzer {
 	void analyze(LinearRecord record) {
 		recordCount++;
 		for (int i = 0; i < analyzers.length; i++) {
-			analyzers[i].analyze(record.nextString());
+			String str = record.nextString();
+			analyzers[i].analyze(str);
 		}
 	}
 	

@@ -106,7 +106,7 @@ public class RecordCompactor {
 				char value = record.nextChar();
 				boolean isNull = record.wasNull();
 				c += compactor.encodeNull(writer, isNull);
-				if (!isNull) c += compactor.encodeInt(writer, value);
+				if (!isNull) c += compactor.encodeChar(writer, value);
 				break;
 			}
 			case STRING_OBJECT:

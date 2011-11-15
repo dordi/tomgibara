@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.NullBitWriter;
@@ -128,10 +129,10 @@ public class TrieConsumer extends OrderedConsumer {
 		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + definition.getId());
 	}
 	
-	private static class CharFreqRec extends CharFrequencyRecorder {
+	private class CharFreqRec extends CharFrequencyRecorder {
 		
 		void record(Node node) {
-			record(node.c);
+			if (node != root) record(node.c);
 			if (node.sibling != null) record(node.sibling);
 			if (node.child != null) record(node.child);
 		}

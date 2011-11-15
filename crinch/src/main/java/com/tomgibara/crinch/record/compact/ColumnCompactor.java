@@ -12,54 +12,12 @@ import com.tomgibara.crinch.record.ColumnStats.Classification;
 
 class ColumnCompactor {
 
-	private static int[][] rank(long[] fs) {
-		int len = fs.length;
-		El[] els = new El[len];
-		for (int i = 0; i < len; i++) {
-			els[i] = new El(i, fs[i]);
-		}
-		Arrays.sort(els);
-		int lim;
-		for (lim = 0; lim < len; lim++) {
-			//if (els[lim].freq == 0) break;
-		}
-		
-		int[][] rs = new int[2][lim];
-		for (int i = 0; i < lim; i++) {
-			El el = els[i];
-			fs[i] = el.freq;
-			int j = el.index;
-			rs[0][i] = j;
-			rs[1][j] = i;
-		}
-		return rs;
-	}
-	
-	private static class El implements Comparable<El> {
-		
-		int index;
-		long freq;
-		
-		El(int index, long freq) {
-			this.index = index;
-			this.freq = freq;
-		}
-		
-		@Override
-		public int compareTo(El that) {
-			if (this.freq == that.freq) return 0;
-			return this.freq < that.freq ? 1 : -1;
-		}
-		
-	}
-	
 	private final ColumnStats stats;
 	// derived from stats
 	private final boolean nullable;
 	private final long offset;
 	private final String[] enumeration;
 	
-	private final int[][] lookup;
 	private final HuffmanCoding huffman;
 	
 	ColumnCompactor(ColumnStats stats) {
@@ -76,20 +34,9 @@ class ColumnCompactor {
 		}
 		long[] freqs = stats.getFrequencies();
 		if (freqs == null) {
-			lookup = null;
 			huffman = null;
 		} else {
-			long[] fs = freqs.clone();
-			lookup = rank(fs);
-			for (int i = 0; i < fs.length; i++) {
-				if (fs[i] == 0L) {
-					fs = Arrays.copyOfRange(fs, 0, i);
-					break;
-				}
-			}
-			//System.out.println("*** " + Arrays.toString(fs));
-			//fs = Arrays.copyOfRange(fs, 0, lookup[0].length);
-			huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(fs));
+			huffman = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(freqs));
 		}
 	}
 
@@ -112,13 +59,13 @@ class ColumnCompactor {
 		if (enumeration != null) {
 			int i = Arrays.binarySearch(enumeration, value);
 			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
-			return huffman.encodePositiveInt(w, lookup[1][i]+1);
+			return huffman.encodePositiveInt(w, i + 1);
 		} else {
 			int length = value.length();
 			int n = writer.writeSignedInt(length - (int) offset);
 			for (int i = 0; i < length; i++) {
 				char c = value.charAt(i);
-				n += huffman.encodePositiveInt(w, lookup[1][c]+1);
+				n += huffman.encodePositiveInt(w, c + 1);
 			}
 			return n;
 		}
@@ -126,12 +73,12 @@ class ColumnCompactor {
 	
 	String decodeString(CodedReader reader) {
 		if (enumeration != null) {
-			return enumeration[ lookup[0][huffman.decodePositiveInt(reader.getReader())-1] ];
+			return enumeration[huffman.decodePositiveInt(reader.getReader()) - 1];
 		} else {
 			int length = ((int) offset) + reader.readSignedInt();
 			StringBuilder sb = new StringBuilder(length);
 			for (; length > 0; length--) {
-				sb.append( (char) lookup[0][huffman.decodePositiveInt(reader.getReader())-1] );
+				sb.append((char) huffman.decodePositiveInt(reader.getReader()) - 1);
 			}
 			return sb.toString();
 		}

@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
+import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitStreams;
 import com.tomgibara.crinch.bits.PrintStreamBitWriter;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
@@ -14,12 +16,6 @@ import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 public class HuffmanCodingTest extends TestCase {
     
-    public static void main(String[] args) {
-        testDecode(new long[] {10, 15, 30, 16, 29});
-        testDecode(new long[] {20, 20, 20, 20, 20});
-        testDecode(new long[] {0, 10, 20, 30, 40, 60});
-    }
-
     public void testEncode() {
       test(new long[] {10, 15, 30, 16, 29});
       test(new long[] {20, 20, 20, 20, 20});
@@ -29,31 +25,49 @@ public class HuffmanCodingTest extends TestCase {
     }
     
     public void testDecode() {
-        testDecode(new long[] {10, 15, 30, 16, 29});
-        testDecode(new long[] {20, 20, 20, 20, 20});
-        testDecode(new long[] {0, 10, 20, 30, 40, 60});
+    	testDecodeBoth(new long[] {10, 15, 30, 16, 29});
+    	testDecodeBoth(new long[] {20, 20, 20, 20, 20});
+    	testDecodeBoth(new long[] {10, 20, 30, 40, 60});
+    	testDecodeBoth(new long[] {1, 2, 4, 8, 16});
     }
 
-    private static void testDecode(long[] freqs) {
-
+    private static void testDecodeBoth(long[] freqs) {
+    	final HuffmanCoding.UnorderedFrequencyValues f1 = new HuffmanCoding.UnorderedFrequencyValues(freqs);
         descendingSort(freqs);
-        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(freqs));
+        final HuffmanCoding.DescendingFrequencyValues f2 = new HuffmanCoding.DescendingFrequencyValues(freqs);
+        assertEquals(f1.getCorrespondence().getCount(), f2.getCorrespondence().getCount());
+        int count = f1.getCorrespondence().getCount();
+        for (int i = 0; i < count; i++) {
+			assertEquals("mismatched frequencies at index " + i, f1.getFrequency(i), f2.getFrequency(i));
+		}
+        
+		BitReader r1 = testDecode(f1);
+		BitReader r2 = testDecode(f2);
+
+		// can't assert this because values are effectively written out in a different order
+        //assertTrue(BitStreams.isSameBits(r1, r2));
+    }
+
+    private static BitReader testDecode(HuffmanCoding.Frequencies frequencies) {
+        HuffmanCoding huffman = new HuffmanCoding(frequencies);
 		int[] memory = new int[1000];
-		IntArrayBitWriter w = new IntArrayBitWriter(memory, 1000*8);
+		IntArrayBitWriter w = new IntArrayBitWriter(memory);
 		PrintStreamBitWriter d = new PrintStreamBitWriter();
-		for (int i = 1; i <= freqs.length; i++) {
+		int count = frequencies.getCorrespondence().getCount();
+		for (int i = 1; i <= count; i++) {
 			huffman.encodePositiveInt(w, i);
 			huffman.encodePositiveInt(d, i);
 		}
 		w.flush();
 		System.out.println();
 		
-		IntArrayBitReader r = new IntArrayBitReader(memory, 1000*8);
-		for (int i = 1; i <= freqs.length; i++) {
-			int j = huffman.decodePositiveInt(r);
-			if (j != i) throw new IllegalStateException(j + " != " + i);
+		IntArrayBitReader r = new IntArrayBitReader(memory);
+		for (int i = 1; i <= count; i++) {
+			assertEquals(i, huffman.decodePositiveInt(r));
 		}
-        
+		
+        r.setPosition(0);
+        return r;
 	}
 
 	public void testUneven() {

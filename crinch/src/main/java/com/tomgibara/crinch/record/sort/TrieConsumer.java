@@ -97,7 +97,7 @@ public class TrieConsumer extends OrderedConsumer {
 		CharFreqRec rec = new CharFreqRec();
 		rec.record(root);
 		frequencies = rec.getFrequencies();
-		huffmanCoding = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(frequencies));
+		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		new Offsetter().offset(root);
 		writeStats();
 		Writer writer = new Writer();
@@ -125,7 +125,7 @@ public class TrieConsumer extends OrderedConsumer {
 	}
 
 	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie" + definition.getId());
+		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + definition.getId());
 	}
 	
 	private static class CharFreqRec extends CharFrequencyRecorder {

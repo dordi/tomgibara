@@ -26,9 +26,7 @@ public class TrieIndex {
 	private final boolean positional;
 	private final HuffmanCoding huffmanCoding;
 	private final ExtendedCoding coding;
-	
-	private ByteArrayBitReader reader;
-	private CodedReader coded;
+	private final byte[] data;
 	
 	public TrieIndex(ProcessContext context, int columnIndex, ColumnOrder... orders) {
 		List<ColumnType> types = context.getColumnTypes();
@@ -54,90 +52,104 @@ public class TrieIndex {
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		
-		//TODO remove testy hackiness
+		//TODO need to support non-memory operation
 		int size = (int) file.length();
-		byte[] memory = new byte[size];
+		byte[] data = new byte[size];
 		FileInputStream in = null;
 		try {
 			in = new FileInputStream(file);
-			new DataInputStream(in).readFully(memory);
+			new DataInputStream(in).readFully(data);
 			in.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		reader = new ByteArrayBitReader(memory);
-		coded = new CodedReader(reader, coding);
+		this.data = data;
 	}
 	
-	public long getValue(String key) {
-		if (key == null) throw new IllegalArgumentException("null key");
-		reader.setPosition(0L);
-		boolean root = true;
-		int index = 0;
-		while (true) {
-			char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-			long value = coded.readPositiveLong() - 2L;
-			long childOffset = coded.readPositiveLong() - 2L;
-			long siblingOffset = coded.readPositiveLong() - 2L;
-			boolean hasChild = childOffset >= 0;
-			boolean hasSibling = siblingOffset >= 0;
-			if (root) {
-				if (key.isEmpty()) return value;
-				if (!hasChild) return -1L;
-				reader.skipBits(childOffset);
-				root = false;
-			} else if (key.charAt(index) == c) {
-				if (++index == key.length()) return value;
-				if (!hasChild) return -1L;
-				reader.skipBits(childOffset);
-			} else {
-				if (!hasSibling) return -1L;
-				reader.skipBits(siblingOffset);
+	public Accessor newAccessor() {
+		return new Accessor();
+	}
+	
+	public class Accessor {
+	
+		private final ByteArrayBitReader reader;
+		private final CodedReader coded;
+
+		public Accessor() {
+			reader = new ByteArrayBitReader(data);
+			coded = new CodedReader(reader, coding);
+		}
+		
+		public long getValue(String key) {
+			if (key == null) throw new IllegalArgumentException("null key");
+			reader.setPosition(0L);
+			boolean root = true;
+			int index = 0;
+			while (true) {
+				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
+				long value = coded.readPositiveLong() - 2L;
+				long childOffset = coded.readPositiveLong() - 2L;
+				long siblingOffset = coded.readPositiveLong() - 2L;
+				boolean hasChild = childOffset >= 0;
+				boolean hasSibling = siblingOffset >= 0;
+				if (root) {
+					if (key.isEmpty()) return value;
+					if (!hasChild) return -1L;
+					reader.skipBits(childOffset);
+					root = false;
+				} else if (key.charAt(index) == c) {
+					if (++index == key.length()) return value;
+					if (!hasChild) return -1L;
+					reader.skipBits(childOffset);
+				} else {
+					if (!hasSibling) return -1L;
+					reader.skipBits(siblingOffset);
+				}
 			}
 		}
-	}
-
-	public boolean contains(String key) {
-		return getValue(key) >= 0;
-	}
 	
-	public void dump() {
-		reader.setPosition(0L);
-		dump(null);
-	}
+		public boolean contains(String key) {
+			return getValue(key) >= 0;
+		}
+		
+		public void dump() {
+			reader.setPosition(0L);
+			dump(null);
+		}
+		
+		private void dump(StringBuilder sb) {
+			boolean root = sb == null;
+			while (true) {
+				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
+				long value = coded.readPositiveLong() - 2L;
+				long childOffset = coded.readPositiveLong() - 2L;
+				long siblingOffset = coded.readPositiveLong() - 2L;
+				boolean hasChild = childOffset >= 0;
+				boolean hasSibling = siblingOffset >= 0;
+				
+				if (root) {
+					sb = new StringBuilder();
+					if (value != -1L) System.out.println(sb);
+					if (!hasChild) return;
+					reader.skipBits(childOffset);
+					dump(sb);
+					return;
+				}
 	
-	private void dump(StringBuilder sb) {
-		boolean root = sb == null;
-		while (true) {
-			char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-			long value = coded.readPositiveLong() - 2L;
-			long childOffset = coded.readPositiveLong() - 2L;
-			long siblingOffset = coded.readPositiveLong() - 2L;
-			boolean hasChild = childOffset >= 0;
-			boolean hasSibling = siblingOffset >= 0;
-			
-			if (root) {
-				sb = new StringBuilder();
+				sb.append(c);
 				if (value != -1L) System.out.println(sb);
-				if (!hasChild) return;
-				reader.skipBits(childOffset);
-				dump(sb);
-				return;
-			}
-
-			sb.append(c);
-			if (value != -1L) System.out.println(sb);
-			if (hasChild) {
-				long position = reader.getPosition();
-				reader.skipBits(childOffset);
-				dump(sb);
-				reader.setPosition(position);
-			}
-			sb.setLength(sb.length() - 1);
-			if (hasSibling) {
-				reader.skipBits(siblingOffset);
-			} else {
-				return;
+				if (hasChild) {
+					long position = reader.getPosition();
+					reader.skipBits(childOffset);
+					dump(sb);
+					reader.setPosition(position);
+				}
+				sb.setLength(sb.length() - 1);
+				if (hasSibling) {
+					reader.skipBits(siblingOffset);
+				} else {
+					return;
+				}
 			}
 		}
 	}

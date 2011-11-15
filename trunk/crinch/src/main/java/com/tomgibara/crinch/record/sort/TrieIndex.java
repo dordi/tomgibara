@@ -23,6 +23,7 @@ public class TrieIndex {
 
 	private final File file;
 	private final boolean ordinal;
+	private final boolean positional;
 	private final HuffmanCoding huffmanCoding;
 	private final ExtendedCoding coding;
 	
@@ -40,14 +41,16 @@ public class TrieIndex {
 			@Override
 			public void readFrom(CodedReader reader) {
 				arr[0] = reader.getReader().readBoolean();
+				arr[1] = reader.getReader().readBoolean();
 				//TODO should switch to non-neg method when it becomes available
-				arr[1] = CodedStreams.readLongArray(reader);
+				arr[2] = CodedStreams.readLongArray(reader);
 			}
 		}, context.getCoding(), statsFile);
-		long[] frequencies = (long[]) arr[1];
+		long[] frequencies = (long[]) arr[2];
 		
 		file = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + def.getId());
 		ordinal = (Boolean) arr[0];
+		positional = (Boolean) arr[1];
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		

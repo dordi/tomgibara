@@ -6,17 +6,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 import com.tomgibara.crinch.bits.BitBoundary;
-import com.tomgibara.crinch.bits.NullBitWriter;
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.bits.NullBitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
+import com.tomgibara.crinch.coding.CharFrequencyRecorder;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedStreams.WriteTask;
-import com.tomgibara.crinch.coding.CharFrequencyRecorder;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.coding.Coding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.ColumnOrder;
@@ -29,12 +27,14 @@ public class TrieConsumer extends OrderedConsumer {
 	private final int columnIndex;
 	private Node root;
 	private boolean ordinalValue;
+	private boolean positionalValue;
 	private long nodeCount = 0;
 	private long[] frequencies;
 	private HuffmanCoding huffmanCoding;
 	
-	public TrieConsumer(int columnIndex, boolean ordinal, ColumnOrder... orders) {
-		super(ordinal, !ordinal, orders);
+	public TrieConsumer(int columnIndex, boolean ordinal, boolean positional, ColumnOrder... orders) {
+		super(ordinal, positional, orders);
+		if (ordinal && positional) throw new UnsupportedOperationException("multiple values not supported yet");
 		if (columnIndex < 0) throw new IllegalArgumentException("negative column index");
 		this.columnIndex = columnIndex;
 	}
@@ -46,6 +46,7 @@ public class TrieConsumer extends OrderedConsumer {
 		if (columnIndex >= definition.getTypes().size()) throw new IllegalStateException("not enough columns");
 		if (definition.getTypes().get(columnIndex) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		ordinalValue = definition.isOrdinal();
+		positionalValue = definition.isPositional();
 	}
 
 	@Override
@@ -62,7 +63,14 @@ public class TrieConsumer extends OrderedConsumer {
 	public void consume(LinearRecord record) {
 		for (int i = 0; i < columnIndex; i++) record.skipNext();
 		final String key = record.nextString();
-		final long value = ordinalValue ? record.getRecordOrdinal() : record.getRecordPosition();
+		final long value;
+		if (ordinalValue) {
+			value = record.getRecordOrdinal();
+		} else if (positionalValue) {
+			value = record.getRecordPosition();
+		} else {
+			value = 0L;
+		}
 		final int length = key.length();
 		Node node = root;
 		outer: for (int i = 0; i < length; i++) {
@@ -120,6 +128,7 @@ public class TrieConsumer extends OrderedConsumer {
 			@Override
 			public void writeTo(CodedWriter writer) {
 				writer.getWriter().writeBoolean(definition.isOrdinal());
+				writer.getWriter().writeBoolean(definition.isPositional());
 				CodedStreams.writePrimitiveArray(writer, frequencies);
 			}
 		}, context.getCoding(), file);

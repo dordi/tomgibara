@@ -73,10 +73,10 @@ public class TrieIndex {
 		while (true) {
 			char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
 			long value = coded.readPositiveLong() - 2L;
-			boolean hasChild = reader.readBoolean();
-			long childOffset = hasChild ? coded.readPositiveLong() - 1L : -1L;
-			boolean hasSibling = reader.readBoolean();
-			long siblingOffset = hasSibling ? coded.readPositiveLong() - 1L : -1L;
+			long childOffset = coded.readPositiveLong() - 2L;
+			long siblingOffset = coded.readPositiveLong() - 2L;
+			boolean hasChild = childOffset >= 0;
+			boolean hasSibling = siblingOffset >= 0;
 			if (root) {
 				if (key.isEmpty()) return value;
 				if (!hasChild) return -1L;
@@ -103,10 +103,10 @@ public class TrieIndex {
 		while (true) {
 			char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
 			long value = coded.readPositiveLong() - 2L;
-			boolean hasChild = reader.readBoolean();
-			long childOffset = hasChild ? coded.readPositiveLong() - 1L : -1L;
-			boolean hasSibling = reader.readBoolean();
-			long siblingOffset = hasSibling ? coded.readPositiveLong() - 1L : -1L;
+			long childOffset = coded.readPositiveLong() - 2L;
+			long siblingOffset = coded.readPositiveLong() - 2L;
+			boolean hasChild = childOffset >= 0;
+			boolean hasSibling = siblingOffset >= 0;
 			
 			if (root) {
 				sb = new StringBuilder();

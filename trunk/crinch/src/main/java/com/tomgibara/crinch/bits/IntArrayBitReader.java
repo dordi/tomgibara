@@ -41,7 +41,7 @@ public class IntArrayBitReader extends AbstractBitReader {
     
     @Override
     public int readBit() {
-        if (position >= size) throw new IllegalStateException();
+        if (position >= size) throw new EndOfBitStreamException();
         int k = (ints[(int)(position >> 5)] >> (31 - (((int)position) & 31))) & 1;
         position++;
         return k;

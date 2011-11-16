@@ -10,7 +10,6 @@ import java.util.NoSuchElementException;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
-import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordDefinition;
@@ -20,10 +19,10 @@ import com.tomgibara.crinch.record.RecordStats;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
-	private final ColumnOrder[] orders;
+	private final boolean ordered;
 	
-	public CompactProducer(ColumnOrder... orders) {
-		this.orders = orders;
+	public CompactProducer(boolean ordered) {
+		this.ordered = ordered;
 	}
 	
 	@Override
@@ -47,8 +46,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			recordCount = stats.getRecordCount();
 			decompactor = new RecordDecompactor(stats);
 
-			
-			RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes(), orders);
+			RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes(), ordered ? context.getColumnOrders() : null);
 			File file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
 			try {
 				in = new BufferedInputStream(new FileInputStream(file), 1024);

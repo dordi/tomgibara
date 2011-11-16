@@ -17,7 +17,6 @@ import com.tomgibara.crinch.coding.CodedStreams.WriteTask;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
-import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
@@ -32,8 +31,8 @@ public class TrieConsumer extends OrderedConsumer {
 	private long[] frequencies;
 	private HuffmanCoding huffmanCoding;
 	
-	public TrieConsumer(int columnIndex, boolean ordinal, boolean positional, ColumnOrder... orders) {
-		super(ordinal, positional, orders);
+	public TrieConsumer(int columnIndex, boolean ordinal, boolean positional) {
+		super(ordinal, positional);
 		if (ordinal && positional) throw new UnsupportedOperationException("multiple values not supported yet");
 		if (columnIndex < 0) throw new IllegalArgumentException("negative column index");
 		this.columnIndex = columnIndex;

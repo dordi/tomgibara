@@ -38,6 +38,7 @@ public class StdProcessContext implements ProcessContext {
 	private String passName;
 	private RecordStats recordStats;
 	private List<ColumnType> columnTypes;
+	private List<ColumnOrder> columnOrders;
 
 	public StdProcessContext() {
 		load();
@@ -169,6 +170,22 @@ public class StdProcessContext implements ProcessContext {
 	@Override
 	public List<ColumnType> getColumnTypes() {
 		return columnTypes;
+	}
+
+	@Override
+	public void setColumnOrders(List<ColumnOrder> columnOrders) {
+		if (columnOrders != null && !columnOrders.equals(this.columnOrders)) {
+			int col = 1;
+			for (ColumnOrder order : columnOrders) {
+				log("Order - column " + col++ + ": " + (order.isAscending() ? "ascending" : "descending") + " " + (order.isNullFirst() ? "(null first)" : "(null last)"));
+			}
+		}
+		this.columnOrders = columnOrders;
+	}
+	
+	@Override
+	public List<ColumnOrder> getColumnOrders() {
+		return columnOrders;
 	}
 	
 	@Override

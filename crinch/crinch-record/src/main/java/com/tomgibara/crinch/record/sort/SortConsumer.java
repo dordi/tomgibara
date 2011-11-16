@@ -11,7 +11,6 @@ import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
@@ -23,8 +22,8 @@ public class SortConsumer extends OrderedConsumer {
 	private BitWriter writer;
 	private CodedWriter coded;
 	
-	public SortConsumer(ColumnOrder... orders) {
-		super(false, false, orders);
+	public SortConsumer() {
+		super(false, false);
 	}
 	
 	@Override

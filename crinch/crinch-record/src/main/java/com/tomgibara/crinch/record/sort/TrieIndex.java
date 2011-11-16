@@ -4,11 +4,9 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
-import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
@@ -28,9 +26,11 @@ public class TrieIndex {
 	private final ExtendedCoding coding;
 	private final byte[] data;
 	
-	public TrieIndex(ProcessContext context, int columnIndex, ColumnOrder... orders) {
+	public TrieIndex(ProcessContext context, int columnIndex) {
 		List<ColumnType> types = context.getColumnTypes();
+		List<ColumnOrder> orders = context.getColumnOrders();
 		if (types == null) throw new IllegalStateException("no types");
+		if (orders == null) throw new IllegalStateException("no orders");
 		RecordDefinition def = new RecordDefinition(false, false, types, orders);
 		
 		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + def.getId());

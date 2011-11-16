@@ -54,14 +54,14 @@ public class RecordDefinition {
 	
 	// constructors
 	
-	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, ColumnOrder... orders) {
+	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, List<ColumnOrder> orders) {
 		if (types == null) throw new IllegalArgumentException("null types");
-		if (orders == null) throw new IllegalArgumentException("null orders");
+		if (orders == null) orders = Collections.emptyList();
 		
 		this.ordinal = ordinal;
 		this.positional = positional;
 		this.types = Collections.unmodifiableList(new ArrayList<ColumnType>(types));
-		this.orders = Collections.unmodifiableList(new ArrayList<ColumnOrder>(Arrays.asList(orders)));
+		this.orders = Collections.unmodifiableList(new ArrayList<ColumnOrder>(orders));
 
 		// verify input
 		if (this.types.contains(null)) throw new IllegalArgumentException("null type");
@@ -76,7 +76,11 @@ public class RecordDefinition {
 			vector.setBit(index, true);
 		}
 	}
-	
+
+	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, ColumnOrder... orders) {
+		this(ordinal, positional, types, Arrays.asList(orders));
+	}
+
 	// accessors
 	
 	public boolean isOrdinal() {

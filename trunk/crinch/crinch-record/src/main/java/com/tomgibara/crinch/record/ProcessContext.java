@@ -38,6 +38,10 @@ public interface ProcessContext {
 	
 	List<ColumnType> getColumnTypes();
 	
+	void setColumnOrders(List<ColumnOrder> columnOrders);
+	
+	List<ColumnOrder> getColumnOrders();
+	
 	void log(String message);
 	
 	void log(String message, Throwable t);

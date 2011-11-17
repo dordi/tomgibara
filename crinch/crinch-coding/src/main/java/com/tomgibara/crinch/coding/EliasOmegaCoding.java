@@ -24,7 +24,7 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
-final public class EliasOmegaCoding extends AbstractCoding {
+final public class EliasOmegaCoding extends UniversalCoding {
 
 	// statics
 	

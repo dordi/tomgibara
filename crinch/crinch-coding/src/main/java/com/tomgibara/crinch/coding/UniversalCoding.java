@@ -4,7 +4,7 @@ import java.math.BigInteger;
 
 import com.tomgibara.crinch.bits.BitWriter;
 
-public abstract class AbstractCoding implements Coding {
+public abstract class UniversalCoding implements Coding {
 
 	abstract int unsafeEncodePositiveInt(BitWriter writer, int value);
 	

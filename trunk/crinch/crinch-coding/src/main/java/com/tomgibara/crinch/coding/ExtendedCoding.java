@@ -10,11 +10,11 @@ public class ExtendedCoding implements Coding {
 
 	// fields
 	
-	private final AbstractCoding coding;
+	private final UniversalCoding coding;
 
 	// constructor
 	
-	public ExtendedCoding(AbstractCoding coding) {
+	public ExtendedCoding(UniversalCoding coding) {
 		if (coding == null) throw new IllegalArgumentException("null coding");
 		this.coding = coding;
 	}

@@ -9,7 +9,7 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
-public final class EliasDeltaCoding extends AbstractCoding {
+public final class EliasDeltaCoding extends UniversalCoding {
 
 	// statics
 	

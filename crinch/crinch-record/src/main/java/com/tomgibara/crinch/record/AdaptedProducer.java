@@ -10,13 +10,23 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 	}
 	
 	@Override
-	public RecordSequence<S> open(final ProcessContext context) {
-		return new AdaptedSequence<R, S>(producer.open(context)) {
+	public void prepare(ProcessContext context) {
+		producer.prepare(context);
+	}
+	
+	@Override
+	public RecordSequence<S> open() {
+		return new AdaptedSequence<R, S>(producer.open()) {
 			@Override
 			public S next() {
 				return adapt(sequence.next());
 			}
 		};
+	}
+	
+	@Override
+	public void complete() {
+		producer.complete();
 	}
 	
 	protected abstract S adapt(R record);

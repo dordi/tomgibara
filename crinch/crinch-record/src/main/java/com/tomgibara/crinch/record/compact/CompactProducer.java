@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
+import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordDefinition;
@@ -21,40 +22,50 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 
 	private final boolean ordered;
 	
+	private ExtendedCoding coding;
+	private long recordCount;
+	private RecordDecompactor decompactor;
+	private File file;
+	
 	public CompactProducer(boolean ordered) {
 		this.ordered = ordered;
 	}
 	
 	@Override
-	public RecordSequence<LinearRecord> open(ProcessContext context) {
-		return new Sequence(context);
+	public void prepare(ProcessContext context) {
+		RecordStats stats = context.getRecordStats();
+		if (stats == null) throw new IllegalStateException("no statistics available");
+		coding = context.getCoding();
+		recordCount = stats.getRecordCount();
+		decompactor = new RecordDecompactor(stats);
+		RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes(), ordered ? context.getColumnOrders() : null);
+		file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
+	}
+	
+	@Override
+	public RecordSequence<LinearRecord> open() {
+		return new Sequence();
 	}
 
 	private class Sequence implements RecordSequence<LinearRecord> {
 		
+		// local copies for possible performance gain
+		final long recordCount = CompactProducer.this.recordCount;
+		final RecordDecompactor decompactor = CompactProducer.this.decompactor;
+		
 		final InputStream in;
 		final BitReader reader;
 		final CodedReader coded;
-		final long recordCount;
-		final RecordDecompactor decompactor;
-		
 		long recordsRead = 0;
 		
-		Sequence(ProcessContext context) {
-			RecordStats stats = context.getRecordStats();
-			if (stats == null) throw new IllegalStateException("no statistics available");
-			recordCount = stats.getRecordCount();
-			decompactor = new RecordDecompactor(stats);
-
-			RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes(), ordered ? context.getColumnOrders() : null);
-			File file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
+		Sequence() {
 			try {
 				in = new BufferedInputStream(new FileInputStream(file), 1024);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			reader = new InputStreamBitReader(in);
-			coded = new CodedReader(reader, context.getCoding());
+			coded = new CodedReader(reader, coding);
 		}
 		
 		@Override
@@ -82,6 +93,14 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			}
 		}
 		
+	}
+	
+	@Override
+	public void complete() {
+		coding = null;
+		recordCount = 0L;
+		decompactor = null;
+		file = null;
 	}
 	
 }

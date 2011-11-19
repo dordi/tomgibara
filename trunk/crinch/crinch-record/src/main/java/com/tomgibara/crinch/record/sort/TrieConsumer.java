@@ -46,6 +46,10 @@ public class TrieConsumer extends OrderedConsumer {
 		if (definition.getTypes().get(columnIndex) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		ordinalValue = definition.isOrdinal();
 		positionalValue = definition.isPositional();
+		if (context.isClean()) {
+			statsFile().delete();
+			file().delete();
+		}
 	}
 
 	@Override
@@ -124,7 +128,6 @@ public class TrieConsumer extends OrderedConsumer {
 	}
 
 	private void writeStats() {
-		File file = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + definition.getId());
 		CodedStreams.writeToFile(new WriteTask() {
 			@Override
 			public void writeTo(CodedWriter writer) {
@@ -132,11 +135,15 @@ public class TrieConsumer extends OrderedConsumer {
 				writer.getWriter().writeBoolean(definition.isPositional());
 				CodedStreams.writePrimitiveArray(writer, frequencies);
 			}
-		}, context.getCoding(), file);
+		}, context.getCoding(), statsFile());
 	}
 
 	private File file() {
 		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + definition.getId());
+	}
+
+	private File statsFile() {
+		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + definition.getId());
 	}
 	
 	private class CharFreqRec extends CharFrequencyRecorder {

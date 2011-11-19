@@ -12,6 +12,7 @@ import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
@@ -24,6 +25,12 @@ public class SortConsumer extends OrderedConsumer {
 	
 	public SortConsumer() {
 		super(false, false);
+	}
+	
+	@Override
+	public void prepare(ProcessContext context) {
+		super.prepare(context);
+		if (context.isClean()) sortedFile().delete();
 	}
 	
 	@Override

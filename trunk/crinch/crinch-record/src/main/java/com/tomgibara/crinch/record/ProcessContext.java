@@ -12,6 +12,10 @@ public interface ProcessContext {
 	
 	ExtendedCoding getCoding();
 
+	void setClean(boolean clean);
+	
+	boolean isClean();
+	
 	void setOutputDir(File outputDir);
 	
 	File getOutputDir();

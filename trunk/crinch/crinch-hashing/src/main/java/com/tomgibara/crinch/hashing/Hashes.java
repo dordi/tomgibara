@@ -16,8 +16,6 @@
  */
 package com.tomgibara.crinch.hashing;
 
-import java.math.BigInteger;
-
 /**
  * Utility methods for working with objects in this package.
  * 
@@ -82,6 +80,41 @@ public class Hashes {
 		if (hash == null) throw new IllegalArgumentException("null hash");
 		if (hash instanceof MultiHash<?>) return (MultiHash<T>) hash;
 		return new SingletonMultiHash<T>(hash);
+	}
+	
+	// methods for hashing primitives
+	
+	public static int hashCode(boolean value) {
+        return value ? 1231 : 1237;
+	}
+
+	public static int hashCode(byte value) {
+		return value;
+	}
+	
+	public static int hashCode(short value) {
+		return value;
+	}
+	
+	public static int hashCode(char value) {
+		return value;
+	}
+
+	public static int hashCode(int value) {
+		return value;
+	}
+	
+	public static int hashCode(long value) {
+        return (int)(value ^ (value >>> 32));
+	}
+
+	public static int hashCode(float value) {
+        return Float.floatToIntBits(value);
+	}
+	
+	public static int hashCode(double value) {
+        long bits = Double.doubleToLongBits(value);
+        return (int)(bits ^ (bits >>> 32));
 	}
 	
 }

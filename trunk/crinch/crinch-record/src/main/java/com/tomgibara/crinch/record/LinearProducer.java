@@ -9,9 +9,9 @@ public class LinearProducer extends AdaptedProducer<StringRecord, LinearRecord> 
 	}
 
 	@Override
-	public RecordSequence<LinearRecord> open(ProcessContext context) {
+	public void prepare(ProcessContext context) {
+		super.prepare(context);
 		parser = context.getColumnParser();
-		return super.open(context);
 	}
 	
 	@Override

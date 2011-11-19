@@ -23,23 +23,45 @@ public class RecordProcessor {
 		if (context == null) throw new IllegalStateException("null context");
 		int state = 0;
 		try {
-			consumer.prepare(context);
+			producer.prepare(context);
 			state = 1;
-			new RecordTransfer<R>(producer, consumer).transfer(context);
+			consumer.prepare(context);
 			state = 2;
+			new RecordTransfer<R>(producer, consumer).transfer(context);
+			state = 3;
+			consumer.complete();
+			state = 4;
+			producer.complete();
+			state = 5;
 		} catch (RuntimeException e) {
 			context.log("error processing records", e);
 		} finally {
-			try {
-				switch (state) {
-				case 1: consumer.quit(); break;
-				case 2: consumer.complete(); state = 3; break;
+			if (state == 4) {
+				state = 0;
+			}
+			if (state == 3) {
+				state = 1;
+			}
+			if (state == 2) {
+				try {
+					consumer.quit();
+				} catch (RuntimeException ex) {
+					context.log("error terminating consumption", ex);
+				} finally {
+					state = 1;
 				}
-			} catch (RuntimeException ex) {
-				context.log("error terminating consumer", ex);
+			}
+			if (state == 1) {
+				try {
+					producer.complete();
+				} catch (RuntimeException ex) {
+					context.log("error terminating production", ex);
+				} finally {
+					state = 0;
+				}
 			}
 		}
-		return state == 3;
+		return state == 5;
 	}
 	
 }

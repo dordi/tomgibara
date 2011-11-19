@@ -17,7 +17,7 @@ public class RecordTransfer<R extends Record> {
 	
 	public void transfer(ProcessContext context) {
 		while (consumer.getRequiredPasses() != 0) {
-			RecordSequence<R> sequence = producer.open(context);
+			RecordSequence<R> sequence = producer.open();
 			if (sequence == null) throw new RuntimeException("null record sequence from producer");
 			try {
 				consumer.beginPass();

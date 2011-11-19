@@ -2,6 +2,10 @@ package com.tomgibara.crinch.record;
 
 public interface RecordProducer<R extends Record> {
 
-	public RecordSequence<R> open(ProcessContext context);
+	void prepare(ProcessContext context);
+	
+	RecordSequence<R> open();
+	
+	void complete();
 	
 }

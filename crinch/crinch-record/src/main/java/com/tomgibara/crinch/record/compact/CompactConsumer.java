@@ -42,10 +42,13 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			pass = PASS_TYPES;
 		} else if (context.getRecordStats() == null) {
 			pass = PASS_STATS;
-		} else if (!file().isFile()) {
-			pass = PASS_COMPACT;
 		} else {
-			pass = PASS_DONE;
+			if (context.isClean()) file().delete();
+			if (!file().isFile()) {
+				pass = PASS_COMPACT;
+			} else {
+				pass = PASS_DONE;
+			}
 		}
 	}
 

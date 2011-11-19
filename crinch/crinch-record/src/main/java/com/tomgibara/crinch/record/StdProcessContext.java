@@ -27,6 +27,7 @@ public class StdProcessContext implements ProcessContext {
 
 	private float progressStep = 1.0f;
 	private ExtendedCoding coding = EliasOmegaCoding.extended;
+	private boolean clean = false;
 	private ColumnParser columnParser = new StdColumnParser();
 	private File outputDir = new File("");
 	private String dataName = "default";
@@ -59,6 +60,16 @@ public class StdProcessContext implements ProcessContext {
 	@Override
 	public ExtendedCoding getCoding() {
 		return coding;
+	}
+	
+	@Override
+	public void setClean(boolean clean) {
+		this.clean = clean;
+	}
+	
+	@Override
+	public boolean isClean() {
+		return clean;
 	}
 	
 	@Override
@@ -271,6 +282,9 @@ public class StdProcessContext implements ProcessContext {
 	
 	private <T> T read(ReadOp<T> op, File file) {
 		if (!file.isFile()) {
+			return null;
+		} else if (clean) {
+			file.delete();
 			return null;
 		} else {
 			InputStream in = null;

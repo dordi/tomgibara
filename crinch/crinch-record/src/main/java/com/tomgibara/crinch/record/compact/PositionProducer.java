@@ -7,8 +7,12 @@ import com.tomgibara.crinch.record.RecordSequence;
 
 public class PositionProducer implements RecordProducer<EmptyRecord> {
 
+	private PositionStats stats;
+	
 	@Override
 	public void prepare(ProcessContext context) {
+		stats = new PositionStats(context);
+		stats.read();
 	}
 	
 	@Override
@@ -19,7 +23,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 	@Override
 	public void complete() {
 	}
-	
+
 	private class PositionSequence implements RecordSequence<EmptyRecord> {
 
 		PositionSequence() {

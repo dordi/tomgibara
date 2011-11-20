@@ -1,24 +1,32 @@
 package com.tomgibara.crinch.record.compact;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.bits.NullBitWriter;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
+import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.FibonacciCoding;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.RecordDefinition;
-import com.tomgibara.crinch.record.RecordProducer;
-import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 
 public class PositionConsumer implements RecordConsumer<LinearRecord> {
 
+	// statics
+	
+	private static void writeEntry(CodedWriter coded, int ordinal, long position) {
+//		//TODO we don't guard against overflow here
+		coded.writePositiveInt(2 * (ordinal + 1));
+		coded.writePositiveLong(2 * position + 1);
+	}
+
+	
 	private ProcessContext context;
 	private RecordDefinition definition;
 	private RecordStats stats;
@@ -36,6 +44,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
 		definition = new RecordDefinition(true, true, types, context.getColumnOrders());
+		if (context.isClean()) file().delete();
 	}
 
 	@Override
@@ -65,19 +74,6 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		chooseFixedBitSize();
 		writeStats();
 		writeFile();
-//		long errMax = 0L;
-//		long errSum = 0L;
-//		long[] errCounts = new long[64];
-//		for (int i = 0; i < positions.length; i++) {
-//			long err = Math.abs(positions[i]);
-//			if (err > errMax) errMax = err;
-//			errCounts[64 - Long.numberOfLeadingZeros(err)]++;
-//			errSum += err;
-//		}
-//		context.log("Max Err: " + errMax);
-//		context.log("Err Sum: " + errSum);
-//		context.log("Err Avg: " + errSum / (double) positions.length);
-//		context.log("Err Tny: " + Arrays.toString(errCounts));
 	}
 
 	@Override
@@ -101,26 +97,34 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	private void chooseFixedBitSize() {
+		// count errors that fit into fixed sizes
 		long[] errCounts = new long[65];
 		for (int i = 0; i < positions.length; i++) {
-			long err = Math.abs(positions[i]);
+			long pos = positions[i];
+			long err = Math.abs(pos);
 			int bits = 65 - Long.numberOfLeadingZeros(err); // 64+1 is because we need sign
 			errCounts[bits]++;
 		}
+		
+		// measure overflow record
+		long[] sizes = new OverSizedMeasurer().sizeEntries();
+		
+		// identify the best fixed size
 		long bestSize = Long.MAX_VALUE;
 		int bestFixed = 0;
 		// TODO could implement more efficiently backwards (to accumulate frees)
 		for (int fixed = 0; fixed < 65; fixed++) {
 			long size = fixed * positions.length;
 			for (int free = fixed + 1; free < 65; free++) {
-				//TODO total guess at this heuristic - analyze properly
-				size += errCounts[free] * free * 5 / 2;
+				size += sizes[free];
 			}
 			if (size < bestSize) {
 				bestSize = size;
 				bestFixed = fixed;
 			}
 		}
+		
+		// record the best fixed size
 		fixedBitSize = bestFixed;
 		context.log("Fixed bit size: " + fixedBitSize);
 	}
@@ -167,20 +171,14 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		return new File(context.getOutputDir(), context.getDataName() + ".positions." + definition.getId());
 	}
 	
-	private class OversizedWriter {
+	private abstract class OversizedBase {
 		
-		private final CodedWriter coded;
 		private final long[] positions = PositionConsumer.this.positions;
-		private final int fixedBitSize = PositionConsumer.this.fixedBitSize;
-		
-		OversizedWriter(BitWriter writer) {
-			this.coded = new CodedWriter(writer, FibonacciCoding.extended);
-		}
 		
 		void writeEntries() {
-			if (fixedBitSize == 0) writeEntry(0, bottomPosition);
+			writeEntry(0, bottomPosition, 0L);
 			writeEntries(0, bottomPosition, positions.length - 1, topPosition);
-			if (fixedBitSize == 0) writeEntry(0, topPosition);
+			writeEntry(0, topPosition, 0L);
 		}
 
 		private void writeEntries(int bottomOrdinal, long bottomPosition, int topOrdinal, long topPosition) {
@@ -190,15 +188,56 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 			long est = (bottomPosition + topPosition) / 2;
 			long pos = est + err;
 			writeEntries(bottomOrdinal, bottomPosition, index, pos);
-			int bits = 65 - Long.numberOfLeadingZeros(Math.abs(err));
-			if (bits > fixedBitSize) writeEntry(index, pos);
+			writeEntry(index, pos, err);
 			writeEntries(index, pos, topOrdinal, topPosition);
 		}
 
-		private void writeEntry(int ordinal, long position) {
-			//TODO we don't guard against overflow here
-			coded.writePositiveInt(2 * (ordinal + 1));
-			coded.writePositiveLong(2 * position + 1);
+		abstract void writeEntry(int ordinal, long position, long err);
+		
+	}
+
+	private class OversizedWriter extends OversizedBase {
+		
+		private final CodedWriter coded;
+		private final int fixedBitSize = PositionConsumer.this.fixedBitSize;
+
+		OversizedWriter(BitWriter writer) {
+			this.coded = new CodedWriter(writer, FibonacciCoding.extended);
+		}
+		
+		void writeEntry(int ordinal, long position, long err) {
+			int bits = 65 - Long.numberOfLeadingZeros(Math.abs(err));
+			if (bits > fixedBitSize) PositionConsumer.writeEntry(coded, ordinal, position);
+		}
+		
+	}
+	
+	private class OverSizedMeasurer extends OversizedBase {
+		
+		// bit writer at posn n records storage for all entries that need at least n bits to store 'fixed'
+		final CodedWriter[] coded = new CodedWriter[65];
+		
+		public OverSizedMeasurer() {
+			ExtendedCoding coding = FibonacciCoding.extended;
+			for (int i = 0; i < coded.length; i++) {
+				coded[i] = new CodedWriter(new NullBitWriter(), coding);
+			}
+		}
+
+		long[] sizeEntries() {
+			writeEntries();
+			long[] sizes = new long[coded.length];
+			for (int i = 0; i < sizes.length; i++) {
+				sizes[i] = coded[i].getWriter().getPosition();
+			}
+			return sizes;
+		}
+		
+		@Override
+		void writeEntry(int ordinal, long position, long err) {
+			int bits = 65 - Long.numberOfLeadingZeros(Math.abs(err));
+			PositionConsumer.writeEntry(coded[bits], ordinal, position);
+			
 		}
 		
 	}

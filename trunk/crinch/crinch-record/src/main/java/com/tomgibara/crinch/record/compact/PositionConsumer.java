@@ -13,7 +13,6 @@ import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.RecordStats;
 
 public class PositionConsumer implements RecordConsumer<LinearRecord> {
@@ -27,35 +26,36 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	
+	// prepared state
 	private ProcessContext context;
-	private RecordDefinition definition;
-	private RecordStats stats;
+	private PositionStats posStats;
+	private RecordStats recStats;
+	private File file;
+	// pass state
 	private long[] positions;
-	private long bottomPosition;
-	private long topPosition;
-	private int fixedBitSize;
-	
+
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		stats = context.getRecordStats();
-		if (stats == null) throw new IllegalStateException("no stats");
-		if (stats.getRecordCount() > Integer.MAX_VALUE) throw new UnsupportedOperationException("long record counts not currently supported.");
+		posStats = new PositionStats(context);
+		recStats = context.getRecordStats();
+		if (recStats == null) throw new IllegalStateException("no stats");
+		if (recStats.getRecordCount() > Integer.MAX_VALUE) throw new UnsupportedOperationException("long record counts not currently supported.");
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		definition = new RecordDefinition(true, true, types, context.getColumnOrders());
-		if (context.isClean()) file().delete();
+		file = new File(context.getOutputDir(), context.getDataName() + ".positions." + posStats.definition.getId());
+		if (context.isClean()) file.delete();
 	}
 
 	@Override
 	public int getRequiredPasses() {
-		return file().isFile() ? 0 : 1;
+		return file.isFile() ? 0 : 1;
 	}
 
 	@Override
 	public void beginPass() {
 		//TODO support larger counts
-		int count = (int) stats.getRecordCount();
+		int count = (int) recStats.getRecordCount();
 		positions = new long[count];
 	}
 
@@ -67,12 +67,12 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void endPass() {
-		bottomPosition = positions[0];
-		topPosition = positions[positions.length - 1];
+		posStats.bottomPosition = positions[0];
+		posStats.topPosition = positions[positions.length - 1];
 		calcOffsets(0, positions.length - 1);
 		positions[positions.length - 1] = 0;
 		chooseFixedBitSize();
-		writeStats();
+		posStats.write();
 		writeFile();
 	}
 
@@ -125,19 +125,8 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		}
 		
 		// record the best fixed size
-		fixedBitSize = bestFixed;
-		context.log("Fixed bit size: " + fixedBitSize);
-	}
-	
-	private void writeStats() {
-		CodedStreams.writeToFile(new CodedStreams.WriteTask() {
-			@Override
-			public void writeTo(CodedWriter writer) {
-				writer.writePositiveLong(bottomPosition + 1L);
-				writer.writePositiveLong(topPosition + 1L);
-				writer.writePositiveInt(fixedBitSize + 1);
-			}
-		}, context.getCoding(), statsFile());
+		posStats.fixedBitSize = bestFixed;
+		context.log("Fixed bit size: " + bestFixed);
 	}
 	
 	private void writeFile() {
@@ -146,7 +135,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 			public void writeTo(CodedWriter writer) {
 				final BitWriter w = writer.getWriter();
 				final long[] positions = PositionConsumer.this.positions;
-				final int fixedBitSize = PositionConsumer.this.fixedBitSize;
+				final int fixedBitSize = PositionConsumer.this.posStats.fixedBitSize;
 				final long invalid = 1 << (fixedBitSize - 1);
 				for (int i = 0; i < positions.length; i++) {
 					long err = positions[i];
@@ -160,15 +149,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 				long variableSize = totalSize - fixedSize;
 				context.log("Non-fixed percentage: " + String.format("%.2f", variableSize / (double) totalSize * 100.0));
 			}
-		}, context.getCoding(), file());
-	}
-	
-	private File statsFile() {
-		return new File(context.getOutputDir(), context.getDataName() + ".positions-stats." + definition.getId());
-	}
-	
-	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + ".positions." + definition.getId());
+		}, posStats.coding, file);
 	}
 	
 	private abstract class OversizedBase {
@@ -176,9 +157,9 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		private final long[] positions = PositionConsumer.this.positions;
 		
 		void writeEntries() {
-			writeEntry(0, bottomPosition, 0L);
-			writeEntries(0, bottomPosition, positions.length - 1, topPosition);
-			writeEntry(0, topPosition, 0L);
+			writeEntry(0, posStats.bottomPosition, 0L);
+			writeEntries(0, posStats.bottomPosition, positions.length - 1, posStats.topPosition);
+			writeEntry(0, posStats.topPosition, 0L);
 		}
 
 		private void writeEntries(int bottomOrdinal, long bottomPosition, int topOrdinal, long topPosition) {
@@ -199,7 +180,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 	private class OversizedWriter extends OversizedBase {
 		
 		private final CodedWriter coded;
-		private final int fixedBitSize = PositionConsumer.this.fixedBitSize;
+		private final int fixedBitSize = posStats.fixedBitSize;
 
 		OversizedWriter(BitWriter writer) {
 			this.coded = new CodedWriter(writer, FibonacciCoding.extended);

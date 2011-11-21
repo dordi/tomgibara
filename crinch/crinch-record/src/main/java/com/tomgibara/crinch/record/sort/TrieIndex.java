@@ -59,9 +59,14 @@ public class TrieIndex {
 		try {
 			in = new FileInputStream(file);
 			new DataInputStream(in).readFully(data);
-			in.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			try {
+				in.close();
+			} catch (IOException e) {
+				context.log("Failed to close file", e);
+			}
 		}
 		this.data = data;
 	}

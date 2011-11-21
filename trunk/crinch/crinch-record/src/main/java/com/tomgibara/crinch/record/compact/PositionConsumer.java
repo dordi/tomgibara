@@ -126,6 +126,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		
 		// record the best fixed size
 		posStats.fixedBitSize = bestFixed;
+		posStats.bitsWritten = bestSize;
 		context.log("Fixed bit size: " + bestFixed);
 	}
 	

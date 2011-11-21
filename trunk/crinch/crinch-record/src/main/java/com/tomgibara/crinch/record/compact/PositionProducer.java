@@ -71,7 +71,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		private final long invalid = 1 << (fixedBitSize - 1);
 		private final long negativeBoundary = 1 << (fixedBitSize - 1);
 		private final long negativeMask = -1L << fixedBitSize;
-		private final int maxDepth = 64 - Long.numberOfLeadingZeros(recordCount);
+		private final int maxDepth = 65 - Long.numberOfLeadingZeros(recordCount);
 		private final long[] stack = new long[maxDepth * 4];
 		//frames in stack are:
 		//  bottomOrdinal
@@ -159,8 +159,8 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		public void close() {
 		}
 
-		//TODO switch to using binary search
-		private long findPosition(long ordinal) {
+		// used to verify binary search implementation
+		private long findPositionSlow(long ordinal) {
 			reader.setPosition(oversizedStart);
 			while (reader.getPosition() < oversizedFinish) {
 				long ord = coded.readPositiveLong() / 2 - 1;
@@ -168,6 +168,47 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 				if (ord == ordinal) return pos;
 			}
 			return -1L;
+		}
+		
+		private long findPosition(long ordinal) {
+			if (oversizedStart == oversizedFinish) return -1L;
+			return findPosition(oversizedStart, oversizedFinish, ordinal);
+		}
+		
+		private long findPosition(long from, long to, long ordinal) {
+			long mid = (from + to) / 2;
+			//TODO compute correctly min offset
+			long offset = 100L;
+			long start = Math.max(mid - offset, oversizedStart);
+			reader.setPosition(start);
+			if (start != oversizedStart) {
+				// look for two consecutive bits indicating end of fib. enc. no.
+				boolean last = false;
+				for (; start < mid; start++) {
+					boolean bit = reader.readBoolean();
+					if (bit && last) break;
+					last = bit;
+				}
+			}
+			// check for error state where we didn't find two consecutive bits
+			if (start == mid) throw new IllegalStateException("No consecutive set bits between " + (mid - offset) + " and mid");
+			
+			while (true) {
+				long left = reader.getPosition();
+				long a = coded.readPositiveLong();
+				if ((a & 1L) == 1L) continue; // we need to start with ordinal which is always even
+				long b = coded.readPositiveLong();
+				long right = reader.getPosition();
+				long ord = a / 2 - 1L;
+				long pos = (b - 1L) / 2;
+				if (ord == ordinal) {
+					return pos;
+				} else if (ordinal < ord) {
+					return left == oversizedStart ? -1L : findPosition(from, left, ordinal);
+				} else if (right >= mid) {
+					return right == oversizedFinish ? -1L : findPosition(right, to, ordinal);
+				}
+			}
 		}
 		
 	}

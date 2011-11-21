@@ -20,6 +20,7 @@ class PositionStats {
 	long bottomPosition;
 	long topPosition;
 	int fixedBitSize;
+	long bitsWritten;
 
 	public PositionStats(ProcessContext context) {
 		List<ColumnType> types = context.getColumnTypes();
@@ -37,6 +38,7 @@ class PositionStats {
 				writer.writePositiveLong(bottomPosition + 1L);
 				writer.writePositiveLong(topPosition + 1L);
 				writer.writePositiveInt(fixedBitSize + 1);
+				writer.writePositiveLong(bitsWritten + 1L);
 			}
 		}, coding, file);
 	}
@@ -48,6 +50,7 @@ class PositionStats {
 				bottomPosition = reader.readPositiveLong() - 1L;
 				topPosition = reader.readPositiveLong() - 1L;
 				fixedBitSize = reader.readPositiveInt() - 1;
+				bitsWritten = reader.readPositiveLong() - 1L;
 			}
 		}, coding, file);
 	}

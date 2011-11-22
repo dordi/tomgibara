@@ -170,6 +170,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 			return -1L;
 		}
 		
+		//TODO cache recent results?
 		private long findPosition(long ordinal) {
 			if (oversizedStart == oversizedFinish) return -1L;
 			return findPosition(oversizedStart, oversizedFinish, ordinal);

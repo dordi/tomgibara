@@ -3,6 +3,7 @@ package com.tomgibara.crinch.record;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,20 +17,83 @@ public class RecordDefinition {
 	
 	// statics
 	
-	private static HashSource<RecordDefinition> hashSource = new HashSource<RecordDefinition>() {
+	//TODO this contains a gotcha for clients constructing definitions
+	private static List<ColumnDefinition> asColumnList(Collection<ColumnDefinition> columns) {
+		if (columns == null) return null;
+		int count = columns.size();
+		List<ColumnDefinition> list;
+		if (columns instanceof List) {
+			list = new ArrayList<ColumnDefinition>(columns);
+			for (int i = 0; i < count; i++) {
+				final ColumnDefinition column = list.get(i);
+				if (column == null) throw new IllegalArgumentException("null column");
+				if (column.getIndex() != i) throw new IllegalArgumentException("column index incorrect at " + i);
+			}
+		} else {
+			list = new ArrayList<ColumnDefinition>(count);
+			list.addAll((Collection) Collections.nCopies(count, null));
+			for (ColumnDefinition column : columns) {
+				if (column == null) throw new IllegalArgumentException("null column");
+				int index = column.getIndex();
+				if (index >= count) throw new IllegalArgumentException("invalid column index: " + index);
+				if (list.set(index, column) != null) throw new IllegalArgumentException("duplicate column index: " + index); 
+			}
+		}
+		return list;
+	}
+	
+	private static List<ColumnDefinition> asColumnList(List<ColumnType> types, List<ColumnOrder> orders) {
+		if (types == null) return null;
+		int count = types.size();
+		if (orders != null && orders.size() > count) throw new IllegalArgumentException("too many orders");
+		List<ColumnDefinition> definitions = new ArrayList<ColumnDefinition>();
+		for (int i = 0; i < count; i++) {
+			definitions.add(i, new ColumnDefinition(i, types.get(i), orders == null || i >= orders.size() ? null : orders.get(i)));
+		}
+		return definitions;
+	}
+	
+	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
+		int count = columns.size();
+		int limit = 0;
+		for (int i = 0; i < count; i++) {
+			if (columns.get(i).getOrder() != null) limit ++;
+		}
+		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(limit);
+		for (int precedence = 0; precedence < limit; precedence++) {
+			ColumnDefinition next = null;
+			for (int i = 0; i < count; i++) {
+				ColumnDefinition column = columns.get(i);
+				ColumnOrder order = column.getOrder();
+				if (order == null) continue;
+				if (order.getPrecedence() == precedence) {
+					if (next != null) throw new IllegalArgumentException("duplicate column order precedence: " + precedence);
+					next = column;
+				}
+			}
+			if (next == null) throw new IllegalArgumentException("precedence absent: " + precedence);
+			list.add(next);
+		}
+		return list;
+	}
+	
+	private static List<ColumnType> asTypeList(List<ColumnDefinition> columns) {
+		List<ColumnType> types = new ArrayList<ColumnType>();
+		int count = columns.size();
+		for (int i = 0; i < count; i++) {
+			types.add(columns.get(i).getType());
+		}
+		return types;
+	}
+	
+	static HashSource<RecordDefinition> hashSource = new HashSource<RecordDefinition>() {
 		
 		@Override
 		public void sourceData(RecordDefinition definition, WriteStream out) {
-			// whether or not records contain them is not really part of name
-//			out.writeBoolean(definition.ordinal);
-//			out.writeBoolean(definition.positional);
-			for (ColumnType type : definition.types) {
-				out.writeInt(type.ordinal());
-			}
-			for (ColumnOrder order: definition.orders) {
-				out.writeInt(order.getIndex());
-				out.writeBoolean(order.isAscending());
-				out.writeBoolean(order.isNullFirst());
+			out.writeBoolean(definition.ordinal);
+			out.writeBoolean(definition.positional);
+			for (ColumnDefinition column : definition.columns) {
+				ColumnDefinition.hashSource.sourceData(column, out);
 			}
 		}
 	};
@@ -43,42 +107,32 @@ public class RecordDefinition {
 	private static final String idPattern = "%0" + hashDigits + "X";
 
 	// fields
-	
-	//TODO consider moving off definition and onto factory constructor
+
+	private final RecordDefinition basis;
 	private final boolean ordinal;
 	private final boolean positional;
+	private final List<ColumnDefinition> columns;
 	private final List<ColumnType> types;
-	private final List<ColumnOrder> orders;
+	private final List<ColumnDefinition> orderedColumns;
+	private final int[] basicIndices;
 
 	private String id = null;
 	
 	// constructors
-	
-	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, List<ColumnOrder> orders) {
-		if (types == null) throw new IllegalArgumentException("null types");
-		if (orders == null) orders = Collections.emptyList();
-		
+
+	public RecordDefinition(boolean ordinal, boolean positional, Collection<ColumnDefinition> columns) {
+		if (columns == null) throw new IllegalArgumentException("null columns");
+		basis = null;
+		basicIndices = null;
 		this.ordinal = ordinal;
 		this.positional = positional;
-		this.types = Collections.unmodifiableList(new ArrayList<ColumnType>(types));
-		this.orders = Collections.unmodifiableList(new ArrayList<ColumnOrder>(orders));
-
-		// verify input
-		if (this.types.contains(null)) throw new IllegalArgumentException("null type");
-		if (this.orders.contains(null)) throw new IllegalArgumentException("null order");
-		
-		final int size = this.types.size();
-		BitVector vector = new BitVector(size);
-		for (ColumnOrder order : this.orders) {
-			int index = order.getIndex();
-			if (index < 0 || index >= size) throw new IllegalArgumentException("invalid order index: " + index);
-			if (vector.getBit(index)) throw new IllegalArgumentException("duplicate order index: " + index);
-			vector.setBit(index, true);
-		}
+		this.columns = Collections.unmodifiableList(asColumnList(columns));
+		this.types = Collections.unmodifiableList(asTypeList(this.columns));
+		this.orderedColumns = Collections.unmodifiableList(asOrderList(this.columns));
 	}
 
-	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, ColumnOrder... orders) {
-		this(ordinal, positional, types, Arrays.asList(orders));
+	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, List<ColumnOrder> orders) {
+		this(ordinal, positional, asColumnList(types, orders));
 	}
 
 	// accessors
@@ -95,8 +149,8 @@ public class RecordDefinition {
 		return types;
 	}
 	
-	public List<ColumnOrder> getOrders() {
-		return orders;
+	public List<ColumnDefinition> getOrderedColumns() {
+		return orderedColumns;
 	}
 	
 	public String getId() {

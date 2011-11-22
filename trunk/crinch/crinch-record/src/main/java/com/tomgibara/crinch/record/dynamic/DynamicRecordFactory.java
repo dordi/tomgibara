@@ -15,6 +15,7 @@ import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
+import com.tomgibara.crinch.record.ColumnDefinition;
 import com.tomgibara.crinch.record.ColumnOrder;
 import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
@@ -230,8 +231,9 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic int compareTo(Object obj) {\n");
 			sb.append("\t\t" + name + " that = (" + name + ") obj;\n");
-			for (ColumnOrder order : definition.getOrders()) {
-				int field = order.getIndex();
+			for (ColumnDefinition column : definition.getOrderedColumns()) {
+				int field = column.getIndex();
+				ColumnOrder order = column.getOrder();
 				ColumnType type = definition.getTypes().get(field);
 				if (type == BOOLEAN_PRIMITIVE) {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " ? -1 : 1;\n");

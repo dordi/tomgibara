@@ -29,11 +29,11 @@ public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 		this.context = context;
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		definition = new RecordDefinition(ordinal, positional, types, context.getColumnOrders());
+		definition = RecordDefinition.fromTypes(context.getColumnTypes()).build().withOrdering(context.getColumnOrders()).asBasis().asCompleteBasisToBuild().setOrdinal(ordinal).setPositional(positional).build();
 	}
 
 	File sortedFile() {
-		return new File(context.getOutputDir(), context.getDataName() + ".compact." + definition.getId());
+		return new File(context.getOutputDir(), context.getDataName() + ".compact." + definition.getBasis().getId());
 	}
 	
 

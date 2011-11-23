@@ -16,12 +16,10 @@ import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordDefinition;
 
-//TODO lots of work here - decide if ordinal flag should be in constructor, make reading into memory optional, support memory mapping too
+//TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieIndex {
 
 	private final File file;
-	private final boolean ordinal;
-	private final boolean positional;
 	private final HuffmanCoding huffmanCoding;
 	private final ExtendedCoding coding;
 	private final byte[] data;
@@ -30,8 +28,7 @@ public class TrieIndex {
 		List<ColumnType> types = context.getColumnTypes();
 		List<ColumnOrder> orders = context.getColumnOrders();
 		if (types == null) throw new IllegalStateException("no types");
-		if (orders == null) throw new IllegalStateException("no orders");
-		RecordDefinition def = new RecordDefinition(false, false, types, orders);
+		RecordDefinition def = RecordDefinition.fromTypes(types).build().withOrdering(orders).asBasis();
 		
 		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + def.getId());
 		final Object[] arr = new Object[3];
@@ -45,10 +42,9 @@ public class TrieIndex {
 			}
 		}, context.getCoding(), statsFile);
 		long[] frequencies = (long[]) arr[2];
+		def = def.asBasisToBuild().setOrdinal((Boolean) arr[0]).setPositional((Boolean) arr[1]).build();
 		
 		file = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + def.getId());
-		ordinal = (Boolean) arr[0];
-		positional = (Boolean) arr[1];
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		

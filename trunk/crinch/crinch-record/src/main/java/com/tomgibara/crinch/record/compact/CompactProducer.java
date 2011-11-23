@@ -38,7 +38,8 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		coding = context.getCoding();
 		recordCount = stats.getRecordCount();
 		decompactor = new RecordDecompactor(stats);
-		RecordDefinition def = new RecordDefinition(true, true, context.getColumnTypes(), ordered ? context.getColumnOrders() : null);
+		RecordDefinition def = RecordDefinition.fromTypes(context.getColumnTypes()).build();
+		if (ordered) def = def.withOrdering(context.getColumnOrders());
 		file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
 	}
 	

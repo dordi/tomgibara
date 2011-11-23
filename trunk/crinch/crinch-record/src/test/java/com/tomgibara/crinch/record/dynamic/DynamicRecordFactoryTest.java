@@ -25,48 +25,48 @@ public class DynamicRecordFactoryTest extends TestCase {
 
 	private static final ColumnParser parser = new StdColumnParser();
 	
-	public void testDefinitionCons() {
-		try {
-			new RecordDefinition(true, true, null);
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-		
-		try {
-			new RecordDefinition(true, true, Arrays.asList((ColumnType) null), null);
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-		
-		try {
-			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(-1, true, true)));
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-		
-		try {
-			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(1, true, true)));
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-		
-		try {
-			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(0, true, true), new ColumnOrder(0, true, true)));
-			fail();
-		} catch (IllegalArgumentException e) {
-			/* expected */
-		}
-	}
+//	public void testDefinitionCons() {
+//		try {
+//			new RecordDefinition(true, true, null);
+//			fail();
+//		} catch (IllegalArgumentException e) {
+//			/* expected */
+//		}
+//		
+//		try {
+//			new RecordDefinition(true, true, Arrays.asList((ColumnType) null), null);
+//			fail();
+//		} catch (IllegalArgumentException e) {
+//			/* expected */
+//		}
+//		
+//		try {
+//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(-1, true, true)));
+//			fail();
+//		} catch (IllegalArgumentException e) {
+//			/* expected */
+//		}
+//		
+//		try {
+//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(1, true, true)));
+//			fail();
+//		} catch (IllegalArgumentException e) {
+//			/* expected */
+//		}
+//		
+//		try {
+//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(0, true, true), new ColumnOrder(0, true, true)));
+//			fail();
+//		} catch (IllegalArgumentException e) {
+//			/* expected */
+//		}
+//	}
 	
 	public void testGetName() {
 		
-		RecordDefinition def1 = new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, STRING_OBJECT), Arrays.asList(null, null, new ColumnOrder(0, false, false)));
-		RecordDefinition def2 = new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE), Arrays.asList(null, null, new ColumnOrder(0, false, false)));
-		RecordDefinition def3 = new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE), null);
+		RecordDefinition def1 = RecordDefinition.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, STRING_OBJECT)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, false, false)));
+		RecordDefinition def2 = RecordDefinition.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, false, false)));
+		RecordDefinition def3 = RecordDefinition.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE)).build();
 		
 		DynamicRecordFactory fac1 = DynamicRecordFactory.getInstance(def1);
 		DynamicRecordFactory fac2 = DynamicRecordFactory.getInstance(def2);
@@ -78,7 +78,10 @@ public class DynamicRecordFactoryTest extends TestCase {
 	}
 	
 	public void testNewRecord() {
-		RecordDefinition def = new RecordDefinition(true, false, Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER), Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)));
+		RecordDefinition def = RecordDefinition
+				.fromTypes(Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER))
+				.setPositional(false)
+				.build().withOrdering(Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)));
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
 		LinearRecord rec = fac.newRecord(new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")));
 		assertEquals("[1,true,null,Tom,3847239847239843,null]", rec.toString());

@@ -2,12 +2,9 @@ package com.tomgibara.crinch.record;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
@@ -17,6 +14,119 @@ public class RecordDefinition {
 	
 	// statics
 	
+	public static class Builder {
+		
+		private final RecordDefinition basis;
+
+		private boolean ordinal;
+		private boolean positional;
+		private List<ColumnDefinition> columns = new ArrayList<ColumnDefinition>();
+		private int index = -1;
+		private ColumnType type;
+		private ColumnOrder order;
+		
+		Builder(RecordDefinition basis) {
+			this.basis = basis;
+			if (basis == null) {
+				ordinal = true;
+				positional = true;
+			} else {
+				ordinal = basis.ordinal;
+				positional = basis.positional;
+			}
+		}
+		
+		public Builder setOrdinal(boolean ordinal) {
+			if (basis != null && !basis.ordinal) throw new IllegalStateException("basis has no ordinals");
+			this.ordinal = ordinal;
+			return this;
+		}
+		
+		public Builder setPositional(boolean positional) {
+			if (basis != null && !basis.positional) throw new IllegalStateException("basis has no positions");
+			this.positional = positional;
+			return this;
+		}
+		
+		public Builder select(int index) {
+			if (basis == null) throw new IllegalStateException("no basis");
+			if (index < 0) throw new IllegalArgumentException("negative index");
+			if (index >= basis.columns.size()) throw new IllegalArgumentException("invalid index");
+			for (ColumnDefinition column : columns) {
+				if (column.getBasis() == index) throw new IllegalArgumentException("duplicate basis index: " + index);
+			}
+			this.index = index;
+			return this;
+		}
+		
+		public Builder type(ColumnType type) {
+			if (basis != null) throw new IllegalStateException("basis");
+			if (type == null) throw new IllegalArgumentException("null type");
+			this.type = type;
+			return this;
+		}
+		
+		public Builder order(ColumnOrder order) {
+			if (order != null) {
+				int precedence = order.getPrecedence();
+				for (ColumnDefinition column : columns) {
+					ColumnOrder colOrd = column.getOrder();
+					if (colOrd != null && colOrd.getPrecedence() == precedence) {
+						throw new IllegalArgumentException("duplicate order precedence");
+					}
+				}
+			}
+			this.order = order;
+			return this;
+		}
+		
+		public Builder add() {
+			if (basis == null) {
+				if (type == null) throw new IllegalStateException("no type");
+				columns.add(new ColumnDefinition(columns.size(), type, order, -1));
+			} else {
+				if (index < 0) throw new IllegalStateException("no index");
+				ColumnDefinition column = basis.basis == null ?
+						basis.columns.get(index) :
+						basis.basis.columns.get(basis.columns.get(index).getBasis());
+				ColumnOrder colOrd = order == null ? column.getOrder() : order;
+				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, column.getBasis()));
+			}
+			index = -1;
+			type = null;
+			order = null;
+			return this;
+		}
+		
+		public RecordDefinition build() {
+			try {
+				return new RecordDefinition(this);
+			} finally {
+				columns = new ArrayList<ColumnDefinition>();
+			}
+		}
+		
+		RecordDefinition getBasis() {
+			if (basis == null) return null;
+			if (basis.basis == null) return basis;
+			return basis.basis;
+		}
+		
+	}
+
+	public static Builder fromScratch() {
+		return new Builder(null);
+	}
+
+	public static Builder fromTypes(List<ColumnType> types) {
+		Builder builder = new Builder(null);
+		for (ColumnType type : types) {
+			builder.type(type).add();
+		}
+		return builder;
+	}
+	
+	/*
 	//TODO this contains a gotcha for clients constructing definitions
 	private static List<ColumnDefinition> asColumnList(Collection<ColumnDefinition> columns) {
 		if (columns == null) return null;
@@ -52,6 +162,7 @@ public class RecordDefinition {
 		}
 		return definitions;
 	}
+	*/
 	
 	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
 		int count = columns.size();
@@ -114,28 +225,34 @@ public class RecordDefinition {
 	private final List<ColumnDefinition> columns;
 	private final List<ColumnType> types;
 	private final List<ColumnDefinition> orderedColumns;
-	private final int[] basicIndices;
 
 	private String id = null;
 	
 	// constructors
 
-	public RecordDefinition(boolean ordinal, boolean positional, Collection<ColumnDefinition> columns) {
-		if (columns == null) throw new IllegalArgumentException("null columns");
+	RecordDefinition(Builder builder) {
+		basis = builder.getBasis();
+		ordinal = builder.ordinal;
+		positional = builder.positional;
+		columns = Collections.unmodifiableList(builder.columns);
+		types = Collections.unmodifiableList(asTypeList(columns));
+		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
+	}
+	
+	RecordDefinition(RecordDefinition that) {
 		basis = null;
-		basicIndices = null;
-		this.ordinal = ordinal;
-		this.positional = positional;
-		this.columns = Collections.unmodifiableList(asColumnList(columns));
-		this.types = Collections.unmodifiableList(asTypeList(this.columns));
-		this.orderedColumns = Collections.unmodifiableList(asOrderList(this.columns));
+		ordinal = that.ordinal;
+		positional = that.positional;
+		columns = that.columns;
+		types = that.types;
+		orderedColumns = that.orderedColumns;
 	}
-
-	public RecordDefinition(boolean ordinal, boolean positional, List<ColumnType> types, List<ColumnOrder> orders) {
-		this(ordinal, positional, asColumnList(types, orders));
-	}
-
+	
 	// accessors
+	
+	public RecordDefinition getBasis() {
+		return basis;
+	}
 	
 	public boolean isOrdinal() {
 		return ordinal;
@@ -143,6 +260,10 @@ public class RecordDefinition {
 	
 	public boolean isPositional() {
 		return positional;
+	}
+	
+	public List<ColumnDefinition> getColumns() {
+		return columns;
 	}
 	
 	public List<ColumnType> getTypes() {
@@ -155,9 +276,41 @@ public class RecordDefinition {
 	
 	public String getId() {
 		if (id == null) {
-			id = String.format(idPattern, hash.hashAsBigInt(this));
+			String str = String.format(idPattern, hash.hashAsBigInt(this));
+			id = basis == null ? str : basis.getId() + '_' + str;
 		}
 		return id;
+	}
+
+	// methods
+	
+	public RecordDefinition asBasis() {
+		return basis == null ? this : new RecordDefinition(this);
+	}
+
+	public Builder asBasisToBuild() {
+		return new Builder(this);
+	}
+	
+	public Builder asCompleteBasisToBuild() {
+		Builder builder = new Builder(this);
+		int count = columns.size();
+		for (int i = 0; i < count; i++) {
+			builder.select(i).add();
+		}
+		return builder;
+	}
+	
+	public RecordDefinition withOrdering(List<ColumnOrder> orders) {
+		//TODO could check if orders are exclusively null
+		if (orders == null || orders.isEmpty()) return this;
+		Builder builder = new Builder(this);
+		for (int i = 0; i < columns.size(); i++) {
+			builder.select(i);
+			if (i < orders.size()) builder.order(orders.get(i));
+			builder.add();
+		}
+		return builder.build();
 	}
 	
 }

@@ -25,7 +25,7 @@ class PositionStats {
 	public PositionStats(ProcessContext context) {
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		definition = new RecordDefinition(true, true, types, context.getColumnOrders());
+		definition = RecordDefinition.fromTypes(context.getColumnTypes()).build().withOrdering(context.getColumnOrders()).asBasis();
 		coding = context.getCoding();
 		file = new File(context.getOutputDir(), context.getDataName() + ".positions-stats." + definition.getId());
 		if (context.isClean()) file.delete();

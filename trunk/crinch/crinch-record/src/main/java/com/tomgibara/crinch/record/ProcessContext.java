@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.List;
 
 import com.tomgibara.crinch.coding.ExtendedCoding;
+import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnType;
 
 
 public interface ProcessContext {

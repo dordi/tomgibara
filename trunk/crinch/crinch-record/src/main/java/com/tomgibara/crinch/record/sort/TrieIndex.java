@@ -11,10 +11,10 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
-import com.tomgibara.crinch.record.ColumnOrder;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.RecordDefinition;
+import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieIndex {

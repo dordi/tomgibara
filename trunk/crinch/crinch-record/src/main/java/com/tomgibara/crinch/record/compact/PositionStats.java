@@ -7,9 +7,9 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.RecordDefinition;
+import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 class PositionStats {
 

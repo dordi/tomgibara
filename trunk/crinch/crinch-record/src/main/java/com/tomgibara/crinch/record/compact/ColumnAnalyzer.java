@@ -7,8 +7,8 @@ import java.util.Set;
 
 import com.tomgibara.crinch.coding.CharFrequencyRecorder;
 import com.tomgibara.crinch.record.ColumnStats;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.ColumnStats.Classification;
+import com.tomgibara.crinch.record.def.ColumnType;
 
 //TODO must switch to using parser when safe parsing methods have been separated out
 //TODO many opportunities for overflow in this class

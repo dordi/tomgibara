@@ -3,11 +3,11 @@ package com.tomgibara.crinch.record.sort;
 import java.io.File;
 import java.util.List;
 
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.RecordDefinition;
+import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {

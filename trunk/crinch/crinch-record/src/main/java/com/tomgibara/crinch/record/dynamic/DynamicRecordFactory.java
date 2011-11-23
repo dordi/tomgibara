@@ -29,7 +29,17 @@ public class DynamicRecordFactory {
 	
 	private static final Map<String, DynamicRecordFactory> factories = new HashMap<String, DynamicRecordFactory>();
 	
-	private static final Class<?>[] consParams = { LinearRecord.class };
+	private static final Class<?>[] consParams = { LinearRecord.class, boolean.class };
+
+	//TODO should be tackled at the type level
+	private static String accessorName(ColumnType type) {
+		switch (type) {
+		case CHAR_WRAPPER: return "Char";
+		case INT_WRAPPER: return "Int";
+		default:
+			return Character.toUpperCase(type.toString().charAt(0)) + type.toString().substring(1);
+		}
+	}
 	
 	public static DynamicRecordFactory getInstance(RecordDefinition definition) {
 		String name = "DynRec_" + definition.getId();
@@ -95,10 +105,14 @@ public class DynamicRecordFactory {
 	public String getSource() {
 		return source;
 	}
-	
+
 	public LinearRecord newRecord(LinearRecord record) {
+		return newRecord(record, false);
+	}
+
+	public LinearRecord newRecord(LinearRecord record, boolean basis) {
 		try {
-			return cons.newInstance(record);
+			return cons.newInstance(record, basis);
 		} catch (InstantiationException e) {
 			throw new RuntimeException(e);
 		} catch (IllegalAccessException e) {
@@ -132,32 +146,18 @@ public class DynamicRecordFactory {
 		}
 		
 		{
-			sb.append("\tpublic ").append(name).append("(" + LinearRecord.class.getName() + " record) {\n");
+			sb.append("\tpublic ").append(name).append("(" + LinearRecord.class.getName() + " record, boolean basis) {\n");
 			if (definition.isOrdinal()) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
 			if (definition.isPositional()) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
-			int field = 0;
-			for (ColumnType type : definition.getTypes()) {
-				//TODO should be tackled at the type level
-				final String accessorName;
-				switch (type) {
-				case CHAR_WRAPPER:
-					accessorName = "Char";
-					break;
-				case INT_WRAPPER:
-					accessorName = "Int";
-					break;
-				default:
-					accessorName = Character.toUpperCase(type.toString().charAt(0)) + type.toString().substring(1);
-					break;
-				}
-				if (type.typeClass.isPrimitive()) {
-					sb.append("\t\tf_").append(field).append(" = record.next").append(accessorName).append("();\n");
-				} else {
-					sb.append("\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(accessorName).append("();\n");
-					sb.append("\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");
-				}
-				field++;
+			sb.append("\t\tif (basis) {\n");
+			if (definition.getBasis() == null) {
+				sb.append("\t\t\tthrow new IllegalArgumentException(\"no basis defined\");\n");
+			} else {
+				generateRecordCopy(sb, definition.getBasisColumns());
 			}
+			sb.append("\t\t} else {\n");
+			generateRecordCopy(sb, definition.getColumns());
+			sb.append("\t\t}\n");
 			sb.append("\t}\n");
 		}
 		
@@ -312,5 +312,23 @@ public class DynamicRecordFactory {
 		System.out.println(sb.toString());
 		return sb.toString();
 	}
-	
+
+	private void generateRecordCopy(StringBuilder sb, List<ColumnDefinition> columns) {
+		for (ColumnDefinition column : columns) {
+			if (column == null) {
+				sb.append("\t\t\trecord.skip();");
+			} else {
+				int field = column.getIndex();
+				ColumnType type = column.getType();
+				String accessorName = accessorName(type);
+				if (type.typeClass.isPrimitive()) {
+					sb.append("\t\t\tf_").append(field).append(" = record.next").append(accessorName).append("();\n");
+				} else {
+					sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(accessorName).append("();\n");
+					sb.append("\t\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");
+				}
+			}
+		}
+	}
+
 }

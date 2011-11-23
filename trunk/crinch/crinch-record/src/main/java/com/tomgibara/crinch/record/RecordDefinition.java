@@ -90,7 +90,7 @@ public class RecordDefinition {
 						basis.columns.get(index) :
 						basis.basis.columns.get(basis.columns.get(index).getBasis());
 				ColumnOrder colOrd = order == null ? column.getOrder() : order;
-				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, column.getBasis()));
+				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, column.getIndex()));
 			}
 			index = -1;
 			type = null;
@@ -281,7 +281,27 @@ public class RecordDefinition {
 		}
 		return id;
 	}
+	
+	public ColumnDefinition getBasisColumn(int index) {
+		if (basis == null) throw new IllegalStateException("null basis");
+		if (index < 0) throw new IllegalArgumentException("negative index");
+		if (index >= columns.size()) throw new IllegalArgumentException("invalid index");
+		return basis.columns.get(columns.get(index).getBasis());
+	}
 
+	public List<ColumnDefinition> getBasisColumns() {
+		if (basis == null) throw new IllegalStateException("null basis");
+		List<ColumnDefinition> basisColumns = basis.columns;
+		int count = basisColumns.size();
+		
+		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(count);
+		list.addAll(Collections.nCopies(count, (ColumnDefinition) null));
+		for (ColumnDefinition column : columns) {
+			list.set(column.getBasis(), column);
+		}
+		return list;
+	}
+	
 	// methods
 	
 	public RecordDefinition asBasis() {

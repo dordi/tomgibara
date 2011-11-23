@@ -42,7 +42,7 @@ public class TrieConsumer extends OrderedConsumer {
 	public void prepare(ProcessContext context) {
 		super.prepare(context);
 		if (!sortedFile().exists()) throw new IllegalStateException("no sorted file: " + sortedFile());
-		if (columnIndex >= definition.getTypes().size()) throw new IllegalStateException("not enough columns");
+		if (columnIndex >= definition.getTypes().size()) throw new IllegalStateException("invalid column index: " + columnIndex);
 		if (definition.getTypes().get(columnIndex) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		ordinalValue = definition.isOrdinal();
 		positionalValue = definition.isPositional();

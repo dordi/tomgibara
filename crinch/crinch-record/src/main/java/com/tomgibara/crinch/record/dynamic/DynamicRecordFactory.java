@@ -316,7 +316,7 @@ public class DynamicRecordFactory {
 	private void generateRecordCopy(StringBuilder sb, List<ColumnDefinition> columns) {
 		for (ColumnDefinition column : columns) {
 			if (column == null) {
-				sb.append("\t\t\trecord.skip();");
+				sb.append("\t\t\trecord.skipNext();\n");
 			} else {
 				int field = column.getIndex();
 				ColumnType type = column.getType();

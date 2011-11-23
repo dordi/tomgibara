@@ -87,4 +87,17 @@ public class DynamicRecordFactoryTest extends TestCase {
 		assertEquals("[1,true,null,Tom,3847239847239843,null]", rec.toString());
 	}
 	
+	public void testNewRecordFromBasis() {
+		RecordDefinition basis = RecordDefinition
+				.fromTypes(Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER))
+				.setPositional(false)
+				.build()
+				.withOrdering(Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)))
+				.asBasis();
+		RecordDefinition def = basis.asBasisToBuild().select(5).add().select(3).add().select(1).add().build();
+		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
+		LinearRecord rec = fac.newRecord(new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")), true);
+		assertEquals("[null,Tom,true]", rec.toString());
+	}
+	
 }

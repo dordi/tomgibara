@@ -13,7 +13,7 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 

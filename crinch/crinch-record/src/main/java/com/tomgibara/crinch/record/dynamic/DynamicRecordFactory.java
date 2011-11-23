@@ -1,7 +1,7 @@
 package com.tomgibara.crinch.record.dynamic;
 
-import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_PRIMITIVE;
-import static com.tomgibara.crinch.record.ColumnType.LONG_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -15,11 +15,11 @@ import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
-import com.tomgibara.crinch.record.ColumnDefinition;
-import com.tomgibara.crinch.record.ColumnOrder;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.RecordDefinition;
+import com.tomgibara.crinch.record.def.ColumnDefinition;
+import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 //TODO could persist nullables as primitives
 public class DynamicRecordFactory {

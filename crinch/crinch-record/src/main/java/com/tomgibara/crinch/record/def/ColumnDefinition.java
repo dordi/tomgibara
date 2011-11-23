@@ -1,4 +1,4 @@
-package com.tomgibara.crinch.record;
+package com.tomgibara.crinch.record.def;
 
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.util.WriteStream;

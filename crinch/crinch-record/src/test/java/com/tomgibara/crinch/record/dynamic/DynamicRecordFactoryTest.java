@@ -1,23 +1,23 @@
 package com.tomgibara.crinch.record.dynamic;
 
-import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_PRIMITIVE;
-import static com.tomgibara.crinch.record.ColumnType.BOOLEAN_WRAPPER;
-import static com.tomgibara.crinch.record.ColumnType.CHAR_WRAPPER;
-import static com.tomgibara.crinch.record.ColumnType.INT_PRIMITIVE;
-import static com.tomgibara.crinch.record.ColumnType.LONG_PRIMITIVE;
-import static com.tomgibara.crinch.record.ColumnType.STRING_OBJECT;
+import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.CHAR_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.INT_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.STRING_OBJECT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.tomgibara.crinch.record.ColumnOrder;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ParsedRecord;
-import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.StringRecord;
 import com.tomgibara.crinch.record.ColumnParser;
+import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 import junit.framework.TestCase;
 

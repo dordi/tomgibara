@@ -13,10 +13,10 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.RecordDefinition;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 

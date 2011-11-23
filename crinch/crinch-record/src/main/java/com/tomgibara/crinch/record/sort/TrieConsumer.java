@@ -17,9 +17,9 @@ import com.tomgibara.crinch.coding.CodedStreams.WriteTask;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
-import com.tomgibara.crinch.record.ColumnType;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.def.ColumnType;
 
 public class TrieConsumer extends OrderedConsumer {
 

@@ -1,14 +1,12 @@
 package com.tomgibara.crinch.record.compact;
 
 import java.io.File;
-import java.util.List;
 
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDefinition;
 
 class PositionStats {
@@ -23,9 +21,9 @@ class PositionStats {
 	long bitsWritten;
 
 	public PositionStats(ProcessContext context) {
-		List<ColumnType> types = context.getColumnTypes();
-		if (types == null) throw new IllegalStateException("no types");
-		definition = RecordDefinition.fromTypes(context.getColumnTypes()).build().withOrdering(context.getColumnOrders()).asBasis();
+		RecordDefinition def = context.getRecordDef();
+		if (def == null) throw new IllegalArgumentException("no record definition");
+		definition = def.asBasis();
 		coding = context.getCoding();
 		file = new File(context.getOutputDir(), context.getDataName() + ".positions-stats." + definition.getId());
 		if (context.isClean()) file.delete();

@@ -24,6 +24,7 @@ import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class StdProcessContext implements ProcessContext {
 
@@ -42,6 +43,7 @@ public class StdProcessContext implements ProcessContext {
 	private RecordStats recordStats;
 	private List<ColumnType> columnTypes;
 	private List<ColumnOrder> columnOrders;
+	private RecordDefinition recordDef;
 
 	public StdProcessContext() {
 		load();
@@ -176,6 +178,7 @@ public class StdProcessContext implements ProcessContext {
 			}
 		}
 		this.columnTypes = columnTypes;
+		recordDef = null;
 		//TODO should only write if changed
 		writeColumnTypes();
 	}
@@ -186,6 +189,21 @@ public class StdProcessContext implements ProcessContext {
 	}
 
 	@Override
+	public RecordDefinition getRecordDef() {
+		if (recordDef == null) {
+			if (columnTypes != null) {
+				RecordDefinition def;
+				def = RecordDefinition.fromTypes(columnTypes).build();
+				if (columnOrders != null) {
+					def = def.withOrdering(columnOrders);
+				}
+				recordDef = def;
+			}
+		}
+		return recordDef;
+	}
+	
+	@Override
 	public void setColumnOrders(List<ColumnOrder> columnOrders) {
 		if (columnOrders != null && !columnOrders.equals(this.columnOrders)) {
 			int col = 1;
@@ -194,6 +212,7 @@ public class StdProcessContext implements ProcessContext {
 			}
 		}
 		this.columnOrders = columnOrders;
+		recordDef = null;
 	}
 	
 	@Override
@@ -280,6 +299,7 @@ public class StdProcessContext implements ProcessContext {
 				return CodedStreams.readEnumList(coded, ColumnType.class);
 			}
 		}, getColumnTypesFile());
+		recordDef = null;
 	}
 	
 	private <T> T read(ReadOp<T> op, File file) {

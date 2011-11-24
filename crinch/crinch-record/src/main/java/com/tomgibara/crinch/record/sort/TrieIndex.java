@@ -25,10 +25,9 @@ public class TrieIndex {
 	private final byte[] data;
 	
 	public TrieIndex(ProcessContext context, int columnIndex) {
-		List<ColumnType> types = context.getColumnTypes();
-		List<ColumnOrder> orders = context.getColumnOrders();
-		if (types == null) throw new IllegalStateException("no types");
-		RecordDefinition def = RecordDefinition.fromTypes(types).build().withOrdering(orders).asBasis();
+		RecordDefinition def = context.getRecordDef();
+		if (def == null) throw new IllegalStateException("no record definition");
+		def = def.asBasis();
 		
 		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + def.getId());
 		final Object[] arr = new Object[3];

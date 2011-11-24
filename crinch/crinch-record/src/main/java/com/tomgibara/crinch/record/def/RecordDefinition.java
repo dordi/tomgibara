@@ -112,6 +112,35 @@ public class RecordDefinition {
 			return basis.basis;
 		}
 		
+		Builder withIndices(int[] indices) {
+			for (int index : indices) {
+				select(index);
+				add();
+			}
+			return this;
+		}
+		
+		Builder withOrdering(List<ColumnOrder> orders) {
+			for (int i = 0; i < basis.columns.size(); i++) {
+				select(i);
+				if (i < orders.size()) order(orders.get(i));
+				add();
+			}
+			return this;
+		}
+		
+		Builder withIndexedOrdering(List<ColumnOrder.Indexed> orders) {
+			int count = basis.columns.size();
+			List<ColumnOrder> list = new ArrayList<ColumnOrder>(count);
+			list.addAll(Collections.nCopies(count, (ColumnOrder) null));
+			for (ColumnOrder.Indexed indexed : orders) {
+				if (indexed == null) continue;
+				ColumnOrder order = list.set(indexed.getIndex(), indexed.getOrder());
+				if (order != null) throw new IllegalArgumentException("duplicate order index: " + indexed.getIndex());
+			}
+			return withOrdering(list);
+		}
+		
 	}
 
 	public static Builder fromScratch() {
@@ -125,44 +154,6 @@ public class RecordDefinition {
 		}
 		return builder;
 	}
-	
-	/*
-	//TODO this contains a gotcha for clients constructing definitions
-	private static List<ColumnDefinition> asColumnList(Collection<ColumnDefinition> columns) {
-		if (columns == null) return null;
-		int count = columns.size();
-		List<ColumnDefinition> list;
-		if (columns instanceof List) {
-			list = new ArrayList<ColumnDefinition>(columns);
-			for (int i = 0; i < count; i++) {
-				final ColumnDefinition column = list.get(i);
-				if (column == null) throw new IllegalArgumentException("null column");
-				if (column.getIndex() != i) throw new IllegalArgumentException("column index incorrect at " + i);
-			}
-		} else {
-			list = new ArrayList<ColumnDefinition>(count);
-			list.addAll((Collection) Collections.nCopies(count, null));
-			for (ColumnDefinition column : columns) {
-				if (column == null) throw new IllegalArgumentException("null column");
-				int index = column.getIndex();
-				if (index >= count) throw new IllegalArgumentException("invalid column index: " + index);
-				if (list.set(index, column) != null) throw new IllegalArgumentException("duplicate column index: " + index); 
-			}
-		}
-		return list;
-	}
-	
-	private static List<ColumnDefinition> asColumnList(List<ColumnType> types, List<ColumnOrder> orders) {
-		if (types == null) return null;
-		int count = types.size();
-		if (orders != null && orders.size() > count) throw new IllegalArgumentException("too many orders");
-		List<ColumnDefinition> definitions = new ArrayList<ColumnDefinition>();
-		for (int i = 0; i < count; i++) {
-			definitions.add(i, new ColumnDefinition(i, types.get(i), orders == null || i >= orders.size() ? null : orders.get(i)));
-		}
-		return definitions;
-	}
-	*/
 	
 	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
 		int count = columns.size();
@@ -201,6 +192,7 @@ public class RecordDefinition {
 		
 		@Override
 		public void sourceData(RecordDefinition definition, WriteStream out) {
+			if (definition.basis != null) hashSource.sourceData(definition.basis, out); 
 			out.writeBoolean(definition.ordinal);
 			out.writeBoolean(definition.positional);
 			for (ColumnDefinition column : definition.columns) {
@@ -276,8 +268,9 @@ public class RecordDefinition {
 	
 	public String getId() {
 		if (id == null) {
-			String str = String.format(idPattern, hash.hashAsBigInt(this));
-			id = basis == null ? str : basis.getId() + '_' + str;
+//			String str = String.format(idPattern, hash.hashAsBigInt(this));
+//			id = basis == null ? str : basis.getId() + '_' + str;
+			id = String.format(idPattern, hash.hashAsBigInt(this));
 		}
 		return id;
 	}
@@ -321,16 +314,41 @@ public class RecordDefinition {
 		return builder;
 	}
 	
+	public RecordDefinition withIndices(int[] indices) {
+		if (indices == null || indices.length == 0) return this;
+		return new Builder(this).withIndices(indices).build();
+	}
+	
 	public RecordDefinition withOrdering(List<ColumnOrder> orders) {
 		//TODO could check if orders are exclusively null
 		if (orders == null || orders.isEmpty()) return this;
-		Builder builder = new Builder(this);
-		for (int i = 0; i < columns.size(); i++) {
-			builder.select(i);
-			if (i < orders.size()) builder.order(orders.get(i));
-			builder.add();
+		return new Builder(this).withOrdering(orders).build();
+	}
+	
+	public RecordDefinition withIndexedOrdering(List<ColumnOrder.Indexed> orders) {
+		if (orders == null || orders.isEmpty()) return this;
+		return new Builder(this).withIndexedOrdering(orders).build();
+	}
+	
+	public RecordDefinition asSubRecord(SubRecordDefinition subRecDef) {
+		if (subRecDef == null) throw new IllegalArgumentException("null subRecDef");
+		RecordDefinition basis;
+		if (subRecDef.isOrdinalEliminated() && ordinal || subRecDef.isPositionEliminated() && positional) {
+			basis = asCompleteBasisToBuild()
+				.setOrdinal(!(subRecDef.ordinalEliminated && ordinal))
+				.setPositional(!(subRecDef.positionEliminated && positional))
+				.build();
+		} else {
+			basis = this;
 		}
-		return builder.build();
+		return basis.withIndices(subRecDef.indices).withIndexedOrdering(subRecDef.orders);
+	}
+
+	//TODO object methods
+	
+	@Override
+	public String toString() {
+		return "ordinal: " + ordinal + ", positional: " + positional + ", columns: " + columns;
 	}
 	
 }

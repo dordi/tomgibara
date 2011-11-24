@@ -54,5 +54,10 @@ public class ColumnDefinition {
 	}
 	
 	//TODO implement object methods
+
+	@Override
+	public String toString() {
+		return "index: " + index + ", type: " + type + ", order: " + order;
+	}
 	
 }

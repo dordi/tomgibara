@@ -1,6 +1,7 @@
 package com.tomgibara.crinch.record.sort;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,36 +15,40 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
+import com.tomgibara.crinch.record.def.SubRecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 public class SortConsumer extends OrderedConsumer {
 
 	private PriorityQueue<LinearRecord> queue; 
+	private File file;
 	private OutputStream out;
 	private BitWriter writer;
 	private CodedWriter coded;
 	
-	public SortConsumer() {
-		super(false, false);
+	public SortConsumer(SubRecordDefinition subRecDef) {
+		super(subRecDef);
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
 		super.prepare(context);
-		if (context.isClean()) sortedFile().delete();
+		file = sortedFile(false);
+		if (context.isClean()) file.delete();
 	}
 	
 	@Override
 	public int getRequiredPasses() {
-		return sortedFile().isFile() ? 0 : 1;
+		return file.isFile() ? 0 : 1;
 	}
 
 	@Override
 	public void beginPass() {
+		super.beginPass();
+		context.setPassName("Sorting records");
 		//TODO splitting
 		//TODO need to size
 		queue = new PriorityQueue<LinearRecord>();
-		factory = DynamicRecordFactory.getInstance(definition);
 	}
 
 	@Override
@@ -78,7 +83,7 @@ public class SortConsumer extends OrderedConsumer {
 
 	private void open() {
 		try {
-			out = new BufferedOutputStream(new FileOutputStream(sortedFile()), 1024);
+			out = new BufferedOutputStream(new FileOutputStream(file), 1024);
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}
@@ -112,6 +117,7 @@ public class SortConsumer extends OrderedConsumer {
 	private void cleanup() {
 		if (context != null) {
 			context = null;
+			file = null;
 		}
 	}
 	

@@ -20,10 +20,10 @@ import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.SubRecordDefinition;
 
 public class TrieConsumer extends OrderedConsumer {
 
-	private final int columnIndex;
 	private Node root;
 	private boolean ordinalValue;
 	private boolean positionalValue;
@@ -31,19 +31,17 @@ public class TrieConsumer extends OrderedConsumer {
 	private long[] frequencies;
 	private HuffmanCoding huffmanCoding;
 	
-	public TrieConsumer(int columnIndex, boolean ordinal, boolean positional) {
-		super(ordinal, positional);
-		if (ordinal && positional) throw new UnsupportedOperationException("multiple values not supported yet");
-		if (columnIndex < 0) throw new IllegalArgumentException("negative column index");
-		this.columnIndex = columnIndex;
+	public TrieConsumer(SubRecordDefinition subRecDef) {
+		super(subRecDef);
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
 		super.prepare(context);
-		if (!sortedFile().exists()) throw new IllegalStateException("no sorted file: " + sortedFile());
-		if (columnIndex >= definition.getTypes().size()) throw new IllegalStateException("invalid column index: " + columnIndex);
-		if (definition.getTypes().get(columnIndex) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
+		File file = sortedFile(true);
+		if (!file.exists()) throw new IllegalStateException("no sorted file: " + file);
+		if (definition.getTypes().isEmpty()) throw new IllegalArgumentException("no columns");
+		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		ordinalValue = definition.isOrdinal();
 		positionalValue = definition.isPositional();
 		if (context.isClean()) {
@@ -59,14 +57,15 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void beginPass() {
+		super.beginPass();
 		context.setPassName("Building trie");
 		root = new Node('\0');
 	}
 
 	@Override
 	public void consume(LinearRecord record) {
-		for (int i = 0; i < columnIndex; i++) record.skipNext();
-		final String key = record.nextString();
+		LinearRecord subRec = factory.newRecord(record, true);
+		final String key = subRec.nextString();
 		final long value;
 		if (ordinalValue) {
 			value = record.getRecordOrdinal();
@@ -139,11 +138,11 @@ public class TrieConsumer extends OrderedConsumer {
 	}
 
 	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + definition.getId());
+		return new File(context.getOutputDir(), context.getDataName() + ".trie." + definition.getId());
 	}
 
 	private File statsFile() {
-		return new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + definition.getId());
+		return new File(context.getOutputDir(), context.getDataName() + ".trie-stats." + definition.getId());
 	}
 	
 	private class CharFreqRec extends CharFrequencyRecorder {

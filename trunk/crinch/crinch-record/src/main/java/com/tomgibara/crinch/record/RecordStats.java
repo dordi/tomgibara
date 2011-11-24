@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedWriter;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class RecordStats {
 
@@ -30,6 +31,14 @@ public class RecordStats {
 	private final List<ColumnStats> columnStats = new ArrayList<ColumnStats>();
 	private long recordCount;
 	
+	public RecordStats() {
+	}
+	
+	private RecordStats(RecordStats that) {
+		this.columnStats.addAll(that.columnStats);
+		this.recordCount = that.recordCount;
+	}
+	
 	public List<ColumnStats> getColumnStats() {
 		return columnStats;
 	}
@@ -42,4 +51,17 @@ public class RecordStats {
 	public long getRecordCount() {
 		return recordCount;
 	}
+	
+	public RecordStats copy() {
+		return new RecordStats(this);
+	}
+	
+	public RecordStats adaptFor(RecordDefinition recordDef) {
+		if (recordDef == null) throw new IllegalArgumentException("null recordDef");
+		if (recordDef.getBasis() == null) return this;
+		RecordStats copy = copy();
+		recordDef.adaptBasicList(copy.getColumnStats());
+		return copy;
+	}
+	
 }

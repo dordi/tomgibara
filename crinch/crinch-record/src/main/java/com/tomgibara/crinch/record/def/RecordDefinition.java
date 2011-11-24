@@ -280,7 +280,7 @@ public class RecordDefinition {
 	}
 	
 	public ColumnDefinition getBasisColumn(int index) {
-		if (basis == null) throw new IllegalStateException("null basis");
+		if (basis == null) throw new IllegalStateException("no basis");
 		if (index < 0) throw new IllegalArgumentException("negative index");
 		if (index >= columns.size()) throw new IllegalArgumentException("invalid index");
 		return basis.columns.get(columns.get(index).getBasis());
@@ -297,6 +297,22 @@ public class RecordDefinition {
 			list.set(column.getBasis(), column);
 		}
 		return list;
+	}
+	
+	public <E> void adaptBasicList(List<E> list) {
+		if (basis == null) throw new IllegalStateException("no basis");
+		if (list == null) return;
+		int basisSize = basis.columns.size();
+		int size = list.size();
+		if (size < basisSize) {
+			list.addAll((List)Collections.nCopies(basisSize - size, null));
+		} else if (size > basisSize) {
+			list.subList(basisSize, size).clear();
+		}
+		for (ColumnDefinition column : columns) {
+			list.add(list.get(column.getBasis()));
+		}
+		list.subList(0, basisSize).clear();
 	}
 	
 	// methods

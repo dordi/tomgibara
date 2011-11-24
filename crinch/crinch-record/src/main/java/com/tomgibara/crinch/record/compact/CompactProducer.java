@@ -33,14 +33,15 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		RecordStats stats = context.getRecordStats();
-		if (stats == null) throw new IllegalStateException("no statistics available");
-		coding = context.getCoding();
-		recordCount = stats.getRecordCount();
-		decompactor = new RecordDecompactor(stats);
 		RecordDefinition def = context.getRecordDef();
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		if (!ordered) def = def.getBasisOrSelf();
+		RecordStats stats = context.getRecordStats();
+		if (stats == null) throw new IllegalStateException("no statistics available");
+		stats = stats.adaptFor(def);
+		coding = context.getCoding();
+		recordCount = stats.getRecordCount();
+		decompactor = new RecordDecompactor(stats);
 		file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
 	}
 	

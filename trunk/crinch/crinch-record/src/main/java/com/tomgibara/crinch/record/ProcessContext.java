@@ -6,6 +6,7 @@ import java.util.List;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 
 public interface ProcessContext {
@@ -47,6 +48,8 @@ public interface ProcessContext {
 	void setColumnOrders(List<ColumnOrder> columnOrders);
 	
 	List<ColumnOrder> getColumnOrders();
+
+	RecordDefinition getRecordDef();
 	
 	void log(String message);
 	

@@ -246,6 +246,10 @@ public class RecordDefinition {
 		return basis;
 	}
 	
+	public RecordDefinition getBasisOrSelf() {
+		return basis == null ? this : basis;
+	}
+	
 	public boolean isOrdinal() {
 		return ordinal;
 	}

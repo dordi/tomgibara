@@ -26,9 +26,9 @@ public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		List<ColumnType> types = context.getColumnTypes();
-		if (types == null) throw new IllegalStateException("no types");
-		definition = RecordDefinition.fromTypes(context.getColumnTypes()).build().withOrdering(context.getColumnOrders()).asBasis();
+		RecordDefinition def = context.getRecordDef();
+		if (def == null) throw new IllegalArgumentException("no record definition");
+		definition = def.asBasis();
 		if (subRecDef != null) definition = definition.asSubRecord(subRecDef);
 	}
 

@@ -4,38 +4,45 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
-import com.tomgibara.crinch.record.ArrayRecord;
 import com.tomgibara.crinch.record.CombinedRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.RecordProducer;
+import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.SingletonRecord;
 import com.tomgibara.crinch.record.compact.RecordDecompactor;
-import com.tomgibara.crinch.record.def.ColumnOrder;
-import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDefinition;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
-public class TrieIndex {
+public class TrieIndex implements RecordProducer<LinearRecord> {
 
-	private final File file;
-	private final HuffmanCoding huffmanCoding;
-	private final ExtendedCoding coding;
-	private final byte[] data;
-	private final RecordDecompactor decompactor;
-	private final RecordDefinition recordDef;
-	private final DynamicRecordFactory factory;
+	private final SubRecordDefinition subRecDef;
 	
-	public TrieIndex(ProcessContext context, SubRecordDefinition subRecDef) {
+	private File file;
+	private HuffmanCoding huffmanCoding;
+	private ExtendedCoding coding;
+	private byte[] data;
+	private int maxLength;
+	private RecordDecompactor decompactor;
+	private RecordDefinition recordDef;
+	private DynamicRecordFactory factory;
+	
+	public TrieIndex(SubRecordDefinition subRecDef) {
+		this.subRecDef = subRecDef;
+	}
+	
+	@Override
+	public void prepare(ProcessContext context) {
 		RecordDefinition def = context.getRecordDef();
 		if (def == null) throw new IllegalStateException("context has no record definition");
 		def = def.asBasis();
@@ -56,7 +63,9 @@ public class TrieIndex {
 
 		RecordStats stats = context.getRecordStats();
 		if (stats == null) throw new IllegalStateException("context has no record stats");
-		decompactor = new RecordDecompactor(stats.adaptFor(def), 1);
+		stats = stats.adaptFor(def);
+		maxLength = stats.getColumnStats().get(0).getMaximum().intValue();
+		decompactor = new RecordDecompactor(stats, 1);
 
 		file = new File(context.getOutputDir(), context.getDataName() + ".trie." + recordDef.getId());
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
@@ -81,37 +90,79 @@ public class TrieIndex {
 		this.data = data;
 	}
 	
-	public Accessor newAccessor() {
+	@Override
+	public Accessor open() {
 		return new Accessor();
 	}
 	
-	public class Accessor {
+	@Override
+	public void complete() {
+		file = null;
+		huffmanCoding = null;
+		coding = null;
+		data = null;
+		decompactor = null;
+		recordDef = null;
+		factory = null;
+	}
+	
+	public class Accessor implements RecordSequence<LinearRecord> {
 	
 		private final ByteArrayBitReader reader;
 		private final CodedReader coded;
 
+		private StringBuilder key;
+		private long[] childPositions;
+		private long[] siblingPositions;
+		private LinearRecord next = null;
+		
 		public Accessor() {
 			reader = new ByteArrayBitReader(data);
 			coded = new CodedReader(reader, coding);
 		}
+
+		//TODO unfortunate to create so much garbage when walking trie
+		private LinearRecord readRecord(CharSequence key) {
+			if (!coded.getReader().readBoolean()) return null;
+			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
+			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+			LinearRecord record = decompactor.decompact(coded, ordinal, position);
+			return factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
+		}
 		
-		public LinearRecord getRecord(String key) {
+		@Override
+		public boolean hasNext() {
+			if (unused()) next = advance();
+			return next != null;
+		}
+		
+		@Override
+		public LinearRecord next() {
+			if (unused()) next = advance();
+			if (next == null) throw new NoSuchElementException();
+			LinearRecord tmp = next;
+			next = advance();
+			return tmp;
+		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() {
+			/* no-op atm */
+		}
+		
+		public LinearRecord get(String key) {
 			if (key == null) throw new IllegalArgumentException("null key");
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;
 			while (true) {
 				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				LinearRecord record;
-				if (coded.getReader().readBoolean()) {
-					long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
-					long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
-					//TODO unfortunate to create so much garbage when walking trie
-					record = decompactor.decompact(coded, ordinal, position);
-					record = factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key), record));
-				} else {
-					record = null;
-				}
+				LinearRecord record = readRecord(key);
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				boolean hasChild = childOffset >= 0;
@@ -133,56 +184,61 @@ public class TrieIndex {
 		}
 	
 		public boolean contains(String key) {
-			return getRecord(key) != null;
+			return get(key) != null;
+		}
+
+		private boolean unused() {
+			return key == null;
 		}
 		
-		public void dump() {
-			reader.setPosition(0L);
-			dump(null);
-		}
-		
-		private void dump(StringBuilder sb) {
-			boolean root = sb == null;
+		private LinearRecord advance() {
+			boolean initial = unused();
+			if (initial) {
+				key = new StringBuilder(maxLength);
+				siblingPositions = new long[maxLength + 1];
+				childPositions = new long[maxLength + 1];
+				reader.setPosition(0L);
+			}
+
 			while (true) {
-				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				LinearRecord record;
-				if (coded.getReader().readBoolean()) {
-					long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
-					long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
-					record = decompactor.decompact(coded, ordinal, position);
-				} else {
-					record = null;
+				if (!initial) {
+					int depth = key.length();
+					while (true) {
+						long childPosition = childPositions[depth]; 
+						if (childPosition >= 0) {
+							reader.setPosition(childPosition);
+							childPositions[depth] = -1L;
+							break;
+						}
+						
+						long siblingPosition = siblingPositions[depth];
+						if (siblingPosition >= 0) {
+							reader.setPosition(siblingPosition);
+							key.setLength(--depth);
+							initial = false;
+							break;
+						}
+
+						if (depth == 0) return null;
+						key.setLength(--depth);
+					}
+					key.append( (char) (huffmanCoding.decodePositiveInt(reader) - 1) );
 				}
+
+				initial = false;
+				LinearRecord record = readRecord(key);
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
-				boolean hasChild = childOffset >= 0;
-				boolean hasSibling = siblingOffset >= 0;
-				
-				if (root) {
-					sb = new StringBuilder();
-					if (record != null) System.out.println(sb);
-					if (!hasChild) return;
-					reader.skipBits(childOffset);
-					dump(sb);
-					return;
-				}
-	
-				sb.append(c);
-				if (record != null) System.out.println(sb);
-				if (hasChild) {
-					long position = reader.getPosition();
-					reader.skipBits(childOffset);
-					dump(sb);
-					reader.setPosition(position);
-				}
-				sb.setLength(sb.length() - 1);
-				if (hasSibling) {
-					reader.skipBits(siblingOffset);
-				} else {
-					return;
-				}
+				long position = reader.getPosition();
+				int depth = key.length();
+				childPositions[depth] = childOffset < 0 ? -1L : childOffset + position;
+				siblingPositions[depth] = siblingOffset < 0 ? -1L : siblingOffset + position;
+
+				if (record != null) return record;
 			}
+
 		}
+		
 	}
 	
 }

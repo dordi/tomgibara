@@ -17,6 +17,12 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 		this.reader = reader;
 	}
 
+	CompactRecord(ColumnCompactor[] compactors, CodedReader reader, long ordinal, long position) {
+		super(ordinal, position);
+		this.compactors = compactors;
+		this.reader = reader;
+	}
+
 	@Override
 	public boolean hasNext() {
 		return index < compactors.length;
@@ -126,6 +132,16 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 		return false;
 	}
 
+	@Override
+	public void mark() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void reset() {
+		throw new UnsupportedOperationException();
+	}
+	
 	@Override
 	public void exhaust() {
 		while (index < compactors.length) {

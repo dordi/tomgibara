@@ -99,6 +99,14 @@ public class EmptyRecord implements LinearRecord {
 		noPrevious();
 		return false;
 	}
+	
+	@Override
+	public void mark() {
+	}
+	
+	@Override
+	public void reset() {
+	}
 
 	@Override
 	public void exhaust() {

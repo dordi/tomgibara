@@ -22,6 +22,7 @@ import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDefinition;
 
 //TODO could persist nullables as primitives
+//TODO currently limited to 32768 fields
 public class DynamicRecordFactory {
 
 	
@@ -123,19 +124,24 @@ public class DynamicRecordFactory {
 	}
 	
 	private String generateSource() {
+		//TODO make configurable
+		boolean markable = true;
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
 		sb.append("public class " + name).append(" implements " + LinearRecord.class.getName() + ", Comparable {\n");
-		sb.append("\tprivate static final int limit = ").append(definition.getTypes().size()).append(";\n");
+		sb.append("\tprivate static final short limit = ").append(definition.getTypes().size()).append(";\n");
 		
 		// fields
 		if (definition.isOrdinal()) sb.append("\tprivate final long recordOrdinal;\n");
 		if (definition.isPositional()) sb.append("\tprivate final long recordPosition;\n");
-		sb.append("\tprivate int field = 0;\n");
+		sb.append("\tprivate short field = 0;\n");
+		if (markable) sb.append("\tprivate short mark = Short.MAX_VALUE;\n");
 		{
 			int field = 0;
 			for (ColumnType type : definition.getTypes()) {
-				sb.append("\tfinal ").append(type).append(" f_").append(field++).append(";\n");
+				sb.append("\tprivate ");
+				if (!markable) sb.append("final ");
+				sb.append(type).append(" f_").append(field++).append(";\n");
 			}
 		}
 		
@@ -181,7 +187,14 @@ public class DynamicRecordFactory {
 			int field = 0;
 			for (ColumnType t : definition.getTypes()) {
 				if (type == t) {
-					sb.append("\t\t\tcase ").append(field).append(": return f_").append(field).append(";\n");
+					sb.append("\t\t\tcase ").append(field).append(":\n");
+					if (markable && type.typeClass.isPrimitive()) {
+						sb.append("\t\t\treturn f_").append(field).append(";\n");
+					} else {
+						sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = f_").append(field).append(";\n");
+						sb.append("\t\t\tf_").append(field).append(" = null;\n");
+						sb.append("\t\t\treturn tmp_").append(field).append(";\n");
+					}
 				}
 				field++;
 			}
@@ -224,6 +237,23 @@ public class DynamicRecordFactory {
 			sb.append("\t\t}\n");
 			sb.append("\t}\n");
 		}
+		
+		sb.append("\tpublic void mark() {\n");
+		if (markable) {
+			sb.append("\t\tmark = field;\n");
+		} else {
+			sb.append("\t\tthrow new UnsupportedOperationException(\"mark not supported\")");
+		}
+		sb.append("\t}\n");
+		
+		sb.append("\tpublic void reset() {\n");
+		if (markable) {
+			sb.append("\t\tif (mark > limit) throw new IllegalStateException(\"not marked\");\n");
+			sb.append("\t\tfield = mark;\n");
+		} else {
+			sb.append("\t\tthrow new UnsupportedOperationException(\"mark not supported\");\n");
+		}
+		sb.append("\t}\n");
 		
 		sb.append("\tpublic void exhaust() { field = limit; }\n");
 

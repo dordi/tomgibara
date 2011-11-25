@@ -11,10 +11,17 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
+import com.tomgibara.crinch.record.CombinedRecord;
+import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.RecordStats;
+import com.tomgibara.crinch.record.SingletonRecord;
+import com.tomgibara.crinch.record.compact.RecordDecompactor;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieIndex {
@@ -23,27 +30,34 @@ public class TrieIndex {
 	private final HuffmanCoding huffmanCoding;
 	private final ExtendedCoding coding;
 	private final byte[] data;
+	private final RecordDecompactor decompactor;
+	private final RecordDefinition recordDef;
+	private final DynamicRecordFactory factory;
 	
-	public TrieIndex(ProcessContext context, int columnIndex) {
+	public TrieIndex(ProcessContext context, SubRecordDefinition subRecDef) {
 		RecordDefinition def = context.getRecordDef();
-		if (def == null) throw new IllegalStateException("no record definition");
+		if (def == null) throw new IllegalStateException("context has no record definition");
 		def = def.asBasis();
+		if (subRecDef != null) def = def.asSubRecord(subRecDef);
+		recordDef = def;
+		factory = DynamicRecordFactory.getInstance(recordDef);
 		
-		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie-stats." + def.getId());
-		final Object[] arr = new Object[3];
+		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".trie-stats." + recordDef.getId());
+		final long[][] arr = new long[1][];
 		CodedStreams.readFromFile(new CodedStreams.ReadTask() {
 			@Override
 			public void readFrom(CodedReader reader) {
-				arr[0] = reader.getReader().readBoolean();
-				arr[1] = reader.getReader().readBoolean();
 				//TODO should switch to non-neg method when it becomes available
-				arr[2] = CodedStreams.readLongArray(reader);
+				arr[0] = CodedStreams.readLongArray(reader);
 			}
 		}, context.getCoding(), statsFile);
-		long[] frequencies = (long[]) arr[2];
-		def = def.asBasisToBuild().setOrdinal((Boolean) arr[0]).setPositional((Boolean) arr[1]).build();
-		
-		file = new File(context.getOutputDir(), context.getDataName() + ".col-" + columnIndex + ".trie." + def.getId());
+		long[] frequencies = arr[0];
+
+		RecordStats stats = context.getRecordStats();
+		if (stats == null) throw new IllegalStateException("context has no record stats");
+		decompactor = new RecordDecompactor(stats.adaptFor(def), 1);
+
+		file = new File(context.getOutputDir(), context.getDataName() + ".trie." + recordDef.getId());
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		
@@ -80,36 +94,43 @@ public class TrieIndex {
 			coded = new CodedReader(reader, coding);
 		}
 		
-		public long getValue(String key) {
+		public LinearRecord getRecord(String key) {
 			if (key == null) throw new IllegalArgumentException("null key");
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;
 			while (true) {
 				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				long value = coded.readPositiveLong() - 2L;
+				LinearRecord record;
+				if (coded.getReader().readBoolean()) {
+					long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
+					long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+					record = decompactor.decompact(coded, ordinal, position);
+				} else {
+					record = null;
+				}
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				boolean hasChild = childOffset >= 0;
 				boolean hasSibling = siblingOffset >= 0;
 				if (root) {
-					if (key.isEmpty()) return value;
-					if (!hasChild) return -1L;
+					if (key.isEmpty()) return unite(key, record);
+					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 					root = false;
 				} else if (key.charAt(index) == c) {
-					if (++index == key.length()) return value;
-					if (!hasChild) return -1L;
+					if (++index == key.length()) return unite(key, record);
+					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 				} else {
-					if (!hasSibling) return -1L;
+					if (!hasSibling) return null;
 					reader.skipBits(siblingOffset);
 				}
 			}
 		}
 	
 		public boolean contains(String key) {
-			return getValue(key) >= 0;
+			return getRecord(key) != null;
 		}
 		
 		public void dump() {
@@ -117,11 +138,23 @@ public class TrieIndex {
 			dump(null);
 		}
 		
+		private LinearRecord unite(String key, LinearRecord record) {
+			if (record == null) return null;
+			return factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key), record));
+		}
+		
 		private void dump(StringBuilder sb) {
 			boolean root = sb == null;
 			while (true) {
 				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				long value = coded.readPositiveLong() - 2L;
+				LinearRecord record;
+				if (coded.getReader().readBoolean()) {
+					long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
+					long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+					record = decompactor.decompact(coded, ordinal, position);
+				} else {
+					record = null;
+				}
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				boolean hasChild = childOffset >= 0;
@@ -129,7 +162,7 @@ public class TrieIndex {
 				
 				if (root) {
 					sb = new StringBuilder();
-					if (value != -1L) System.out.println(sb);
+					if (record != null) System.out.println(sb);
 					if (!hasChild) return;
 					reader.skipBits(childOffset);
 					dump(sb);
@@ -137,7 +170,7 @@ public class TrieIndex {
 				}
 	
 				sb.append(c);
-				if (value != -1L) System.out.println(sb);
+				if (record != null) System.out.println(sb);
 				if (hasChild) {
 					long position = reader.getPosition();
 					reader.skipBits(childOffset);

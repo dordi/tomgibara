@@ -70,7 +70,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			break;
 		case PASS_COMPACT:
 			context.setPassName("Compacting data");
-			compactor = new RecordCompactor(context);
+			compactor = new RecordCompactor(context, null, 0);
 			open();
 			break;
 		}

@@ -62,7 +62,7 @@ public class SortConsumer extends OrderedConsumer {
 	public void endPass() {
 		open();
 		try {
-			RecordCompactor compactor = new RecordCompactor(context);
+			RecordCompactor compactor = new RecordCompactor(context, definition, 0);
 			while (!queue.isEmpty()) compactor.compact(coded, queue.poll());
 		} finally {
 			queue = null;

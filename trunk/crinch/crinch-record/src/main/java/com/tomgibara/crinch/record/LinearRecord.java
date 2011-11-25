@@ -27,6 +27,10 @@ public interface LinearRecord extends Record {
 	boolean wasNull();
 	
 	boolean wasInvalid();
+
+	void mark();
+	
+	void reset();
 	
 	void exhaust();
 }

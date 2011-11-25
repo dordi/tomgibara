@@ -6,6 +6,7 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 	private final ColumnParser parser;
 	private final StringRecord record;
 	private final int length;
+	int mark = Integer.MAX_VALUE;
 	int index = 0;
 	boolean nullFlag;
 	IllegalArgumentException invalidCause;
@@ -175,6 +176,17 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 	public boolean wasNull() {
 		if (index == 0) throw new IllegalStateException("no field read");
 		return nullFlag;
+	}
+
+	@Override
+	public void mark() {
+		mark = index;
+	}
+	
+	@Override
+	public void reset() {
+		if (mark > length) throw new IllegalStateException("not marked");
+		index = mark;
 	}
 	
 	@Override

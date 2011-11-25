@@ -8,20 +8,25 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class RecordCompactor {
 
-
+	//TODO could trim arrays rather than retain startIndex
 	private final ColumnType[] types;
 	private final ColumnCompactor[] compactors;
+	private final int startIndex;
 	
-	public RecordCompactor(ProcessContext context) {
-		List<ColumnType> types = context.getColumnTypes();
-		if (types == null) throw new IllegalArgumentException("context has no column types");
+	public RecordCompactor(ProcessContext context, RecordDefinition recordDef, int startIndex) {
+		if (recordDef == null) recordDef = context.getRecordDef();
+		if (recordDef == null) throw new IllegalArgumentException("context has no record definition");
 		RecordStats stats = context.getRecordStats();
 		if (stats == null) throw new IllegalArgumentException("context has no record stats");
+		stats = stats.adaptFor(recordDef);
+		if (startIndex < 0) throw new IllegalArgumentException("negative startIndex");
+		if (startIndex > stats.getColumnStats().size()) throw new IllegalArgumentException("invalid startIndex");
 		
-		
+		List<ColumnType> types = recordDef.getTypes();
 		ColumnCompactor[] compactors = new ColumnCompactor[types.size()];
 		List<ColumnStats> list = stats.getColumnStats();
 		for (int i = 0; i < compactors.length; i++) {
@@ -30,11 +35,12 @@ public class RecordCompactor {
 		
 		this.types = (ColumnType[]) types.toArray(new ColumnType[types.size()]);
 		this.compactors = compactors;
+		this.startIndex = startIndex;
 	}
 
 	public int compact(CodedWriter writer, LinearRecord record) {
 		int c = 0;
-		for (int i = 0; i < compactors.length; i++) {
+		for (int i = startIndex; i < compactors.length; i++) {
 			ColumnCompactor compactor = compactors[i];
 			switch (types[i]) {
 			case BOOLEAN_PRIMITIVE:

@@ -19,14 +19,14 @@ import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
 
 public class TrieConsumer extends OrderedConsumer {
 
+	private RecordCompactor compactor;
 	private Node root;
-	private boolean ordinalValue;
-	private boolean positionalValue;
 	private long nodeCount = 0;
 	private long[] frequencies;
 	private HuffmanCoding huffmanCoding;
@@ -42,8 +42,7 @@ public class TrieConsumer extends OrderedConsumer {
 		if (!file.exists()) throw new IllegalStateException("no sorted file: " + file);
 		if (definition.getTypes().isEmpty()) throw new IllegalArgumentException("no columns");
 		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
-		ordinalValue = definition.isOrdinal();
-		positionalValue = definition.isPositional();
+		compactor = new RecordCompactor(context, definition, 1);
 		if (context.isClean()) {
 			statsFile().delete();
 			file().delete();
@@ -66,14 +65,7 @@ public class TrieConsumer extends OrderedConsumer {
 	public void consume(LinearRecord record) {
 		LinearRecord subRec = factory.newRecord(record, true);
 		final String key = subRec.nextString();
-		final long value;
-		if (ordinalValue) {
-			value = record.getRecordOrdinal();
-		} else if (positionalValue) {
-			value = record.getRecordPosition();
-		} else {
-			value = 0L;
-		}
+		subRec.mark();
 		final int length = key.length();
 		Node node = root;
 		outer: for (int i = 0; i < length; i++) {
@@ -100,7 +92,7 @@ public class TrieConsumer extends OrderedConsumer {
 				child = child.sibling;
 			}
 		}
-		node.value = value;
+		node.record = subRec;
 		record.exhaust();
 	}
 
@@ -130,8 +122,6 @@ public class TrieConsumer extends OrderedConsumer {
 		CodedStreams.writeToFile(new WriteTask() {
 			@Override
 			public void writeTo(CodedWriter writer) {
-				writer.getWriter().writeBoolean(definition.isOrdinal());
-				writer.getWriter().writeBoolean(definition.isPositional());
 				CodedStreams.writePrimitiveArray(writer, frequencies);
 			}
 		}, context.getCoding(), statsFile());
@@ -143,6 +133,18 @@ public class TrieConsumer extends OrderedConsumer {
 
 	private File statsFile() {
 		return new File(context.getOutputDir(), context.getDataName() + ".trie-stats." + definition.getId());
+	}
+	
+	private void writeNode(CodedWriter coded, Node node) {
+		if (node != root) huffmanCoding.encodePositiveInt(coded.getWriter(), node.c + 1);
+		LinearRecord record = node.record;
+		coded.getWriter().writeBoolean(record != null);
+		if (record != null) {
+			if (definition.isOrdinal()) coded.writePositiveLong(record.getRecordOrdinal() + 1L);
+			if (definition.isPositional()) coded.writePositiveLong(record.getRecordPosition() + 1L);
+			record.reset();
+			compactor.compact(coded, record);
+		}
 	}
 	
 	private class CharFreqRec extends CharFrequencyRecorder {
@@ -157,14 +159,12 @@ public class TrieConsumer extends OrderedConsumer {
 	
 	private class Offsetter {
 		
-		private final HuffmanCoding huffmanCoding;
 		private final NullBitWriter writer;
 		private final CodedWriter coded;
 		
 		private long lastOffset = 0L;
 		
 		public Offsetter() {
-			this.huffmanCoding = TrieConsumer.this.huffmanCoding;
 			ExtendedCoding coding = context.getCoding();
 			writer = new NullBitWriter();
 			coded = new CodedWriter(writer, coding);
@@ -194,9 +194,7 @@ public class TrieConsumer extends OrderedConsumer {
 			
 			// now measure the bits needed to write this node
 			writer.setPosition(0L);
-			if (node != root) huffmanCoding.encodePositiveInt(writer, node.c + 1);
-			// add 2 to the value because -1 indicates absent value
-			coded.writePositiveLong(node.value + 2L);
+			writeNode(coded, node);
 			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
 			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
 			long offset = lastOffset - writer.getPosition();
@@ -205,7 +203,7 @@ public class TrieConsumer extends OrderedConsumer {
 			// ready for a node that references us
 			lastOffset = node.offset = offset;
 		}
-		
+
 	}
 
 	private class Writer {
@@ -230,8 +228,7 @@ public class TrieConsumer extends OrderedConsumer {
 			final boolean hasChild = node.child != null;
 			final boolean hasSibling = node.sibling != null;
 
-			if (node != root) huffmanCoding.encodePositiveInt(writer, node.c + 1);
-			coded.writePositiveLong(node.value + 2L);
+			writeNode(coded, node);
 			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
 			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
 
@@ -259,8 +256,8 @@ public class TrieConsumer extends OrderedConsumer {
 		
 		final char c;
 		
-		//TODO may need to support multiple refs!
-		long value;
+		//TODO may need to support multiple records!
+		LinearRecord record;
 		
 		Node sibling;
 	
@@ -270,7 +267,6 @@ public class TrieConsumer extends OrderedConsumer {
 		
 		Node(char c) {
 			this.c = c;
-			value = -1L;
 		}
 		
 	}

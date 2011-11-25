@@ -11,6 +11,7 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
+import com.tomgibara.crinch.record.ArrayRecord;
 import com.tomgibara.crinch.record.CombinedRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
@@ -105,7 +106,9 @@ public class TrieIndex {
 				if (coded.getReader().readBoolean()) {
 					long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
 					long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+					//TODO unfortunate to create so much garbage when walking trie
 					record = decompactor.decompact(coded, ordinal, position);
+					record = factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key), record));
 				} else {
 					record = null;
 				}
@@ -114,12 +117,12 @@ public class TrieIndex {
 				boolean hasChild = childOffset >= 0;
 				boolean hasSibling = siblingOffset >= 0;
 				if (root) {
-					if (key.isEmpty()) return unite(key, record);
+					if (key.isEmpty()) return record;
 					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 					root = false;
 				} else if (key.charAt(index) == c) {
-					if (++index == key.length()) return unite(key, record);
+					if (++index == key.length()) return record;
 					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 				} else {
@@ -136,11 +139,6 @@ public class TrieIndex {
 		public void dump() {
 			reader.setPosition(0L);
 			dump(null);
-		}
-		
-		private LinearRecord unite(String key, LinearRecord record) {
-			if (record == null) return null;
-			return factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key), record));
 		}
 		
 		private void dump(StringBuilder sb) {

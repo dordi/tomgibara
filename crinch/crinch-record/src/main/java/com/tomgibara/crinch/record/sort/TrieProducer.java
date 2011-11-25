@@ -24,7 +24,7 @@ import com.tomgibara.crinch.record.def.SubRecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
-public class TrieIndex implements RecordProducer<LinearRecord> {
+public class TrieProducer implements RecordProducer<LinearRecord> {
 
 	private final SubRecordDefinition subRecDef;
 	
@@ -37,7 +37,7 @@ public class TrieIndex implements RecordProducer<LinearRecord> {
 	private RecordDefinition recordDef;
 	private DynamicRecordFactory factory;
 	
-	public TrieIndex(SubRecordDefinition subRecDef) {
+	public TrieProducer(SubRecordDefinition subRecDef) {
 		this.subRecDef = subRecDef;
 	}
 	

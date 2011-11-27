@@ -34,8 +34,8 @@ public class StdProcessContext implements ProcessContext {
 	private File outputDir = new File("");
 	private String dataName = "default";
 	
-	private long recordCount = 0L;
-	private long recordsTransferred = 0L;
+	private long recordCount = -1L;
+	private long recordsTransferred = -1L;
 	private float progress;
 	private float lastProgress;
 	private String passName;
@@ -121,17 +121,22 @@ public class StdProcessContext implements ProcessContext {
 	
 	@Override
 	public void setRecordsTransferred(long recordsTransferred) {
-		if (recordCount == 0f) return;
-		float progress;
-		if (recordsTransferred <= 0) {
-			progress = 0f;
-		} else if (recordsTransferred >= recordCount) {
-			progress = 1f;
+		if (recordCount == -1L) return;
+		if (recordsTransferred < 0L) recordsTransferred = -1L;
+		if (recordsTransferred == -1L) {
+			resetProgress();
 		} else {
-			progress = (float)(recordsTransferred / (double) recordCount);
-		}
-		if (progress < this.progress || progress > lastProgress + progressStep || progress > lastProgress && progress == 1f) {
-			reportProgress(progress);
+			float progress;
+			if (recordsTransferred >= recordCount) {
+				progress = 1f;
+			} else if (recordsTransferred <= 0) {
+				progress = 0f;
+			} else {
+				progress = (float)(recordsTransferred / (double) recordCount);
+			}
+			if (progress < this.progress || progress > lastProgress + progressStep || progress > lastProgress && progress == 1f) {
+				reportProgress(progress);
+			}
 		}
 		this.recordsTransferred = recordsTransferred;
 	}
@@ -149,16 +154,36 @@ public class StdProcessContext implements ProcessContext {
 		return passName;
 	}
 	
+	public void setRecordCount(long recordCount) {
+		if (recordCount < 0L) recordCount = -1L;
+		if (recordStats != null && recordCount != recordStats.getRecordCount()) { 
+			setRecordStats(null);
+		}
+		if (recordCount != this.recordCount) {
+			this.recordCount = recordCount;
+			recordsTransferred = Math.min(recordsTransferred, recordCount);
+			log("Record count: " + recordCount);
+			if (recordCount <= 0L) resetProgress();
+		}
+	}
+	
+	
+	@Override
+	public long getRecordCount() {
+		return recordCount;
+	}
+	
 	@Override
 	public void setRecordStats(RecordStats recordStats) {
-		if (recordStats != null && !recordStats.equals(this.recordStats)) {
+		RecordStats oldStats = this.recordStats;
+		this.recordStats = recordStats;
+		if (recordStats != null && !recordStats.equals(oldStats)) {
 			int col = 1;
 			for (ColumnStats stats : recordStats.getColumnStats()) {
 				log("Statistics - column " + col++ + ": " + stats);
 			}
-			setRecordCount(recordStats.getRecordCount());
 		}
-		this.recordStats = recordStats;
+		setRecordCount(recordStats == null ? -1L : recordStats.getRecordCount());
 		//TODO should only write if changed
 		writeRecordStats();
 	}
@@ -230,15 +255,6 @@ public class StdProcessContext implements ProcessContext {
 		t.printStackTrace();
 	}
 
-	private void setRecordCount(long recordCount) {
-		if (recordCount < 0L) throw new IllegalArgumentException("negative recordCount");
-		if (recordCount == this.recordCount) return;
-		this.recordCount = recordCount;
-		recordsTransferred = Math.min(recordsTransferred, recordCount);
-		log("Record count: " + recordCount);
-		if (recordCount == 0L) resetProgress();
-	}
-	
 	private void resetProgress() {
 		progress = 0f;
 		lastProgress = -1f;
@@ -276,6 +292,7 @@ public class StdProcessContext implements ProcessContext {
 				return RecordStats.read(coded);
 			}
 		}, getRecordStatsFile());
+		if (recordStats != null) setRecordCount(recordStats.getRecordCount());
 	}
 
 	private File getColumnTypesFile() {

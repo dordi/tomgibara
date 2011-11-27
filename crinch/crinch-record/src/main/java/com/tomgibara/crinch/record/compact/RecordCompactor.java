@@ -38,6 +38,12 @@ public class RecordCompactor {
 		this.startIndex = startIndex;
 	}
 
+	public ColumnStats getColumnStats(int index) {
+		if (index < 0) throw new IllegalArgumentException("negative index");
+		if (index >= compactors.length) throw new IllegalArgumentException("invalid index");
+		return compactors[index].getStats();
+	}
+	
 	public int compact(CodedWriter writer, LinearRecord record) {
 		int c = 0;
 		for (int i = startIndex; i < compactors.length; i++) {

@@ -19,6 +19,7 @@ import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
+import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
@@ -43,6 +44,7 @@ public class TrieConsumer extends OrderedConsumer {
 		if (definition.getTypes().isEmpty()) throw new IllegalArgumentException("no columns");
 		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		compactor = new RecordCompactor(context, definition, 1);
+		if (!compactor.getColumnStats(0).isUnique()) throw new UnsupportedOperationException("non-unique keys not supported yet");
 		if (context.isClean()) {
 			statsFile().delete();
 			file().delete();

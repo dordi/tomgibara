@@ -13,7 +13,6 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
-import com.tomgibara.crinch.record.def.RecordDefinition;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
@@ -66,7 +65,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			break;
 		case PASS_STATS:
 			context.setPassName("Gathering statistics");
-			analyzer = new RecordAnalyzer(context);
+			if (analyzer == null) analyzer = new RecordAnalyzer(context);
 			break;
 		case PASS_COMPACT:
 			context.setPassName("Compacting data");
@@ -96,13 +95,21 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	public void endPass() {
 		switch(pass) {
 		case PASS_TYPES:
+			context.setRecordCount(typer.getRecordCount());
 			context.setColumnTypes(typer.getColumnTypes());
+			pass = PASS_STATS;
 			break;
 		case PASS_STATS:
-			context.setRecordStats(analyzer.getStats());
+			if (!analyzer.needsReanalysis()) {
+				context.setRecordStats(analyzer.getStats());
+				pass = PASS_COMPACT;
+			}
 			break;
+		case PASS_COMPACT:
+			pass = PASS_DONE;
+			break;
+		default : throw new IllegalStateException("too many passes");
 		}
-		pass++;
 	}
 
 	@Override

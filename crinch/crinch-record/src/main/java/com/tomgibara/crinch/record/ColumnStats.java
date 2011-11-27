@@ -63,6 +63,7 @@ public class ColumnStats {
 		for (int i = 0; i < enumCount; i++) {
 			c += writeString(writer, enums[i]);
 		}
+		c += writer.getWriter().writeBoolean(stats.unique);
 		return c;
 	}
 	
@@ -98,7 +99,7 @@ public class ColumnStats {
 			}
 		}
 		stats.setEnumeration(enums);
-		
+		stats.setUnique(reader.getReader().readBoolean());
 		return stats;
 	}
 	
@@ -111,6 +112,7 @@ public class ColumnStats {
 	private long count;
 	private long[] frequencies;
 	private String[] enumeration;
+	private boolean unique;
 
 	public void setClassification(Classification classification) {
 		this.classification = classification;
@@ -177,10 +179,18 @@ public class ColumnStats {
 	public String[] getEnumeration() {
 		return enumeration;
 	}
+
+	public void setUnique(boolean unique) {
+		this.unique = unique;
+	}
+	
+	public boolean isUnique() {
+		return unique;
+	}
 	
 	@Override
 	public String toString() {
-		return "classification: " + classification + ", nullable? " + nullable + ", minimum: " + minimum + ", maximum: " + maximum + " sum: " + sum + ", count: " + count + ", frequencies: " + Arrays.toString(frequencies) + ", enumeration: " + Arrays.toString(enumeration);
+		return "classification: " + classification + ", nullable? " + nullable + ", minimum: " + minimum + ", maximum: " + maximum + " sum: " + sum + ", count: " + count + ", frequencies: " + Arrays.toString(frequencies) + ", enumeration: " + Arrays.toString(enumeration) + ", unique: " + unique;
 	}
 	
 }

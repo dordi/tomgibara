@@ -37,6 +37,10 @@ public interface ProcessContext {
 	
 	String getPassName();
 	
+	void setRecordCount(long recordCount);
+	
+	long getRecordCount();
+	
 	void setRecordStats(RecordStats recordStats);
 	
 	RecordStats getRecordStats();

@@ -37,7 +37,7 @@ public class RecordTyper {
 
 	private final ColumnParser parser;
 	
-	private boolean first = true;
+	private long recordCount = 0L;
 	private final List<Set<ColumnType>> types = new ArrayList<Set<ColumnType>>();
 	//TODO use something like this for identifying enums
 	private final List<String[]> values = new ArrayList<String[]>();
@@ -56,7 +56,7 @@ public class RecordTyper {
 				valueArr = new String[2];
 				types.add(typeSet);
 				values.add(valueArr);
-				if (!first) typeSet.remove(PRIMITIVE_TYPES);
+				if (recordCount == 0L) typeSet.remove(PRIMITIVE_TYPES);
 			} else {
 				typeSet = types.get(index);
 				valueArr = values.get(index);
@@ -117,9 +117,13 @@ public class RecordTyper {
 			}
 			index ++;
 		}
-		first = false;
+		recordCount++;
 	}
 
+	long getRecordCount() {
+		return recordCount;
+	}
+	
 	List<ColumnType> getColumnTypes() {
 		int size = types.size();
 		List<ColumnType> list = new ArrayList<ColumnType>(size);

@@ -14,4 +14,6 @@ public interface LinkedRecord extends LinearRecord {
 	
 	void removeRecord();
 	
+	void replaceRecord(LinkedRecord record);
+	
 }

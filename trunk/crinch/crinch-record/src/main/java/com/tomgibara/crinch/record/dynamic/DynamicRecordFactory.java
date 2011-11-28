@@ -333,6 +333,7 @@ public class DynamicRecordFactory {
 		// linked methods
 		if (linkable) {
 			sb.append("\tpublic void insertRecordBefore(").append(LinkedRecord.class.getName()).append(" record) {\n");
+			sb.append("\t\tif (record == null) throw new IllegalArgumentException(\"null record\");\n");
 			sb.append("\t\tif (!(record instanceof ").append(className).append(")) throw new IllegalArgumentException(\"incorrect record type\");\n");
 			sb.append("\t\tif (next != this) throw new IllegalStateException(\"already linked\");\n");
 			sb.append("\t\t").append(className).append(" that = (").append(className).append(") record;\n");
@@ -343,6 +344,7 @@ public class DynamicRecordFactory {
 			sb.append("\t}\n");
 
 			sb.append("\tpublic void insertRecordAfter(").append(LinkedRecord.class.getName()).append(" record) {\n");
+			sb.append("\t\tif (record == null) throw new IllegalArgumentException(\"null record\");\n");
 			sb.append("\t\tif (!(record instanceof ").append(className).append(")) throw new IllegalArgumentException(\"incorrect record type\");\n");
 			sb.append("\t\tif (next != this) throw new IllegalStateException(\"already linked\");\n");
 			sb.append("\t\t").append(className).append(" that = (").append(className).append(") record;\n");
@@ -365,6 +367,19 @@ public class DynamicRecordFactory {
 			sb.append("\t\tprev.next = next;\n");
 			sb.append("\t\tnext = this;\n");
 			sb.append("\t\tprev = this;\n");
+			sb.append("\t}\n");
+
+			sb.append("\tpublic void replaceRecord(LinkedRecord record) {\n");
+			sb.append("\t\tif (record == null) throw new IllegalArgumentException(\"null record\");\n");
+			sb.append("\t\tif (!(record instanceof ").append(className).append(")) throw new IllegalArgumentException(\"incorrect record type\");\n");
+			sb.append("\t\tif (next != this) throw new IllegalStateException(\"already linked\");\n");
+			sb.append("\t\t").append(className).append(" that = (").append(className).append(") record;\n");
+			sb.append("\t\tthis.next = that.next;\n");
+			sb.append("\t\tthis.prev = that.prev;\n");
+			sb.append("\t\tthis.next.prev = this;\n");
+			sb.append("\t\tthis.prev.next = this;\n");
+			sb.append("\t\tthat.next = that;\n");
+			sb.append("\t\tthat.prev = that;\n");
 			sb.append("\t}\n");
 
 		}

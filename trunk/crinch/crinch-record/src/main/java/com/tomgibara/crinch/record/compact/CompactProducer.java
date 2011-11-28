@@ -84,7 +84,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		@Override
 		public LinearRecord next() {
 			if (recordsRead == recordCount) throw new NoSuchElementException();
-			return decompactor.decompact(coded, recordsRead++);
+			return decompactor.decompact(coded, recordsRead++, reader.getPosition());
 		}
 		
 		@Override

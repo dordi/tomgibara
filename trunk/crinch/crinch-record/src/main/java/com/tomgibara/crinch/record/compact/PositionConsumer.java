@@ -54,6 +54,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void beginPass() {
+		context.setPassName("Building position index");
 		//TODO support larger counts
 		int count = (int) recStats.getRecordCount();
 		positions = new long[count];
@@ -61,7 +62,12 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void consume(LinearRecord record) {
-		positions[(int) record.getRecordOrdinal()] = record.getRecordPosition();
+		long position = record.getRecordPosition();
+		int ordinal = (int) record.getRecordOrdinal();
+		//TODO could deal with this by maintaining own count of records and decrementing
+		if (position < 0L) throw new IllegalArgumentException("record without position");
+		if (ordinal < 0) throw new IllegalArgumentException("record without ordinal");
+		positions[ordinal] = position;
 		record.exhaust();
 	}
 

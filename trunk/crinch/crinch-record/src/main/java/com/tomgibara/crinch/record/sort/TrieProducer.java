@@ -11,6 +11,7 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
+import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.CombinedRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
@@ -22,9 +23,12 @@ import com.tomgibara.crinch.record.compact.RecordDecompactor;
 import com.tomgibara.crinch.record.def.RecordDefinition;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {
+
+	private static ClassConfig sConfig = new ClassConfig(false, false);
 
 	private final SubRecordDefinition subRecDef;
 	
@@ -36,6 +40,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	private RecordDecompactor decompactor;
 	private RecordDefinition recordDef;
 	private DynamicRecordFactory factory;
+	private boolean uniqueKeys;
 	
 	public TrieProducer(SubRecordDefinition subRecDef) {
 		this.subRecDef = subRecDef;
@@ -64,8 +69,10 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		RecordStats stats = context.getRecordStats();
 		if (stats == null) throw new IllegalStateException("context has no record stats");
 		stats = stats.adaptFor(def);
-		maxLength = stats.getColumnStats().get(0).getMaximum().intValue();
 		decompactor = new RecordDecompactor(stats, 1);
+		ColumnStats keyStats = stats.getColumnStats().get(0);
+		maxLength = keyStats.getMaximum().intValue();
+		uniqueKeys = keyStats.isUnique();
 
 		file = new File(context.getOutputDir(), context.getDataName() + ".trie." + recordDef.getId());
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
@@ -112,6 +119,8 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		private final CodedReader coded;
 
 		private StringBuilder key;
+		long nextRecordPosition;
+		long finalRecordPosition;
 		private long[] childPositions;
 		private long[] siblingPositions;
 		private LinearRecord next = null;
@@ -123,11 +132,10 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 
 		//TODO unfortunate to create so much garbage when walking trie
 		private LinearRecord readRecord(CharSequence key) {
-			if (!coded.getReader().readBoolean()) return null;
 			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
 			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
 			LinearRecord record = decompactor.decompact(coded, ordinal, position);
-			return factory.newRecord(new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
+			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
 		}
 		
 		@Override
@@ -155,25 +163,44 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			/* no-op atm */
 		}
 		
+		//TODO produce API that can return multiple records for single key
 		public LinearRecord get(String key) {
 			if (key == null) throw new IllegalArgumentException("null key");
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;
+			LinearRecord record = null;
+			long recordPosition = -1L;
 			while (true) {
 				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				LinearRecord record = readRecord(key);
+				if (uniqueKeys) {
+					record = reader.readBoolean() ? readRecord(key) : null;
+				} else {
+					long reclen = coded.readPositiveLong() - 1L;
+					recordPosition = reclen == 0L ? -1L : reader.getPosition();
+					reader.skipBits(reclen);
+				}
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				boolean hasChild = childOffset >= 0;
 				boolean hasSibling = siblingOffset >= 0;
 				if (root) {
-					if (key.isEmpty()) return record;
+					if (key.isEmpty()) {
+						if (uniqueKeys) return record;
+						if (recordPosition == -1L) return null;
+						reader.setPosition(recordPosition);
+						return readRecord(key);
+					}
 					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 					root = false;
 				} else if (key.charAt(index) == c) {
-					if (++index == key.length()) return record;
+					if (++index == key.length()) {
+						if (uniqueKeys) return record;
+						if (recordPosition == -1L) return null;
+						reader.setPosition(recordPosition);
+						return readRecord(key);
+					}
 					if (!hasChild) return null;
 					reader.skipBits(childOffset);
 				} else {
@@ -200,6 +227,13 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				reader.setPosition(0L);
 			}
 
+			if (nextRecordPosition < finalRecordPosition) {
+				reader.setPosition(nextRecordPosition);
+				LinearRecord record = readRecord(key);
+				nextRecordPosition = reader.getPosition();
+				return record;
+			}
+			
 			while (true) {
 				if (!initial) {
 					int depth = key.length();
@@ -226,7 +260,20 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				}
 
 				initial = false;
-				LinearRecord record = readRecord(key);
+				LinearRecord record;
+				if (uniqueKeys) {
+					record = reader.readBoolean() ? readRecord(key) : null;
+				} else {
+					long reclen = coded.readPositiveLong() - 1L;
+					if (reclen == 0L) {
+						record = null;
+					} else {
+						finalRecordPosition = reader.getPosition() + reclen;
+						record = readRecord(key);
+						nextRecordPosition = reader.getPosition();
+						reader.setPosition(finalRecordPosition);
+					}
+				}
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				long position = reader.getPosition();

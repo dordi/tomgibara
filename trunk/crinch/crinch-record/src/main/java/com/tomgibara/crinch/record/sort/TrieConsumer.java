@@ -19,10 +19,11 @@ import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.dynamic.LinkedRecord;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 public class TrieConsumer extends OrderedConsumer {
 
@@ -31,6 +32,11 @@ public class TrieConsumer extends OrderedConsumer {
 	private long nodeCount = 0;
 	private long[] frequencies;
 	private HuffmanCoding huffmanCoding;
+	private boolean uniqueKeys;
+	private ClassConfig config;
+	private NullBitWriter recordSizingWriter;
+	private CodedWriter recordSizingCoded;
+
 	
 	public TrieConsumer(SubRecordDefinition subRecDef) {
 		super(subRecDef);
@@ -44,7 +50,10 @@ public class TrieConsumer extends OrderedConsumer {
 		if (definition.getTypes().isEmpty()) throw new IllegalArgumentException("no columns");
 		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		compactor = new RecordCompactor(context, definition, 1);
-		if (!compactor.getColumnStats(0).isUnique()) throw new UnsupportedOperationException("non-unique keys not supported yet");
+		uniqueKeys = compactor.getColumnStats(0).isUnique();
+		config = new ClassConfig(true, !uniqueKeys);
+		recordSizingWriter = new NullBitWriter();
+		recordSizingCoded = new CodedWriter(recordSizingWriter, context.getCoding());
 		if (context.isClean()) {
 			statsFile().delete();
 			file().delete();
@@ -65,7 +74,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void consume(LinearRecord record) {
-		LinearRecord subRec = factory.newRecord(record, true);
+		LinearRecord subRec = factory.newRecord(config, record, true);
 		final String key = subRec.nextString();
 		subRec.mark();
 		final int length = key.length();
@@ -94,7 +103,12 @@ public class TrieConsumer extends OrderedConsumer {
 				child = child.sibling;
 			}
 		}
-		node.record = subRec;
+		if (node.record != null) {
+			if (uniqueKeys) throw new IllegalStateException("unexpected duplicate key: " + key);
+			((LinkedRecord) subRec).insertRecordBefore((LinkedRecord) node.record);
+		} else {
+			node.record = subRec;
+		}
 		record.exhaust();
 	}
 
@@ -114,12 +128,23 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void complete() {
+		cleanup();
 	}
 
 	@Override
 	public void quit() {
+		cleanup();
 	}
 
+	// wipe references to free memory
+	private void cleanup() {
+		compactor = null;
+		root = null;
+		frequencies = null;
+		huffmanCoding = null;
+		config = null;
+	}
+	
 	private void writeStats() {
 		CodedStreams.writeToFile(new WriteTask() {
 			@Override
@@ -140,13 +165,40 @@ public class TrieConsumer extends OrderedConsumer {
 	private void writeNode(CodedWriter coded, Node node) {
 		if (node != root) huffmanCoding.encodePositiveInt(coded.getWriter(), node.c + 1);
 		LinearRecord record = node.record;
-		coded.getWriter().writeBoolean(record != null);
-		if (record != null) {
-			if (definition.isOrdinal()) coded.writePositiveLong(record.getRecordOrdinal() + 1L);
-			if (definition.isPositional()) coded.writePositiveLong(record.getRecordPosition() + 1L);
-			record.reset();
-			compactor.compact(coded, record);
+		if (uniqueKeys) {
+			coded.getWriter().writeBoolean(record != null);
+			if (record != null) writeRecord(coded, record);
+		} else {
+			if (record == null) {
+				coded.writePositiveLong(1L);
+			} else {
+				// first record the size
+				{
+					LinkedRecord next = (LinkedRecord) record;
+					recordSizingWriter.setPosition(0L);
+					do {
+						writeRecord(recordSizingCoded, next);
+						next = next.getNextRecord();
+					} while (next != record);
+					coded.writePositiveLong(recordSizingWriter.getPosition() + 1L);
+				}
+				// then actually write the records
+				{
+					LinkedRecord next = (LinkedRecord) record;
+					do {
+						writeRecord(coded, next);
+						next = next.getNextRecord();
+					} while (next != record);
+				}
+			}
 		}
+	}
+	
+	private void writeRecord(CodedWriter coded, LinearRecord record) {
+		if (definition.isOrdinal()) coded.writePositiveLong(record.getRecordOrdinal() + 1L);
+		if (definition.isPositional()) coded.writePositiveLong(record.getRecordPosition() + 1L);
+		record.reset();
+		compactor.compact(coded, record);
 	}
 	
 	private class CharFreqRec extends CharFrequencyRecorder {

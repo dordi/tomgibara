@@ -12,6 +12,7 @@ import java.util.Arrays;
 
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ParsedRecord;
+import com.tomgibara.crinch.record.SingletonRecord;
 import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.StringRecord;
 import com.tomgibara.crinch.record.ColumnParser;
@@ -83,7 +84,7 @@ public class DynamicRecordFactoryTest extends TestCase {
 				.setPositional(false)
 				.build().withOrdering(Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)));
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
-		LinearRecord rec = fac.newRecord(new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")));
+		LinearRecord rec = fac.newRecord(new DynamicRecordFactory.ClassConfig(false, false), new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")));
 		assertEquals("[1,true,null,Tom,3847239847239843,null]", rec.toString());
 	}
 	
@@ -96,8 +97,38 @@ public class DynamicRecordFactoryTest extends TestCase {
 				.asBasis();
 		RecordDefinition def = basis.asBasisToBuild().select(5).add().select(3).add().select(1).add().build();
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
-		LinearRecord rec = fac.newRecord(new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")), true);
+		LinearRecord rec = fac.newRecord(new DynamicRecordFactory.ClassConfig(false, false), new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")), true);
 		assertEquals("[null,Tom,true]", rec.toString());
+	}
+	
+	public void testLinkedRecord() {
+		RecordDefinition def = RecordDefinition
+				.fromTypes(Arrays.asList(INT_PRIMITIVE))
+				.setOrdinal(false)
+				.setPositional(false)
+				.build();
+		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
+		LinkedRecord[] recs = new LinkedRecord[5];
+		for (int i = 0; i < recs.length; i++) {
+			recs[i] = (LinkedRecord) fac.newRecord(new DynamicRecordFactory.ClassConfig(false, true), new SingletonRecord(i));
+		}
+		recs[0].insertRecordBefore(recs[1]);
+		assertEquals(recs[0], recs[1].getPreviousRecord());
+		assertEquals(recs[1], recs[0].getNextRecord());
+		recs[2].insertRecordAfter(recs[1]);
+		assertEquals(recs[0], recs[1].getPreviousRecord());
+		assertEquals(recs[1], recs[2].getPreviousRecord());
+		assertEquals(recs[2], recs[0].getPreviousRecord());
+		assertEquals(recs[1], recs[0].getNextRecord());
+		assertEquals(recs[2], recs[1].getNextRecord());
+		assertEquals(recs[0], recs[2].getNextRecord());
+		recs[0].removeRecord();
+		assertEquals(recs[0], recs[0].getNextRecord());
+		assertEquals(recs[0], recs[0].getPreviousRecord());
+		assertEquals(recs[1], recs[2].getPreviousRecord());
+		assertEquals(recs[2], recs[1].getPreviousRecord());
+		assertEquals(recs[1], recs[2].getNextRecord());
+		assertEquals(recs[2], recs[1].getNextRecord());
 	}
 	
 }

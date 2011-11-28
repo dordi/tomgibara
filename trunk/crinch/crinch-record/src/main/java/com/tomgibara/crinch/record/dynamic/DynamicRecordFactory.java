@@ -23,9 +23,9 @@ import com.tomgibara.crinch.record.def.RecordDefinition;
 
 //TODO could persist nullables as primitives
 //TODO currently limited to 32768 fields
+//TODO basing different configurations on a single base class would be preferable
 public class DynamicRecordFactory {
 
-	
 	private static String packageName = "com.tomgibara.crinch.record.dynamic";
 	
 	private static final Map<String, DynamicRecordFactory> factories = new HashMap<String, DynamicRecordFactory>();
@@ -55,13 +55,66 @@ public class DynamicRecordFactory {
 		return factory; 
 	}
 	
+	public final static class ClassConfig {
+		
+		static final ClassConfig[] sInstances;
+		
+		static {
+			ClassConfig[] src = {
+					new ClassConfig(false, false),
+					new ClassConfig(false, true),
+					new ClassConfig(true, false),
+					new ClassConfig(true, true),
+			};
+			
+			ClassConfig[] dst = new ClassConfig[src.length];
+			
+			for (ClassConfig config : src) {
+				dst[config.getIndex()] = config;
+			}
+			sInstances = dst;
+		}
+		
+		private final boolean markingSupported;
+		private final boolean linkingSupported;
+		private final int index;
+		private final String classNameSuffix;
+		
+		public ClassConfig(boolean markingSupported, boolean linkingSupported) {
+			this.markingSupported = markingSupported;
+			this.linkingSupported = linkingSupported;
+			StringBuilder sb = new StringBuilder();
+			if (markingSupported) sb.append("_Markable");
+			if (linkingSupported) sb.append("_Linkable");
+			classNameSuffix = sb.toString();
+			index = (markingSupported ? 1 : 0) + (linkingSupported ? 2 : 0);
+		}
+		
+		public boolean isLinkingSupported() {
+			return linkingSupported;
+		}
+		
+		public boolean isMarkingSupported() {
+			return markingSupported;
+		}
+		
+		int getIndex() {
+			return index;
+		}
+		
+		String getClassNameSuffix() {
+			return classNameSuffix;
+		}
+		
+	}
+	
 	// fields
 	
 	private final RecordDefinition definition;
 	private final String name;
 	private final String source;
-	private final Class<? extends LinearRecord> clss;
-	private final Constructor<? extends LinearRecord> cons;
+	private final Class<? extends LinearRecord>[] clss = new Class[ClassConfig.sInstances.length];
+	private final Constructor<? extends LinearRecord>[] cons = new Constructor[ClassConfig.sInstances.length];
 	
 	// constructors
 	
@@ -81,20 +134,24 @@ public class DynamicRecordFactory {
 			throw new RuntimeException(e);
 		}
 		try {
-			clss = (Class) compiler.getClassLoader().loadClass(packageName + "." + name);
+			for (ClassConfig config : ClassConfig.sInstances) {
+				clss[config.getIndex()] = (Class) compiler.getClassLoader().loadClass(packageName + "." + name + config.getClassNameSuffix());
+			}
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 		
 		try {
-			cons = clss.getConstructor(consParams);
+			for (int i = 0; i < cons.length; i++) {
+				cons[i] = clss[i].getConstructor(consParams);
+			}
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException(e);
 		}
 	}
-
+	
 	public RecordDefinition getDefinition() {
 		return definition;
 	}
@@ -107,13 +164,14 @@ public class DynamicRecordFactory {
 		return source;
 	}
 
-	public LinearRecord newRecord(LinearRecord record) {
-		return newRecord(record, false);
+	public LinearRecord newRecord(ClassConfig config, LinearRecord record) {
+		return newRecord(config, record, false);
 	}
 
-	public LinearRecord newRecord(LinearRecord record, boolean basis) {
+	public LinearRecord newRecord(ClassConfig config, LinearRecord record, boolean basis) {
+		if (config == null) throw new IllegalArgumentException("null config");
 		try {
-			return cons.newInstance(record, basis);
+			return cons[config.getIndex()].newInstance(record, basis);
 		} catch (InstantiationException e) {
 			throw new RuntimeException(e);
 		} catch (IllegalAccessException e) {
@@ -122,13 +180,28 @@ public class DynamicRecordFactory {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private String generateSource() {
-		//TODO make configurable
-		boolean markable = true;
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
-		sb.append("public class " + name).append(" implements " + LinearRecord.class.getName() + ", Comparable {\n");
+		for (ClassConfig config : ClassConfig.sInstances) {
+			generateSource(sb, config);
+		}
+		return sb.toString();
+	}
+
+	private void generateSource(StringBuilder sb, ClassConfig config) {
+		boolean linkable = config.isLinkingSupported();
+		boolean markable = config.isMarkingSupported();
+		String className = name + config.getClassNameSuffix(); 
+		sb.append("\npublic class ").append(className).append(" implements ");
+		if (linkable) {
+			sb.append(LinkedRecord.class.getName());
+		} else {
+			sb.append(LinearRecord.class.getName());
+		}
+		sb.append(", Comparable");
+		sb.append(" {\n");
 		sb.append("\tprivate static final short limit = ").append(definition.getTypes().size()).append(";\n");
 		
 		// fields
@@ -144,15 +217,15 @@ public class DynamicRecordFactory {
 				sb.append(type).append(" f_").append(field++).append(";\n");
 			}
 		}
+		if (linkable) {
+			sb.append("\tprivate ").append(className).append(" next;\n");
+			sb.append("\tprivate ").append(className).append(" prev;\n");
+		}
 		
 		// constructors
 		{
-			sb.append("\tpublic ").append(name).append("() {\n");
-			sb.append("\t}\n");
-		}
-		
-		{
-			sb.append("\tpublic ").append(name).append("(" + LinearRecord.class.getName() + " record, boolean basis) {\n");
+			sb.append("\tpublic ").append(className).append("(" + LinearRecord.class.getName() + " record, boolean basis) {\n");
+			if (linkable) sb.append("\t\tnext = prev = this;\n");
 			if (definition.isOrdinal()) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
 			if (definition.isPositional()) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
 			sb.append("\t\tif (basis) {\n");
@@ -188,7 +261,7 @@ public class DynamicRecordFactory {
 			for (ColumnType t : definition.getTypes()) {
 				if (type == t) {
 					sb.append("\t\t\tcase ").append(field).append(":\n");
-					if (markable && type.typeClass.isPrimitive()) {
+					if (!markable || type.typeClass.isPrimitive()) {
 						sb.append("\t\t\treturn f_").append(field).append(";\n");
 					} else {
 						sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = f_").append(field).append(";\n");
@@ -242,7 +315,7 @@ public class DynamicRecordFactory {
 		if (markable) {
 			sb.append("\t\tmark = field;\n");
 		} else {
-			sb.append("\t\tthrow new UnsupportedOperationException(\"mark not supported\")");
+			sb.append("\t\tthrow new UnsupportedOperationException(\"mark not supported\");\n");
 		}
 		sb.append("\t}\n");
 		
@@ -257,10 +330,49 @@ public class DynamicRecordFactory {
 		
 		sb.append("\tpublic void exhaust() { field = limit; }\n");
 
+		// linked methods
+		if (linkable) {
+			sb.append("\tpublic void insertRecordBefore(").append(LinkedRecord.class.getName()).append(" record) {\n");
+			sb.append("\t\tif (!(record instanceof ").append(className).append(")) throw new IllegalArgumentException(\"incorrect record type\");\n");
+			sb.append("\t\tif (next != this) throw new IllegalStateException(\"already linked\");\n");
+			sb.append("\t\t").append(className).append(" that = (").append(className).append(") record;\n");
+			sb.append("\t\tthis.next = that;\n");
+			sb.append("\t\tthis.prev = that.prev;\n");
+			sb.append("\t\tthat.prev.next = this;\n");
+			sb.append("\t\tthat.prev = this;\n");
+			sb.append("\t}\n");
+
+			sb.append("\tpublic void insertRecordAfter(").append(LinkedRecord.class.getName()).append(" record) {\n");
+			sb.append("\t\tif (!(record instanceof ").append(className).append(")) throw new IllegalArgumentException(\"incorrect record type\");\n");
+			sb.append("\t\tif (next != this) throw new IllegalStateException(\"already linked\");\n");
+			sb.append("\t\t").append(className).append(" that = (").append(className).append(") record;\n");
+			sb.append("\t\tthis.prev = that;\n");
+			sb.append("\t\tthis.next = that.next;\n");
+			sb.append("\t\tthat.next.prev = this;\n");
+			sb.append("\t\tthat.next = this;\n");
+			sb.append("\t}\n");
+
+			sb.append("\tpublic ").append(LinkedRecord.class.getName()).append(" getNextRecord() {\n");
+			sb.append("\t\treturn next;\n");
+			sb.append("\t}\n");
+
+			sb.append("\tpublic ").append(LinkedRecord.class.getName()).append(" getPreviousRecord() {\n");
+			sb.append("\t\treturn prev;\n");
+			sb.append("\t}\n");
+
+			sb.append("\tpublic void removeRecord() {\n");
+			sb.append("\t\tnext.prev = prev;\n");
+			sb.append("\t\tprev.next = next;\n");
+			sb.append("\t\tnext = this;\n");
+			sb.append("\t\tprev = this;\n");
+			sb.append("\t}\n");
+
+		}
+		
 		// comparable methods
 		{
 			sb.append("\tpublic int compareTo(Object obj) {\n");
-			sb.append("\t\t" + name + " that = (" + name + ") obj;\n");
+			sb.append("\t\t" + className + " that = (" + className + ") obj;\n");
 			for (ColumnDefinition column : definition.getOrderedColumns()) {
 				int field = column.getIndex();
 				ColumnOrder order = column.getOrder();
@@ -306,8 +418,8 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic boolean equals(Object obj) {\n");
 			sb.append("\t\tif (obj == this) return true;\n");
-			sb.append("\t\tif (!(obj instanceof " + name +")) return false;\n");
-			sb.append("\t\t" + name + " that = (" + name + ") obj;\n");
+			sb.append("\t\tif (!(obj instanceof " + className +")) return false;\n");
+			sb.append("\t\t" + className + " that = (" + className + ") obj;\n");
 			int field = 0;
 			for (ColumnType type : definition.getTypes()) {
 				if (type.typeClass.isPrimitive()) {
@@ -338,8 +450,7 @@ public class DynamicRecordFactory {
 			sb.append("\t}\n");
 		}
 
-		sb.append("}");
-		return sb.toString();
+		sb.append("}\n");
 	}
 
 	private void generateRecordCopy(StringBuilder sb, List<ColumnDefinition> columns) {

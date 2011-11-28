@@ -16,10 +16,12 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
-import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 public class SortConsumer extends OrderedConsumer {
 
+	private static ClassConfig sConfig = new ClassConfig(false, false);
+	
 	private PriorityQueue<LinearRecord> queue; 
 	private File file;
 	private OutputStream out;
@@ -53,7 +55,7 @@ public class SortConsumer extends OrderedConsumer {
 
 	@Override
 	public void consume(LinearRecord record) {
-		LinearRecord r = factory.newRecord(record);
+		LinearRecord r = factory.newRecord(sConfig, record);
 		queue.add(r);
 	}
 

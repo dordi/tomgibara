@@ -64,8 +64,12 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			typer = new RecordTyper(context);
 			break;
 		case PASS_STATS:
-			context.setPassName("Gathering statistics");
-			if (analyzer == null) analyzer = new RecordAnalyzer(context);
+			if (analyzer == null) {
+				analyzer = new RecordAnalyzer(context);
+				context.setPassName("Gathering statistics");
+			} else {
+				context.setPassName("Identifying unique values");
+			}
 			break;
 		case PASS_COMPACT:
 			context.setPassName("Compacting data");

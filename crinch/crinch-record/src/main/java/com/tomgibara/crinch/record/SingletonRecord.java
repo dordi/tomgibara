@@ -3,7 +3,12 @@ package com.tomgibara.crinch.record;
 public class SingletonRecord extends AbstractLinearRecord {
 
 	private Object value;
-	
+
+	public SingletonRecord(Object value) {
+		super(-1L, -1L);
+		this.value = value;
+	}
+
 	public SingletonRecord(long recordOrdinal, long recordPosition, Object value) {
 		super(recordOrdinal, recordPosition);
 		this.value = value;

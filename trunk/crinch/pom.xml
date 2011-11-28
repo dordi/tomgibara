@@ -9,6 +9,7 @@
     <module>crinch-bits</module>
     <module>crinch-coding</module>
     <module>crinch-collections</module>
+    <module>crinch-csv</module>
     <module>crinch-hashing</module>
     <module>crinch-math</module>
     <module>crinch-perm</module>

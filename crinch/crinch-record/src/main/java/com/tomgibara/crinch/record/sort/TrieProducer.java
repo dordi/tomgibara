@@ -129,11 +129,17 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		factory = null;
 	}
 	
+	//TODO add convenience method: List<LinearRecord> allNext();
 	public class Accessor implements RecordSequence<LinearRecord> {
 	
 		private final ByteArrayBitReader reader;
 		private final CodedReader coded;
 
+		private String prefixKey = "";
+		private long prefixPosition = 0L;
+		private boolean initial = true;
+		private boolean exact = false;
+		
 		private StringBuilder key;
 		long nextRecordPosition;
 		long finalRecordPosition;
@@ -146,23 +152,29 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			coded = new CodedReader(reader, coding);
 		}
 
-		//TODO unfortunate to create so much garbage when walking trie
-		private LinearRecord readRecord(CharSequence key) {
-			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
-			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
-			LinearRecord record = decompactor.decompact(coded, ordinal, position);
-			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
+		public Accessor prefix(String prefix) {
+			if (prefix == null) throw new IllegalArgumentException("null prefix");
+			configure(prefix);
+			exact = false;
+			return this;
+		}
+		
+		public Accessor key(String key) {
+			if (key == null) throw new IllegalArgumentException("null key");
+			configure(key);
+			exact = true;
+			return this;
 		}
 		
 		@Override
 		public boolean hasNext() {
-			if (unused()) next = advance();
+			if (initial) next = advance();
 			return next != null;
 		}
 		
 		@Override
 		public LinearRecord next() {
-			if (unused()) next = advance();
+			if (initial) next = advance();
 			if (next == null) throw new NoSuchElementException();
 			LinearRecord tmp = next;
 			next = advance();
@@ -179,80 +191,88 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			/* no-op atm */
 		}
 		
-		//TODO produce API that can return multiple records for single key
-		public LinearRecord get(String key) {
-			if (key == null) throw new IllegalArgumentException("null key");
+		private void configure(String str) {
+			prefixKey = str;
+			prefixPosition = locate(str);
+			initial = true;
+			nextRecordPosition = 0L;
+			finalRecordPosition = 0L;
+		}
+		
+		// finishes with reader positioned to read record(s)
+		private long locate(String key) {
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;
-			LinearRecord record = null;
-			long recordPosition = -1L;
 			while (true) {
-				char c = root ? '\0' : (char) (huffmanCoding.decodePositiveInt(reader) - 1);
-				if (uniqueKeys) {
-					record = reader.readBoolean() ? readRecord(key) : null;
+				boolean followChild;
+				if (root) {
+					if (key.isEmpty()) return 0L;
+					followChild = true;
+					root = false;
+				} else if (key.charAt(index) == (char) (huffmanCoding.decodePositiveInt(reader) - 1)) {
+					if (++index == key.length()) return reader.getPosition();
+					followChild = true;
 				} else {
-					long reclen = coded.readPositiveLong() - 1L;
-					recordPosition = reclen == 0L ? -1L : reader.getPosition();
-					reader.skipBits(reclen);
+					followChild = false;
+				}
+				if (uniqueKeys) {
+					if (reader.readBoolean()) readRecord(key);
+				} else {
+					reader.skipBits(coded.readPositiveLong() - 1L);
 				}
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
-				boolean hasChild = childOffset >= 0;
-				boolean hasSibling = siblingOffset >= 0;
-				if (root) {
-					if (key.isEmpty()) {
-						if (uniqueKeys) return record;
-						if (recordPosition == -1L) return null;
-						reader.setPosition(recordPosition);
-						return readRecord(key);
-					}
-					if (!hasChild) return null;
-					reader.skipBits(childOffset);
-					root = false;
-				} else if (key.charAt(index) == c) {
-					if (++index == key.length()) {
-						if (uniqueKeys) return record;
-						if (recordPosition == -1L) return null;
-						reader.setPosition(recordPosition);
-						return readRecord(key);
-					}
-					if (!hasChild) return null;
+				if (followChild) {
+					if (childOffset < 0) return -1L;
 					reader.skipBits(childOffset);
 				} else {
-					if (!hasSibling) return null;
+					if (siblingOffset < 0) return -1L;
 					reader.skipBits(siblingOffset);
 				}
 			}
 		}
-	
-		public boolean contains(String key) {
-			return get(key) != null;
-		}
-
-		private boolean unused() {
-			return key == null;
+		
+		//TODO unfortunate to create so much garbage when walking trie
+		private LinearRecord readRecord(CharSequence key) {
+			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
+			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+			LinearRecord record = decompactor.decompact(coded, ordinal, position);
+			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
 		}
 		
-		private LinearRecord advance() {
-			boolean initial = unused();
-			if (initial) {
+		private void prepare() {
+			if (key == null) {
 				key = new StringBuilder(maxLength);
 				siblingPositions = new long[maxLength + 1];
 				childPositions = new long[maxLength + 1];
-				reader.setPosition(0L);
+			}
+		}
+		
+		private LinearRecord advance() {
+			if (prefixPosition < 0L) return null;
+			
+			if (initial) {
+				prepare();
+				key.setLength(0);
+				key.append(prefixKey);
+				reader.setPosition(prefixPosition);
 			}
 
 			if (nextRecordPosition < finalRecordPosition) {
+				//TODO recording & setting the next record position may not now be necessary
+				// since locate and advance are now the only methods that change reader position
 				reader.setPosition(nextRecordPosition);
 				LinearRecord record = readRecord(key);
 				nextRecordPosition = reader.getPosition();
 				return record;
 			}
 			
+			int depth = key.length();
 			while (true) {
 				if (!initial) {
-					int depth = key.length();
+					if (exact) return null;
+					
 					while (true) {
 						long childPosition = childPositions[depth]; 
 						if (childPosition >= 0) {
@@ -260,7 +280,9 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 							childPositions[depth] = -1L;
 							break;
 						}
-						
+
+						if (depth == prefixKey.length()) return null;
+
 						long siblingPosition = siblingPositions[depth];
 						if (siblingPosition >= 0) {
 							reader.setPosition(siblingPosition);
@@ -269,12 +291,12 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 							break;
 						}
 
-						if (depth == 0) return null;
 						key.setLength(--depth);
 					}
 					key.append( (char) (huffmanCoding.decodePositiveInt(reader) - 1) );
+					depth++;
 				}
-
+				
 				initial = false;
 				LinearRecord record;
 				if (uniqueKeys) {
@@ -293,7 +315,6 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				long position = reader.getPosition();
-				int depth = key.length();
 				childPositions[depth] = childOffset < 0 ? -1L : childOffset + position;
 				siblingPositions[depth] = siblingOffset < 0 ? -1L : siblingOffset + position;
 

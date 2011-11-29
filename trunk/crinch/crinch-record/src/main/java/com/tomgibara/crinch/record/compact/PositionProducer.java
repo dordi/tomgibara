@@ -31,7 +31,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		posStats = new PositionStats(context);
 		posStats.read();
 
-		file = new File(context.getOutputDir(), context.getDataName() + ".positions." + posStats.definition.getId());
+		file = context.file("positions", false, posStats.definition);
 		int size = (int) file.length();
 		byte[] data = new byte[size];
 		FileInputStream in = null;

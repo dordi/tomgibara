@@ -128,7 +128,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
 	private File file() {
 		//TODO should change to include ordering when that has been added to stats
-		return new File(context.getOutputDir(), context.getDataName() + ".compact." + context.getRecordDef().getBasisOrSelf().getId());
+		return context.file("compact", false, context.getRecordDef().getBasisOrSelf());
 	}
 	
 	private void open() {

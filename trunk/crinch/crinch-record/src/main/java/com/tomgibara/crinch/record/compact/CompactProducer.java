@@ -42,7 +42,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		coding = context.getCoding();
 		recordCount = stats.getRecordCount();
 		decompactor = new RecordDecompactor(stats, 0);
-		file = new File(context.getOutputDir(), context.getDataName() + ".compact." + def.getId());
+		file = context.file("compact", false, def);
 	}
 	
 	@Override

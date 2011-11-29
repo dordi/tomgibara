@@ -55,7 +55,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		recordDef = def;
 		factory = DynamicRecordFactory.getInstance(recordDef);
 		
-		File statsFile = new File(context.getOutputDir(), context.getDataName() + ".trie-stats." + recordDef.getId());
+		File statsFile = context.file("trie", true, recordDef);
 		final long[][] arr = new long[1][];
 		CodedStreams.readFromFile(new CodedStreams.ReadTask() {
 			@Override
@@ -74,7 +74,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		maxLength = keyStats.getMaximum().intValue();
 		uniqueKeys = keyStats.isUnique();
 
-		file = new File(context.getOutputDir(), context.getDataName() + ".trie." + recordDef.getId());
+		file = context.file("trie", false, recordDef);
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		

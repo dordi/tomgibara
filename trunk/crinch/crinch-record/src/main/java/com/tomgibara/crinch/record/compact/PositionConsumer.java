@@ -43,7 +43,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		if (recStats.getRecordCount() > Integer.MAX_VALUE) throw new UnsupportedOperationException("long record counts not currently supported.");
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		file = new File(context.getOutputDir(), context.getDataName() + ".positions." + posStats.definition.getId());
+		file = context.file("positions", false, posStats.definition);
 		if (context.isClean()) file.delete();
 	}
 

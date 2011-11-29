@@ -255,6 +255,19 @@ public class StdProcessContext implements ProcessContext {
 		t.printStackTrace();
 	}
 
+	@Override
+	public File file(String type, boolean stats, RecordDefinition def) {
+		StringBuilder sb = new StringBuilder(dataName);
+		if (type != null) {
+			sb.append('.').append(type);
+			if (stats) sb.append("-stats");
+		} else {
+			sb.append(".stats");
+		}
+		if (def != null) sb.append('.').append(def.getId());
+		return new File(outputDir, sb.toString());
+	}
+	
 	private void resetProgress() {
 		progress = 0f;
 		lastProgress = -1f;
@@ -273,7 +286,7 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	private File getRecordStatsFile() {
-		return new File(outputDir, dataName + ".stats");
+		return file(null, true, null);
 	}
 	
 	private void writeRecordStats() {
@@ -296,7 +309,7 @@ public class StdProcessContext implements ProcessContext {
 	}
 
 	private File getColumnTypesFile() {
-		return new File(outputDir, dataName + ".types");
+		return file("types", false, null);
 	}
 	
 	private void writeColumnTypes() {

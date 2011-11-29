@@ -90,13 +90,13 @@ public class CodingFrequenciesTest extends TestCase {
 		CodingFrequencies freqs = CodingFrequencies.fromValues(values);
 		
 		//outputs: 1.4488156357251847
-		System.out.println( freqs.binaryEntropy() );
+		assertEquals("1.4488", String.format("%.4f", freqs.binaryEntropy()));
 		
 		//outputs: 3
-		System.out.println( freqs.getFrequency(7) );
+		assertEquals(3, freqs.getFrequency(7));
 		
 		//outputs: [1, 3, 3]
-		System.out.println( Arrays.toString(freqs.getFrequencies()) );
+		assertTrue(Arrays.equals(new int[] {1,3,3}, freqs.getFrequencies()));
 
 	}
 	

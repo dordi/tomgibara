@@ -25,25 +25,25 @@ public class SubRecordDefinition {
 	private static final int[] NO_INDICES = new int[0];
 	private static final List<ColumnOrder.Indexed> NO_ORDERS = Collections.emptyList();
 	
-	final boolean ordinalEliminated;
-	final boolean positionEliminated;
-	final int[] indices;
-	final List<ColumnOrder.Indexed> orders;
+	private final boolean ordinalRetained;
+	private final boolean positionRetained;
+	private final int[] indices;
+	private final List<ColumnOrder.Indexed> orders;
 	
-	public SubRecordDefinition(boolean ordinalEliminated, boolean positionEliminated, int[] indices, List<ColumnOrder.Indexed> orders) {
-		this.ordinalEliminated = ordinalEliminated;
-		this.positionEliminated = positionEliminated;
+	public SubRecordDefinition(boolean ordinalRetained, boolean positionRetained, int[] indices, List<ColumnOrder.Indexed> orders) {
+		this.ordinalRetained = ordinalRetained;
+		this.positionRetained = positionRetained;
 		//TODO should check arguments as far as possible
 		this.indices = indices == null ? NO_INDICES : indices.clone();
 		this.orders = orders == null ? NO_ORDERS : Collections.unmodifiableList(new ArrayList<ColumnOrder.Indexed>(orders));
 	}
 	
-	public boolean isOrdinalEliminated() {
-		return ordinalEliminated;
+	public boolean isOrdinalRetained() {
+		return ordinalRetained;
 	}
 	
-	public boolean isPositionEliminated() {
-		return positionEliminated;
+	public boolean isPositionRetained() {
+		return positionRetained;
 	}
 	
 	public int[] getIndices() {
@@ -56,5 +56,9 @@ public class SubRecordDefinition {
 	
 	public List<ColumnOrder.Indexed> getOrders() {
 		return orders;
+	}
+	
+	int[] getIndicesUnsafely() {
+		return indices;
 	}
 }

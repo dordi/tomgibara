@@ -67,15 +67,6 @@ public class RecordDefinition {
 		}
 		
 		public Builder order(ColumnOrder order) {
-			if (order != null) {
-				int precedence = order.getPrecedence();
-				for (ColumnDefinition column : columns) {
-					ColumnOrder colOrd = column.getOrder();
-					if (colOrd != null && colOrd.getPrecedence() == precedence) {
-						throw new IllegalArgumentException("duplicate order precedence");
-					}
-				}
-			}
 			this.order = order;
 			return this;
 		}
@@ -155,26 +146,40 @@ public class RecordDefinition {
 		return builder;
 	}
 	
-	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
-		int count = columns.size();
-		int limit = 0;
-		for (int i = 0; i < count; i++) {
-			if (columns.get(i).getOrder() != null) limit ++;
+	private static List<ColumnDefinition> asCompactOrder(List<ColumnDefinition> columns) {
+		if (columns.isEmpty()) return columns;
+		List<ColumnDefinition> orderedColumns = new ArrayList<ColumnDefinition>();
+		for (ColumnDefinition column : columns) {
+			if (column.getOrder() != null) orderedColumns.add(column);
 		}
-		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(limit);
-		for (int precedence = 0; precedence < limit; precedence++) {
-			ColumnDefinition next = null;
-			for (int i = 0; i < count; i++) {
-				ColumnDefinition column = columns.get(i);
-				ColumnOrder order = column.getOrder();
-				if (order == null) continue;
-				if (order.getPrecedence() == precedence) {
-					if (next != null) throw new IllegalArgumentException("duplicate column order precedence: " + precedence);
-					next = column;
-				}
+		if (orderedColumns.isEmpty()) return columns;
+		Collections.sort(orderedColumns, ColumnOrder.columnComparator);
+
+		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(columns);
+		for (int precedence = 0; precedence < orderedColumns.size(); precedence++) {
+			ColumnDefinition column = orderedColumns.get(precedence);
+			ColumnOrder order = column.getOrder();
+			if (order.getPrecedence() != precedence) {
+				order = new ColumnOrder(precedence, order.isAscending(), order.isNullFirst());
+				column = new ColumnDefinition(column.getIndex(), column.getType(), order, column.getBasis());
+				list.set(column.getIndex(), column);
 			}
-			if (next == null) throw new IllegalArgumentException("precedence absent: " + precedence);
-			list.add(next);
+		}
+		return list;
+	}
+	
+	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
+		int columnCount = columns.size();
+		int orderCount = 0;
+		for (int i = 0; i < columnCount; i++) {
+			if (columns.get(i).getOrder() != null) orderCount ++;
+		}
+		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(orderCount);
+		list.addAll(Collections.nCopies(orderCount, (ColumnDefinition) null));
+		for (int i = 0; i < columnCount; i++) {
+			ColumnDefinition column = columns.get(i);
+			ColumnOrder order = column.getOrder();
+			if (order != null) list.set(order.getPrecedence(), column);
 		}
 		return list;
 	}
@@ -226,7 +231,7 @@ public class RecordDefinition {
 		basis = builder.getBasis();
 		ordinal = builder.ordinal;
 		positional = builder.positional;
-		columns = Collections.unmodifiableList(builder.columns);
+		columns = Collections.unmodifiableList(asCompactOrder(builder.columns));
 		types = Collections.unmodifiableList(asTypeList(columns));
 		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
 	}
@@ -235,9 +240,9 @@ public class RecordDefinition {
 		basis = null;
 		ordinal = that.ordinal;
 		positional = that.positional;
-		columns = that.columns;
+		columns = Collections.unmodifiableList(asCompactOrder(that.columns));
 		types = that.types;
-		orderedColumns = that.orderedColumns;
+		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
 	}
 	
 	// accessors

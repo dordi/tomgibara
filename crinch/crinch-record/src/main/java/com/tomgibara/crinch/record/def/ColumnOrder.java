@@ -1,5 +1,7 @@
 package com.tomgibara.crinch.record.def;
 
+import java.util.Comparator;
+
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.util.WriteStream;
 
@@ -7,6 +9,29 @@ public class ColumnOrder {
 
 	// statics
 	
+	static Comparator<ColumnOrder> comparator = new Comparator<ColumnOrder>() {
+		
+		@Override
+		public int compare(ColumnOrder a, ColumnOrder b) {
+			if (a.precedence != b.precedence) return a.precedence - b.precedence;
+			if (a.ascending != b.ascending) return a.ascending ? -1 : 1;
+			if (a.nullFirst != b.nullFirst) return a.nullFirst ? -1 : 1;
+			return 0;
+		}
+	};
+
+	static Comparator<ColumnDefinition> columnComparator = new Comparator<ColumnDefinition>() {
+		
+		public int compare(ColumnDefinition a, ColumnDefinition b) {
+			ColumnOrder aOrd = a.getOrder();
+			ColumnOrder bOrd = b.getOrder();
+			if (aOrd == null || bOrd == null) throw new IllegalArgumentException("missing order");
+			int c = comparator.compare(aOrd, bOrd);
+			return c == 0 ? a.getIndex() - b.getIndex() : c;
+		}
+		
+	};
+
 	static HashSource<ColumnOrder> hashSource = new HashSource<ColumnOrder>() {
 		
 		@Override

@@ -374,15 +374,16 @@ public class RecordDefinition {
 	public RecordDefinition asSubRecord(SubRecordDefinition subRecDef) {
 		if (subRecDef == null) throw new IllegalArgumentException("null subRecDef");
 		RecordDefinition basis;
-		if (subRecDef.isOrdinalEliminated() && ordinal || subRecDef.isPositionEliminated() && positional) {
+		if (ordinal && !subRecDef.isOrdinalRetained() || positional && !subRecDef.isPositionRetained()) {
 			basis = asCompleteBasisToBuild()
-				.setOrdinal(!(subRecDef.ordinalEliminated && ordinal))
-				.setPositional(!(subRecDef.positionEliminated && positional))
+				//.setOrdinal(!(subRecDef.ordinalRetained && ordinal))
+				.setOrdinal(ordinal && subRecDef.isOrdinalRetained())
+				.setPositional(positional && subRecDef.isPositionRetained())
 				.build();
 		} else {
 			basis = this;
 		}
-		return basis.withIndices(subRecDef.indices).withIndexedOrdering(subRecDef.orders);
+		return basis.withIndices(subRecDef.getIndicesUnsafely()).withIndexedOrdering(subRecDef.getOrders());
 	}
 
 	//TODO object methods

@@ -29,13 +29,13 @@ import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 public class HuffmanCodingTest extends TestCase {
     
-    public void testEncode() {
-      test(new long[] {10, 15, 30, 16, 29});
-      test(new long[] {20, 20, 20, 20, 20});
-      test(new long[] {10, 20, 30, 40, 60});
-      test(new long[] {0, 10, 20, 30, 40, 60});
-      test(new long[] {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,100});
-    }
+//    public void testEncode() {
+//      test(new long[] {10, 15, 30, 16, 29});
+//      test(new long[] {20, 20, 20, 20, 20});
+//      test(new long[] {10, 20, 30, 40, 60});
+//      test(new long[] {0, 10, 20, 30, 40, 60});
+//      test(new long[] {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,100});
+//    }
     
     public void testDecode() {
     	testDecodeBoth(new long[] {10, 15, 30, 16, 29});
@@ -66,15 +66,15 @@ public class HuffmanCodingTest extends TestCase {
     private static BitReader testDecode(HuffmanCoding.Frequencies frequencies) {
         HuffmanCoding huffman = new HuffmanCoding(frequencies);
 		int[] memory = new int[1000];
-		IntArrayBitWriter w = new IntArrayBitWriter(memory);
-		PrintStreamBitWriter d = new PrintStreamBitWriter();
 		int count = frequencies.getCorrespondence().getCount();
+		IntArrayBitWriter w = new IntArrayBitWriter(memory);
+//		PrintStreamBitWriter d = new PrintStreamBitWriter();
 		for (int i = 1; i <= count; i++) {
 			huffman.encodePositiveInt(w, i);
-			huffman.encodePositiveInt(d, i);
+//			huffman.encodePositiveInt(d, i);
 		}
 		w.flush();
-		System.out.println();
+//		System.out.println();
 		
 		IntArrayBitReader r = new IntArrayBitReader(memory);
 		for (int i = 1; i <= count; i++) {
@@ -85,38 +85,40 @@ public class HuffmanCodingTest extends TestCase {
         return r;
 	}
 
-	public void testUneven() {
-        int size = 1000;
-        long[] uneven = new long[size];
-        for (int i = 0; i < uneven.length; i++) {
-            uneven[i] = size - i;
-        }
-        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(uneven));
-        System.out.println("==================");
-        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
-        for (int i = size - 100; i <= size; i++) {
-            System.out.print("(" + i + ") ");
-            huffman.encodePositiveInt(dumper, i);
-            dumper.flush();
-        }
-        System.out.println();
-        
-    }
+//TODO make this a useful test
+//	public void testUneven() {
+//        int size = 1000;
+//        long[] uneven = new long[size];
+//        for (int i = 0; i < uneven.length; i++) {
+//            uneven[i] = size - i;
+//        }
+//        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(uneven));
+//        System.out.println("==================");
+//        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
+//        for (int i = size - 100; i <= size; i++) {
+//            System.out.print("(" + i + ") ");
+//            huffman.encodePositiveInt(dumper, i);
+//            dumper.flush();
+//        }
+//        System.out.println();
+//        
+//    }
     
-    private static void test(long[] freqs) {
-
-        descendingSort(freqs);
-        
-        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(freqs));
-
-        System.out.println("==================");
-        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
-        for (int i = 1; i <= freqs.length; i++) {
-            huffman.encodePositiveInt(dumper, i);
-            dumper.flush();
-        }
-        System.out.println();
-    }
+  //TODO make this a useful test
+//    private static void test(long[] freqs) {
+//
+//        descendingSort(freqs);
+//        
+//        HuffmanCoding huffman = new HuffmanCoding(new HuffmanCoding.DescendingFrequencyValues(freqs));
+//
+//        System.out.println("==================");
+//        PrintStreamBitWriter dumper = new PrintStreamBitWriter();
+//        for (int i = 1; i <= freqs.length; i++) {
+//            huffman.encodePositiveInt(dumper, i);
+//            dumper.flush();
+//        }
+//        System.out.println();
+//    }
 
     private static void descendingSort(long[] a) {
         Arrays.sort(a);

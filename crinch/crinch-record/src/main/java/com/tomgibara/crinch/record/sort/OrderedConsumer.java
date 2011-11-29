@@ -38,7 +38,7 @@ public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 	}
 	
 	File sortedFile(boolean input) {
-		return new File(context.getOutputDir(), context.getDataName() + ".compact." + (input ? definition.getBasis().getId() : definition.getId()));
+		return context.file("compact", false, input ? definition.getBasis() : definition);
 	}
 	
 

@@ -25,7 +25,7 @@ class PositionStats {
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		definition = def.asBasis();
 		coding = context.getCoding();
-		file = new File(context.getOutputDir(), context.getDataName() + ".positions-stats." + definition.getId());
+		file = context.file("positions", true, definition);
 		if (context.isClean()) file.delete();
 	}
 	

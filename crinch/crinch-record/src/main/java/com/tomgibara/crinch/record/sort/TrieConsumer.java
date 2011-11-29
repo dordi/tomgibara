@@ -155,11 +155,11 @@ public class TrieConsumer extends OrderedConsumer {
 	}
 
 	private File file() {
-		return new File(context.getOutputDir(), context.getDataName() + ".trie." + definition.getId());
+		return context.file("trie", false, definition);
 	}
 
 	private File statsFile() {
-		return new File(context.getOutputDir(), context.getDataName() + ".trie-stats." + definition.getId());
+		return context.file("trie", true, definition);
 	}
 	
 	private void writeNode(CodedWriter coded, Node node) {

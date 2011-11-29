@@ -59,5 +59,5 @@ public interface ProcessContext {
 	
 	void log(String message, Throwable t);
 
-	
+	File file(String type, boolean stats, RecordDefinition def);
 }

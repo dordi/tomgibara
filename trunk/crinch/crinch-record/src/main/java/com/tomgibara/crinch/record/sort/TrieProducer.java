@@ -20,6 +20,8 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
@@ -40,11 +42,13 @@ import com.tomgibara.crinch.record.def.RecordDefinition;
 import com.tomgibara.crinch.record.def.SubRecordDefinition;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
+import com.tomgibara.crinch.record.dynamic.LinkedRecord;
+import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {
 
-	private static ClassConfig sConfig = new ClassConfig(false, false);
+	private static ClassConfig sConfig = new ClassConfig(false, true);
 
 	private final SubRecordDefinition subRecDef;
 	
@@ -129,7 +133,6 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		factory = null;
 	}
 	
-	//TODO add convenience method: List<LinearRecord> allNext();
 	public class Accessor implements RecordSequence<LinearRecord> {
 	
 		private final ByteArrayBitReader reader;
@@ -179,6 +182,14 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			LinearRecord tmp = next;
 			next = advance();
 			return tmp;
+		}
+
+		public List<LinearRecord> allNext() {
+			LinkedRecordList<LinkedRecord> list = new LinkedRecordList<LinkedRecord>();
+			while (hasNext()) {
+				list.add((LinkedRecord) next());
+			}
+			return (List) Collections.unmodifiableList(list);
 		}
 		
 		@Override

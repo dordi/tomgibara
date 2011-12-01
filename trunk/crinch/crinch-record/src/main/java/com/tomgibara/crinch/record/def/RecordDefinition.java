@@ -24,6 +24,7 @@ import java.util.List;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
+import com.tomgibara.crinch.record.def.ColumnOrder.Indexed;
 import com.tomgibara.crinch.util.WriteStream;
 
 public class RecordDefinition {
@@ -376,14 +377,17 @@ public class RecordDefinition {
 		RecordDefinition basis;
 		if (ordinal && !subRecDef.isOrdinalRetained() || positional && !subRecDef.isPositionRetained()) {
 			basis = asCompleteBasisToBuild()
-				//.setOrdinal(!(subRecDef.ordinalRetained && ordinal))
 				.setOrdinal(ordinal && subRecDef.isOrdinalRetained())
 				.setPositional(positional && subRecDef.isPositionRetained())
 				.build();
 		} else {
 			basis = this;
 		}
-		return basis.withIndices(subRecDef.getIndicesUnsafely()).withIndexedOrdering(subRecDef.getOrders());
+		int[] indices = subRecDef.getIndicesUnsafely();
+		if (indices != null) basis = basis.withIndices(indices);
+		List<Indexed> orders = subRecDef.getOrders();
+		if (orders != null) basis = basis.withIndexedOrdering(orders);
+		return basis;
 	}
 
 	//TODO object methods

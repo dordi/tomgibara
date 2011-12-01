@@ -22,20 +22,29 @@ import java.util.List;
 
 public class SubRecordDefinition {
 
-	private static final int[] NO_INDICES = new int[0];
-	private static final List<ColumnOrder.Indexed> NO_ORDERS = Collections.emptyList();
-	
 	private final boolean ordinalRetained;
 	private final boolean positionRetained;
 	private final int[] indices;
 	private final List<ColumnOrder.Indexed> orders;
-	
+
+	public SubRecordDefinition(boolean ordinalRetained, boolean positionRetained) {
+		this(ordinalRetained, positionRetained, null, null);
+	}
+
+	public SubRecordDefinition(int[] indices) {
+		this(true, true, indices, null);
+	}
+
+	public SubRecordDefinition(List<ColumnOrder.Indexed> orders) {
+		this(true, true, null, orders);
+	}
+
 	public SubRecordDefinition(boolean ordinalRetained, boolean positionRetained, int[] indices, List<ColumnOrder.Indexed> orders) {
 		this.ordinalRetained = ordinalRetained;
 		this.positionRetained = positionRetained;
 		//TODO should check arguments as far as possible
-		this.indices = indices == null ? NO_INDICES : indices.clone();
-		this.orders = orders == null ? NO_ORDERS : Collections.unmodifiableList(new ArrayList<ColumnOrder.Indexed>(orders));
+		this.indices = indices == null ? null : indices.clone();
+		this.orders = orders == null ? null : Collections.unmodifiableList(new ArrayList<ColumnOrder.Indexed>(orders));
 	}
 	
 	public boolean isOrdinalRetained() {
@@ -47,11 +56,7 @@ public class SubRecordDefinition {
 	}
 	
 	public int[] getIndices() {
-		return indices.clone();
-	}
-	
-	public int getColumnCount() {
-		return indices.length;
+		return indices == null ? null : indices.clone();
 	}
 	
 	public List<ColumnOrder.Indexed> getOrders() {

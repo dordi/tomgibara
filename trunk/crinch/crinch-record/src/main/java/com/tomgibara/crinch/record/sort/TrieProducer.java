@@ -212,6 +212,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		
 		// finishes with reader positioned to read record(s)
 		private long locate(String key) {
+			if (key.length() > maxLength) return -1L;
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;

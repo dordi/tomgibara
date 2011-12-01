@@ -178,7 +178,11 @@ public class StdProcessContext implements ProcessContext {
 		if (recordCount != this.recordCount) {
 			this.recordCount = recordCount;
 			recordsTransferred = Math.min(recordsTransferred, recordCount);
-			log("Record count: " + recordCount);
+			if (recordCount < 0L) {
+				log("Record count unknown");
+			} else {
+				log("Record count: " + recordCount);
+			}
 			if (recordCount <= 0L) resetProgress();
 		}
 	}

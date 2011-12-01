@@ -48,6 +48,10 @@ import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {
 
+	public static enum Case {
+		MIXED, UPPER, LOWER
+	}
+	
 	private static ClassConfig sConfig = new ClassConfig(false, true);
 
 	private final SubRecordDefinition subRecDef;
@@ -138,6 +142,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		private final ByteArrayBitReader reader;
 		private final CodedReader coded;
 
+		private Case casing = Case.MIXED;
 		private String prefixKey = "";
 		private long prefixPosition = 0L;
 		private boolean initial = true;
@@ -166,6 +171,13 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			if (key == null) throw new IllegalArgumentException("null key");
 			configure(key);
 			exact = true;
+			return this;
+		}
+
+		public Accessor casing(Case casing) {
+			if (casing == null) throw new IllegalArgumentException("null casing");
+			this.casing = casing;
+			configure(prefixKey);
 			return this;
 		}
 		
@@ -203,30 +215,46 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		}
 		
 		private void configure(String str) {
-			prefixKey = str;
-			prefixPosition = locate(str);
+			if (str != null) locate(str);
 			initial = true;
 			nextRecordPosition = 0L;
 			finalRecordPosition = 0L;
 		}
 		
 		// finishes with reader positioned to read record(s)
-		private long locate(String key) {
-			if (key.length() > maxLength) return -1L;
+		private void locate(String key) {
+			if (key.length() > maxLength) {
+				prefixKey = null;
+				prefixPosition = -1L;
+				return;
+			}
 			reader.setPosition(0L);
 			boolean root = true;
 			int index = 0;
+			StringBuilder sb = new StringBuilder();
 			while (true) {
 				boolean followChild;
 				if (root) {
-					if (key.isEmpty()) return 0L;
+					if (key.isEmpty()) {
+						prefixKey = "";
+						prefixPosition = 0L;
+						return;
+					}
 					followChild = true;
 					root = false;
-				} else if (key.charAt(index) == (char) (huffmanCoding.decodePositiveInt(reader) - 1)) {
-					if (++index == key.length()) return reader.getPosition();
-					followChild = true;
 				} else {
-					followChild = false;
+					char c = (char) (huffmanCoding.decodePositiveInt(reader) - 1);
+					if (charsMatch(key.charAt(index), c)) {
+						sb.append(c);
+						if (++index == key.length()) {
+							prefixKey = sb.toString();
+							prefixPosition = reader.getPosition();
+							return;
+						}
+						followChild = true;
+					} else {
+						followChild = false;
+					}
 				}
 				if (uniqueKeys) {
 					if (reader.readBoolean()) readRecord(key);
@@ -236,12 +264,29 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				long childOffset = coded.readPositiveLong() - 2L;
 				long siblingOffset = coded.readPositiveLong() - 2L;
 				if (followChild) {
-					if (childOffset < 0) return -1L;
+					if (childOffset < 0) {
+						prefixKey = null;
+						prefixPosition = -1L;
+						return;
+					}
 					reader.skipBits(childOffset);
 				} else {
-					if (siblingOffset < 0) return -1L;
+					if (siblingOffset < 0) {
+						prefixKey = null;
+						prefixPosition = -1L;
+						return;
+					}
 					reader.skipBits(siblingOffset);
 				}
+			}
+		}
+		
+		private boolean charsMatch(char c, char d) {
+			switch (casing) {
+			case MIXED : return c == d;
+			case UPPER : return Character.toUpperCase(c) == Character.toUpperCase(d);
+			case LOWER : return Character.toLowerCase(c) == Character.toLowerCase(d);
+			default : throw new IllegalStateException("Unexpected case: " + casing);
 			}
 		}
 		

@@ -31,6 +31,9 @@ public class RecordDefinition {
 	
 	// statics
 	
+	// slightly hacky way of recording that builder clients are specifically nullifying an order
+	private static final ColumnOrder NO_ORDER = new ColumnOrder(0, true, true);
+	
 	public static class Builder {
 		
 		private final RecordDefinition basis;
@@ -84,7 +87,7 @@ public class RecordDefinition {
 		}
 		
 		public Builder order(ColumnOrder order) {
-			this.order = order;
+			this.order = order == null ? NO_ORDER : order;
 			return this;
 		}
 		
@@ -94,11 +97,10 @@ public class RecordDefinition {
 				columns.add(new ColumnDefinition(columns.size(), type, order, -1));
 			} else {
 				if (index < 0) throw new IllegalStateException("no index");
-				ColumnDefinition column = basis.basis == null ?
-						basis.columns.get(index) :
-						basis.basis.columns.get(basis.columns.get(index).getBasis());
-				ColumnOrder colOrd = order == null ? column.getOrder() : order;
-				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, column.getIndex()));
+				ColumnDefinition column = basis.columns.get(index);
+				ColumnOrder colOrd = order == null ? column.getOrder() : (order == NO_ORDER ? null : order);
+				int index = basis.basis == null ? this.index : column.getBasis(); 
+				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, index));
 			}
 			index = -1;
 			type = null;
@@ -131,7 +133,7 @@ public class RecordDefinition {
 		Builder withOrdering(List<ColumnOrder> orders) {
 			for (int i = 0; i < basis.columns.size(); i++) {
 				select(i);
-				if (i < orders.size()) order(orders.get(i));
+				order( i < orders.size() ? orders.get(i) : null);
 				add();
 			}
 			return this;
@@ -362,13 +364,12 @@ public class RecordDefinition {
 	}
 	
 	public RecordDefinition withOrdering(List<ColumnOrder> orders) {
-		//TODO could check if orders are exclusively null
-		if (orders == null || orders.isEmpty()) return this;
+		if (orders == null) return this;
 		return new Builder(this).withOrdering(orders).build();
 	}
 	
 	public RecordDefinition withIndexedOrdering(List<ColumnOrder.Indexed> orders) {
-		if (orders == null || orders.isEmpty()) return this;
+		if (orders == null) return this;
 		return new Builder(this).withIndexedOrdering(orders).build();
 	}
 	

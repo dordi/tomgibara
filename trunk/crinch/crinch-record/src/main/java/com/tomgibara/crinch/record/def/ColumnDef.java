@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record.def;
 
+import java.util.Map;
+
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.util.WriteStream;
 
@@ -34,7 +36,6 @@ public class ColumnDef {
 			}
 		}
 	};
-
 	
 	// fields
 	
@@ -42,14 +43,17 @@ public class ColumnDef {
 	private final ColumnType type;
 	private final ColumnOrder order;
 	private final int basis;
+	private final Map<String, String> properties;
 
 	// constructors
-	
-	ColumnDef(int index, ColumnType type, ColumnOrder order, int basis) {
+
+	// properties should be immutable and not null
+	ColumnDef(int index, ColumnType type, ColumnOrder order, int basis, Map<String, String> properties) {
 		this.index = index;
 		this.type = type;
 		this.order = order;
 		this.basis = basis;
+		this.properties = properties;
 	}
 	
 	// accessors
@@ -66,8 +70,21 @@ public class ColumnDef {
 		return order;
 	}
 	
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+	
+	// package scoped accessors
+
 	int getBasis() {
 		return basis;
+	}
+	
+	// package scoped methods
+
+	ColumnDef withOrder(ColumnOrder order) {
+		//TODO consider a weaker equality check here
+		return order == this.order ? this : new ColumnDef(index, type, order, basis, properties);
 	}
 	
 	//TODO implement object methods

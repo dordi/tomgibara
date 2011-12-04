@@ -19,12 +19,15 @@ package com.tomgibara.crinch.record.def;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
-import com.tomgibara.crinch.record.def.ColumnOrder.Indexed;
 import com.tomgibara.crinch.util.WriteStream;
 
 public class RecordDef {
@@ -33,6 +36,20 @@ public class RecordDef {
 	
 	// slightly hacky way of recording that builder clients are specifically nullifying an order
 	private static final ColumnOrder NO_ORDER = new ColumnOrder(0, true, true);
+	private static final Map<String, String> NO_PROPS = Collections.emptyMap();
+
+	private static Map<String, String> combineProperties(Map<String, String> basisProps, Map<String, String> extraProps) {
+		if (extraProps.isEmpty()) return basisProps;
+		Map<String, String> props = new LinkedHashMap<String, String>(basisProps);
+		for (Entry<String, String> entry : extraProps.entrySet()) {
+			if (entry.getValue() == null) {
+				props.remove(entry.getKey());
+			} else {
+				props.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return Collections.unmodifiableMap(props);
+	}
 	
 	public static class Builder {
 		
@@ -44,6 +61,7 @@ public class RecordDef {
 		private int index = -1;
 		private ColumnType type;
 		private ColumnOrder order;
+		private final Map<String, String> properties = new LinkedHashMap<String, String>();
 		
 		Builder(RecordDef basis) {
 			this.basis = basis;
@@ -91,24 +109,33 @@ public class RecordDef {
 			return this;
 		}
 		
+		public Builder property(String name, String value) {
+			if (name == null) throw new IllegalArgumentException("null name");
+			properties.put(name, value);
+			return this;
+		}
+		
 		public Builder add() {
 			if (basis == null) {
 				if (type == null) throw new IllegalStateException("no type");
-				columns.add(new ColumnDef(columns.size(), type, order, -1));
+				columns.add(new ColumnDef(columns.size(), type, order, -1, combineProperties(NO_PROPS, properties)));
 			} else {
 				if (index < 0) throw new IllegalStateException("no index");
 				ColumnDef column = basis.columns.get(index);
 				ColumnOrder colOrd = order == null ? column.getOrder() : (order == NO_ORDER ? null : order);
 				int index = basis.basis == null ? this.index : column.getBasis(); 
-				columns.add(new ColumnDef(columns.size(), column.getType(), colOrd, index));
+				Map<String, String> properties = combineProperties(column.getProperties(), this.properties);
+				columns.add(new ColumnDef(columns.size(), column.getType(), colOrd, index, properties));
 			}
 			index = -1;
 			type = null;
 			order = null;
+			properties.clear();
 			return this;
 		}
-		
+
 		public RecordDef build() {
+			if (index != -1 || type != null || order != null || !properties.isEmpty()) throw new IllegalStateException("unadded column information");
 			try {
 				return new RecordDef(this);
 			} finally {
@@ -179,9 +206,7 @@ public class RecordDef {
 			ColumnDef column = orderedColumns.get(precedence);
 			ColumnOrder order = column.getOrder();
 			if (order.getPrecedence() != precedence) {
-				order = new ColumnOrder(precedence, order.isAscending(), order.isNullFirst());
-				column = new ColumnDef(column.getIndex(), column.getType(), order, column.getBasis());
-				list.set(column.getIndex(), column);
+				list.set(column.getIndex(), column.withOrder(order.withPrecedence(precedence)));
 			}
 		}
 		return list;
@@ -349,17 +374,16 @@ public class RecordDef {
 		return new Builder(this);
 	}
 	
-	public Builder asCompleteBasisToBuild() {
-		Builder builder = new Builder(this);
-		int count = columns.size();
-		for (int i = 0; i < count; i++) {
-			builder.select(i).add();
-		}
-		return builder;
+	public RecordDef withRetention(boolean ordinalRetained, boolean positionRetained) {
+		if ((!ordinal || ordinalRetained) && (!positional || positionRetained)) return this;
+		return asCompleteBasisToBuild()
+			.setOrdinal(ordinal && ordinalRetained)
+			.setPositional(positional && positionRetained)
+			.build();
 	}
 	
 	public RecordDef withIndices(int[] indices) {
-		if (indices == null || indices.length == 0) return this;
+		if (indices == null) return this;
 		return new Builder(this).withIndices(indices).build();
 	}
 	
@@ -375,22 +399,21 @@ public class RecordDef {
 	
 	public RecordDef asSubRecord(SubRecordDef subRecDef) {
 		if (subRecDef == null) throw new IllegalArgumentException("null subRecDef");
-		RecordDef basis;
-		if (ordinal && !subRecDef.isOrdinalRetained() || positional && !subRecDef.isPositionRetained()) {
-			basis = asCompleteBasisToBuild()
-				.setOrdinal(ordinal && subRecDef.isOrdinalRetained())
-				.setPositional(positional && subRecDef.isPositionRetained())
-				.build();
-		} else {
-			basis = this;
-		}
-		int[] indices = subRecDef.getIndicesUnsafely();
-		if (indices != null) basis = basis.withIndices(indices);
-		List<Indexed> orders = subRecDef.getOrders();
-		if (orders != null) basis = basis.withIndexedOrdering(orders);
-		return basis;
+		return this
+			.withRetention(subRecDef.isOrdinalRetained(), subRecDef.isPositionRetained())
+			.withIndices(subRecDef.getIndicesUnsafely())
+			.withIndexedOrdering(subRecDef.getOrders());
 	}
 
+	private Builder asCompleteBasisToBuild() {
+		Builder builder = new Builder(this);
+		int count = columns.size();
+		for (int i = 0; i < count; i++) {
+			builder.select(i).add();
+		}
+		return builder;
+	}
+	
 	//TODO object methods
 	
 	@Override

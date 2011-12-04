@@ -88,6 +88,12 @@ public class ColumnOrder {
 		return nullFirst;
 	}
 	
+	// package scoped methods
+	
+	ColumnOrder withPrecedence(int precedence) {
+		return precedence == this.precedence ? this : new ColumnOrder(precedence, ascending, nullFirst);
+	}
+	
 	// object methods
 
 	@Override

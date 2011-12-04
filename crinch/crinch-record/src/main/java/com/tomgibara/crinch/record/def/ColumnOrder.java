@@ -37,9 +37,9 @@ public class ColumnOrder {
 		}
 	};
 
-	static Comparator<ColumnDefinition> columnComparator = new Comparator<ColumnDefinition>() {
+	static Comparator<ColumnDef> columnComparator = new Comparator<ColumnDef>() {
 		
-		public int compare(ColumnDefinition a, ColumnDefinition b) {
+		public int compare(ColumnDef a, ColumnDef b) {
 			ColumnOrder aOrd = a.getOrder();
 			ColumnOrder bOrd = b.getOrder();
 			if (aOrd == null || bOrd == null) throw new IllegalArgumentException("missing order");

@@ -39,7 +39,7 @@ import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 public class StdProcessContext implements ProcessContext {
 
@@ -58,7 +58,7 @@ public class StdProcessContext implements ProcessContext {
 	private RecordStats recordStats;
 	private List<ColumnType> columnTypes;
 	private List<ColumnOrder> columnOrders;
-	private RecordDefinition recordDef;
+	private RecordDef recordDef;
 
 	public StdProcessContext() {
 		load();
@@ -233,11 +233,11 @@ public class StdProcessContext implements ProcessContext {
 	}
 
 	@Override
-	public RecordDefinition getRecordDef() {
+	public RecordDef getRecordDef() {
 		if (recordDef == null) {
 			if (columnTypes != null) {
-				RecordDefinition def;
-				def = RecordDefinition.fromTypes(columnTypes).build();
+				RecordDef def;
+				def = RecordDef.fromTypes(columnTypes).build();
 				if (columnOrders != null) {
 					def = def.withOrdering(columnOrders);
 				}
@@ -276,7 +276,7 @@ public class StdProcessContext implements ProcessContext {
 	}
 
 	@Override
-	public File file(String type, boolean stats, RecordDefinition def) {
+	public File file(String type, boolean stats, RecordDef def) {
 		StringBuilder sb = new StringBuilder(dataName);
 		if (type != null) {
 			sb.append('.').append(type);

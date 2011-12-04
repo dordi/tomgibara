@@ -32,10 +32,10 @@ import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.def.ColumnDefinition;
+import com.tomgibara.crinch.record.def.ColumnDef;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 //TODO could persist nullables as primitives
 //TODO currently limited to 32768 fields
@@ -58,7 +58,7 @@ public class DynamicRecordFactory {
 		}
 	}
 	
-	public static DynamicRecordFactory getInstance(RecordDefinition definition) {
+	public static DynamicRecordFactory getInstance(RecordDef definition) {
 		String name = "DynRec_" + definition.getId();
 		DynamicRecordFactory factory;
 		synchronized (factories) {
@@ -126,7 +126,7 @@ public class DynamicRecordFactory {
 	
 	// fields
 	
-	private final RecordDefinition definition;
+	private final RecordDef definition;
 	private final String name;
 	private final String source;
 	private final Class<? extends LinearRecord>[] clss = new Class[ClassConfig.sInstances.length];
@@ -134,7 +134,7 @@ public class DynamicRecordFactory {
 	
 	// constructors
 	
-	private DynamicRecordFactory(RecordDefinition definition, String name) {
+	private DynamicRecordFactory(RecordDef definition, String name) {
 		this.definition = definition;
 		this.name = name;
 		source = generateSource();
@@ -168,7 +168,7 @@ public class DynamicRecordFactory {
 		}
 	}
 	
-	public RecordDefinition getDefinition() {
+	public RecordDef getDefinition() {
 		return definition;
 	}
 	
@@ -404,7 +404,7 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic int compareTo(Object obj) {\n");
 			sb.append("\t\t" + className + " that = (" + className + ") obj;\n");
-			for (ColumnDefinition column : definition.getOrderedColumns()) {
+			for (ColumnDef column : definition.getOrderedColumns()) {
 				int field = column.getIndex();
 				ColumnOrder order = column.getOrder();
 				ColumnType type = definition.getTypes().get(field);
@@ -484,8 +484,8 @@ public class DynamicRecordFactory {
 		sb.append("}\n");
 	}
 
-	private void generateRecordCopy(StringBuilder sb, List<ColumnDefinition> columns) {
-		for (ColumnDefinition column : columns) {
+	private void generateRecordCopy(StringBuilder sb, List<ColumnDef> columns) {
+		for (ColumnDef column : columns) {
 			if (column == null) {
 				sb.append("\t\t\trecord.skipNext();\n");
 			} else {

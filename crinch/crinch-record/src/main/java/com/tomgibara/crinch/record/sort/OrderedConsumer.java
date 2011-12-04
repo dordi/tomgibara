@@ -23,26 +23,26 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.RecordDefinition;
-import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 
 public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 
-	private final SubRecordDefinition subRecDef;
+	private final SubRecordDef subRecDef;
 	
 	ProcessContext context;
-	RecordDefinition definition;
+	RecordDef definition;
 	DynamicRecordFactory factory;
 
-	public OrderedConsumer(SubRecordDefinition subRecDef) {
+	public OrderedConsumer(SubRecordDef subRecDef) {
 		this.subRecDef = subRecDef;
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		RecordDefinition def = context.getRecordDef();
+		RecordDef def = context.getRecordDef();
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		definition = def.asBasis();
 		if (subRecDef != null) definition = definition.asSubRecord(subRecDef);

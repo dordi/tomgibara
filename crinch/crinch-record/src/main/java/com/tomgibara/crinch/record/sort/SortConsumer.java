@@ -31,7 +31,7 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
-import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 public class SortConsumer extends OrderedConsumer {
@@ -44,7 +44,7 @@ public class SortConsumer extends OrderedConsumer {
 	private BitWriter writer;
 	private CodedWriter coded;
 	
-	public SortConsumer(SubRecordDefinition subRecDef) {
+	public SortConsumer(SubRecordDef subRecDef) {
 		super(subRecDef);
 	}
 	

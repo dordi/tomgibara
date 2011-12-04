@@ -37,7 +37,7 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
@@ -54,7 +54,7 @@ public class TrieConsumer extends OrderedConsumer {
 	private CodedWriter recordSizingCoded;
 
 	
-	public TrieConsumer(SubRecordDefinition subRecDef) {
+	public TrieConsumer(SubRecordDef subRecDef) {
 		super(subRecDef);
 	}
 	

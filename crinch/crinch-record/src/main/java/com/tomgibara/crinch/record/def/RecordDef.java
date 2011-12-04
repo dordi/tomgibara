@@ -27,7 +27,7 @@ import com.tomgibara.crinch.hashing.PRNGMultiHash;
 import com.tomgibara.crinch.record.def.ColumnOrder.Indexed;
 import com.tomgibara.crinch.util.WriteStream;
 
-public class RecordDefinition {
+public class RecordDef {
 	
 	// statics
 	
@@ -36,16 +36,16 @@ public class RecordDefinition {
 	
 	public static class Builder {
 		
-		private final RecordDefinition basis;
+		private final RecordDef basis;
 
 		private boolean ordinal;
 		private boolean positional;
-		private List<ColumnDefinition> columns = new ArrayList<ColumnDefinition>();
+		private List<ColumnDef> columns = new ArrayList<ColumnDef>();
 		private int index = -1;
 		private ColumnType type;
 		private ColumnOrder order;
 		
-		Builder(RecordDefinition basis) {
+		Builder(RecordDef basis) {
 			this.basis = basis;
 			if (basis == null) {
 				ordinal = true;
@@ -72,7 +72,7 @@ public class RecordDefinition {
 			if (basis == null) throw new IllegalStateException("no basis");
 			if (index < 0) throw new IllegalArgumentException("negative index");
 			if (index >= basis.columns.size()) throw new IllegalArgumentException("invalid index");
-			for (ColumnDefinition column : columns) {
+			for (ColumnDef column : columns) {
 				if (column.getBasis() == index) throw new IllegalArgumentException("duplicate basis index: " + index);
 			}
 			this.index = index;
@@ -94,13 +94,13 @@ public class RecordDefinition {
 		public Builder add() {
 			if (basis == null) {
 				if (type == null) throw new IllegalStateException("no type");
-				columns.add(new ColumnDefinition(columns.size(), type, order, -1));
+				columns.add(new ColumnDef(columns.size(), type, order, -1));
 			} else {
 				if (index < 0) throw new IllegalStateException("no index");
-				ColumnDefinition column = basis.columns.get(index);
+				ColumnDef column = basis.columns.get(index);
 				ColumnOrder colOrd = order == null ? column.getOrder() : (order == NO_ORDER ? null : order);
 				int index = basis.basis == null ? this.index : column.getBasis(); 
-				columns.add(new ColumnDefinition(columns.size(), column.getType(), colOrd, index));
+				columns.add(new ColumnDef(columns.size(), column.getType(), colOrd, index));
 			}
 			index = -1;
 			type = null;
@@ -108,15 +108,15 @@ public class RecordDefinition {
 			return this;
 		}
 		
-		public RecordDefinition build() {
+		public RecordDef build() {
 			try {
-				return new RecordDefinition(this);
+				return new RecordDef(this);
 			} finally {
-				columns = new ArrayList<ColumnDefinition>();
+				columns = new ArrayList<ColumnDef>();
 			}
 		}
 		
-		RecordDefinition getBasis() {
+		RecordDef getBasis() {
 			if (basis == null) return null;
 			if (basis.basis == null) return basis;
 			return basis.basis;
@@ -165,45 +165,45 @@ public class RecordDefinition {
 		return builder;
 	}
 	
-	private static List<ColumnDefinition> asCompactOrder(List<ColumnDefinition> columns) {
+	private static List<ColumnDef> asCompactOrder(List<ColumnDef> columns) {
 		if (columns.isEmpty()) return columns;
-		List<ColumnDefinition> orderedColumns = new ArrayList<ColumnDefinition>();
-		for (ColumnDefinition column : columns) {
+		List<ColumnDef> orderedColumns = new ArrayList<ColumnDef>();
+		for (ColumnDef column : columns) {
 			if (column.getOrder() != null) orderedColumns.add(column);
 		}
 		if (orderedColumns.isEmpty()) return columns;
 		Collections.sort(orderedColumns, ColumnOrder.columnComparator);
 
-		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(columns);
+		List<ColumnDef> list = new ArrayList<ColumnDef>(columns);
 		for (int precedence = 0; precedence < orderedColumns.size(); precedence++) {
-			ColumnDefinition column = orderedColumns.get(precedence);
+			ColumnDef column = orderedColumns.get(precedence);
 			ColumnOrder order = column.getOrder();
 			if (order.getPrecedence() != precedence) {
 				order = new ColumnOrder(precedence, order.isAscending(), order.isNullFirst());
-				column = new ColumnDefinition(column.getIndex(), column.getType(), order, column.getBasis());
+				column = new ColumnDef(column.getIndex(), column.getType(), order, column.getBasis());
 				list.set(column.getIndex(), column);
 			}
 		}
 		return list;
 	}
 	
-	private static List<ColumnDefinition> asOrderList(List<ColumnDefinition> columns) {
+	private static List<ColumnDef> asOrderList(List<ColumnDef> columns) {
 		int columnCount = columns.size();
 		int orderCount = 0;
 		for (int i = 0; i < columnCount; i++) {
 			if (columns.get(i).getOrder() != null) orderCount ++;
 		}
-		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(orderCount);
-		list.addAll(Collections.nCopies(orderCount, (ColumnDefinition) null));
+		List<ColumnDef> list = new ArrayList<ColumnDef>(orderCount);
+		list.addAll(Collections.nCopies(orderCount, (ColumnDef) null));
 		for (int i = 0; i < columnCount; i++) {
-			ColumnDefinition column = columns.get(i);
+			ColumnDef column = columns.get(i);
 			ColumnOrder order = column.getOrder();
 			if (order != null) list.set(order.getPrecedence(), column);
 		}
 		return list;
 	}
 	
-	private static List<ColumnType> asTypeList(List<ColumnDefinition> columns) {
+	private static List<ColumnType> asTypeList(List<ColumnDef> columns) {
 		List<ColumnType> types = new ArrayList<ColumnType>();
 		int count = columns.size();
 		for (int i = 0; i < count; i++) {
@@ -212,15 +212,15 @@ public class RecordDefinition {
 		return types;
 	}
 	
-	static HashSource<RecordDefinition> hashSource = new HashSource<RecordDefinition>() {
+	static HashSource<RecordDef> hashSource = new HashSource<RecordDef>() {
 		
 		@Override
-		public void sourceData(RecordDefinition definition, WriteStream out) {
+		public void sourceData(RecordDef definition, WriteStream out) {
 			if (definition.basis != null) hashSource.sourceData(definition.basis, out); 
 			out.writeBoolean(definition.ordinal);
 			out.writeBoolean(definition.positional);
-			for (ColumnDefinition column : definition.columns) {
-				ColumnDefinition.hashSource.sourceData(column, out);
+			for (ColumnDef column : definition.columns) {
+				ColumnDef.hashSource.sourceData(column, out);
 			}
 		}
 	};
@@ -229,24 +229,24 @@ public class RecordDefinition {
 	
 	private static HashRange hashRange = new HashRange(BigInteger.ZERO, BigInteger.ONE.shiftLeft(4 * hashDigits));
 	
-	private static PRNGMultiHash<RecordDefinition> hash = new PRNGMultiHash<RecordDefinition>(hashSource, hashRange);
+	private static PRNGMultiHash<RecordDef> hash = new PRNGMultiHash<RecordDef>(hashSource, hashRange);
 	
 	private static final String idPattern = "%0" + hashDigits + "X";
 
 	// fields
 
-	private final RecordDefinition basis;
+	private final RecordDef basis;
 	private final boolean ordinal;
 	private final boolean positional;
-	private final List<ColumnDefinition> columns;
+	private final List<ColumnDef> columns;
 	private final List<ColumnType> types;
-	private final List<ColumnDefinition> orderedColumns;
+	private final List<ColumnDef> orderedColumns;
 
 	private String id = null;
 	
 	// constructors
 
-	RecordDefinition(Builder builder) {
+	RecordDef(Builder builder) {
 		basis = builder.getBasis();
 		ordinal = builder.ordinal;
 		positional = builder.positional;
@@ -255,7 +255,7 @@ public class RecordDefinition {
 		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
 	}
 	
-	RecordDefinition(RecordDefinition that) {
+	RecordDef(RecordDef that) {
 		basis = null;
 		ordinal = that.ordinal;
 		positional = that.positional;
@@ -266,11 +266,11 @@ public class RecordDefinition {
 	
 	// accessors
 	
-	public RecordDefinition getBasis() {
+	public RecordDef getBasis() {
 		return basis;
 	}
 	
-	public RecordDefinition getBasisOrSelf() {
+	public RecordDef getBasisOrSelf() {
 		return basis == null ? this : basis;
 	}
 	
@@ -282,7 +282,7 @@ public class RecordDefinition {
 		return positional;
 	}
 	
-	public List<ColumnDefinition> getColumns() {
+	public List<ColumnDef> getColumns() {
 		return columns;
 	}
 	
@@ -290,7 +290,7 @@ public class RecordDefinition {
 		return types;
 	}
 	
-	public List<ColumnDefinition> getOrderedColumns() {
+	public List<ColumnDef> getOrderedColumns() {
 		return orderedColumns;
 	}
 	
@@ -303,21 +303,21 @@ public class RecordDefinition {
 		return id;
 	}
 	
-	public ColumnDefinition getBasisColumn(int index) {
+	public ColumnDef getBasisColumn(int index) {
 		if (basis == null) throw new IllegalStateException("no basis");
 		if (index < 0) throw new IllegalArgumentException("negative index");
 		if (index >= columns.size()) throw new IllegalArgumentException("invalid index");
 		return basis.columns.get(columns.get(index).getBasis());
 	}
 
-	public List<ColumnDefinition> getBasisColumns() {
+	public List<ColumnDef> getBasisColumns() {
 		if (basis == null) throw new IllegalStateException("null basis");
-		List<ColumnDefinition> basisColumns = basis.columns;
+		List<ColumnDef> basisColumns = basis.columns;
 		int count = basisColumns.size();
 		
-		List<ColumnDefinition> list = new ArrayList<ColumnDefinition>(count);
-		list.addAll(Collections.nCopies(count, (ColumnDefinition) null));
-		for (ColumnDefinition column : columns) {
+		List<ColumnDef> list = new ArrayList<ColumnDef>(count);
+		list.addAll(Collections.nCopies(count, (ColumnDef) null));
+		for (ColumnDef column : columns) {
 			list.set(column.getBasis(), column);
 		}
 		return list;
@@ -333,7 +333,7 @@ public class RecordDefinition {
 		} else if (size > basisSize) {
 			list.subList(basisSize, size).clear();
 		}
-		for (ColumnDefinition column : columns) {
+		for (ColumnDef column : columns) {
 			list.add(list.get(column.getBasis()));
 		}
 		list.subList(0, basisSize).clear();
@@ -341,8 +341,8 @@ public class RecordDefinition {
 	
 	// methods
 	
-	public RecordDefinition asBasis() {
-		return basis == null ? this : new RecordDefinition(this);
+	public RecordDef asBasis() {
+		return basis == null ? this : new RecordDef(this);
 	}
 
 	public Builder asBasisToBuild() {
@@ -358,24 +358,24 @@ public class RecordDefinition {
 		return builder;
 	}
 	
-	public RecordDefinition withIndices(int[] indices) {
+	public RecordDef withIndices(int[] indices) {
 		if (indices == null || indices.length == 0) return this;
 		return new Builder(this).withIndices(indices).build();
 	}
 	
-	public RecordDefinition withOrdering(List<ColumnOrder> orders) {
+	public RecordDef withOrdering(List<ColumnOrder> orders) {
 		if (orders == null) return this;
 		return new Builder(this).withOrdering(orders).build();
 	}
 	
-	public RecordDefinition withIndexedOrdering(List<ColumnOrder.Indexed> orders) {
+	public RecordDef withIndexedOrdering(List<ColumnOrder.Indexed> orders) {
 		if (orders == null) return this;
 		return new Builder(this).withIndexedOrdering(orders).build();
 	}
 	
-	public RecordDefinition asSubRecord(SubRecordDefinition subRecDef) {
+	public RecordDef asSubRecord(SubRecordDef subRecDef) {
 		if (subRecDef == null) throw new IllegalArgumentException("null subRecDef");
-		RecordDefinition basis;
+		RecordDef basis;
 		if (ordinal && !subRecDef.isOrdinalRetained() || positional && !subRecDef.isPositionRetained()) {
 			basis = asCompleteBasisToBuild()
 				.setOrdinal(ordinal && subRecDef.isOrdinalRetained())

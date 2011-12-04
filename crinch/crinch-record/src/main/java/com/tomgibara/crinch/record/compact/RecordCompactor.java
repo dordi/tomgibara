@@ -24,7 +24,7 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 public class RecordCompactor {
 
@@ -33,7 +33,7 @@ public class RecordCompactor {
 	private final ColumnCompactor[] compactors;
 	private final int startIndex;
 	
-	public RecordCompactor(ProcessContext context, RecordDefinition recordDef, int startIndex) {
+	public RecordCompactor(ProcessContext context, RecordDef recordDef, int startIndex) {
 		if (recordDef == null) recordDef = context.getRecordDef();
 		if (recordDef == null) throw new IllegalArgumentException("context has no record definition");
 		RecordStats stats = context.getRecordStats();

@@ -22,7 +22,7 @@ import java.util.List;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 
 public interface ProcessContext {
@@ -69,11 +69,11 @@ public interface ProcessContext {
 	
 	List<ColumnOrder> getColumnOrders();
 
-	RecordDefinition getRecordDef();
+	RecordDef getRecordDef();
 	
 	void log(String message);
 	
 	void log(String message, Throwable t);
 
-	File file(String type, boolean stats, RecordDefinition def);
+	File file(String type, boolean stats, RecordDef def);
 }

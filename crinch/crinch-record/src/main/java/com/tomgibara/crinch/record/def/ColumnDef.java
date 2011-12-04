@@ -19,14 +19,14 @@ package com.tomgibara.crinch.record.def;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.util.WriteStream;
 
-public class ColumnDefinition {
+public class ColumnDef {
 
 	// statics
 	
-	static HashSource<ColumnDefinition> hashSource = new HashSource<ColumnDefinition>() {
+	static HashSource<ColumnDef> hashSource = new HashSource<ColumnDef>() {
 		
 		@Override
-		public void sourceData(ColumnDefinition definition, WriteStream out) {
+		public void sourceData(ColumnDef definition, WriteStream out) {
 			out.writeInt(definition.index);
 			out.writeInt(definition.type.ordinal());
 			if (definition.order != null) {
@@ -45,7 +45,7 @@ public class ColumnDefinition {
 
 	// constructors
 	
-	ColumnDefinition(int index, ColumnType type, ColumnOrder order, int basis) {
+	ColumnDef(int index, ColumnType type, ColumnOrder order, int basis) {
 		this.index = index;
 		this.type = type;
 		this.order = order;

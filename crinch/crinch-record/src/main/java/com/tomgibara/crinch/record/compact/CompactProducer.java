@@ -32,7 +32,7 @@ import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
@@ -49,7 +49,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		RecordDefinition def = context.getRecordDef();
+		RecordDef def = context.getRecordDef();
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		if (!ordered) def = def.getBasisOrSelf();
 		RecordStats stats = context.getRecordStats();

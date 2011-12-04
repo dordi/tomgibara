@@ -27,6 +27,7 @@ public class ColumnDefinition {
 		
 		@Override
 		public void sourceData(ColumnDefinition definition, WriteStream out) {
+			out.writeInt(definition.index);
 			out.writeInt(definition.type.ordinal());
 			if (definition.order != null) {
 				ColumnOrder.hashSource.sourceData(definition.order, out);

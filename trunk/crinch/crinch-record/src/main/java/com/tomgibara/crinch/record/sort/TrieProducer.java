@@ -38,8 +38,8 @@ import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.SingletonRecord;
 import com.tomgibara.crinch.record.compact.RecordDecompactor;
-import com.tomgibara.crinch.record.def.RecordDefinition;
-import com.tomgibara.crinch.record.def.SubRecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
@@ -54,7 +54,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	
 	private static ClassConfig sConfig = new ClassConfig(false, true);
 
-	private final SubRecordDefinition subRecDef;
+	private final SubRecordDef subRecDef;
 	
 	private File file;
 	private HuffmanCoding huffmanCoding;
@@ -62,17 +62,17 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	private byte[] data;
 	private int maxLength;
 	private RecordDecompactor decompactor;
-	private RecordDefinition recordDef;
+	private RecordDef recordDef;
 	private DynamicRecordFactory factory;
 	private boolean uniqueKeys;
 	
-	public TrieProducer(SubRecordDefinition subRecDef) {
+	public TrieProducer(SubRecordDef subRecDef) {
 		this.subRecDef = subRecDef;
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		RecordDefinition def = context.getRecordDef();
+		RecordDef def = context.getRecordDef();
 		if (def == null) throw new IllegalStateException("context has no record definition");
 		def = def.asBasis();
 		if (subRecDef != null) def = def.asSubRecord(subRecDef);

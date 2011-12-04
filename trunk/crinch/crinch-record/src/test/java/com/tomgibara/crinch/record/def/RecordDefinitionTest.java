@@ -17,10 +17,10 @@ public class RecordDefinitionTest extends TestCase {
 	
 	public void testWithOrdering() {
 		
-		RecordDefinition def = RecordDefinition.fromTypes(types(ColumnType.INT_PRIMITIVE, ColumnType.BOOLEAN_PRIMITIVE)).build().withOrdering(orders(new ColumnOrder(0, true, true), new ColumnOrder(1, false, false))).asBasis();
+		RecordDef def = RecordDef.fromTypes(types(ColumnType.INT_PRIMITIVE, ColumnType.BOOLEAN_PRIMITIVE)).build().withOrdering(orders(new ColumnOrder(0, true, true), new ColumnOrder(1, false, false))).asBasis();
 		assertEquals(0, def.getColumns().get(0).getOrder().getPrecedence());
 		assertEquals(1, def.getColumns().get(1).getOrder().getPrecedence());
-		RecordDefinition sub = def.withOrdering(orders());
+		RecordDef sub = def.withOrdering(orders());
 		assertNull(sub.getColumns().get(0).getOrder());
 		assertNull(sub.getColumns().get(1).getOrder());
 		

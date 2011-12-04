@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 public class RecordStats {
 
@@ -72,7 +72,7 @@ public class RecordStats {
 		return new RecordStats(this);
 	}
 	
-	public RecordStats adaptFor(RecordDefinition recordDef) {
+	public RecordStats adaptFor(RecordDef recordDef) {
 		if (recordDef == null) throw new IllegalArgumentException("null recordDef");
 		if (recordDef.getBasis() == null) return this;
 		RecordStats copy = copy();

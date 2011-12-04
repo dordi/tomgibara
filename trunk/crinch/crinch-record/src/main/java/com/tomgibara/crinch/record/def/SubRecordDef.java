@@ -20,26 +20,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SubRecordDefinition {
+public class SubRecordDef {
 
 	private final boolean ordinalRetained;
 	private final boolean positionRetained;
 	private final int[] indices;
 	private final List<ColumnOrder.Indexed> orders;
 
-	public SubRecordDefinition(boolean ordinalRetained, boolean positionRetained) {
+	public SubRecordDef(boolean ordinalRetained, boolean positionRetained) {
 		this(ordinalRetained, positionRetained, null, null);
 	}
 
-	public SubRecordDefinition(int[] indices) {
+	public SubRecordDef(int[] indices) {
 		this(true, true, indices, null);
 	}
 
-	public SubRecordDefinition(List<ColumnOrder.Indexed> orders) {
+	public SubRecordDef(List<ColumnOrder.Indexed> orders) {
 		this(true, true, null, orders);
 	}
 
-	public SubRecordDefinition(boolean ordinalRetained, boolean positionRetained, int[] indices, List<ColumnOrder.Indexed> orders) {
+	public SubRecordDef(boolean ordinalRetained, boolean positionRetained, int[] indices, List<ColumnOrder.Indexed> orders) {
 		this.ordinalRetained = ordinalRetained;
 		this.positionRetained = positionRetained;
 		//TODO should check arguments as far as possible

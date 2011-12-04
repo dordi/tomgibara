@@ -23,11 +23,11 @@ import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.ProcessContext;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 class PositionStats {
 
-	final RecordDefinition definition;
+	final RecordDef definition;
 	final ExtendedCoding coding;
 	final File file;
 	
@@ -37,7 +37,7 @@ class PositionStats {
 	long bitsWritten;
 
 	public PositionStats(ProcessContext context) {
-		RecordDefinition def = context.getRecordDef();
+		RecordDef def = context.getRecordDef();
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		definition = def.asBasis();
 		coding = context.getCoding();

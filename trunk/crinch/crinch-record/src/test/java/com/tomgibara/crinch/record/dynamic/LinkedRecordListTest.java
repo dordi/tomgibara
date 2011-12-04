@@ -21,14 +21,14 @@ import static com.tomgibara.crinch.record.def.ColumnType.INT_PRIMITIVE;
 import java.util.Arrays;
 
 import com.tomgibara.crinch.record.SingletonRecord;
-import com.tomgibara.crinch.record.def.RecordDefinition;
+import com.tomgibara.crinch.record.def.RecordDef;
 
 import junit.framework.TestCase;
 
 public class LinkedRecordListTest extends TestCase {
 
 	public void testBasics() {
-		RecordDefinition def = RecordDefinition
+		RecordDef def = RecordDef
 			.fromTypes(Arrays.asList(INT_PRIMITIVE))
 			.setOrdinal(false)
 			.setPositional(false)

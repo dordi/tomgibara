@@ -19,6 +19,7 @@ package com.tomgibara.crinch.record.def;
 import java.util.Comparator;
 
 import com.tomgibara.crinch.hashing.HashSource;
+import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.util.WriteStream;
 
 public class ColumnOrder {
@@ -87,7 +88,28 @@ public class ColumnOrder {
 		return nullFirst;
 	}
 	
-	//TODO object methods
+	// object methods
+
+	@Override
+	public int hashCode() {
+		return this.precedence ^ Hashes.hashCode(ascending) ^ (31 * Hashes.hashCode(nullFirst));
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (!(obj instanceof ColumnOrder)) return false;
+		ColumnOrder that = (ColumnOrder) obj;
+		if (this.precedence != that.precedence) return false;
+		if (this.ascending != that.ascending) return false;
+		if (this.nullFirst != that.nullFirst) return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "[precedence: " + precedence + ", ascending: " + ascending + ", nullFirst: " + nullFirst + "]";
+	}
 	
 	// inner classes
 	
@@ -111,6 +133,8 @@ public class ColumnOrder {
 		public ColumnOrder getOrder() {
 			return order;
 		}
+		
+		// TODO object methods
 		
 	}
 	

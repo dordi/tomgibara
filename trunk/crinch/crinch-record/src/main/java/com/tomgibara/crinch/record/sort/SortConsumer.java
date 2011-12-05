@@ -36,7 +36,7 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 public class SortConsumer extends OrderedConsumer {
 
-	private static ClassConfig sConfig = new ClassConfig(false, false);
+	private static ClassConfig sConfig = new ClassConfig(false, false, false);
 	
 	private PriorityQueue<LinearRecord> queue; 
 	private File file;

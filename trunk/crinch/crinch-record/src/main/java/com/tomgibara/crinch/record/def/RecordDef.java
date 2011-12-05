@@ -19,7 +19,6 @@ package com.tomgibara.crinch.record.def;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,11 +56,12 @@ public class RecordDef {
 
 		private boolean ordinal;
 		private boolean positional;
+		private final Map<String, String> recordProps = new LinkedHashMap<String, String>();
 		private List<ColumnDef> columns = new ArrayList<ColumnDef>();
 		private int index = -1;
 		private ColumnType type;
 		private ColumnOrder order;
-		private final Map<String, String> properties = new LinkedHashMap<String, String>();
+		private final Map<String, String> columnProps = new LinkedHashMap<String, String>();
 		
 		Builder(RecordDef basis) {
 			this.basis = basis;
@@ -83,6 +83,12 @@ public class RecordDef {
 		public Builder setPositional(boolean positional) {
 			if (basis != null && !basis.positional) throw new IllegalStateException("basis has no positions");
 			this.positional = positional;
+			return this;
+		}
+		
+		public Builder recordProp(String name, String value) {
+			if (name == null) throw new IllegalArgumentException("null name");
+			recordProps.put(name, value);
 			return this;
 		}
 		
@@ -109,37 +115,38 @@ public class RecordDef {
 			return this;
 		}
 		
-		public Builder property(String name, String value) {
+		public Builder columnProp(String name, String value) {
 			if (name == null) throw new IllegalArgumentException("null name");
-			properties.put(name, value);
+			columnProps.put(name, value);
 			return this;
 		}
 		
 		public Builder add() {
 			if (basis == null) {
 				if (type == null) throw new IllegalStateException("no type");
-				columns.add(new ColumnDef(columns.size(), type, order, -1, combineProperties(NO_PROPS, properties)));
+				columns.add(new ColumnDef(columns.size(), type, order, -1, combineProperties(NO_PROPS, columnProps)));
 			} else {
 				if (index < 0) throw new IllegalStateException("no index");
 				ColumnDef column = basis.columns.get(index);
 				ColumnOrder colOrd = order == null ? column.getOrder() : (order == NO_ORDER ? null : order);
 				int index = basis.basis == null ? this.index : column.getBasis(); 
-				Map<String, String> properties = combineProperties(column.getProperties(), this.properties);
+				Map<String, String> properties = combineProperties(column.getProperties(), this.columnProps);
 				columns.add(new ColumnDef(columns.size(), column.getType(), colOrd, index, properties));
 			}
 			index = -1;
 			type = null;
 			order = null;
-			properties.clear();
+			columnProps.clear();
 			return this;
 		}
 
 		public RecordDef build() {
-			if (index != -1 || type != null || order != null || !properties.isEmpty()) throw new IllegalStateException("unadded column information");
+			if (index != -1 || type != null || order != null || !columnProps.isEmpty()) throw new IllegalStateException("unadded column information");
 			try {
 				return new RecordDef(this);
 			} finally {
 				columns = new ArrayList<ColumnDef>();
+				recordProps.clear();
 			}
 		}
 		
@@ -147,6 +154,10 @@ public class RecordDef {
 			if (basis == null) return null;
 			if (basis.basis == null) return basis;
 			return basis.basis;
+		}
+		
+		Map<String, String> getProperties() {
+			return combineProperties(basis == null ? NO_PROPS : basis.properties, recordProps);
 		}
 		
 		Builder withIndices(int[] indices) {
@@ -266,6 +277,7 @@ public class RecordDef {
 	private final List<ColumnDef> columns;
 	private final List<ColumnType> types;
 	private final List<ColumnDef> orderedColumns;
+	private final Map<String, String> properties;
 
 	private String id = null;
 	
@@ -278,6 +290,7 @@ public class RecordDef {
 		columns = Collections.unmodifiableList(asCompactOrder(builder.columns));
 		types = Collections.unmodifiableList(asTypeList(columns));
 		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
+		properties = builder.getProperties();
 	}
 	
 	RecordDef(RecordDef that) {
@@ -287,6 +300,7 @@ public class RecordDef {
 		columns = Collections.unmodifiableList(asCompactOrder(that.columns));
 		types = that.types;
 		orderedColumns = Collections.unmodifiableList(asOrderList(columns));
+		properties = that.properties;
 	}
 	
 	// accessors
@@ -317,6 +331,10 @@ public class RecordDef {
 	
 	public List<ColumnDef> getOrderedColumns() {
 		return orderedColumns;
+	}
+	
+	public Map<String, String> getProperties() {
+		return properties;
 	}
 	
 	public String getId() {

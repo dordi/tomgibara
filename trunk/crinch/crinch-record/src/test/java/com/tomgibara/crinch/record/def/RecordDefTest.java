@@ -32,7 +32,7 @@ public class RecordDefTest extends TestCase {
 		}
 		
 		try {
-			RecordDef.fromScratch().property("a", "b").build();
+			RecordDef.fromScratch().columnProp("a", "b").build();
 			fail();
 		} catch (IllegalStateException e) {
 			/* expected */
@@ -61,14 +61,33 @@ public class RecordDefTest extends TestCase {
 	}
 	
 	public void testColumnProperties() {
-		RecordDef def = RecordDef.fromScratch().type(ColumnType.INT_PRIMITIVE).property("key1", "value1").property("key2", "value2").add().build();
+		RecordDef def = RecordDef.fromScratch().type(ColumnType.INT_PRIMITIVE).columnProp("key1", "value1").columnProp("key2", "value2").add().build();
 		Map<String, String> props;
 		props = def.getColumns().get(0).getProperties();
 		assertEquals(2, props.size());
 		assertEquals("value1", props.get("key1"));
 		assertEquals("value2", props.get("key2"));
-		RecordDef sub = def.asBasisToBuild().select(0).property("key3", "value3").property("key2", null).add().build();
+		RecordDef sub = def.asBasisToBuild().select(0).columnProp("key3", "value3").columnProp("key2", null).add().build();
 		props = sub.getColumns().get(0).getProperties();
+		assertEquals(2, props.size());
+		assertEquals("value1", props.get("key1"));
+		assertEquals("value3", props.get("key3"));
+	}
+	
+	public void testRecordProperties() {
+		RecordDef def = RecordDef.fromScratch().build();
+		Map<String, String> props;
+		props = def.getProperties();
+		assertTrue(props.isEmpty());
+		
+		RecordDef sub = def.asBasisToBuild().recordProp("key1", "value1").recordProp("key2", "value2").build();
+		props = sub.getProperties();
+		assertEquals(2, props.size());
+		assertEquals("value1", props.get("key1"));
+		assertEquals("value2", props.get("key2"));
+		
+		sub = sub.asBasisToBuild().recordProp("key3", "value3").recordProp("key2", null).build();
+		props = sub.getProperties();
 		assertEquals(2, props.size());
 		assertEquals("value1", props.get("key1"));
 		assertEquals("value3", props.get("key3"));

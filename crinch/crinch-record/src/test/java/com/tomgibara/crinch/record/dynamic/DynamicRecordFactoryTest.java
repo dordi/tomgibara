@@ -115,6 +115,13 @@ public class DynamicRecordFactoryTest extends TestCase {
 	}
 
 	public void testExtendedRecord() {
+		testExtendedRecord(new DynamicRecordFactory.ClassConfig(false, false, true));
+		testExtendedRecord(new DynamicRecordFactory.ClassConfig(true, false, true));
+		testExtendedRecord(new DynamicRecordFactory.ClassConfig(false, true, true));
+		testExtendedRecord(new DynamicRecordFactory.ClassConfig(true, true, true));
+	}
+	
+	private void testExtendedRecord(DynamicRecordFactory.ClassConfig config) {
 		RecordDef def = RecordDef
 				.fromTypes(Arrays.asList(INT_PRIMITIVE))
 				.setOrdinal(false)
@@ -122,15 +129,25 @@ public class DynamicRecordFactoryTest extends TestCase {
 				.build();
 		
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
-		Extended ext = (Extended) fac.newRecord(new DynamicRecordFactory.ClassConfig(false, false, true), new SingletonRecord(0));
-		assertNull(ext.getExtension());
-		ext.setExtension("str");
-		assertEquals("str", ext.getExtension());
-		ext.setExtension(null);
-		assertNull(ext.getExtension());
+		
+		{
+			Extended ext = (Extended) fac.newRecord(config, new SingletonRecord(0));
+			assertNull(ext.getExtension());
+			ext.setExtension("str");
+			assertEquals("str", ext.getExtension());
+			ext.setExtension(null);
+			assertNull(ext.getExtension());
+		}
 	}
 
 	public void testHashSource() {
+		testHashSource(new DynamicRecordFactory.ClassConfig(false, false, false));
+		testHashSource(new DynamicRecordFactory.ClassConfig(true, false, false));
+		testHashSource(new DynamicRecordFactory.ClassConfig(false, true, false));
+		testHashSource(new DynamicRecordFactory.ClassConfig(true, true, false));
+	}
+
+	public void testHashSource(DynamicRecordFactory.ClassConfig config) {
 		RecordDef def = RecordDef
 				.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_WRAPPER, STRING_OBJECT))
 				.setOrdinal(false)
@@ -138,13 +155,12 @@ public class DynamicRecordFactoryTest extends TestCase {
 				.build();
 		
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
-		DynamicRecordFactory.ClassConfig config = new DynamicRecordFactory.ClassConfig(false, false, false);
 		HashSource<LinearRecord> src = fac.getHashSource(config);
-		final CondensingWriteStream out = new CondensingWriteStream();
+		CondensingWriteStream out = new CondensingWriteStream();
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, null, null })), out);
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, null, "STR" })), out);
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 10, null })), out);
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 20, "STRING" })), out);
 	}
-	
+
 }

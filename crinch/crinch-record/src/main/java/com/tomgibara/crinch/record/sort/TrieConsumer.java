@@ -83,7 +83,6 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void beginPass() {
-		super.beginPass();
 		context.setPassName("Building trie");
 		root = new Node('\0');
 	}

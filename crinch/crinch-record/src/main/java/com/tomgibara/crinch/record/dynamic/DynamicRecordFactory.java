@@ -31,11 +31,13 @@ import org.codehaus.janino.Parser.ParseException;
 import org.codehaus.janino.Scanner.ScanException;
 import org.codehaus.janino.SimpleCompiler;
 
+import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.def.ColumnDef;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.util.WriteStream;
 
 //TODO could persist nullables as primitives
 //TODO currently limited to 32768 fields
@@ -142,6 +144,7 @@ public class DynamicRecordFactory {
 	private final String source;
 	private final Class<? extends LinearRecord>[] clss = new Class[ClassConfig.sInstances.length];
 	private final Constructor<? extends LinearRecord>[] cons = new Constructor[ClassConfig.sInstances.length];
+	private final HashSource<LinearRecord>[] sources = new HashSource[ClassConfig.sInstances.length];
 	
 	// constructors
 	
@@ -171,10 +174,15 @@ public class DynamicRecordFactory {
 		try {
 			for (int i = 0; i < cons.length; i++) {
 				cons[i] = clss[i].getConstructor(consParams);
+				sources[i] = (HashSource) clss[i].getField("HASH_SOURCE").get(null);
 			}
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -208,6 +216,11 @@ public class DynamicRecordFactory {
 		}
 	}
 
+	public HashSource<LinearRecord> getHashSource(ClassConfig config) {
+		if (config == null) throw new IllegalArgumentException("null config");
+		return sources[config.getIndex()];
+	}
+	
 	private String generateSource() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("package ").append(packageName).append(";\n");
@@ -231,7 +244,14 @@ public class DynamicRecordFactory {
 		sb.append(", Comparable");
 		if (extensible) sb.append(", ").append(Extended.class.getName());
 		sb.append(" {\n");
+
+		// statics
 		sb.append("\tprivate static final short limit = ").append(definition.getTypes().size()).append(";\n");
+		sb.append("\tpublic static final ").append(HashSource.class.getName()).append(" HASH_SOURCE = new ").append(HashSource.class.getName()).append("() {\n");
+		sb.append("\t\tpublic void sourceData(Object value, ").append(WriteStream.class.getName()).append(" out) {\n");
+		sb.append("\t\t\tif (value != null) ((").append(name).append(") value).populateStream(out);\n");
+		sb.append("\t\t}\n");
+		sb.append("\t};\n");
 		
 		// fields
 		if (definition.isOrdinal()) sb.append("\tprivate final long recordOrdinal;\n");
@@ -508,6 +528,25 @@ public class DynamicRecordFactory {
 			sb.append("\t}\n");
 		}
 
+		// private methods
+		{
+			sb.append("\tvoid populateStream(").append(WriteStream.class.getName()).append(" out) {\n");
+			int field = 0;
+			for (ColumnType type : definition.getTypes()) {
+				if (type.typeClass == String.class) {
+					sb.append("\t\tif (f_").append(field).append(" != null) out.writeString(f_").append(field).append(");\n");
+				} else if (type.typeClass.isPrimitive()) {
+					sb.append("\t\tout.write").append(accessorName(type)).append("(f_").append(field).append(");\n");
+				} else {
+					sb.append("\t\tif (f_").append(field).append(" != null) {\n");
+					sb.append("\t\t\tout.write").append(accessorName(type)).append("(f_").append(field).append(".").append(accessorName(type).toLowerCase()).append("Value());\n");
+					sb.append("\t\t}\n");
+				}
+				field++;
+			}
+			sb.append("\t}\n");
+		}
+		
 		sb.append("}\n");
 	}
 

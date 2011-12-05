@@ -20,12 +20,16 @@ import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.CHAR_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.INT_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.INT_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.STRING_OBJECT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.tomgibara.crinch.hashing.CondensingWriteStream;
+import com.tomgibara.crinch.hashing.HashSource;
+import com.tomgibara.crinch.record.ArrayRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ParsedRecord;
 import com.tomgibara.crinch.record.SingletonRecord;
@@ -41,43 +45,6 @@ import junit.framework.TestCase;
 public class DynamicRecordFactoryTest extends TestCase {
 
 	private static final ColumnParser parser = new StdColumnParser();
-	
-//	public void testDefinitionCons() {
-//		try {
-//			new RecordDefinition(true, true, null);
-//			fail();
-//		} catch (IllegalArgumentException e) {
-//			/* expected */
-//		}
-//		
-//		try {
-//			new RecordDefinition(true, true, Arrays.asList((ColumnType) null), null);
-//			fail();
-//		} catch (IllegalArgumentException e) {
-//			/* expected */
-//		}
-//		
-//		try {
-//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(-1, true, true)));
-//			fail();
-//		} catch (IllegalArgumentException e) {
-//			/* expected */
-//		}
-//		
-//		try {
-//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(1, true, true)));
-//			fail();
-//		} catch (IllegalArgumentException e) {
-//			/* expected */
-//		}
-//		
-//		try {
-//			new RecordDefinition(true, true, Arrays.asList(INT_PRIMITIVE), Arrays.asList(new ColumnOrder(0, true, true), new ColumnOrder(0, true, true)));
-//			fail();
-//		} catch (IllegalArgumentException e) {
-//			/* expected */
-//		}
-//	}
 	
 	public void testGetName() {
 		
@@ -161,6 +128,23 @@ public class DynamicRecordFactoryTest extends TestCase {
 		assertEquals("str", ext.getExtension());
 		ext.setExtension(null);
 		assertNull(ext.getExtension());
+	}
+
+	public void testHashSource() {
+		RecordDef def = RecordDef
+				.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_WRAPPER, STRING_OBJECT))
+				.setOrdinal(false)
+				.setPositional(false)
+				.build();
+		
+		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
+		DynamicRecordFactory.ClassConfig config = new DynamicRecordFactory.ClassConfig(false, false, false);
+		HashSource<LinearRecord> src = fac.getHashSource(config);
+		final CondensingWriteStream out = new CondensingWriteStream();
+		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, null, null })), out);
+		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, null, "STR" })), out);
+		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 10, null })), out);
+		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 20, "STRING" })), out);
 	}
 	
 }

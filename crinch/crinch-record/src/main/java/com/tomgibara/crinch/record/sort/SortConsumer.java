@@ -22,12 +22,16 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Comparator;
 import java.util.PriorityQueue;
 
 import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
+import com.tomgibara.crinch.hashing.Hash;
+import com.tomgibara.crinch.hashing.LongHash;
+import com.tomgibara.crinch.hashing.LongSeededHashSource;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
@@ -36,8 +40,9 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 public class SortConsumer extends OrderedConsumer {
 
-	private static ClassConfig sConfig = new ClassConfig(false, false, false);
-	
+	private ClassConfig config;
+	private Comparator<LinearRecord> comparator;
+	private Hash<LinearRecord> hash;
 	private PriorityQueue<LinearRecord> queue; 
 	private File file;
 	private OutputStream out;
@@ -51,8 +56,18 @@ public class SortConsumer extends OrderedConsumer {
 	@Override
 	public void prepare(ProcessContext context) {
 		super.prepare(context);
+		if (definition.getProperties().get("shuffle.hashSeed") != null) {
+			long seed = Long.parseLong( definition.getProperties().get("shuffle.hashSeed")	);
+			config = new ClassConfig(false, false, true);
+			hash = new LongHash<LinearRecord>(new LongSeededHashSource<LinearRecord>(factory.getHashSource(config), seed));
+		} else {
+			comparator = null;
+			config = new ClassConfig(false, false, false);
+			hash = null;
+		}
 		file = sortedFile(false);
 		if (context.isClean()) file.delete();
+		
 	}
 	
 	@Override
@@ -71,7 +86,7 @@ public class SortConsumer extends OrderedConsumer {
 
 	@Override
 	public void consume(LinearRecord record) {
-		LinearRecord r = factory.newRecord(sConfig, record);
+		LinearRecord r = factory.newRecord(config, record);
 		queue.add(r);
 	}
 

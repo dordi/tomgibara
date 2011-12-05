@@ -249,7 +249,7 @@ public class DynamicRecordFactory {
 		sb.append("\tprivate static final short limit = ").append(definition.getTypes().size()).append(";\n");
 		sb.append("\tpublic static final ").append(HashSource.class.getName()).append(" HASH_SOURCE = new ").append(HashSource.class.getName()).append("() {\n");
 		sb.append("\t\tpublic void sourceData(Object value, ").append(WriteStream.class.getName()).append(" out) {\n");
-		sb.append("\t\t\tif (value != null) ((").append(name).append(") value).populateStream(out);\n");
+		sb.append("\t\t\tif (value != null) ((").append(className).append(") value).populateStream(out);\n");
 		sb.append("\t\t}\n");
 		sb.append("\t};\n");
 		

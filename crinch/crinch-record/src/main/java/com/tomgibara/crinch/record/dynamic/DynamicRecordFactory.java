@@ -77,10 +77,14 @@ public class DynamicRecordFactory {
 		
 		static {
 			ClassConfig[] src = {
-					new ClassConfig(false, false),
-					new ClassConfig(false, true),
-					new ClassConfig(true, false),
-					new ClassConfig(true, true),
+					new ClassConfig(false, false, false),
+					new ClassConfig(false, false, true),
+					new ClassConfig(false, true, false),
+					new ClassConfig(false, true, true),
+					new ClassConfig(true, false, false),
+					new ClassConfig(true, false, true),
+					new ClassConfig(true, true, false),
+					new ClassConfig(true, true, true),
 			};
 			
 			ClassConfig[] dst = new ClassConfig[src.length];
@@ -93,17 +97,20 @@ public class DynamicRecordFactory {
 		
 		private final boolean markingSupported;
 		private final boolean linkingSupported;
+		private final boolean extendingSupported;
 		private final int index;
 		private final String classNameSuffix;
-		
-		public ClassConfig(boolean markingSupported, boolean linkingSupported) {
+
+		public ClassConfig(boolean markingSupported, boolean linkingSupported, boolean extendingSupported) {
 			this.markingSupported = markingSupported;
 			this.linkingSupported = linkingSupported;
+			this.extendingSupported = extendingSupported;
 			StringBuilder sb = new StringBuilder();
 			if (markingSupported) sb.append("_Markable");
 			if (linkingSupported) sb.append("_Linkable");
+			if (extendingSupported) sb.append("_Extensible");
 			classNameSuffix = sb.toString();
-			index = (markingSupported ? 1 : 0) + (linkingSupported ? 2 : 0);
+			index = (markingSupported ? 1 : 0) + (linkingSupported ? 2 : 0) + (extendingSupported ? 4 : 0);
 		}
 		
 		public boolean isLinkingSupported() {
@@ -112,6 +119,10 @@ public class DynamicRecordFactory {
 		
 		public boolean isMarkingSupported() {
 			return markingSupported;
+		}
+
+		public boolean isExtendingSupported() {
+			return extendingSupported;
 		}
 		
 		int getIndex() {
@@ -209,6 +220,7 @@ public class DynamicRecordFactory {
 	private void generateSource(StringBuilder sb, ClassConfig config) {
 		boolean linkable = config.isLinkingSupported();
 		boolean markable = config.isMarkingSupported();
+		boolean extensible = config.isExtendingSupported();
 		String className = name + config.getClassNameSuffix(); 
 		sb.append("\npublic class ").append(className).append(" implements ");
 		if (linkable) {
@@ -217,6 +229,7 @@ public class DynamicRecordFactory {
 			sb.append(LinearRecord.class.getName());
 		}
 		sb.append(", Comparable");
+		if (extensible) sb.append(", ").append(Extended.class.getName());
 		sb.append(" {\n");
 		sb.append("\tprivate static final short limit = ").append(definition.getTypes().size()).append(";\n");
 		
@@ -236,6 +249,9 @@ public class DynamicRecordFactory {
 		if (linkable) {
 			sb.append("\tprivate ").append(className).append(" next;\n");
 			sb.append("\tprivate ").append(className).append(" prev;\n");
+		}
+		if (extensible) {
+			sb.append("\tprivate Object extension;\n");
 		}
 		
 		// constructors
@@ -398,6 +414,17 @@ public class DynamicRecordFactory {
 			sb.append("\t\tthat.prev = that;\n");
 			sb.append("\t}\n");
 
+		}
+		
+		// extensible methods
+		if (extensible) {
+			sb.append("\tpublic void setExtension(Object extension) {\n");
+			sb.append("\t\tthis.extension = extension;\n");
+			sb.append("\t}\n");
+			
+			sb.append("\tpublic Object getExtension() {\n");
+			sb.append("\t\treturn extension;");
+			sb.append("\t}\n");
 		}
 		
 		// comparable methods

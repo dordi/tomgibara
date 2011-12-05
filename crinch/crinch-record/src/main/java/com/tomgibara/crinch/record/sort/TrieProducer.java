@@ -52,7 +52,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		MIXED, UPPER, LOWER
 	}
 	
-	private static ClassConfig sConfig = new ClassConfig(false, true);
+	private static ClassConfig sConfig = new ClassConfig(false, true, false);
 
 	private final SubRecordDef subRecDef;
 	

@@ -67,7 +67,7 @@ public class TrieConsumer extends OrderedConsumer {
 		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		compactor = new RecordCompactor(context, definition, 1);
 		uniqueKeys = compactor.getColumnStats(0).isUnique();
-		config = new ClassConfig(true, !uniqueKeys);
+		config = new ClassConfig(true, !uniqueKeys, false);
 		recordSizingWriter = new NullBitWriter();
 		recordSizingCoded = new CodedWriter(recordSizingWriter, context.getCoding());
 		if (context.isClean()) {

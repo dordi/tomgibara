@@ -35,7 +35,7 @@ public class LinkedRecordListTest extends TestCase {
 			.build();
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
 		LinkedRecord[] recs = new LinkedRecord[5];
-		DynamicRecordFactory.ClassConfig config = new DynamicRecordFactory.ClassConfig(false, true);
+		DynamicRecordFactory.ClassConfig config = new DynamicRecordFactory.ClassConfig(false, true, false);
 		for (int i = 0; i < recs.length; i++) {
 			recs[i] = (LinkedRecord) fac.newRecord(config, new SingletonRecord(i));
 		}

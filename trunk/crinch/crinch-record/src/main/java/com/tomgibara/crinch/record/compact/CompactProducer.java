@@ -33,25 +33,26 @@ import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 
-	private final boolean ordered;
+	private final SubRecordDef subRecDef;
 	
 	private ExtendedCoding coding;
 	private long recordCount;
 	private RecordDecompactor decompactor;
 	private File file;
 	
-	public CompactProducer(boolean ordered) {
-		this.ordered = ordered;
+	public CompactProducer(SubRecordDef subRecDef) {
+		this.subRecDef = subRecDef;
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
 		RecordDef def = context.getRecordDef();
 		if (def == null) throw new IllegalArgumentException("no record definition");
-		if (!ordered) def = def.getBasisOrSelf();
+		if (subRecDef != null) def = def.asSubRecord(subRecDef);
 		RecordStats stats = context.getRecordStats();
 		if (stats == null) throw new IllegalStateException("no statistics available");
 		stats = stats.adaptFor(def);

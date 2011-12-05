@@ -46,13 +46,9 @@ public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		definition = def.asBasis();
 		if (subRecDef != null) definition = definition.asSubRecord(subRecDef);
-	}
-
-	@Override
-	public void beginPass() {
 		factory = DynamicRecordFactory.getInstance(definition);
 	}
-	
+
 	File sortedFile(boolean input) {
 		return context.file("compact", false, input ? definition.getBasis() : definition);
 	}

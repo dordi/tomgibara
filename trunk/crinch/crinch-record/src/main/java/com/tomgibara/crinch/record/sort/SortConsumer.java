@@ -37,9 +37,20 @@ import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
+import com.tomgibara.crinch.record.dynamic.Extended;
 
 public class SortConsumer extends OrderedConsumer {
 
+	private static Comparator<LinearRecord> sHashComparator = new Comparator<LinearRecord>() {
+		@Override
+		public int compare(LinearRecord a, LinearRecord b) {
+			long ha = (Long) ((Extended) a).getExtension();
+			long hb = (Long) ((Extended) b).getExtension();
+			if (ha == hb) return ((Comparable) a).compareTo(b);
+			return ha < hb ? -1 : 1;
+		}
+	};
+	
 	private ClassConfig config;
 	private Comparator<LinearRecord> comparator;
 	private Hash<LinearRecord> hash;
@@ -58,6 +69,7 @@ public class SortConsumer extends OrderedConsumer {
 		super.prepare(context);
 		if (definition.getProperties().get("shuffle.hashSeed") != null) {
 			long seed = Long.parseLong( definition.getProperties().get("shuffle.hashSeed")	);
+			comparator = sHashComparator;
 			config = new ClassConfig(false, false, true);
 			hash = new LongHash<LinearRecord>(new LongSeededHashSource<LinearRecord>(factory.getHashSource(config), seed));
 		} else {
@@ -77,16 +89,19 @@ public class SortConsumer extends OrderedConsumer {
 
 	@Override
 	public void beginPass() {
-		super.beginPass();
 		context.setPassName("Sorting records");
 		//TODO splitting
 		//TODO need to size
-		queue = new PriorityQueue<LinearRecord>();
+		queue = new PriorityQueue<LinearRecord>(10000, comparator);
 	}
 
 	@Override
 	public void consume(LinearRecord record) {
 		LinearRecord r = factory.newRecord(config, record);
+		if (hash != null) {
+			long h = hash.hashAsLong(r);
+			((Extended) r).setExtension(h);
+		}
 		queue.add(r);
 	}
 

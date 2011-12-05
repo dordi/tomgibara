@@ -61,7 +61,7 @@ public abstract class AbstractWriteStream implements WriteStream {
 	}
 	
 	@Override
-	public void writeDouble(float v) {
+	public void writeDouble(double v) {
 		writeLong(Double.doubleToLongBits(v));
 	}
 	

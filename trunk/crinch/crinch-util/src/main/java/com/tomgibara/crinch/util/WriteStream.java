@@ -34,7 +34,7 @@ public interface WriteStream {
 	
 	void writeFloat(float v);
 	
-	void writeDouble(float v);
+	void writeDouble(double v);
 	
 	void writeChar(char v);
 	

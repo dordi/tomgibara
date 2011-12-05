@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
@@ -415,12 +416,23 @@ public class RecordDef {
 		return new Builder(this).withIndexedOrdering(orders).build();
 	}
 	
+	public RecordDef withProperties(Map<String, String> properties) {
+		if (properties == null || properties.isEmpty()) return this;
+		Set<Entry<String,String>> entrySet = properties.entrySet();
+		Builder builder = asCompleteBasisToBuild();
+		for (Entry<String, String> property : entrySet) {
+			builder.recordProp(property.getKey(), property.getValue());
+		}
+		return builder.build();
+	}
+	
 	public RecordDef asSubRecord(SubRecordDef subRecDef) {
 		if (subRecDef == null) throw new IllegalArgumentException("null subRecDef");
 		return this
 			.withRetention(subRecDef.isOrdinalRetained(), subRecDef.isPositionRetained())
 			.withIndices(subRecDef.getIndicesUnsafely())
-			.withIndexedOrdering(subRecDef.getOrders());
+			.withIndexedOrdering(subRecDef.getOrders())
+			.withProperties(subRecDef.getProperties());
 	}
 
 	private Builder asCompleteBasisToBuild() {

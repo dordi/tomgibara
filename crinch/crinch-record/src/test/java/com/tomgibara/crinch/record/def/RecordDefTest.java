@@ -1,6 +1,7 @@
 package com.tomgibara.crinch.record.def;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,15 @@ public class RecordDefTest extends TestCase {
 		return Arrays.asList(orders);
 	}
 
+	private static Map<String, String> props(String... props) {
+		if ((props.length & 1) != 0) throw new IllegalArgumentException();
+		LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+		for (int i = 0; i < props.length; i += 2) {
+			map.put(props[i], props[i+1]);
+		}
+		return map;
+	}
+	
 	public void testTrailing() {
 		try {
 			RecordDef.fromScratch().type(ColumnType.INT_PRIMITIVE).build();
@@ -76,21 +86,24 @@ public class RecordDefTest extends TestCase {
 	
 	public void testRecordProperties() {
 		RecordDef def = RecordDef.fromScratch().build();
-		Map<String, String> props;
-		props = def.getProperties();
-		assertTrue(props.isEmpty());
+		assertEquals(props(), def.getProperties());
 		
 		RecordDef sub = def.asBasisToBuild().recordProp("key1", "value1").recordProp("key2", "value2").build();
-		props = sub.getProperties();
-		assertEquals(2, props.size());
-		assertEquals("value1", props.get("key1"));
-		assertEquals("value2", props.get("key2"));
+		assertEquals(props("key1", "value1", "key2", "value2"), sub.getProperties());
 		
 		sub = sub.asBasisToBuild().recordProp("key3", "value3").recordProp("key2", null).build();
-		props = sub.getProperties();
-		assertEquals(2, props.size());
-		assertEquals("value1", props.get("key1"));
-		assertEquals("value3", props.get("key3"));
+		assertEquals(props("key1", "value1", "key3", "value3"), sub.getProperties());
+	}
+	
+	public void testWithProperties() {
+		RecordDef def = RecordDef.fromScratch().build();
+		assertEquals(props(), def.getProperties());
+		
+		RecordDef sub = def.withProperties(props("key1", "value1", "key2", "value2"));		
+		assertEquals(props("key1", "value1", "key2", "value2"), sub.getProperties());
+		
+		sub = sub.withProperties(props("key3", "value3", "key2", null));
+		assertEquals(props("key1", "value1", "key3", "value3"), sub.getProperties());
 	}
 	
 }

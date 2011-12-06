@@ -34,8 +34,6 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 
 	private final Iterable<ReaderSource> readerSources;
 	private final char separator;
-	private long recordCount = -1L;
-	private ProcessContext context;
 
 	public CsvProducer(Iterable<ReaderSource> readerSources) {
 		this(readerSources, ',');
@@ -49,12 +47,10 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		this.context = context;
 	}
 	
 	@Override
 	public RecordSequence<StringRecord> open() {
-		context.setRecordCount(recordCount);
 		
 		return new RecordSequence<StringRecord>() {
 
@@ -97,7 +93,6 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 						reader = null;
 						csvReader = null;
 						iterator = null;
-						CsvProducer.this.recordCount = this.recordCount;
 					}					
 				}
 			}
@@ -109,7 +104,6 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 					if (reader == null) {
 						if (!iterator.hasNext()) {
 							iterator = null;
-							CsvProducer.this.recordCount = this.recordCount;
 							return false;
 						}
 						ReaderSource source = iterator.next();
@@ -135,7 +129,6 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 
 	@Override
 	public void complete() {
-		context = null;
 	}
 	
 }

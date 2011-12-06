@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 public abstract class AdaptedConsumer<R extends Record, S extends Record> implements RecordConsumer<S> {
 
 	protected final RecordConsumer<R> consumer;

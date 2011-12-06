@@ -33,11 +33,11 @@ import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.LongHash;
 import com.tomgibara.crinch.hashing.LongSeededHashSource;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.Extended;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class SortConsumer extends OrderedConsumer {
 

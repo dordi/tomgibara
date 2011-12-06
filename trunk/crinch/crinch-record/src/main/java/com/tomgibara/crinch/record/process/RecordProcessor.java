@@ -14,7 +14,12 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record;
+package com.tomgibara.crinch.record.process;
+
+import com.tomgibara.crinch.record.Record;
+import com.tomgibara.crinch.record.RecordConsumer;
+import com.tomgibara.crinch.record.RecordProducer;
+import com.tomgibara.crinch.record.RecordTransfer;
 
 public class RecordProcessor {
 

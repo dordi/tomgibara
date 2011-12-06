@@ -42,8 +42,8 @@ import java.util.Set;
 
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ColumnParser;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 //TODO use column parser when appropriate methods are available
 

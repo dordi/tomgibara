@@ -22,8 +22,8 @@ import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 class PositionStats {
 

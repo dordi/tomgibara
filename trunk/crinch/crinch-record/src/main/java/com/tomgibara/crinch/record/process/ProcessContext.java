@@ -14,12 +14,14 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record;
+package com.tomgibara.crinch.record.process;
 
 import java.io.File;
 import java.util.List;
 
 import com.tomgibara.crinch.coding.ExtendedCoding;
+import com.tomgibara.crinch.record.ColumnParser;
+import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;

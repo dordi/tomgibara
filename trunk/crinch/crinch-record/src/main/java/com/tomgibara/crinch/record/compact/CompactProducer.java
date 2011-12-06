@@ -28,12 +28,12 @@ import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.def.SubRecordDef;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class CompactProducer implements RecordProducer<LinearRecord> {
 

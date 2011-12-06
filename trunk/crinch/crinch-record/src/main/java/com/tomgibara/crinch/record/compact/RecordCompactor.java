@@ -21,10 +21,10 @@ import java.util.List;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class RecordCompactor {
 

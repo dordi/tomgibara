@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 public abstract class AdaptedProducer<R extends Record, S extends Record> implements RecordProducer<S> {
 
 	protected final RecordProducer<R> producer;

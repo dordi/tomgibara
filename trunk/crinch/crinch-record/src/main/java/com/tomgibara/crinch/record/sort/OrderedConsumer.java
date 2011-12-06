@@ -20,12 +20,12 @@ import java.io.File;
 import java.util.List;
 
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public abstract class OrderedConsumer implements RecordConsumer<LinearRecord> {
 

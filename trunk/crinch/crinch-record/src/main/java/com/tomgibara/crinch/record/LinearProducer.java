@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 public class LinearProducer extends AdaptedProducer<StringRecord, LinearRecord> {
 
 	private ColumnParser parser;

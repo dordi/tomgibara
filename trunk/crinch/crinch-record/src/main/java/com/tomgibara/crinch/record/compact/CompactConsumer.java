@@ -27,8 +27,8 @@ import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 

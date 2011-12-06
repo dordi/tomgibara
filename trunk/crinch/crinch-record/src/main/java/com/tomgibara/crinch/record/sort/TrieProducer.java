@@ -44,6 +44,7 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {
@@ -115,7 +116,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			try {
 				in.close();
 			} catch (IOException e) {
-				context.log("Failed to close file", e);
+				context.getLogger().log(Level.WARN, "Failed to close file", e);
 			}
 		}
 		this.data = data;

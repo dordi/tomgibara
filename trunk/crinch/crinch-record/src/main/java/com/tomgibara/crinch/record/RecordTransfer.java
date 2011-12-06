@@ -17,6 +17,7 @@
 package com.tomgibara.crinch.record;
 
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 
 public class RecordTransfer<R extends Record> {
@@ -49,7 +50,7 @@ public class RecordTransfer<R extends Record> {
 				try {
 					sequence.close();
 				} catch (RuntimeException e) {
-					context.log("error closing sequence", e);
+					context.getLogger().log(Level.WARN, "error closing sequence", e);
 				}
 			}
 		}

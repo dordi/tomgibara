@@ -29,6 +29,7 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
@@ -164,7 +165,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
-				context.log("Failed to flush writer", e);
+				context.getLogger().log(Level.ERROR, "Failed to flush writer", e);
 			} finally {
 				writer = null;
 				coded = null;
@@ -174,7 +175,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 			try {
 				out.close();
 			} catch (IOException e) {
-				context.log("Failed to close file", e);
+				context.getLogger().log(Level.WARN, "Failed to close file", e);
 			} finally {
 				out = null;
 			}

@@ -30,6 +30,7 @@ import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class PositionProducer implements RecordProducer<EmptyRecord> {
 
@@ -60,7 +61,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 			try {
 				in.close();
 			} catch (IOException e) {
-				context.log("Failed to close file", e);
+				context.getLogger().log(Level.WARN, "Failed to close file", e);
 			}
 		}
 		this.data = data;

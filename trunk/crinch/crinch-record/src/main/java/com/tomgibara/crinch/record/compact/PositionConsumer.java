@@ -149,7 +149,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 		// record the best fixed size
 		posStats.fixedBitSize = bestFixed;
 		posStats.bitsWritten = bestSize;
-		context.log("Fixed bit size: " + bestFixed);
+		context.getLogger().log("Fixed bit size: " + bestFixed);
 	}
 	
 	private void writeFile() {
@@ -170,7 +170,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 				new OversizedWriter(w).writeEntries();
 				long totalSize = w.getPosition();
 				long variableSize = totalSize - fixedSize;
-				context.log("Non-fixed percentage: " + String.format("%.2f", variableSize / (double) totalSize * 100.0));
+				context.getLogger().log("Non-fixed percentage: " + String.format("%.2f", variableSize / (double) totalSize * 100.0));
 			}
 		}, posStats.coding, file);
 	}

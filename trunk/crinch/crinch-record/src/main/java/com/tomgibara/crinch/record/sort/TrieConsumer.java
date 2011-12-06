@@ -40,6 +40,7 @@ import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class TrieConsumer extends OrderedConsumer {
 
@@ -129,7 +130,7 @@ public class TrieConsumer extends OrderedConsumer {
 
 	@Override
 	public void endPass() {
-		context.log("Node count: " + nodeCount);
+		context.getLogger().log("Node count: " + nodeCount);
 		CharFreqRec rec = new CharFreqRec();
 		rec.record(root);
 		frequencies = rec.getFrequencies();
@@ -310,12 +311,12 @@ public class TrieConsumer extends OrderedConsumer {
 				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
-				context.log("Failed to flush writer", e);
+				context.getLogger().log(Level.ERROR, "Failed to flush writer", e);
 			}
 			try {
 				out.close();
 			} catch (IOException e) {
-				context.log("Failed to close file", e);
+				context.getLogger().log(Level.WARN, "Failed to close file", e);
 			}
 		}
 		

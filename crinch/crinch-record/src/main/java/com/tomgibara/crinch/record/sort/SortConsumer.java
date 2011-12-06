@@ -38,6 +38,7 @@ import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.Extended;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class SortConsumer extends OrderedConsumer {
 
@@ -145,7 +146,7 @@ public class SortConsumer extends OrderedConsumer {
 				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
-				context.log("Failed to flush writer", e);
+				context.getLogger().log(Level.ERROR, "Failed to flush writer", e);
 			} finally {
 				writer = null;
 				coded = null;
@@ -155,7 +156,7 @@ public class SortConsumer extends OrderedConsumer {
 			try {
 				out.close();
 			} catch (IOException e) {
-				context.log("Failed to close file", e);
+				context.getLogger().log(Level.WARN, "Failed to close file", e);
 			} finally {
 				out = null;
 			}

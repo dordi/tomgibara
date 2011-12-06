@@ -44,9 +44,14 @@ import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class StdProcessContext implements ProcessContext {
 
+	private static final ProcessLogger sDefaultLogger = new PrintStreamLogger();
+	
+	private ProcessLogger logger = sDefaultLogger;
+	
 	private float progressStep = 1.0f;
 	private ExtendedCoding coding = EliasOmegaCoding.extended;
 	private boolean clean = false;
@@ -69,6 +74,16 @@ public class StdProcessContext implements ProcessContext {
 		resetProgress();
 	}
 
+	public void setLogger(ProcessLogger logger) {
+		if (logger == null) throw new IllegalArgumentException("null logger");
+		this.logger = logger;
+	}
+	
+	@Override
+	public ProcessLogger getLogger() {
+		return logger;
+	}
+	
 	public void setProgressStep(float progressStep) {
 		if (progressStep < 0f) throw new IllegalArgumentException("negative progress");
 		this.progressStep = progressStep;
@@ -110,7 +125,7 @@ public class StdProcessContext implements ProcessContext {
 	public void setDataDir(File dataDir) {
 		if (dataDir == null) throw new IllegalArgumentException("null dataDir");
 		if (!dataDir.equals(this.dataDir)) {
-			log("Data directory: " + dataDir);
+			logger.log("Data directory: " + dataDir);
 			this.dataDir = dataDir;
 			load();
 		}
@@ -126,7 +141,7 @@ public class StdProcessContext implements ProcessContext {
 		if (dataName == null) throw new IllegalArgumentException("null dataName");
 		if (dataName.isEmpty()) throw new IllegalArgumentException("empty dataName");
 		if (!dataName.equals(this.dataName)) {
-			log("Data name: " + dataName);
+			logger.log("Data name: " + dataName);
 			this.dataName = dataName;
 			load();
 		}
@@ -164,7 +179,7 @@ public class StdProcessContext implements ProcessContext {
 	@Override
 	public void setPassName(String passName) {
 		if (passName != null && !passName.equals(this.passName)) {
-			log("Pass: " + passName);
+			logger.log("Pass: " + passName);
 		}
 		this.passName = passName;
 	}
@@ -183,9 +198,9 @@ public class StdProcessContext implements ProcessContext {
 			this.recordCount = recordCount;
 			recordsTransferred = Math.min(recordsTransferred, recordCount);
 			if (recordCount < 0L) {
-				log("Record count unknown");
+				logger.log("Record count unknown");
 			} else {
-				log("Record count: " + recordCount);
+				logger.log("Record count: " + recordCount);
 			}
 			if (recordCount <= 0L) resetProgress();
 		}
@@ -204,7 +219,7 @@ public class StdProcessContext implements ProcessContext {
 		if (recordStats != null && !recordStats.equals(oldStats)) {
 			int col = 1;
 			for (ColumnStats stats : recordStats.getColumnStats()) {
-				log("Statistics - column " + col++ + ": " + stats);
+				logger.log("Statistics - column " + col++ + ": " + stats);
 			}
 		}
 		setRecordCount(recordStats == null ? -1L : recordStats.getRecordCount());
@@ -222,7 +237,7 @@ public class StdProcessContext implements ProcessContext {
 		if (columnTypes != null && !columnTypes.equals(this.columnTypes)) {
 			int col = 1;
 			for (ColumnType type : columnTypes) {
-				log("Type - column " + col++ + ": " + type);
+				logger.log("Type - column " + col++ + ": " + type);
 			}
 		}
 		this.columnTypes = columnTypes;
@@ -256,7 +271,7 @@ public class StdProcessContext implements ProcessContext {
 		if (columnOrders != null && !columnOrders.equals(this.columnOrders)) {
 			int col = 1;
 			for (ColumnOrder order : columnOrders) {
-				log("Order - column " + col++ + ": " + (order.isAscending() ? "ascending" : "descending") + " " + (order.isNullFirst() ? "(null first)" : "(null last)"));
+				logger.log("Order - column " + col++ + ": " + (order.isAscending() ? "ascending" : "descending") + " " + (order.isNullFirst() ? "(null first)" : "(null last)"));
 			}
 		}
 		this.columnOrders = columnOrders;
@@ -268,17 +283,6 @@ public class StdProcessContext implements ProcessContext {
 		return columnOrders;
 	}
 	
-	@Override
-	public void log(String message) {
-		System.out.println(message);
-	}
-	
-	@Override
-	public void log(String message, Throwable t) {
-		System.err.println(message + "(records transferred: " + recordsTransferred + ")");
-		t.printStackTrace();
-	}
-
 	@Override
 	public File file(String type, boolean stats, RecordDef def) {
 		StringBuilder sb = new StringBuilder(dataName);
@@ -301,7 +305,7 @@ public class StdProcessContext implements ProcessContext {
 		if (progressStep >= 1.0f) return;
 		this.progress = progress;
 		lastProgress = progress;
-		log("Progress: " + Math.round(progress * 100f) + "%");
+		logger.log("Progress: " + Math.round(progress * 100f) + "%");
 	}
 	
 	private void load() {
@@ -375,7 +379,7 @@ public class StdProcessContext implements ProcessContext {
 					try {
 						in.close();
 					} catch (IOException e) {
-						log("problem closing file", e);
+						logger.log(Level.WARN, "problem closing file", e);
 					}
 				}
 			}
@@ -401,7 +405,7 @@ public class StdProcessContext implements ProcessContext {
 					try {
 						out.close();
 					} catch (IOException e) {
-						log("problem closing file", e);
+						logger.log(Level.WARN, "problem closing file", e);
 					}
 				}
 			}

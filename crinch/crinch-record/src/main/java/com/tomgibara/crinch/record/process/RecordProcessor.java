@@ -20,6 +20,7 @@ import com.tomgibara.crinch.record.Record;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordTransfer;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class RecordProcessor {
 
@@ -55,7 +56,7 @@ public class RecordProcessor {
 			producer.complete();
 			state = 5;
 		} catch (RuntimeException e) {
-			context.log("error processing records", e);
+			context.getLogger().log("error processing records", e);
 		} finally {
 			if (state == 4) {
 				state = 0;
@@ -67,7 +68,7 @@ public class RecordProcessor {
 				try {
 					consumer.quit();
 				} catch (RuntimeException ex) {
-					context.log("error terminating consumption", ex);
+					context.getLogger().log(Level.WARN, "error terminating consumption", ex);
 				} finally {
 					state = 1;
 				}
@@ -76,7 +77,7 @@ public class RecordProcessor {
 				try {
 					producer.complete();
 				} catch (RuntimeException ex) {
-					context.log("error terminating production", ex);
+					context.getLogger().log(Level.WARN, "error terminating production", ex);
 				} finally {
 					state = 0;
 				}

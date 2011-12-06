@@ -29,6 +29,8 @@ import com.tomgibara.crinch.record.def.RecordDef;
 
 public interface ProcessContext {
 
+	ProcessLogger getLogger();
+	
 	void setCoding(ExtendedCoding coding);
 	
 	ExtendedCoding getCoding();
@@ -73,9 +75,6 @@ public interface ProcessContext {
 
 	RecordDef getRecordDef();
 	
-	void log(String message);
-	
-	void log(String message, Throwable t);
-
 	File file(String type, boolean stats, RecordDef def);
+	
 }

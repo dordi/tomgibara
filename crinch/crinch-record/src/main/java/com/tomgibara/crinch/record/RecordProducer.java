@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 public interface RecordProducer<R extends Record> {
 
 	void prepare(ProcessContext context);

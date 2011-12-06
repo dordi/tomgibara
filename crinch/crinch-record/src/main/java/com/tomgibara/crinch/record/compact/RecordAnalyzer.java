@@ -29,10 +29,10 @@ import com.tomgibara.crinch.hashing.MultiHash;
 import com.tomgibara.crinch.hashing.ObjectMultiHash;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.ColumnStats.Classification;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 //TODO bloom filter parameters should be determined on a column-by-column basis
 //TODO avg length of string columns should inform bloom filter params

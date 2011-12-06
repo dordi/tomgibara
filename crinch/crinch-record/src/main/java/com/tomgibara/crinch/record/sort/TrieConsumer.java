@@ -34,12 +34,12 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class TrieConsumer extends OrderedConsumer {
 

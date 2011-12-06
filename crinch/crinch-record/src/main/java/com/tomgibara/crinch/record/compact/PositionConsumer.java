@@ -26,10 +26,10 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.FibonacciCoding;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 public class PositionConsumer implements RecordConsumer<LinearRecord> {
 

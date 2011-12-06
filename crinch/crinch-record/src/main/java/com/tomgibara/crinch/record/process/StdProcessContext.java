@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record;
+package com.tomgibara.crinch.record.process;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -37,6 +37,10 @@ import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.EliasOmegaCoding;
 import com.tomgibara.crinch.coding.ExtendedCoding;
+import com.tomgibara.crinch.record.ColumnParser;
+import com.tomgibara.crinch.record.ColumnStats;
+import com.tomgibara.crinch.record.RecordStats;
+import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;

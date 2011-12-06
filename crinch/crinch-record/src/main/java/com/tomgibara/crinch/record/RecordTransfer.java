@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 
 public class RecordTransfer<R extends Record> {
 

@@ -1,5 +1,7 @@
 package com.tomgibara.crinch.record;
 
+import com.tomgibara.crinch.record.process.ProcessContext;
+
 public abstract class OneTimeConsumer<R extends Record> implements RecordConsumer<R> {
 
 	private boolean done = false;

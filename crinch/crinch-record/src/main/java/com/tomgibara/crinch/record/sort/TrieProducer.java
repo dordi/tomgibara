@@ -32,7 +32,6 @@ import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.CombinedRecord;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
@@ -44,6 +43,7 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {

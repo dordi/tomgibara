@@ -21,11 +21,11 @@ import java.io.Reader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.record.ProcessContext;
 import com.tomgibara.crinch.record.ReaderSource;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.StringRecord;
+import com.tomgibara.crinch.record.process.ProcessContext;
 
 
 import au.com.bytecode.opencsv.CSVReader;

@@ -35,9 +35,9 @@ public interface ProcessContext {
 	
 	boolean isClean();
 	
-	void setOutputDir(File outputDir);
+	void setDataDir(File dataDir);
 	
-	File getOutputDir();
+	File getDataDir();
 	
 	void setDataName(String dataName);
 	

@@ -47,7 +47,7 @@ public class StdProcessContext implements ProcessContext {
 	private ExtendedCoding coding = EliasOmegaCoding.extended;
 	private boolean clean = false;
 	private ColumnParser columnParser = new StdColumnParser();
-	private File outputDir = new File("");
+	private File dataDir = new File("");
 	private String dataName = "default";
 	
 	private long recordCount = -1L;
@@ -103,18 +103,18 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	@Override
-	public void setOutputDir(File outputDir) {
-		if (outputDir == null) throw new IllegalArgumentException("null outputDir");
-		if (!outputDir.equals(this.outputDir)) {
-			log("Output directory: " + outputDir);
-			this.outputDir = outputDir;
+	public void setDataDir(File dataDir) {
+		if (dataDir == null) throw new IllegalArgumentException("null dataDir");
+		if (!dataDir.equals(this.dataDir)) {
+			log("Data directory: " + dataDir);
+			this.dataDir = dataDir;
 			load();
 		}
 	}
 	
 	@Override
-	public File getOutputDir() {
-		return outputDir;
+	public File getDataDir() {
+		return dataDir;
 	}
 	
 	@Override
@@ -285,7 +285,7 @@ public class StdProcessContext implements ProcessContext {
 			sb.append(".stats");
 		}
 		if (def != null) sb.append('.').append(def.getId());
-		return new File(outputDir, sb.toString());
+		return new File(dataDir, sb.toString());
 	}
 	
 	private void resetProgress() {

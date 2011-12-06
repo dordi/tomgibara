@@ -3,10 +3,12 @@ package com.tomgibara.crinch.record.process;
 public interface ProcessLogger {
 
 	public enum Level {
+		ALL,
 		DEBUG,
 		INFO,
 		WARN,
 		ERROR,
+		NONE
 	}
 	
 	void log(String message);

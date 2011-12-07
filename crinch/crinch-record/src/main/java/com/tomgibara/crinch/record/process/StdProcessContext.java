@@ -59,7 +59,6 @@ public class StdProcessContext implements ProcessContext {
 	private File dataDir = new File("");
 	private String dataName = "default";
 	
-	private long recordCount = -1L;
 	private long recordsTransferred = -1L;
 	private float progress;
 	private float lastProgress;
@@ -156,11 +155,12 @@ public class StdProcessContext implements ProcessContext {
 	
 	@Override
 	public void setRecordsTransferred(long recordsTransferred) {
-		if (recordCount == -1L) return;
+		if (recordStats == null) return;
 		if (recordsTransferred < 0L) recordsTransferred = -1L;
 		if (recordsTransferred == -1L) {
 			resetProgress();
 		} else {
+			long recordCount = recordStats.getRecordCount();
 			float progress;
 			if (recordsTransferred >= recordCount) {
 				progress = 1f;
@@ -190,12 +190,13 @@ public class StdProcessContext implements ProcessContext {
 	}
 	
 	public void setRecordCount(long recordCount) {
-		if (recordCount < 0L) recordCount = -1L;
-		if (recordStats != null && recordCount != recordStats.getRecordCount()) { 
+		if (recordCount < 0L) {
 			setRecordStats(null);
+			return;
 		}
-		if (recordCount != this.recordCount) {
-			this.recordCount = recordCount;
+		
+		if (recordStats == null || recordCount != recordStats.getRecordCount()) {
+			setRecordStats(new RecordStats(recordCount));
 			recordsTransferred = Math.min(recordsTransferred, recordCount);
 			if (recordCount < 0L) {
 				logger.log("Record count unknown");
@@ -206,10 +207,9 @@ public class StdProcessContext implements ProcessContext {
 		}
 	}
 	
-	
 	@Override
 	public long getRecordCount() {
-		return recordCount;
+		return recordStats == null ? -1 : recordStats.getRecordCount();
 	}
 	
 	@Override
@@ -222,7 +222,6 @@ public class StdProcessContext implements ProcessContext {
 				logger.log("Statistics - column " + col++ + ": " + stats);
 			}
 		}
-		setRecordCount(recordStats == null ? -1L : recordStats.getRecordCount());
 		//TODO should only write if changed
 		writeRecordStats();
 	}
@@ -266,6 +265,7 @@ public class StdProcessContext implements ProcessContext {
 		return recordDef;
 	}
 	
+	//TODO I think this can be eliminated
 	@Override
 	public void setColumnOrders(List<ColumnOrder> columnOrders) {
 		if (columnOrders != null && !columnOrders.equals(this.columnOrders)) {

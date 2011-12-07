@@ -33,15 +33,7 @@ import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
-	private static final int PASS_TYPES = 0;
-	private static final int PASS_STATS = 1;
-	private static final int PASS_COMPACT = 2;
-	private static final int PASS_DONE = 3;
-	
-	private ProcessContext context = null;
-	private int pass;
-	private RecordTyper typer;
-	private RecordAnalyzer analyzer;
+	private ProcessContext context;
 	private RecordCompactor compactor;
 	private OutputStream out;
 	private OutputStreamBitWriter writer;
@@ -54,83 +46,29 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		if (context.getColumnTypes() == null) {
-			pass = PASS_TYPES;
-		} else if (context.getRecordStats() == null) {
-			pass = PASS_STATS;
-		} else {
-			if (context.isClean()) file().delete();
-			if (!file().isFile()) {
-				pass = PASS_COMPACT;
-			} else {
-				pass = PASS_DONE;
-			}
-		}
+		if (context.getRecordDef() == null) throw new IllegalArgumentException("context has no record definition");
+		if (context.isClean()) file().delete();
 	}
 
 	@Override
 	public int getRequiredPasses() {
-		return PASS_DONE - pass;
+		return file().isFile() ? 0 : 1;
 	}
 
 	@Override
 	public void beginPass() {
-		switch (pass) {
-		case PASS_TYPES:
-			context.setPassName("Identifying types");
-			typer = new RecordTyper(context);
-			break;
-		case PASS_STATS:
-			if (analyzer == null) {
-				analyzer = new RecordAnalyzer(context);
-				context.setPassName("Gathering statistics");
-			} else {
-				context.setPassName("Identifying unique values");
-			}
-			break;
-		case PASS_COMPACT:
-			context.setPassName("Compacting data");
-			compactor = new RecordCompactor(context, null, 0);
-			open();
-			break;
-		}
+		context.setPassName("Compacting data");
+		compactor = new RecordCompactor(context, null, 0);
+		open();
 	}
 
 	@Override
 	public void consume(LinearRecord record) {
-		switch (pass) {
-		case PASS_TYPES:
-			typer.type(record);
-			break;
-		case PASS_STATS:
-			analyzer.analyze(record);
-			break;
-		case PASS_COMPACT:
-			int c = compactor.compact(coded, record);
-			bitsWritten += c;
-			break;
-		}
+		bitsWritten += compactor.compact(coded, record);
 	}
 
 	@Override
 	public void endPass() {
-		switch(pass) {
-		case PASS_TYPES:
-			context.setRecordCount(typer.getRecordCount());
-			context.setColumnTypes(typer.getColumnTypes());
-			pass = PASS_STATS;
-			break;
-		case PASS_STATS:
-			if (!analyzer.needsReanalysis()) {
-				context.setRecordStats(analyzer.getStats());
-				pass = PASS_COMPACT;
-			}
-			break;
-		case PASS_COMPACT:
-			pass = PASS_DONE;
-			break;
-		default : throw new IllegalStateException("too many passes");
-		}
 	}
 
 	@Override
@@ -144,7 +82,6 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	}
 
 	private File file() {
-		//TODO should change to include ordering when that has been added to stats
 		return context.file("compact", false, context.getRecordDef().getBasisOrSelf());
 	}
 	

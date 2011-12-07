@@ -50,6 +50,10 @@ public class RecordStats {
 	public RecordStats() {
 	}
 	
+	public RecordStats(long recordCount) {
+		setRecordCount(recordCount);
+	}
+	
 	private RecordStats(RecordStats that) {
 		this.columnStats.addAll(that.columnStats);
 		this.recordCount = that.recordCount;

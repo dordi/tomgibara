@@ -44,6 +44,10 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	private RecordDecompactor decompactor;
 	private File file;
 	
+	public CompactProducer() {
+		this(null);
+	}
+	
 	public CompactProducer(SubRecordDef subRecDef) {
 		this.subRecDef = subRecDef;
 	}

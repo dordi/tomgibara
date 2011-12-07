@@ -35,10 +35,34 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 	@Override
 	public RecordSequence<S> open() {
 		return new AdaptedSequence<R, S>(producer.open()) {
+			
+			private S next = null;
+			
+			{
+				advance();
+			}
+			
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+			
 			@Override
 			public S next() {
-				return adapt(sequence.next());
+				try {
+					return next;
+				} finally {
+					advance();
+				}
 			}
+			
+			private void advance() {
+				while (sequence.hasNext()) {
+					next = adapt(sequence.next());
+					if (next != null) break;
+				}
+			}
+			
 		};
 	}
 	
@@ -47,6 +71,7 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 		producer.complete();
 	}
 	
+	// records may be filtered-out by returning null
 	protected abstract S adapt(R record);
 	
 }

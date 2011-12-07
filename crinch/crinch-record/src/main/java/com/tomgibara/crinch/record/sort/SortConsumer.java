@@ -90,7 +90,11 @@ public class SortConsumer extends OrderedConsumer {
 
 	@Override
 	public void beginPass() {
-		context.setPassName("Sorting records");
+		if (hash == null) {
+			context.setPassName("Sorting records");
+		} else {
+			context.setPassName("Shuffling records");
+		}
 		//TODO splitting
 		//TODO need to size
 		queue = new PriorityQueue<LinearRecord>(10000, comparator);

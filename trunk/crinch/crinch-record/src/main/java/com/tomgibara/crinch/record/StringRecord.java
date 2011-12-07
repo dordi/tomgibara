@@ -32,6 +32,10 @@ public class StringRecord extends AbstractRecord {
 		return value == null || value.isEmpty() ? null : value;
 	}
 	
+	public String[] getAll() {
+		return values.clone();
+	}
+	
 	public int length() {
 		return values.length;
 	}

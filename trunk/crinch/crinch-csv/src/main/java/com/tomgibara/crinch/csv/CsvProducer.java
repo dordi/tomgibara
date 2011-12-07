@@ -32,17 +32,24 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class CsvProducer implements RecordProducer<StringRecord> {
 
-	private final Iterable<ReaderSource> readerSources;
-	private final char separator;
+	private Iterable<? extends ReaderSource> readerSources;
+	private char separator;
 
-	public CsvProducer(Iterable<ReaderSource> readerSources) {
-		this(readerSources, ',');
+	CsvProducer() {
 	}
 
-	public CsvProducer(Iterable<ReaderSource> readerSources, char separator) {
+	void init(Iterable<? extends ReaderSource> readerSources, char separator) {
 		if (readerSources == null) throw new IllegalArgumentException("null readerSources");
 		this.readerSources = readerSources;
 		this.separator = separator;
+	}
+	
+	public CsvProducer(Iterable<? extends ReaderSource> readerSources) {
+		this(readerSources, ',');
+	}
+
+	public CsvProducer(Iterable<? extends ReaderSource> readerSources, char separator) {
+		init(readerSources, separator);
 	}
 	
 	@Override
@@ -54,7 +61,7 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 		
 		return new RecordSequence<StringRecord>() {
 
-			private Iterator<ReaderSource> iterator = readerSources.iterator();
+			private Iterator<? extends ReaderSource> iterator = readerSources.iterator();
 			private Reader reader = null;
 			CSVReader csvReader = null;
 			private StringRecord next;
@@ -130,5 +137,5 @@ public class CsvProducer implements RecordProducer<StringRecord> {
 	@Override
 	public void complete() {
 	}
-	
+
 }

@@ -25,6 +25,12 @@ import junit.framework.TestCase;
 // sizing is in multiples of 32 for memory bit writer
 public abstract class AbstractBitWriterTest extends TestCase {
 
+	static byte bite(String binary) {
+		return (byte) Integer.parseInt(binary, 2);
+	}
+	
+
+	
 	abstract BitWriter newBitWriter(long size);
 	
 	abstract BitReader bitReaderFor(BitWriter writer);

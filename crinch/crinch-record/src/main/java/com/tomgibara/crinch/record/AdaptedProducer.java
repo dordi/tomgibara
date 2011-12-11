@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import java.util.NoSuchElementException;
+
 import com.tomgibara.crinch.record.process.ProcessContext;
 
 public abstract class AdaptedProducer<R extends Record, S extends Record> implements RecordProducer<S> {
@@ -36,7 +38,7 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 	public RecordSequence<S> open() {
 		return new AdaptedSequence<R, S>(producer.open()) {
 			
-			private S next = null;
+			private S next;
 			
 			{
 				advance();
@@ -49,6 +51,7 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 			
 			@Override
 			public S next() {
+				if (next == null) throw new NoSuchElementException();
 				try {
 					return next;
 				} finally {
@@ -59,8 +62,9 @@ public abstract class AdaptedProducer<R extends Record, S extends Record> implem
 			private void advance() {
 				while (sequence.hasNext()) {
 					next = adapt(sequence.next());
-					if (next != null) break;
+					if (next != null) return;
 				}
+				next = null;
 			}
 			
 		};

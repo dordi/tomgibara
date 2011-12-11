@@ -18,4 +18,26 @@ package com.tomgibara.crinch.bits;
 
 public abstract class AbstractByteBasedBitWriterTest extends AbstractBitWriterTest {
 
+	abstract ByteBasedBitWriter newBitWriter(long size);
+
+	abstract byte[] getWrittenBytes(ByteBasedBitWriter writer);
+	
+	private static byte bite(String binary) {
+		return (byte) Integer.parseInt(binary, 2);
+	}
+	
+	public void testBitOrder() {
+		testBitOrder("1111111100000000");
+		testBitOrder("1111000011110000");
+		testBitOrder("1100110011001100");
+	}
+	
+	private void testBitOrder(String binary) {
+		ByteBasedBitWriter writer = newBitWriter(16);
+		writer.write(new BitVector(binary));
+		byte[] bytes = getWrittenBytes(writer);
+		assertEquals(bite(binary.substring(0, 8)), bytes[0]);
+		assertEquals(bite(binary.substring(8, 16)), bytes[1]);
+	}
+	
 }

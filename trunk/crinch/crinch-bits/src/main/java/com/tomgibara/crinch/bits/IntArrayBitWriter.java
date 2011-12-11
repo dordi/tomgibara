@@ -139,7 +139,7 @@ public class IntArrayBitWriter extends AbstractBitWriter {
         return size;
     }
     
-    public int[] getMemory() {
+    public int[] getInts() {
         return ints;
     }
     

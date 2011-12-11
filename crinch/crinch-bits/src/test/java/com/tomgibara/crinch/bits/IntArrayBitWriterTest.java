@@ -27,7 +27,7 @@ public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 	@Override
 	BitReader bitReaderFor(BitWriter writer) {
 		IntArrayBitWriter mw = (IntArrayBitWriter) writer;
-		return new IntArrayBitReader(mw.getMemory(), mw.getSize());
+		return new IntArrayBitReader(mw.getInts(), mw.getSize());
 	}
 	
 	public void testBitOrder() {
@@ -42,7 +42,7 @@ public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 		IntArrayBitWriter writer = newBitWriter(32);
 		writer.write(new BitVector(binary));
 		writer.flush();
-		int[] ints = writer.getMemory();
+		int[] ints = writer.getInts();
 		assertEquals(bite(binary.substring(0,   8)), (byte) (ints[0] >> 24));
 		assertEquals(bite(binary.substring(8,  16)), (byte) (ints[0] >> 16));
 		assertEquals(bite(binary.substring(16, 24)), (byte) (ints[0] >>  8));

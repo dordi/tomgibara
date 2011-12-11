@@ -16,6 +16,8 @@
  */
 package com.tomgibara.crinch.record;
 
+import java.util.Arrays;
+
 public class StringRecord extends AbstractRecord {
 
 	private final String[] values;
@@ -54,5 +56,13 @@ public class StringRecord extends AbstractRecord {
 		if (index < 0) throw new IllegalArgumentException("negative index");
 		if (index >= values.length) throw new IllegalArgumentException("index too large");
 	}
+	
+	//TODO implement object methods
+
+	@Override
+	public String toString() {
+		return "Ordinal: " + getRecordOrdinal() + ", position: " + getRecordPosition() + ", values: " + Arrays.toString(values);
+	}
+	
 	
 }

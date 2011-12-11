@@ -17,6 +17,7 @@
 package com.tomgibara.crinch.record;
 
 
+
 public class ParsedRecord extends AbstractRecord implements LinearRecord {
 
 	private final ColumnParser parser;
@@ -216,6 +217,13 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 		invalidCause = null;
 		String str = record.get(index++);
 		return str != null && str.isEmpty() ? null : str;
+	}
+
+	//TODO implement object methods
+	
+	@Override
+	public String toString() {
+		return record.toString();
 	}
 	
 }

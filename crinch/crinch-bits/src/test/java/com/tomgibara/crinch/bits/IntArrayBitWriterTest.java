@@ -20,7 +20,7 @@ package com.tomgibara.crinch.bits;
 public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 
 	@Override
-	BitWriter newBitWriter(long size) {
+	IntArrayBitWriter newBitWriter(long size) {
 		return new IntArrayBitWriter(new int[(int) ((size + 31) / 32)], size);
 	}
 
@@ -29,5 +29,25 @@ public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 		IntArrayBitWriter mw = (IntArrayBitWriter) writer;
 		return new IntArrayBitReader(mw.getMemory(), mw.getSize());
 	}
+	
+	public void testBitOrder() {
+		testBitOrder("11111111111111110000000000000000");
+		testBitOrder("11111111000000001111111100000000");
+		testBitOrder("11110000111100001111000011110000");
+		testBitOrder("11001100110011001100110011001100");
+		testBitOrder("10101010101010101010101010101010");
+	}
+	
+	private void testBitOrder(String binary) {
+		IntArrayBitWriter writer = newBitWriter(32);
+		writer.write(new BitVector(binary));
+		writer.flush();
+		int[] ints = writer.getMemory();
+		assertEquals(bite(binary.substring(0,   8)), (byte) (ints[0] >> 24));
+		assertEquals(bite(binary.substring(8,  16)), (byte) (ints[0] >> 16));
+		assertEquals(bite(binary.substring(16, 24)), (byte) (ints[0] >>  8));
+		assertEquals(bite(binary.substring(24, 32)), (byte) (ints[0]      ));
+	}
+
 	
 }

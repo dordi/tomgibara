@@ -22,14 +22,11 @@ public abstract class AbstractByteBasedBitWriterTest extends AbstractBitWriterTe
 
 	abstract byte[] getWrittenBytes(ByteBasedBitWriter writer);
 	
-	private static byte bite(String binary) {
-		return (byte) Integer.parseInt(binary, 2);
-	}
-	
 	public void testBitOrder() {
 		testBitOrder("1111111100000000");
 		testBitOrder("1111000011110000");
 		testBitOrder("1100110011001100");
+		testBitOrder("1010101010101010");
 	}
 	
 	private void testBitOrder(String binary) {

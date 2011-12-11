@@ -143,12 +143,14 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		private final ByteArrayBitReader reader;
 		private final CodedReader coded;
 
+		private boolean autoClose = false;
 		private Case casing = Case.MIXED;
 		private String prefixKey = "";
 		private long prefixPosition = 0L;
 		private boolean initial = true;
 		private boolean exact = false;
-		
+
+		private boolean closed = false;
 		private StringBuilder key;
 		long nextRecordPosition;
 		long finalRecordPosition;
@@ -161,6 +163,12 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			coded = new CodedReader(reader, coding);
 		}
 
+		public Accessor autoClose(boolean autoClose) {
+			checkNotClosed();
+			this.autoClose = autoClose;
+			return this;
+		}
+		
 		public Accessor prefix(String prefix) {
 			if (prefix == null) throw new IllegalArgumentException("null prefix");
 			configure(prefix);
@@ -212,16 +220,17 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 
 		@Override
 		public void close() {
-			/* no-op atm */
+			closed = true;
 		}
 		
 		private void configure(String str) {
+			checkNotClosed();
 			if (str != null) locate(str);
 			initial = true;
 			nextRecordPosition = 0L;
 			finalRecordPosition = 0L;
 		}
-		
+
 		// finishes with reader positioned to read record(s)
 		private void locate(String key) {
 			if (key.length() > maxLength) {
@@ -308,6 +317,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		}
 		
 		private LinearRecord advance() {
+			checkNotClosed();
 			if (prefixPosition < 0L) return null;
 			
 			if (initial) {
@@ -323,13 +333,13 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				reader.setPosition(nextRecordPosition);
 				LinearRecord record = readRecord(key);
 				nextRecordPosition = reader.getPosition();
-				return record;
+				return terminus();
 			}
 			
 			int depth = key.length();
 			while (true) {
 				if (!initial) {
-					if (exact) return null;
+					if (exact) return terminus();
 					
 					while (true) {
 						long childPosition = childPositions[depth]; 
@@ -339,7 +349,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 							break;
 						}
 
-						if (depth == prefixKey.length()) return null;
+						if (depth == prefixKey.length()) return terminus();
 
 						long siblingPosition = siblingPositions[depth];
 						if (siblingPosition >= 0) {
@@ -379,6 +389,15 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				if (record != null) return record;
 			}
 
+		}
+		
+		private LinearRecord terminus() {
+			if (autoClose) closed = true;
+			return null;
+		}
+		
+		private void checkNotClosed() {
+			if (closed) throw new IllegalStateException("closed");
 		}
 		
 	}

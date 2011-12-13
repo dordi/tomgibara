@@ -179,9 +179,8 @@ public interface BloomFilter<E> {
 	
 	/**
 	 * The bits of the Bloom filter. The returned {@link BitVector} may be live,
-	 * or may be a snapshot, there's no guarantee. Use
-	 * {@link BitVector#immutable()} if you must have a static snapshot - it's a
-	 * free operation on bit vectors that are already immutable.
+	 * or may be a snapshot, there's no guarantee. Use {@link BitVector#copy()}
+	 * if you must have a guaranteed static snapshot.
 	 * 
 	 * @return a {@link BitVector} that contains the state of the filter, never
 	 *         null

@@ -21,6 +21,7 @@ import java.util.HashSet;
 
 import junit.framework.TestCase;
 
+import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.MultiHash;
@@ -38,13 +39,28 @@ public class BasicBloomFilterTest extends TestCase {
 	MultiHash<Object> sha1Hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), new HashRange(0, DEFAULT_SIZE - 1));
 	MultiHash<Object> objHash = new SingletonMultiHash<Object>( Hashes.rangeAdjust(new HashRange(DEFAULT_MIN, DEFAULT_MAX), new ObjectHash<Object>()) );
 
-	public void testConstructor() {
+	public void testConstructorWithoutBitVector() {
 		BasicBloomFilter<Object> bloom = new BasicBloomFilter<Object>(sha1Hash, 10);
 		assertEquals(0.0, bloom.getFalsePositiveProbability());
 		assertEquals(10, bloom.getHashCount());
 		assertEquals(sha1Hash, bloom.getMultiHash());
 		assertEquals(true, bloom.isEmpty());
 		assertEquals(DEFAULT_SIZE, bloom.getBitVector().size());
+	}
+	
+	public void testConstructorWithBitVector() {
+		BasicBloomFilter<Object> bloom = new BasicBloomFilter<Object>(new BitVector(500), sha1Hash, 10);
+		assertEquals(500, bloom.getCapacity());
+		assertEquals(500, bloom.getMultiHash().getRange().getSize().intValue());
+	}
+	
+	public void testConstructorWithImmutableBitVector() {
+		try {
+			new BasicBloomFilter<Object>(new BitVector(1000).immutableCopy(), sha1Hash, 10);
+			fail();
+		} catch (IllegalArgumentException e) {
+			/* expected */
+		}
 	}
 	
 	public void testIsEmpty() {

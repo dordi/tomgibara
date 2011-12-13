@@ -18,6 +18,17 @@ package com.tomgibara.crinch.collections;
 
 import com.tomgibara.crinch.bits.BitVector;
 
+/**
+ * <p>
+ * A convenient base class for {@link BloomFilter} implementations.
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ * @param <E>
+ *            the type of element contained in the filter
+ */
+
 public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 
 	@Override

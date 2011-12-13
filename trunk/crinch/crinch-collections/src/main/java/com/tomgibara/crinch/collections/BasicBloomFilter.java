@@ -21,6 +21,17 @@ import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.MultiHash;
 
+/**
+ * <p>
+ * A straightforward {@link BloomFilter} implementation that persists live state
+ * in a {@link BitVector}.
+ * </p>
+ * 
+ * @author Tom Gibara
+ * 
+ * @param <E>
+ *            the type of element contained in the filter
+ */
 
 public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Cloneable {
 
@@ -33,17 +44,55 @@ public class BasicBloomFilter<E> extends AbstractBloomFilter<E> implements Clone
 	private final BitVector publicBits;
 	
 	// constructors
+
+	/**
+	 * Constructs a {@link BasicBloomFilter} with the specified multi-hash and
+	 * hash count. The capacity of the filter will be determined by the size of
+	 * the hash range.
+	 * 
+	 * @param multiHash
+	 *            generates hashes for elements added to the filter
+	 * @param hashCount
+	 *            the number hashes generated for each element
+	 * @throws IllegalArgumentException
+	 *             if the hashCount is less than 1, the multiHash is null, its
+	 *             maximum multiplicity is exceeded by the hashCount or if the
+	 *             hash range is too large to be accommodated by a
+	 *             {@link BitVector}
+	 */
 	
 	public BasicBloomFilter(MultiHash<? super E> multiHash, int hashCount) {
 		this(null, multiHash, hashCount);
 	}
 
+	/**
+	 * Constructs a {@link BasicBloomFilter} with the specified multi-hash and
+	 * hash count. If a {@link BitVector} is supplied with a capacity that is
+	 * inferior to the range of the {@link MultiHash}, a range-adjusted hash
+	 * will be used that matches the capacity.
+	 * 
+	 * @param bits
+	 *            a {@link BitVector} that will store the state of the filter,
+	 *            or null
+	 * @param multiHash
+	 *            generates hashes for elements added to the filter
+	 * @param hashCount
+	 *            the number hashes generated for each element
+	 * @throws IllegalArgumentException
+	 *             if the hashCount is less than 1, the multiHash is null, its
+	 *             maximum multiplicity is exceeded by the hashCount or if the
+	 *             hash range is too large to be accommodated by a
+	 *             {@link BitVector} or if the supplied {@link BitVector} is
+	 *             immutable
+	 */
+	
 	public BasicBloomFilter(BitVector bits, MultiHash<? super E> multiHash, int hashCount) {
 		if (multiHash == null) throw new IllegalArgumentException("null multiHash");
 		if (hashCount < 1) throw new IllegalArgumentException("hashCount not positive");
 		if (multiHash.getMaxMultiplicity() < hashCount) throw new IllegalArgumentException("hashCount exceeds maximum hash multiplicity");
 		
 		if (bits != null) { // adapt the multiHash to match bits size (if possible)
+			if (!bits.isMutable()) throw new IllegalArgumentException("bits not mutable");
 			final int bitSize = bits.size();
 			multiHash = Hashes.rangeAdjust(new HashRange(0, bitSize - 1), multiHash);
 		} else { // ensure that the multiHash is small enough fit into bits

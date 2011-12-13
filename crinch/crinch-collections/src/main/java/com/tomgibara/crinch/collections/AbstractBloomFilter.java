@@ -37,6 +37,7 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	
 	@Override
 	public boolean addAll(Iterable<? extends E> elements) {
+		if (elements == null) throw new IllegalArgumentException("null elements");
 		boolean mutated = false;
 		for (E element : elements) if ( add(element) ) mutated = true;
 		return mutated;
@@ -55,6 +56,7 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	
 	@Override
 	public boolean mightContainAll(Iterable<? extends E> elements) {
+		if (elements == null) throw new IllegalArgumentException("null elements");
 		for (E element : elements) if (!mightContain(element)) return false;
 		return true;
 	}
@@ -91,6 +93,7 @@ public abstract class AbstractBloomFilter<E> implements BloomFilter<E> {
 	// package scoped methods
 
 	void checkCompatible(BloomFilter<?> that) {
+		if (that == null) throw new IllegalArgumentException("null filter");
 		if (this.getHashCount() != that.getHashCount()) throw new IllegalArgumentException("Incompatible filter, hashCount was " + that.getHashCount() +", expected " + this.getHashCount());
 		if (!this.getMultiHash().equals(that.getMultiHash())) throw new IllegalArgumentException("Incompatible filter, multiHashes were not equal");
 	}

@@ -333,7 +333,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				reader.setPosition(nextRecordPosition);
 				LinearRecord record = readRecord(key);
 				nextRecordPosition = reader.getPosition();
-				return terminus();
+				return record;
 			}
 			
 			int depth = key.length();

@@ -135,6 +135,13 @@ public class DynamicRecordFactory {
 			return classNameSuffix;
 		}
 		
+		// TODO object methods
+		
+		@Override
+		public String toString() {
+			return classNameSuffix;
+		}
+		
 	}
 	
 	// fields
@@ -261,9 +268,7 @@ public class DynamicRecordFactory {
 		{
 			int field = 0;
 			for (ColumnType type : definition.getTypes()) {
-				sb.append("\tprivate ");
-				if (!markable) sb.append("final ");
-				sb.append(type).append(" f_").append(field++).append(";\n");
+				sb.append("\tprivate final ").append(type).append(" f_").append(field++).append(";\n");
 			}
 		}
 		if (linkable) {
@@ -313,13 +318,7 @@ public class DynamicRecordFactory {
 			for (ColumnType t : definition.getTypes()) {
 				if (type == t) {
 					sb.append("\t\t\tcase ").append(field).append(":\n");
-					if (!markable || type.typeClass.isPrimitive()) {
-						sb.append("\t\t\treturn f_").append(field).append(";\n");
-					} else {
-						sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = f_").append(field).append(";\n");
-						sb.append("\t\t\tf_").append(field).append(" = null;\n");
-						sb.append("\t\t\treturn tmp_").append(field).append(";\n");
-					}
+					sb.append("\t\t\treturn f_").append(field).append(";\n");
 				}
 				field++;
 			}

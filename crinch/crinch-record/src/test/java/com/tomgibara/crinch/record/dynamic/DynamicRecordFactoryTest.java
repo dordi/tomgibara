@@ -84,6 +84,32 @@ public class DynamicRecordFactoryTest extends TestCase {
 		assertEquals("[null,Tom,true]", rec.toString());
 	}
 	
+	public void testWasNull() {
+		for (DynamicRecordFactory.ClassConfig config : DynamicRecordFactory.ClassConfig.sInstances) {
+			testWasNull(config);
+		}
+	}
+
+	private void testWasNull(DynamicRecordFactory.ClassConfig config) {
+		RecordDef def = RecordDef
+				.fromTypes(Arrays.asList(STRING_OBJECT, STRING_OBJECT))
+				.setPositional(false)
+				.build();
+		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
+		LinearRecord rec1 = fac.newRecord(config, new ParsedRecord(parser, new StringRecord(0L, -1L, "SOMESTR", null)));
+		assertEquals("SOMESTR", rec1.nextString());
+		System.out.println(config);
+		assertFalse(rec1.wasNull());
+		assertNull(rec1.nextString());
+		assertTrue(rec1.wasNull());
+		LinearRecord rec2 = fac.newRecord(config, new ParsedRecord(parser, new StringRecord(0L, -1L, null, "SOMESTR")));
+		assertNull(rec2.nextString());
+		assertTrue(rec2.wasNull());
+		assertEquals("SOMESTR", rec2.nextString());
+		assertFalse(rec2.wasNull());
+	}
+
+	
 	public void testLinkedRecord() {
 		RecordDef def = RecordDef
 				.fromTypes(Arrays.asList(INT_PRIMITIVE))

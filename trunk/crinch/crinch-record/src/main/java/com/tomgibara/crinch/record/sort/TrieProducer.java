@@ -24,7 +24,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
+import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.FileBitReaderFactory;
+import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.ExtendedCoding;
@@ -60,7 +64,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	private File file;
 	private HuffmanCoding huffmanCoding;
 	private ExtendedCoding coding;
-	private byte[] data;
+	private FileBitReaderFactory fbrf;
 	private int maxLength;
 	private RecordDecompactor decompactor;
 	private RecordDef recordDef;
@@ -103,23 +107,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		
-		//TODO need to support non-memory operation
-		int size = (int) file.length();
-		byte[] data = new byte[size];
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream(file);
-			new DataInputStream(in).readFully(data);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-				context.getLogger().log(Level.WARN, "Failed to close file", e);
-			}
-		}
-		this.data = data;
+		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 	}
 	
 	@Override
@@ -132,7 +120,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		file = null;
 		huffmanCoding = null;
 		coding = null;
-		data = null;
+		fbrf = null;
 		decompactor = null;
 		recordDef = null;
 		factory = null;
@@ -140,7 +128,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	
 	public class Accessor implements RecordSequence<LinearRecord> {
 	
-		private final ByteArrayBitReader reader;
+		private final ByteBasedBitReader reader;
 		private final CodedReader coded;
 
 		private boolean autoClose = false;
@@ -159,7 +147,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		private LinearRecord next = null;
 		
 		public Accessor() {
-			reader = new ByteArrayBitReader(data);
+			reader = fbrf.newReader();
 			coded = new CodedReader(reader, coding);
 		}
 

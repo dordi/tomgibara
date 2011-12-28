@@ -125,7 +125,6 @@ public class TrieConsumer extends OrderedConsumer {
 		} else {
 			node.record = subRec;
 		}
-		record.exhaust();
 	}
 
 	@Override
@@ -211,8 +210,8 @@ public class TrieConsumer extends OrderedConsumer {
 	}
 	
 	private void writeRecord(CodedWriter coded, LinearRecord record) {
-		if (definition.isOrdinal()) coded.writePositiveLong(record.getRecordOrdinal() + 1L);
-		if (definition.isPositional()) coded.writePositiveLong(record.getRecordPosition() + 1L);
+		if (definition.isOrdinal()) coded.writePositiveLong(record.getOrdinal() + 1L);
+		if (definition.isPositional()) coded.writePositiveLong(record.getPosition() + 1L);
 		record.reset();
 		compactor.compact(coded, record);
 	}

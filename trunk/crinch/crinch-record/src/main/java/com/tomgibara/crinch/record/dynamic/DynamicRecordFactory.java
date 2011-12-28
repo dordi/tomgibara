@@ -261,8 +261,8 @@ public class DynamicRecordFactory {
 		sb.append("\t};\n");
 		
 		// fields
-		if (definition.isOrdinal()) sb.append("\tprivate final long recordOrdinal;\n");
-		if (definition.isPositional()) sb.append("\tprivate final long recordPosition;\n");
+		if (definition.isOrdinal()) sb.append("\tprivate final long ordinal;\n");
+		if (definition.isPositional()) sb.append("\tprivate final long position;\n");
 		sb.append("\tprivate short field = 0;\n");
 		if (markable) sb.append("\tprivate short mark = Short.MAX_VALUE;\n");
 		{
@@ -283,8 +283,8 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic ").append(className).append("(" + LinearRecord.class.getName() + " record, boolean basis) {\n");
 			if (linkable) sb.append("\t\tnext = prev = this;\n");
-			if (definition.isOrdinal()) sb.append("\t\tthis.recordOrdinal = record.getRecordOrdinal();\n");
-			if (definition.isPositional()) sb.append("\t\tthis.recordPosition = record.getRecordPosition();\n");
+			if (definition.isOrdinal()) sb.append("\t\tthis.ordinal = record.getOrdinal();\n");
+			if (definition.isPositional()) sb.append("\t\tthis.position = record.getPosition();\n");
 			sb.append("\t\tif (basis) {\n");
 			if (definition.getBasis() == null) {
 				sb.append("\t\t\tthrow new IllegalArgumentException(\"no basis defined\");\n");
@@ -298,12 +298,12 @@ public class DynamicRecordFactory {
 		}
 		
 		// accessors
-		sb.append("\tpublic long getRecordOrdinal() {\n");
-		sb.append("\t\treturn ").append(definition.isOrdinal() ? "recordOrdinal" : "-1L").append(";\n");
+		sb.append("\tpublic long getOrdinal() {\n");
+		sb.append("\t\treturn ").append(definition.isOrdinal() ? "ordinal" : "-1L").append(";\n");
 		sb.append("\t}\n");
 
-		sb.append("\tpublic long getRecordPosition() {\n");
-		sb.append("\t\treturn ").append(definition.isPositional() ? "recordPosition" : "-1L").append(";\n");
+		sb.append("\tpublic long getPosition() {\n");
+		sb.append("\t\treturn ").append(definition.isPositional() ? "position" : "-1L").append(";\n");
 		sb.append("\t}\n");
 
 		// next methods

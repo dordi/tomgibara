@@ -32,13 +32,13 @@ public class CombinedRecord implements LinearRecord {
 	}
 
 	@Override
-	public long getRecordOrdinal() {
-		return current().getRecordOrdinal();
+	public long getOrdinal() {
+		return current().getOrdinal();
 	}
 
 	@Override
-	public long getRecordPosition() {
-		return current().getRecordPosition();
+	public long getPosition() {
+		return current().getPosition();
 	}
 
 	@Override
@@ -124,8 +124,8 @@ public class CombinedRecord implements LinearRecord {
 	}
 
 	@Override
-	public void exhaust() {
-		while (current().hasNext()) current().exhaust();
+	public void release() {
+		while (current().hasNext()) current().release();
 	}
 
 	private LinearRecord current() {

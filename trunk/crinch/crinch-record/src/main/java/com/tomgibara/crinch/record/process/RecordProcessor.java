@@ -41,6 +41,18 @@ public class RecordProcessor {
 		return context;
 	}
 	
+	/**
+	 * Prepares the producer and consumer and transfers all records from one to
+	 * the other until processing is complete. Exceptions that occur during
+	 * processing are caught and recorded in the context's logger.
+	 * 
+	 * @param producer
+	 *            the record producer
+	 * @param consumer
+	 *            the record consumer
+	 * @return true iff the process ran to completion without error
+	 */
+	
 	public <R extends Record> boolean process(RecordProducer<R> producer, RecordConsumer<R> consumer) {
 		if (context == null) throw new IllegalStateException("null context");
 		int state = 0;

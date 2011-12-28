@@ -22,8 +22,8 @@ public class ArrayRecord extends AbstractLinearRecord {
 
 	private final Object[] values;
 	
-	public ArrayRecord(long recordOrdinal, long recordPosition, Object[] values) {
-		super(recordOrdinal, recordPosition);
+	public ArrayRecord(long ordinal, long position, Object[] values) {
+		super(ordinal, position);
 		if (values == null) throw new IllegalArgumentException("null values");
 		this.values = values;
 	}

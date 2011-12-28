@@ -38,12 +38,12 @@ public class RecordDecompactor {
 		this.compactors = compactors;
 	}
 
-	public CompactRecord decompact(CodedReader reader, long recordOrdinal) {
-		return new CompactRecord(compactors, reader, recordOrdinal, -1L);
+	public CompactRecord decompact(CodedReader reader, long ordinal) {
+		return new CompactRecord(compactors, reader, ordinal, -1L);
 	}
 
-	public CompactRecord decompact(CodedReader reader, long recordOrdinal, long recordPosition) {
-		return new CompactRecord(compactors, reader, recordOrdinal, recordPosition);
+	public CompactRecord decompact(CodedReader reader, long ordinal, long position) {
+		return new CompactRecord(compactors, reader, ordinal, position);
 	}
 
 	

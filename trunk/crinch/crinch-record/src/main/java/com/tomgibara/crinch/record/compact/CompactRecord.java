@@ -159,7 +159,7 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 	}
 	
 	@Override
-	public void exhaust() {
+	public void release() {
 		while (index < compactors.length) {
 			skipNext();
 		}

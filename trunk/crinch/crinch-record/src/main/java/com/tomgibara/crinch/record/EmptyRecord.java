@@ -31,12 +31,12 @@ public class EmptyRecord implements LinearRecord {
 	}
 	
 	@Override
-	public long getRecordOrdinal() {
+	public long getOrdinal() {
 		return ordinal;
 	}
 
 	@Override
-	public long getRecordPosition() {
+	public long getPosition() {
 		return position;
 	}
 
@@ -125,7 +125,7 @@ public class EmptyRecord implements LinearRecord {
 	}
 
 	@Override
-	public void exhaust() {
+	public void release() {
 	}
 
 	private final void noNext() {

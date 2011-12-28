@@ -25,8 +25,8 @@ public class SingletonRecord extends AbstractLinearRecord {
 		this.value = value;
 	}
 
-	public SingletonRecord(long recordOrdinal, long recordPosition, Object value) {
-		super(recordOrdinal, recordPosition);
+	public SingletonRecord(long ordinal, long position, Object value) {
+		super(ordinal, position);
 		this.value = value;
 	}
 
@@ -48,7 +48,7 @@ public class SingletonRecord extends AbstractLinearRecord {
 
 	@Override
 	public String toString() {
-		return "ordinal: " + recordOrdinal + ",  position: " + recordPosition + ", value: " + value;
+		return "ordinal: " + ordinal + ",  position: " + position + ", value: " + value;
 	}
 	
 }

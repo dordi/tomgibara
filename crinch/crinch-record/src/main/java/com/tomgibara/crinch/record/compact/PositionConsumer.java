@@ -78,13 +78,12 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void consume(LinearRecord record) {
-		long position = record.getRecordPosition();
-		int ordinal = (int) record.getRecordOrdinal();
+		long position = record.getPosition();
+		int ordinal = (int) record.getOrdinal();
 		//TODO could deal with this by maintaining own count of records and decrementing
 		if (position < 0L) throw new IllegalArgumentException("record without position");
 		if (ordinal < 0) throw new IllegalArgumentException("record without ordinal");
 		positions[ordinal] = position;
-		record.exhaust();
 	}
 
 	@Override

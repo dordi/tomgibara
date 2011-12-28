@@ -28,8 +28,8 @@ public abstract class AbstractLinearRecord extends AbstractRecord implements Lin
 
 	protected abstract int getLength();
 
-	protected AbstractLinearRecord(long recordOrdinal, long recordPosition) {
-		super(recordOrdinal, recordPosition);
+	protected AbstractLinearRecord(long ordinal, long position) {
+		super(ordinal, position);
 	}
 	
 	@Override
@@ -168,10 +168,10 @@ public abstract class AbstractLinearRecord extends AbstractRecord implements Lin
 	}
 
 	@Override
-	public void exhaust() {
+	public void release() {
 		index = getLength();
 	}
-	
+
 	private Object nextValue() {
 		if (index == getLength()) throw new IllegalStateException("record exhausted");
 		wasInvalid = false;

@@ -207,7 +207,7 @@ public class ParsedRecord extends AbstractRecord implements LinearRecord {
 	}
 	
 	@Override
-	public void exhaust() {
+	public void release() {
 		index = length;
 	}
 	

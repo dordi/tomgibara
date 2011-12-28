@@ -293,7 +293,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
 			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
 			LinearRecord record = decompactor.decompact(coded, ordinal, position);
-			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getRecordOrdinal(), record.getRecordPosition(), key.toString()), record));
+			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getOrdinal(), record.getPosition(), key.toString()), record));
 		}
 		
 		private void prepare() {

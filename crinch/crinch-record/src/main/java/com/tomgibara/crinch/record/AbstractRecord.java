@@ -18,37 +18,37 @@ package com.tomgibara.crinch.record;
 
 public abstract class AbstractRecord implements Record {
 
-	final long recordOrdinal;
-	final long recordPosition;
+	final long ordinal;
+	final long position;
 	
 	public AbstractRecord() {
-		recordOrdinal = -1L;
-		recordPosition = -1L;
+		ordinal = -1L;
+		position = -1L;
 	}
 
-	public AbstractRecord(long recordOrdinal, long recordPosition) {
-		this.recordOrdinal = recordOrdinal;
-		this.recordPosition = recordPosition;
+	public AbstractRecord(long ordinal, long position) {
+		this.ordinal = ordinal;
+		this.position = position;
 	}
 	
 	public AbstractRecord(AbstractRecord that) {
-		this.recordOrdinal = that.recordOrdinal;
-		this.recordPosition = that.recordPosition;
+		this.ordinal = that.ordinal;
+		this.position = that.position;
 	}
 	
 	public AbstractRecord(Record that) {
-		this.recordOrdinal = that.getRecordOrdinal();
-		this.recordPosition = that.getRecordPosition();
+		this.ordinal = that.getOrdinal();
+		this.position = that.getPosition();
 	}
 
 	@Override
-	public long getRecordOrdinal() {
-		return recordOrdinal;
+	public long getOrdinal() {
+		return ordinal;
 	}
 	
 	@Override
-	public long getRecordPosition() {
-		return recordPosition;
+	public long getPosition() {
+		return position;
 	}
 	
 }

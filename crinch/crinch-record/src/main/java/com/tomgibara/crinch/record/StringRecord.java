@@ -22,10 +22,14 @@ public class StringRecord extends AbstractRecord {
 
 	private final String[] values;
 	
-	public StringRecord(long recordOrdinal, long recordPosition, String... values) {
-		super(recordOrdinal, recordPosition);
+	public StringRecord(long ordinal, long position, String... values) {
+		super(ordinal, position);
 		if (values == null) throw new IllegalArgumentException("null value");
 		this.values = values;
+	}
+	
+	@Override
+	public void release() {
 	}
 	
 	public String get(int index) {
@@ -49,7 +53,7 @@ public class StringRecord extends AbstractRecord {
 			checkIndex(index);
 			mapped[i] = values[index];
 		}
-		return new StringRecord(recordOrdinal, -1L, mapped);
+		return new StringRecord(ordinal, -1L, mapped);
 	}
 	
 	private void checkIndex(int index) {
@@ -61,7 +65,7 @@ public class StringRecord extends AbstractRecord {
 
 	@Override
 	public String toString() {
-		return "Ordinal: " + getRecordOrdinal() + ", position: " + getRecordPosition() + ", values: " + Arrays.toString(values);
+		return "Ordinal: " + getOrdinal() + ", position: " + getPosition() + ", values: " + Arrays.toString(values);
 	}
 	
 	

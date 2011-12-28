@@ -47,6 +47,4 @@ public interface LinearRecord extends Record {
 	void mark();
 	
 	void reset();
-	
-	void exhaust();
 }

@@ -26,6 +26,15 @@ public interface RecordConsumer<R extends Record> {
 	
 	void beginPass();
 	
+	/**
+	 * Supplies a record to the consumer during processing.
+	 * During processing, the record supplied to this method will automatically be released at some time after the the call to consume has returned.
+	 * Though implementations are free to release records sooner by directly calling {@link Record#release()} it is not necessary since the record will be released on the consumer's behalf.
+	 * However, this has the consequence that consumers cannot safely keep references to a record (or any resource it may back) beyond the call.
+	 * 
+	 * @param record a record, never null
+	 */
+	
 	void consume(R record);
 	
 	void endPass();

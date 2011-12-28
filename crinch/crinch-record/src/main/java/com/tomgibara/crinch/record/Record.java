@@ -18,8 +18,28 @@ package com.tomgibara.crinch.record;
 
 public interface Record {
 
-	long getRecordOrdinal();
+	/**
+	 * The number of the record within a sequence of records.
+	 * 
+	 * @return the ordinal or -1L if not known
+	 */
 	
-	long getRecordPosition();
+	long getOrdinal();
+	
+	/**
+	 * The position at which the record is persisted.
+	 * 
+	 * @return the position or -1L if not known
+	 */
+	
+	long getPosition();
+	
+	/**
+	 * Called to indicate that the record object is no longer required.
+	 * No methods should be called on the record after this method has
+	 * been called.
+	 */
+	
+	void release();
 	
 }

@@ -42,7 +42,12 @@ public class RecordTransfer<R extends Record> {
 				consumer.beginPass();
 				context.setRecordsTransferred(recordNumber = 0);
 				while (sequence.hasNext()) {
-					consumer.consume(sequence.next());
+					R record = sequence.next();
+					try {
+						consumer.consume(record);
+					} finally {
+						record.release();
+					}
 					context.setRecordsTransferred(++recordNumber);
 				}
 				consumer.endPass();

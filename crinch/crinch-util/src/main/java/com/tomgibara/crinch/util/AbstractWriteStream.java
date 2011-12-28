@@ -82,16 +82,22 @@ public abstract class AbstractWriteStream implements WriteStream {
 	}
 
 	@Override
-	public void writeChars(char[] bs, int off, int len) {
+	public void writeChars(char[] cs, int off, int len) {
 		final int lim = off + len;
-		for (int i = off; i < lim; i++) writeChar(bs[i]);
+		for (int i = off; i < lim; i++) writeChar(cs[i]);
 	}
 	
 	@Override
-	public void writeString(String v) {
-		final int length = v.length();
+	public void writeChars(CharSequence cs) {
+		final int length = cs.length();
 		writeInt(length);
-		writeChars(v.toCharArray());
+		if (cs instanceof String) {
+			writeChars(((String) cs).toCharArray());
+		} else {
+			for (int i = 0; i < length; i++) {
+				writeChar(cs.charAt(i));
+			}
+		}
 	}
 
 }

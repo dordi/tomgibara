@@ -42,6 +42,6 @@ public interface WriteStream {
 
 	void writeChars(char[] cs, int off, int len);
 	
-	void writeString(String v);
+	void writeChars(CharSequence cs);
 
 }

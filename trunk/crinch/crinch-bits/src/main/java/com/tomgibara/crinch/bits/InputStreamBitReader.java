@@ -50,4 +50,8 @@ public class InputStreamBitReader extends ByteBasedBitReader {
 		return -1L;
 	}
 	
+	InputStream getInputStream() {
+		return in;
+	}
+	
 }

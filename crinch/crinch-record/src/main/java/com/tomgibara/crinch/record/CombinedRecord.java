@@ -47,7 +47,7 @@ public class CombinedRecord implements LinearRecord {
 	}
 
 	@Override
-	public String nextString() {
+	public CharSequence nextString() {
 		return next().nextString();
 	}
 

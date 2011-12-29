@@ -129,6 +129,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	public class Accessor implements RecordSequence<LinearRecord> {
 	
 		private final ByteBasedBitReader reader;
+		private final RecordDecompactor decompactor = TrieProducer.this.decompactor.copy();
 		private final CodedReader coded;
 
 		private boolean autoClose = false;
@@ -147,7 +148,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		private LinearRecord next = null;
 		
 		public Accessor() {
-			reader = fbrf.newReader();
+			reader = fbrf.openReader();
 			coded = new CodedReader(reader, coding);
 		}
 
@@ -209,6 +210,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		@Override
 		public void close() {
 			closed = true;
+			fbrf.closeReader(reader);
 		}
 		
 		private void configure(String str) {

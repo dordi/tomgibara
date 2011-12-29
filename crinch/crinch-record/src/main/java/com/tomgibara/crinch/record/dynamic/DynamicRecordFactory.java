@@ -55,6 +55,7 @@ public class DynamicRecordFactory {
 		switch (type) {
 		case CHAR_WRAPPER: return "Char";
 		case INT_WRAPPER: return "Int";
+		case STRING_OBJECT: return "String";
 		default:
 			return Character.toUpperCase(type.toString().charAt(0)) + type.toString().substring(1);
 		}
@@ -311,7 +312,7 @@ public class DynamicRecordFactory {
 		types.addAll(ColumnType.PRIMITIVE_TYPES);
 		types.addAll(ColumnType.OBJECT_TYPES);
 		for (ColumnType type : types) {
-			sb.append("\tpublic ").append(type).append(" next").append(Character.toUpperCase(type.toString().charAt(0))).append(type.toString().substring(1)).append("() {\n");
+			sb.append("\tpublic ").append(type).append(" next").append(accessorName(type)).append("() {\n");
 			sb.append("\t\tif (field == limit) throw new IllegalStateException(\"fields exhausted\");\n");
 			sb.append("\t\tswitch(field++) {\n");
 			int field = 0;
@@ -379,7 +380,7 @@ public class DynamicRecordFactory {
 		}
 		sb.append("\t}\n");
 		
-		sb.append("\tpublic void exhaust() { field = limit; }\n");
+		sb.append("\tpublic void release() { field = limit; }\n");
 
 		// linked methods
 		if (linkable) {
@@ -462,7 +463,7 @@ public class DynamicRecordFactory {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") {\n");
 					sb.append("\t\t\tif (this.f_" + field + " == null) return " + (order.isNullFirst() ? "-1" : "1") + ";\n");
 					sb.append("\t\t\tif (that.f_" + field + " == null) return " + (order.isNullFirst() ? "1" : "-1") + ";\n");
-					sb.append("\t\t\treturn " + (order.isAscending() ? "this" : "that") + ".f_" + field + ".compareTo(" + (order.isAscending() ? "that" : "this") + ".f_" + field + ");\n");
+					sb.append("\t\t\treturn ((Comparable)").append(order.isAscending() ? "this" : "that").append(".f_").append(field).append(").compareTo(((Comparable) ").append(order.isAscending() ? "that" : "this").append(".f_").append(field).append("));\n");
 					sb.append("\t\t}\n");
 				}
 			}
@@ -532,8 +533,8 @@ public class DynamicRecordFactory {
 			sb.append("\tvoid populateStream(").append(WriteStream.class.getName()).append(" out) {\n");
 			int field = 0;
 			for (ColumnType type : definition.getTypes()) {
-				if (type.typeClass == String.class) {
-					sb.append("\t\tif (f_").append(field).append(" != null) out.writeString(f_").append(field).append(");\n");
+				if (type.typeClass == CharSequence.class) {
+					sb.append("\t\tif (f_").append(field).append(" != null) out.writeChars(f_").append(field).append(");\n");
 				} else if (type.typeClass.isPrimitive()) {
 					sb.append("\t\tout.write").append(accessorName(type)).append("(f_").append(field).append(");\n");
 				} else {

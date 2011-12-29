@@ -26,7 +26,7 @@ import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
-public class RecordCompactor {
+public class RecordCompactor extends CompactCharStore {
 
 	//TODO could trim arrays rather than retain startIndex
 	private final ColumnType[] types;
@@ -46,12 +46,13 @@ public class RecordCompactor {
 		ColumnCompactor[] compactors = new ColumnCompactor[types.size()];
 		List<ColumnStats> list = stats.getColumnStats();
 		for (int i = 0; i < compactors.length; i++) {
-			compactors[i] = new ColumnCompactor(list.get(i));
+			compactors[i] = new ColumnCompactor(list.get(i), this, i);
 		}
 		
 		this.types = (ColumnType[]) types.toArray(new ColumnType[types.size()]);
 		this.compactors = compactors;
 		this.startIndex = startIndex;
+		setCharColumns(compactors.length);
 	}
 
 	public ColumnStats getColumnStats(int index) {
@@ -139,7 +140,7 @@ public class RecordCompactor {
 			}
 			case STRING_OBJECT:
 			{
-				String value = record.nextString();
+				CharSequence value = record.nextString();
 				boolean isNull = record.wasNull();
 				c += compactor.encodeNull(writer, isNull);
 				if (!isNull) c += compactor.encodeString(writer, value);

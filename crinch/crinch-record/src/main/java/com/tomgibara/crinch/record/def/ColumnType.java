@@ -39,7 +39,7 @@ public enum ColumnType {
 	DOUBLE_WRAPPER(Double.class),
 	CHAR_PRIMITIVE(char.class),
 	CHAR_WRAPPER(Character.class),
-	STRING_OBJECT(String.class);
+	STRING_OBJECT(CharSequence.class);
 
 	public static final List<ColumnType> INTEGRAL_TYPES = Collections.unmodifiableList(Arrays.asList(
 			BYTE_PRIMITIVE,

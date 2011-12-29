@@ -17,28 +17,51 @@
 package com.tomgibara.crinch.record.compact;
 
 import com.tomgibara.crinch.coding.CodedReader;
-import com.tomgibara.crinch.record.AbstractRecord;
 import com.tomgibara.crinch.record.LinearRecord;
 
-class CompactRecord extends AbstractRecord implements LinearRecord {
+class CompactRecord implements LinearRecord {
 
-	private final ColumnCompactor[] compactors;
-	private final CodedReader reader;
+	private final RecordDecompactor decompactor;
+	private final ColumnCompactor[] compactors; // for performance
+	
+	private CodedReader reader;
+	private long ordinal;
+	private long position;
 	private int index = 0;
 	private boolean nullFlag;
 	
-	CompactRecord(ColumnCompactor[] compactors, CodedReader reader, long ordinal) {
-		super(ordinal, reader.getReader().getPosition());
-		this.compactors = compactors;
-		this.reader = reader;
+	private CompactCharSequence charCache = null;
+	
+	CompactRecord(RecordDecompactor decompactor) {
+		this.decompactor = decompactor;
+		this.compactors = decompactor.getCompactors();
 	}
 
-	CompactRecord(ColumnCompactor[] compactors, CodedReader reader, long ordinal, long position) {
-		super(ordinal, position);
-		this.compactors = compactors;
-		this.reader = reader;
+	CompactRecord populate(CodedReader reader) {
+		return populate(reader, -1L);
 	}
 
+	CompactRecord populate(CodedReader reader, long ordinal) {
+		return populate(reader, ordinal, reader.getReader().getPosition());
+	}
+	
+	CompactRecord populate(CodedReader reader, long ordinal, long position) {
+		this.reader = reader;
+		this.ordinal = ordinal;
+		this.position = position;
+		return this;
+	}
+	
+	@Override
+	public long getOrdinal() {
+		return ordinal;
+	}
+	
+	@Override
+	public long getPosition() {
+		return position;
+	}
+	
 	@Override
 	public boolean hasNext() {
 		return index < compactors.length;
@@ -109,11 +132,11 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 	}
 
 	@Override
-	public String nextString() {
+	public CharSequence nextString() {
 		ColumnCompactor next = next();
 		nullFlag = next.decodeNull(reader);
 		if (nullFlag) return null;
-		return next.decodeString(reader);
+		return cacheDecodedChars(next);
 	}
 
 	@Override
@@ -131,7 +154,7 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 			next.decodeDouble(reader);
 			break;
 		case TEXTUAL:
-			next.decodeString(reader);
+			cacheDecodedChars(next);
 			break;
 		}
 	}
@@ -163,11 +186,31 @@ class CompactRecord extends AbstractRecord implements LinearRecord {
 		while (index < compactors.length) {
 			skipNext();
 		}
+		reader = null;
+		ordinal = -1L;
+		position = -1L;
+		decompactor.spare(this);
+		CompactCharSequence css = charCache;
+		while (css != null) {
+			CompactCharSequence tmp = css.next;
+			css.recycle();
+			css = tmp;
+		}
 	}
 	
 	private ColumnCompactor next() {
 		if (index == compactors.length) throw new IllegalStateException("number of columns exceeded");
 		return compactors[index++];
+	}
+	
+	private CharSequence cacheDecodedChars(ColumnCompactor c) {
+		CharSequence cs = c.decodeString(reader);
+		if (cs instanceof CompactCharSequence) {
+			CompactCharSequence ccs = (CompactCharSequence) cs;
+			ccs.next = charCache;
+			charCache = ccs;
+		}
+		return cs;
 	}
 
 }

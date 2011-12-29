@@ -84,8 +84,9 @@ class RecordAnalyzer {
 	
 	void analyze(LinearRecord record) {
 		for (int i = 0; i < analyzers.length; i++) {
-			String str = record.nextString();
+			CharSequence chars = record.nextString();
 			ColumnAnalyzer analyzer = analyzers[i];
+			String str = chars == null ? null : chars.toString();
 			switch (passCount) {
 			case 0 : analyzer.analyze(str); break;
 			case 1 : analyzer.reanalyze(str); break;

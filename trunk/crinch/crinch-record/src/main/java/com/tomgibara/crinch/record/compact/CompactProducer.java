@@ -16,15 +16,12 @@
  */
 package com.tomgibara.crinch.record.compact;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.InputStreamBitReader;
+import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.FileBitReaderFactory;
+import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.LinearRecord;
@@ -43,6 +40,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	private long recordCount;
 	private RecordDecompactor decompactor;
 	private File file;
+	private FileBitReaderFactory fbrf;
 	
 	public CompactProducer() {
 		this(null);
@@ -64,6 +62,8 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		recordCount = stats.getRecordCount();
 		decompactor = new RecordDecompactor(stats, 0);
 		file = context.file("compact", false, def);
+
+		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 	}
 	
 	@Override
@@ -73,22 +73,16 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 
 	private class Sequence implements RecordSequence<LinearRecord> {
 		
-		// local copies for possible performance gain
+		// local copy for possible performance gain
 		final long recordCount = CompactProducer.this.recordCount;
-		final RecordDecompactor decompactor = CompactProducer.this.decompactor;
+		final RecordDecompactor decompactor = CompactProducer.this.decompactor.copy();
 		
-		final InputStream in;
-		final BitReader reader;
+		final ByteBasedBitReader reader;
 		final CodedReader coded;
 		long recordsRead = 0;
 		
 		Sequence() {
-			try {
-				in = new BufferedInputStream(new FileInputStream(file), 1024);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			reader = new InputStreamBitReader(in);
+			reader = fbrf.openReader();
 			coded = new CodedReader(reader, coding);
 		}
 		
@@ -110,11 +104,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		
 		@Override
 		public void close() {
-			try {
-				in.close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			fbrf.closeReader(reader);
 		}
 		
 	}

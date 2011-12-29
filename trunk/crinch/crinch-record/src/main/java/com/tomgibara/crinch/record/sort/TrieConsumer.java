@@ -91,7 +91,7 @@ public class TrieConsumer extends OrderedConsumer {
 	@Override
 	public void consume(LinearRecord record) {
 		LinearRecord subRec = factory.newRecord(config, record, true);
-		final String key = subRec.nextString();
+		final CharSequence key = subRec.nextString();
 		subRec.mark();
 		final int length = key.length();
 		Node node = root;

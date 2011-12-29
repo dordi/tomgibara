@@ -2,7 +2,7 @@ package com.tomgibara.crinch.record;
 
 import com.tomgibara.crinch.record.process.ProcessContext;
 
-public abstract class OneTimeConsumer<R extends Record> implements RecordConsumer<R> {
+public class OneTimeConsumer<R extends Record> implements RecordConsumer<R> {
 
 	private boolean done = false;
 	
@@ -19,6 +19,10 @@ public abstract class OneTimeConsumer<R extends Record> implements RecordConsume
 	public void beginPass() {
 	}
 
+	@Override
+	public void consume(R record) {
+	}
+	
 	@Override
 	public void endPass() {
 		done = true;

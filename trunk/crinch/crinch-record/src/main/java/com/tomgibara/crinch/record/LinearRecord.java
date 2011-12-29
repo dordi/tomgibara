@@ -20,7 +20,7 @@ public interface LinearRecord extends Record {
 
 	boolean hasNext();
 	
-	String nextString();
+	CharSequence nextString();
 
 	char nextChar();
 

@@ -29,6 +29,8 @@ import com.tomgibara.crinch.record.ColumnStats.Classification;
 class ColumnCompactor {
 
 	private final ColumnStats stats;
+	private final CompactCharStore store;
+	private final int columnIndex;
 	// derived from stats
 	private final boolean nullable;
 	private final long offset;
@@ -37,8 +39,12 @@ class ColumnCompactor {
 	
 	private final HuffmanCoding huffman;
 	
-	ColumnCompactor(ColumnStats stats) {
+	//TODO nasty constructor
+	ColumnCompactor(ColumnStats stats, CompactCharStore store, int columnIndex) {
 		this.stats = stats;
+		this.store = store;
+		this.columnIndex = columnIndex;
+		
 		nullable = stats.isNullable();
 		enumerated = stats.getClassification() == Classification.ENUMERATED;
 		enumeration = enumerated ? stats.getEnumeration() : null;
@@ -58,7 +64,7 @@ class ColumnCompactor {
 			huffman = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(freqs));
 		}
 	}
-
+	
 	ColumnStats getStats() {
 		return stats;
 	}
@@ -73,7 +79,7 @@ class ColumnCompactor {
 		return reader.getReader().readBoolean();
 	}
 	
-	int encodeString(CodedWriter writer, String value) {
+	int encodeString(CodedWriter writer, CharSequence value) {
 		BitWriter w = writer.getWriter();
 		if (enumerated) {
 			int i;
@@ -95,7 +101,7 @@ class ColumnCompactor {
 		}
 	}
 	
-	String decodeString(CodedReader reader) {
+	CharSequence decodeString(CodedReader reader) {
 		if (enumerated) {
 			int value = huffman.decodePositiveInt(reader.getReader()) - 1;
 			if (enumeration == null) {
@@ -105,11 +111,11 @@ class ColumnCompactor {
 			}
 		} else {
 			int length = ((int) offset) + reader.readSignedInt();
-			StringBuilder sb = new StringBuilder(length);
+			CompactCharSequence chars = store.getChars(columnIndex, length);
 			for (; length > 0; length--) {
-				sb.append((char) (huffman.decodePositiveInt(reader.getReader()) - 1));
+				chars.append((char) (huffman.decodePositiveInt(reader.getReader()) - 1));
 			}
-			return sb.toString();
+			return chars;
 		}
 	}
 	

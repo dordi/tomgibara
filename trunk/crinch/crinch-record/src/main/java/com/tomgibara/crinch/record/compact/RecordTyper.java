@@ -77,8 +77,9 @@ public class RecordTyper {
 				typeSet = types.get(index);
 				valueArr = values.get(index);
 			}
-			String str = r.nextString();
-			if (str == null || str.isEmpty()) {
+			CharSequence chars = r.nextString();
+			String str = chars == null ? "" : chars.toString(); 
+			if (str.isEmpty()) {
 				typeSet.removeAll(PRIMITIVE_TYPES);
 			} else {
 				if (typeSet.contains(LONG_WRAPPER)) {

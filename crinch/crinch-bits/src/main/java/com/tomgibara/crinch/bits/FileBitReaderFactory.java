@@ -60,7 +60,6 @@ public class FileBitReaderFactory {
 		}
 	}
 	
-	//TODO consider moving?
 	public void closeReader(ByteBasedBitReader reader) throws BitStreamException {
 		if (reader == null) throw new IllegalArgumentException("null reader");
 		if (reader instanceof InputStreamBitReader) {

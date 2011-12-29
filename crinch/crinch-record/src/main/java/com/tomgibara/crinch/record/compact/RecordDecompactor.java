@@ -64,7 +64,7 @@ public class RecordDecompactor extends CompactCharStore {
 	}
 	
 	void spare(CompactRecord spare) {
-		if (this.spare != null) this.spare = spare;
+		if (this.spare == null) this.spare = spare;
 	}
 	
 	private CompactRecord record() {

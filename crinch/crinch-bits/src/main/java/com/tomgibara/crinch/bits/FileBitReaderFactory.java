@@ -47,7 +47,7 @@ public class FileBitReaderFactory {
 	}
 	
 	//TODO should be generalized to just BitReader, but setPosition is necessary
-	public ByteBasedBitReader newReader() {
+	public ByteBasedBitReader openReader() throws BitStreamException {
 		try {
 			switch(mode) {
 			case MEMORY : return new ByteArrayBitReader(getBytes());
@@ -58,6 +58,25 @@ public class FileBitReaderFactory {
 		} catch (IOException e) {
 			throw new BitStreamException(e);
 		}
+	}
+	
+	//TODO consider moving?
+	public void closeReader(ByteBasedBitReader reader) throws BitStreamException {
+		if (reader == null) throw new IllegalArgumentException("null reader");
+		if (reader instanceof InputStreamBitReader) {
+			try {
+				((InputStreamBitReader) reader).getInputStream().close();
+			} catch (IOException e) {
+				throw new BitStreamException(e);
+			}
+		} else if (reader instanceof FileChannelBitReader) {
+			try {
+				((FileChannelBitReader) reader).getChannel().close();
+			} catch (IOException e) {
+				throw new BitStreamException(e);
+			}
+		}
+		
 	}
 
 	private byte[] getBytes() throws IOException {

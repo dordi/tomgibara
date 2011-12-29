@@ -70,6 +70,10 @@ public class FileChannelBitReader extends ByteBasedBitReader {
 		return seekSlow(position + count) - position;
 	}
 
+	FileChannel getChannel() {
+		return channel;
+	}
+	
 	private long seekSlow(long index) throws BitStreamException {
 		try {
 			long length = channel.size();

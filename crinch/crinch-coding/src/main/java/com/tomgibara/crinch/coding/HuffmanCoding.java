@@ -309,6 +309,8 @@ public class HuffmanCoding implements Coding {
         codes = encodeCounts(counts);
         cumm = accumulateCounts(counts);
         root = produceNids();
+        root.computeLeastHeights();
+        root.computeLookups();
     }
 
     // methods
@@ -335,14 +337,14 @@ public class HuffmanCoding implements Coding {
     	return unsafeEncodePositiveInt(writer, value.intValue());
     }
     
-    //TODO investigate possibilities for optimization:
-    //eg reading minimum number of bits available
     public int decodePositiveInt(BitReader r) {
     	Nid nid = root;
-    	while(nid.index == -1) {
-    		nid = r.readBoolean() ? nid.one: nid.zero;
-    	}
-    	return correspondence.getValue(nid.index);
+		while (nid.index == -1) {
+			// simple but slower, using lookup is about 25% faster overall
+    		//nid = r.readBoolean() ? nid.one: nid.zero;
+			nid = nid.lookup[ r.read(nid.leastHeight) ];
+		}
+	    return correspondence.getValue(nid.index);
     }
     
     @Override
@@ -458,10 +460,37 @@ public class HuffmanCoding implements Coding {
         int index = -1;
         Nid zero;
         Nid one;
+        int leastHeight;
+        Nid[] lookup;
 
+        void computeLeastHeights() {
+        	if (zero == null || one == null) {
+        		leastHeight = 0;
+        	} else {
+	        	one.computeLeastHeights();
+	        	zero.computeLeastHeights();
+	        	leastHeight = 1 + Math.min(zero.leastHeight, one.leastHeight);
+        	}
+        }
+
+        void computeLookups() {
+        	if (leastHeight == 0) return;
+        	int length = 1 << leastHeight;
+        	lookup = new Nid[length];
+        	for (int i = 0; i < length; i++) {
+        		Nid n = this;
+				for (int b = leastHeight - 1; b >= 0; b--) {
+					n = ((i >> b) & 1) == 0 ? n.zero : n.one; 
+				}
+				n.computeLookups();
+				lookup[i] = n;
+			}
+        }
+        
 		@Override
 		public String toString() {
-			return index == -1 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(index);
+			//return index == -1 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(index);
+			return lookup == null ? index == -1 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(index) : Arrays.toString(lookup);
 		}
 
     }

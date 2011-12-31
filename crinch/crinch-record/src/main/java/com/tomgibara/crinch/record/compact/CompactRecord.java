@@ -189,6 +189,7 @@ class CompactRecord implements LinearRecord {
 		reader = null;
 		ordinal = -1L;
 		position = -1L;
+		index = 0;
 		decompactor.spare(this);
 		CompactCharSequence css = charCache;
 		while (css != null) {

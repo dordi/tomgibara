@@ -37,7 +37,7 @@ public class BasicBloomFilterTest extends TestCase {
 	static final int DEFAULT_SIZE = DEFAULT_MAX - DEFAULT_MIN + 1;
 	
 	MultiHash<Object> sha1Hash = new PRNGMultiHash<Object>("SHA1PRNG", new ObjectHashSource(), new HashRange(0, DEFAULT_SIZE - 1));
-	MultiHash<Object> objHash = new SingletonMultiHash<Object>( Hashes.rangeAdjust(new HashRange(DEFAULT_MIN, DEFAULT_MAX), new ObjectHash<Object>()) );
+	MultiHash<Object> objHash = new SingletonMultiHash<Object>( Hashes.rangeAdjust(new HashRange(DEFAULT_MIN, DEFAULT_MAX), new SingletonMultiHash<Object>(new ObjectHash<Object>())) );
 
 	public void testConstructorWithoutBitVector() {
 		BasicBloomFilter<Object> bloom = new BasicBloomFilter<Object>(sha1Hash, 10);
@@ -74,7 +74,7 @@ public class BasicBloomFilterTest extends TestCase {
 
 	public void testGetFalsePositiveProbability() {
 		int size = 10;
-		MultiHash<Integer> multiHash = new SingletonMultiHash<Integer>( Hashes.rangeAdjust(new HashRange(0, size - 1), new ObjectHash<Integer>()) );
+		MultiHash<Integer> multiHash = new SingletonMultiHash<Integer>( Hashes.rangeAdjust(new HashRange(0, size - 1), new SingletonMultiHash<Integer>(new ObjectHash<Integer>()) ) );
 		BasicBloomFilter<Integer> bloom = new BasicBloomFilter<Integer>(multiHash, 1);
 		double p = bloom.getFalsePositiveProbability();
 		assertEquals(0.0, p);

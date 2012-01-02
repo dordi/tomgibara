@@ -26,7 +26,7 @@ import java.math.BigInteger;
  * 
  */
 
-public class ObjectHash<T> extends AbstractMultiHash<T> {
+public class ObjectHash<T> extends AbstractHash<T> {
 
 	@Override
 	public HashRange getRange() {

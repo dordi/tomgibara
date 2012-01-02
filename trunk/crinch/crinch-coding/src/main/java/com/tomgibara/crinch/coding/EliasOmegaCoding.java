@@ -56,20 +56,48 @@ final public class EliasOmegaCoding extends UniversalCoding {
 	
 	@Override
     public int decodePositiveInt(BitReader reader) {
-    	int value = 1;
-    	while (reader.readBoolean()) {
-	    	value = (1 << value) | reader.read(value);
-    	}
+		//conceptually simple version
+//    	int value = 1;
+//    	while (reader.readBoolean()) {
+//	    	value = (1 << value) | reader.read(value);
+//    	}
+//    	return value;
+		
+		// optimized version
+    	if (!reader.readBoolean()) return 1;
+    	int value = 2 | reader.read(1);
+    	if (!reader.readBoolean()) return value;
+    	value = (1 << value) | reader.read(value);
+    	if (!reader.readBoolean()) return value;
+    	value = (1 << value) | reader.read(value);
+    	if (!reader.readBoolean()) return value;
+    	//TODO could check value < 32 to catch call decoding errors
+		value = (1 << value) | reader.read(value);
+    	if (reader.readBoolean()) throw new BitStreamException("value too large for int");
     	return value;
     }
 
 	@Override
     public long decodePositiveLong(BitReader reader) {
-    	long value = 1;
-    	while (reader.readBoolean()) {
-	    	value = (1L << (int)value) | reader.readLong((int)value);
-    	}
-    	return value;
+		//conceptually simple version
+//    	long value = 1;
+//    	while (reader.readBoolean()) {
+//	    	value = (1L << (int)value) | reader.readLong((int)value);
+//    	}
+//    	return value;
+		
+		// optimized version
+    	if (!reader.readBoolean()) return 1L;
+    	int value = 2 | reader.read(1);
+    	if (!reader.readBoolean()) return value;
+    	value = (1 << value) | reader.read(value);
+    	if (!reader.readBoolean()) return value;
+    	value = (1 << value) | reader.read(value);
+    	if (!reader.readBoolean()) return value;
+    	//TODO could check value < 64 to catch call decoding errors
+		long lvalue = (1L << value) | reader.readLong(value);
+    	if (reader.readBoolean()) throw new BitStreamException("value too large for long");
+    	return lvalue;
     }
     
 	@Override

@@ -19,6 +19,28 @@ package com.tomgibara.crinch.bits;
 
 public abstract class ByteBasedBitReader extends AbstractBitReader {
 
+	// statics
+	
+	private static final int[] ZERO_COUNT_LOOKUP = new int[256 * 8];
+	private static final int[] ONE_COUNT_LOOKUP = new int[256 * 8];
+	
+	private static int countBits(int buffer, int position, boolean ones) {
+		final int e = ones ? 1 : 0;
+		int i;
+		for (i = position; i < 8 && ((buffer >> (7 - i)) & 1) == e; i++);
+		return i - position;
+	}
+
+	static {
+		for (int buffer = 0; buffer < 256; buffer++) {
+			for (int position = 0; position < 8; position++) {
+				int index = (buffer << 3) | position;
+				ZERO_COUNT_LOOKUP[index] = countBits(buffer, position, false);
+				ONE_COUNT_LOOKUP[index] = countBits(buffer, position, true);
+			}
+		}
+	}
+	
 	// fields
 	
 	private int buffer = 0;
@@ -95,6 +117,28 @@ public abstract class ByteBasedBitReader extends AbstractBitReader {
 				value = (value << count) | (buffer >> (8 - count));
 				position += count;
 				return value;
+			}
+		}
+	}
+	
+	@Override
+	public int readUntil(boolean one) {
+		int total = 0;
+		final int[] lookup = one ? ZERO_COUNT_LOOKUP : ONE_COUNT_LOOKUP;
+		int count = (int)position & 7;
+		while (true) {
+			if (count == 0) { // need new bits
+				buffer = readByte();
+				if (buffer == -1) throw new EndOfBitStreamException();
+			}
+			int t = lookup[(buffer << 3) | count];
+			if (count + t == 8) {
+				position += t;
+				total += t;
+				count = 0;
+			} else {
+				position += t + 1;
+				return total + t;
 			}
 		}
 	}

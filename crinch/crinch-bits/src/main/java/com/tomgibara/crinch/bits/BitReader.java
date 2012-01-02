@@ -98,6 +98,10 @@ public interface BitReader {
     
     void readBits(BitVector bits) throws BitStreamException;
 
+    //TODO consider whether this method is really worthwhile
+    
+    int readUntil(boolean one) throws BitStreamException;
+    
 	/**
 	 * The position in the stream; usually (but not necessarily) the number of
 	 * bits read. Implementations that cannot report their position should

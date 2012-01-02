@@ -28,8 +28,9 @@ public class ProfiledBitReader implements BitReader {
 	private static final int RBS = 4;
 	private static final int RZ = 5;
 	private static final int RL = 6;
-	private static final int SB = 7;
-	private static final int STB = 8;
+	private static final int RC = 7;
+	private static final int SB = 8;
+	private static final int STB = 9;
 	
 	private final BitReader reader;
 	private final long[] calls = new long[9];
@@ -81,6 +82,12 @@ public class ProfiledBitReader implements BitReader {
 		return reader.readLong(count);
 	}
 
+	@Override
+	public int readUntil(boolean one) {
+		calls[RC]++;
+		return reader.readUntil(one);
+	}
+	
 	@Override
 	public long skipBits(long count) {
 		calls[SB]++;

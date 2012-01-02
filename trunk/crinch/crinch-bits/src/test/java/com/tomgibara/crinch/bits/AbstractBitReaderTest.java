@@ -87,4 +87,32 @@ public abstract class AbstractBitReaderTest extends TestCase {
 		}
 	}
 	
+	public void testReadUntil() {
+		testReadUntil(true);
+		testReadUntil(false);
+	}
+	
+	private void testReadUntil(boolean ones) {
+		Random r = new Random(0L);
+		for (int i = 0; i < 1000; i++) {
+			int a = r.nextInt(40);
+			int b = r.nextInt(40);
+			int c = 32 - ((a + b) & 31);
+			BitVector bits = new BitVector(a + b + c);
+			bits.setRange(0, a, ones);
+			bits.setRange(a, a+b, !ones);
+			bits.setRange(a+b, a+b+c, ones);
+			for (int j = 0; j < a + b; j++) {
+				BitReader reader = readerFor(bits);
+				reader.skipBits(j);
+				int read = reader.readUntil(ones);
+				if (j < a) {
+					assertEquals(0, read);
+				} else {
+					assertEquals(a + b - j, read);
+				}
+			}
+		}
+	}
+	
 }

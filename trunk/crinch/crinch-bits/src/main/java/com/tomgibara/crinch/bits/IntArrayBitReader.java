@@ -16,7 +16,7 @@
  */
 package com.tomgibara.crinch.bits;
 
-
+//TODO optimize readUntil
 public class IntArrayBitReader extends AbstractBitReader {
 
     // statics

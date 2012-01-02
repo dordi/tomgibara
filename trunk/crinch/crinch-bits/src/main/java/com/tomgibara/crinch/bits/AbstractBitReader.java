@@ -67,6 +67,13 @@ public abstract class AbstractBitReader implements BitReader {
     	readBits(bits);
     	return bits.toBigInteger();
     }
+
+    @Override
+    public int readUntil(boolean one) throws BitStreamException {
+    	int count = 0;
+    	while (readBoolean() != one) count++;
+    	return count;
+    }
     
 	@Override
 	public int skipToBoundary(BitBoundary boundary) {

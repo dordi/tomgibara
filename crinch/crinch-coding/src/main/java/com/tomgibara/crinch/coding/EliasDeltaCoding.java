@@ -22,6 +22,7 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
+//TODO use readUntil method for implementation?
 public final class EliasDeltaCoding extends UniversalCoding {
 
 	// statics

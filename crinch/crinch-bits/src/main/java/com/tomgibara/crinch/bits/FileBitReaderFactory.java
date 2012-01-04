@@ -1,5 +1,6 @@
 package com.tomgibara.crinch.bits;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,7 +52,7 @@ public class FileBitReaderFactory {
 		try {
 			switch(mode) {
 			case MEMORY : return new ByteArrayBitReader(getBytes());
-			case STREAM : return new InputStreamBitReader(new FileInputStream(file));
+			case STREAM : return new InputStreamBitReader(new BufferedInputStream(new FileInputStream(file), bufferSize));
 			case CHANNEL: return new FileChannelBitReader(new RandomAccessFile(file, "r").getChannel(), bufferSize, true);
 			default: throw new IllegalStateException("Unexpected mode: " + mode);
 			}

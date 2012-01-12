@@ -131,6 +131,7 @@ class WorldMap extends JComponent {
         	int cr = child.getRadius() < 1 ? DEFAULT_PIN_RADIUS : child.getRadius();
             cr = cr * d.width / PIN_SCALE;
             int w = Math.min(cr, radius);
+            if (w < 0) w = 1;
 
             g.setColor(color);
         	g.setStroke(new BasicStroke(w));

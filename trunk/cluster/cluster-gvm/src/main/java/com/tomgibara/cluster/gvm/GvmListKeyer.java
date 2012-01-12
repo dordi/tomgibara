@@ -29,7 +29,7 @@ import java.util.List;
  */
 
 //TODO if hierachial clustering is supported, lists will need to be treated as unmodifiable
-public class GvmListKeyer<K> extends GvmSimpleKeyer<List<K>> {
+public class GvmListKeyer<P extends GvmPoint, K> extends GvmSimpleKeyer<P,List<K>> {
 
 	protected List<K> combineKeys(List<K> list1, List<K> list2) {
 		list1.addAll(list2);

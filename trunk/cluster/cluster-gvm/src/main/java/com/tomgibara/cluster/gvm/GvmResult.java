@@ -17,9 +17,6 @@
 package com.tomgibara.cluster.gvm;
 
 import java.io.Serializable;
-import java.util.Arrays;
-
-import com.tomgibara.cluster.NUMBER;
 
 /**
  * A snapshot of a cluster that has been produced as the result of clustering a
@@ -31,8 +28,14 @@ import com.tomgibara.cluster.NUMBER;
  *            the key type
  */
 
-public class GvmResult<K> implements Serializable {
+public class GvmResult<P extends GvmPoint, K> implements Serializable {
 
+	/**
+	 * The space over which the result is defined.
+	 */
+	
+	private final GvmSpace<P> space;
+	
 	/**
 	 * The number of points in the cluster.
 	 */
@@ -43,13 +46,13 @@ public class GvmResult<K> implements Serializable {
 	 * The aggregate mass of the cluster.
 	 */
 	
-	private NUMBER mass;
+	private double mass;
 	
 	/**
 	 * The coordinates of the cluster's centroid.
 	 */
 	
-	private final NUMBER[] coords;
+	private final P point;
 	
 	/**
 	 * The variance of the cluster.
@@ -70,21 +73,29 @@ public class GvmResult<K> implements Serializable {
 	 * @param dimension the number of dimensions in the result
 	 */
 	
-	public GvmResult(int dimension) {
-		coords = new NUMBER[dimension];
+	public GvmResult(GvmSpace<P> space) {
+		if (space == null) throw new IllegalArgumentException("null space");
+		this.space = space;
+		point = space.newOrigin();
 	}
 	
-	GvmResult(GvmCluster<K> cluster) {
+	GvmResult(GvmCluster<P,K> cluster) {
+		space = cluster.clusters.space;
 		count = cluster.count;
 		mass = cluster.m0;
 		variance = cluster.var;
 		key = cluster.key;
 		
-		NUMBER[] m1 = cluster.m1;
-		coords = new NUMBER[m1.length];
-		for (int i = 0; i < coords.length; i++) {
-			coords[i] = NUMBER.quotient(m1[i], mass);
-		}
+		point = space.newCopy(cluster.m1);
+		point.scale(1.0 / mass);
+	}
+
+	/**
+	 * The space in which the cluster is defined.
+	 */
+	
+	public GvmSpace<P> getSpace() {
+		return space;
 	}
 	
 	/**
@@ -103,7 +114,7 @@ public class GvmResult<K> implements Serializable {
 	 * The aggregate mass of the cluster.
 	 */
 	
-	public NUMBER getMass() {
+	public double getMass() {
 		return mass;
 	}
 	
@@ -111,7 +122,7 @@ public class GvmResult<K> implements Serializable {
 	 * Sets the aggregate mass of the cluster.
 	 */
 	
-	public void setMass(NUMBER mass) {
+	public void setMass(double mass) {
 		this.mass = mass;
 	}
 	
@@ -120,17 +131,17 @@ public class GvmResult<K> implements Serializable {
 	 * be modified.
 	 */
 
-	public NUMBER[] getCoords() {
-		return coords;
+	public P getPoint() {
+		return point;
 	}
 	
 	/**
 	 * Sets the coordinates of the cluster's centroid. The values of the
-	 * supplied array are copied.
+	 * supplied point are copied.
 	 */
 
-	public void setCoords(NUMBER[] coords) {
-		System.arraycopy(coords, 0, this.coords, 0, Math.min(this.coords.length, coords.length));
+	public void setPoint(GvmPoint point) {
+		this.point.setTo(point);
 	}
 
 	/**
@@ -170,8 +181,7 @@ public class GvmResult<K> implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Arrays.toString(coords));
-		sb.append(String.format("  count: %d  variance: %3.3f  mass: %3.3f  key: %s", count, variance, mass, key));
+		sb.append(String.format("point: %s  count: %d  variance: %3.3f  mass: %3.3f  key: %s", point, count, variance, mass, key));
 		return sb.toString();
 	}
 }

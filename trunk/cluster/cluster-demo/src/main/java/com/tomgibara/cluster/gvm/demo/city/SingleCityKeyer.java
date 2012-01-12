@@ -16,9 +16,10 @@
  */
 package com.tomgibara.cluster.gvm.demo.city;
 
-import com.tomgibara.cluster.gvm.dbl.DblSimpleKeyer;
+import com.tomgibara.cluster.gvm.GvmSimpleKeyer;
+import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
-public class SingleCityKeyer extends DblSimpleKeyer<City> {
+public class SingleCityKeyer extends GvmSimpleKeyer<GvmVectorSpace.Vector,City> {
 
 	@Override
 	protected City combineKeys(City city1, City city2) {

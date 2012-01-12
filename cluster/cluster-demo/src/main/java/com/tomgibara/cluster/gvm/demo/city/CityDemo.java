@@ -43,9 +43,11 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import com.tomgibara.cluster.gvm.dbl.DblClusters;
-import com.tomgibara.cluster.gvm.dbl.DblListKeyer;
-import com.tomgibara.cluster.gvm.dbl.DblResult;
+import com.tomgibara.cluster.gvm.GvmClusters;
+import com.tomgibara.cluster.gvm.GvmListKeyer;
+import com.tomgibara.cluster.gvm.GvmPoint;
+import com.tomgibara.cluster.gvm.GvmResult;
+import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 /*
  * Created on 06-Aug-2007
@@ -89,7 +91,7 @@ public class CityDemo {
         slider.setPaintLabels(true);
         c.add(slider, BorderLayout.SOUTH);
 
-        List<DblResult<City>> results = clusterCities(cities, slider.getValue());
+        List<GvmResult<GvmVectorSpace.Vector, City>> results = clusterCities(cities, slider.getValue());
         List<Pin> pins = pinsFromResults(results);
         map.addAllPins(pins);
         map.repaint();
@@ -127,9 +129,10 @@ public class CityDemo {
 
     // city methods
 
-    private static List<DblResult<List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
+    /*
+    private static List<GvmResult<GvmVectorSpace.Vector, List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
         double[] xs = new double[2];
-        DblClusters<List<City>> clusters = new DblClusters<List<City>>(2, maxClusters);
+        GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, List<City>> clusters = new GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, List<City>>(new GvmVectorSpace(2), maxClusters);
         clusters.setKeyer(new DblListKeyer<City>());
         for (City city : cities) {
             xs[0] = city.lng;
@@ -183,30 +186,30 @@ public class CityDemo {
         double poplog = Math.log(pop);
         return 1 + (int) (poplog*poplog*poplog/900.0);
     }
+    */
     
     //cluster methods
     
-    private static List<DblResult<City>> clusterCities(Collection<City> cities, int maxClusters) {
-        DblClusters<City> clusters = new DblClusters<City>(2, maxClusters);
+    private static List<GvmResult<GvmVectorSpace.Vector,City>> clusterCities(Collection<City> cities, int maxClusters) {
+        GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector,City> clusters = new GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector,City>(new GvmVectorSpace(2), maxClusters);
         clusters.setKeyer(new SingleCityKeyer());
-        double[] xs = new double[2];
+        GvmVectorSpace.Vector vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
-            xs[0] = city.lng;
-            xs[1] = city.lat;
-            double m = city.pop;
-            clusters.add(m, xs, city);
+        	vector.setCoord(0, city.lng);
+        	vector.setCoord(1, city.lat);
+            clusters.add(city.pop, vector, city);
         }
         
-        List<DblResult<City>> results = clusters.results();
+        List<GvmResult<GvmVectorSpace.Vector, City>> results = clusters.results();
         return results;
     }
     
-    private static List<Pin> pinsFromResults(List<DblResult<City>> results) {
+    private static List<Pin> pinsFromResults(List<GvmResult<GvmVectorSpace.Vector, City>> results) {
         ArrayList<Pin> pins = new ArrayList<Pin>();
         Collections.sort(results, new ResultComp());
         int pinCount = 0;
         int hiddenLimit = results.size() - 20;
-        for (DblResult<City> result : results) {
+        for (GvmResult<GvmVectorSpace.Vector, City> result : results) {
             Pin pin = pinFromResult(result);
             if (pinCount >= hiddenLimit) pin.setChild(pinFromCity(result.getKey()));
             pins.add(pin);
@@ -238,10 +241,10 @@ public class CityDemo {
         return pin;
     }
 
-    private static Pin pinFromResult(DblResult<City> result) {
+    private static Pin pinFromResult(GvmResult<GvmVectorSpace.Vector, City> result) {
         String continent = result.getKey().cont;
-        double lng = result.getCoords()[0];
-        double lat = result.getCoords()[1];
+        double lng = result.getPoint().getCoord(0);
+        double lat = result.getPoint().getCoord(1);
         double pop = result.getMass();
 
         String label = null;
@@ -265,8 +268,8 @@ public class CityDemo {
         return 3 + (int) (poplog*poplog*poplog/600.0);
     }
     
-    private static class ResultComp implements Comparator<DblResult<City>> {
-        public int compare(DblResult<City> r1, DblResult<City> r2) {
+    private static class ResultComp implements Comparator<GvmResult<GvmVectorSpace.Vector, City>> {
+        public int compare(GvmResult<GvmVectorSpace.Vector, City> r1, GvmResult<GvmVectorSpace.Vector, City> r2) {
             double m1 = r1.getMass();
             double m2 = r2.getMass();
             if (m1 == m2) return 0;
@@ -301,13 +304,15 @@ public class CityDemo {
             if (desiredDisplay.get()) {
             	doClusterUpdate(newValue);
             } else {
-            	doCityUpdate(newValue);
+            	throw new UnsupportedOperationException();
+            	//doCityUpdate(newValue);
             }
         };
 
+        /*
 		private void doCityUpdate(int count) {
 	    	long start = System.currentTimeMillis();
-	        List<DblResult<List<City>>> results = clusterCities2(cities, count);
+	        List<GvmResult<GvmVectorSpace.Vector, List<City>>> results = clusterCities2(cities, count);
 	        long finish = System.currentTimeMillis();
 	        List<Pin> pins = pinsFromResults2(results);
 	        map.clearPins();
@@ -315,10 +320,11 @@ public class CityDemo {
 	        map.setCaption(String.format("...into %d clusters (%,3d ms)", results.size(), finish - start));
 	        map.repaint();
 		}
+		*/
 
 		private void doClusterUpdate(int count) {
 	    	long start = System.currentTimeMillis();
-	        List<DblResult<City>> results = clusterCities(cities, count);
+	        List<GvmResult<GvmVectorSpace.Vector, City>> results = clusterCities(cities, count);
 	        long finish = System.currentTimeMillis();
 	        List<Pin> pins = pinsFromResults(results);
 	        map.clearPins();

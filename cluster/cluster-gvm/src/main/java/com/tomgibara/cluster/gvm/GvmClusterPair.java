@@ -24,19 +24,19 @@ package com.tomgibara.cluster.gvm;
  * @param <K> the key type
  */
 
-class GvmClusterPair<K> {
+class GvmClusterPair<P extends GvmPoint, K> {
 
 	/**
 	 * The first cluster in this collection.
 	 */
 	
-	final GvmCluster<K> c1;
+	final GvmCluster<P, K> c1;
 	
 	/**
 	 * The second cluster in this collection.
 	 */
 	
-	final GvmCluster<K> c2;
+	final GvmCluster<P, K> c2;
 	
 	/**
 	 * The index of this pair within a heap of pairs.
@@ -57,7 +57,7 @@ class GvmClusterPair<K> {
 	 * @param c2 a cluster, not equal to c1
 	 */
 	
-	GvmClusterPair(GvmCluster<K> c1, GvmCluster<K> c2) {
+	GvmClusterPair(GvmCluster<P,K> c1, GvmCluster<P,K> c2) {
 		if (c1 == c2) throw new IllegalArgumentException();
 		this.c1 = c1;
 		this.c2 = c2;

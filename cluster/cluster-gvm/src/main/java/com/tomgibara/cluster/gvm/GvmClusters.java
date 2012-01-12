@@ -33,7 +33,7 @@ import com.tomgibara.cluster.NUMBER;
  *            the key type
  */
 
-public class GvmClusters<K> {
+public class GvmClusters<S extends GvmSpace<P>, P extends GvmPoint, K> {
 
 	// statics
 	
@@ -58,28 +58,28 @@ public class GvmClusters<K> {
 	final int capacity;
 	
 	/**
-	 * The number of dimensions over which clustering is being performed.
+	 * Defines the points that will be clusters
 	 */
 	
-	final int dimension;
+	final S space;
 
 	/**
 	 * The keyer used to apply keys to clusters.
 	 */
 	
-	private GvmKeyer<K> keyer = new GvmDefaultKeyer<K>();
+	private GvmKeyer<P,K> keyer = new GvmDefaultKeyer<P,K>();
 
 	/**
 	 * The clusters.
 	 */
 
-	private final GvmCluster<K>[] clusters;
+	private final GvmCluster<P,K>[] clusters;
 	
 	/**
 	 * All possible cluster pairs.
 	 */
 	
-	private final GvmClusterPairs<K> pairs;
+	private final GvmClusterPairs<P,K> pairs;
 	
 	/**
 	 * The number of points that have been added.
@@ -99,13 +99,13 @@ public class GvmClusters<K> {
 	
 	private int bound = 0;
 	
-	public GvmClusters(int dimension, int capacity) {
-		if (dimension < 0) throw new IllegalArgumentException("negative dimension");
+	public GvmClusters(S space, int capacity) {
+		if (space == null) throw new IllegalArgumentException("null space");
 		if (capacity < 0) throw new IllegalArgumentException("negative capacity");
-		this.dimension = dimension;
+		this.space = space;
 		this.capacity = capacity;
 		this.clusters = new GvmCluster[capacity];
-		pairs = new GvmClusterPairs<K>(capacity * (capacity-1) / 2);
+		pairs = new GvmClusterPairs<P,K>(capacity * (capacity-1) / 2);
 	}
 	
 	// accessors
@@ -114,7 +114,7 @@ public class GvmClusters<K> {
 	 * The keyer used to assign keys to clusters.
 	 */
 	
-	public GvmKeyer<K> getKeyer() {
+	public GvmKeyer<P,K> getKeyer() {
 		return keyer;
 	}
 	
@@ -124,7 +124,7 @@ public class GvmClusters<K> {
 	 * @param keyer a keyer, not null
 	 */
 	
-	public void setKeyer(GvmKeyer<K> keyer) {
+	public void setKeyer(GvmKeyer<P,K> keyer) {
 		if (keyer == null) throw new IllegalArgumentException();
 		this.keyer = keyer;
 	}
@@ -140,13 +140,13 @@ public class GvmClusters<K> {
 	}
 	
 	/**
-	 * The number of dimensions over which clustering is being performed.
+	 * The space in which clustering will be performed
 	 * 
-	 * @return the number of dimensions
+	 * @return the space containing the points to be clustered
 	 */
 	
-	public int getDimension() {
-		return dimension;
+	public S getSpace() {
+		return space;
 	}
 	
 	// public methods
@@ -174,27 +174,27 @@ public class GvmClusters<K> {
 	 *            a key assigned to the point, may be null
 	 */
 
-	public void add(NUMBER m, NUMBER[] xs, K key) {
-		if (NUMBER.equal(m, NUMBER.zero())) return; //nothing to do
+	public void add(double m, P pt, K key) {
+		if (m == 0.0) return; //nothing to do
 		if (count < capacity) { //shortcut
 			//TODO should prefer add if var comes to zero
-			GvmCluster<K> cluster = new GvmCluster<K>(this);
+			GvmCluster<P,K> cluster = new GvmCluster<P,K>(this);
 			clusters[additions] = cluster;
-			cluster.set(m, xs);
+			cluster.set(m, pt);
 			addPairs();
 			cluster.key = keyer.addKey(cluster, key);
 			count++;
 			bound = count;
 		} else {
 			//identify cheapest merge
-			GvmClusterPair<K> mergePair = pairs.peek();
+			GvmClusterPair<P,K> mergePair = pairs.peek();
 			double mergeT = mergePair == null ? Double.MAX_VALUE : mergePair.value;
 			//find cheapest addition
-			GvmCluster<K> additionC = null;
+			GvmCluster<P,K> additionC = null;
 			double additionT = Double.MAX_VALUE;
 			for (int i = 0; i < clusters.length; i++) {
-				GvmCluster<K> cluster = clusters[i];
-				double t = cluster.test(m, xs);
+				GvmCluster<P,K> cluster = clusters[i];
+				double t = cluster.test(m, pt);
 				if (t < additionT) {
 					additionC = cluster;
 					additionT = t;
@@ -202,21 +202,21 @@ public class GvmClusters<K> {
 			}
 			if (additionT <= mergeT) {
 				//chose addition
-				additionC.add(m, xs);
+				additionC.add(m, pt);
 				updatePairs(additionC);
 				additionC.key = keyer.addKey(additionC, key);
 			} else {
 				//choose merge
-				GvmCluster<K> c1 = mergePair.c1;
-				GvmCluster<K> c2 = mergePair.c2;
-				if (NUMBER.lessThan(c1.m0, c2.m0)) {
+				GvmCluster<P,K> c1 = mergePair.c1;
+				GvmCluster<P,K> c2 = mergePair.c2;
+				if (c1.m0 < c2.m0) {
 					c1 = c2;
 					c2 = mergePair.c1;
 				}
 				c1.key = keyer.mergeKeys(c1, c2);
 				c1.add(c2);
 				updatePairs(c1);
-				c2.set(m, xs);
+				c2.set(m, pt);
 				updatePairs(c2);
 				//TODO should this pass through a method on keyer?
 				c2.key = null;
@@ -246,26 +246,26 @@ public class GvmClusters<K> {
 		double totalVar = 0.0;
 		double totalMass = 0.0;
 		for (int i = 0; i < count; i++) {
-			GvmCluster<K> cluster = clusters[i];
+			GvmCluster<P,K> cluster = clusters[i];
 			totalVar += cluster.var;
-			totalMass += NUMBER.doubleValue(cluster.m0);
+			totalMass += cluster.m0;
 		}
 		
 		while (count > minClusters) {
 			if (count == 1) {
 				//remove the last cluster
 				for (int i = 0; i < bound; i++) {
-					GvmCluster<K> c = clusters[i];
+					GvmCluster<P,K> c = clusters[i];
 					if (!c.removed) {
 						c.removed = true;
 						break;
 					}
 				}
 			} else {
-				GvmClusterPair<K> mergePair = pairs.peek();
-				GvmCluster<K> c1 = mergePair.c1;
-				GvmCluster<K> c2 = mergePair.c2;
-				if (NUMBER.lessThan(c1.m0, c2.m0)) {
+				GvmClusterPair<P,K> mergePair = pairs.peek();
+				GvmCluster<P,K> c1 = mergePair.c1;
+				GvmCluster<P,K> c2 = mergePair.c2;
+				if (c1.m0 < c2.m0) {
 					c1 = c2;
 					c2 = mergePair.c1;
 				}
@@ -301,11 +301,11 @@ public class GvmClusters<K> {
 		}
 		//iterate over cluster pairs and remove dead pairs
 		for (int i = 0; i < count; i++) {
-			GvmCluster<K> cluster = clusters[i];
-			GvmClusterPair<K>[] pairs = cluster.pairs;
+			GvmCluster<P,K> cluster = clusters[i];
+			GvmClusterPair<P,K>[] pairs = cluster.pairs;
 			int k = 0;
 			for (int j = 0; j < bound-1;) {
-				GvmClusterPair<K> pair = pairs[j];
+				GvmClusterPair<P,K> pair = pairs[j];
 				boolean lose = pair.c1.removed || pair.c2.removed;
 				if (lose) {
 					j++;
@@ -329,12 +329,12 @@ public class GvmClusters<K> {
 	 * @return the result of clustering the points thus far added
 	 */
 	
-	public List<GvmResult<K>> results() {
-		ArrayList<GvmResult<K>> list = new ArrayList<GvmResult<K>>(count);
+	public List<GvmResult<P,K>> results() {
+		ArrayList<GvmResult<P,K>> list = new ArrayList<GvmResult<P,K>>(count);
 		for (int i = 0; i < count; i++) {
-			GvmCluster<K> cluster = clusters[i];
+			GvmCluster<P,K> cluster = clusters[i];
 			//TODO exclude massless clusters?
-			list.add(new GvmResult<K>(cluster));
+			list.add(new GvmResult<P,K>(cluster));
 		}
 		return list;
 	}
@@ -345,11 +345,11 @@ public class GvmClusters<K> {
 	//assumes last cluster is the one to add pairs for
 	//assumes pairs are contiguous
 	private void addPairs() {
-		GvmCluster<K> cj = clusters[count];
+		GvmCluster<P,K> cj = clusters[count];
 		int c = count - 1; //index at which new pairs registered for existing clusters
 		for (int i = 0; i < count; i++) {
-			GvmCluster<K> ci = clusters[i];
-			GvmClusterPair<K> pair = new GvmClusterPair<K>(ci, cj);
+			GvmCluster<P,K> ci = clusters[i];
+			GvmClusterPair<P,K> pair = new GvmClusterPair<P,K>(ci, cj);
 			ci.pairs[c] = pair;
 			cj.pairs[i] = pair;
 			pairs.add(pair);
@@ -358,8 +358,8 @@ public class GvmClusters<K> {
 	}
 	
 	//does not assume pairs are contiguous
-	private void updatePairs(GvmCluster<K> cluster) {
-		GvmClusterPair<K>[] pairs = cluster.pairs;
+	private void updatePairs(GvmCluster<P,K> cluster) {
+		GvmClusterPair<P,K>[] pairs = cluster.pairs;
 		//accelerated path
 		if (count == bound) {
 			int limit = count - 1;
@@ -369,7 +369,7 @@ public class GvmClusters<K> {
 		} else {
 			int limit = bound - 1;
 			for (int i = 0; i < limit; i++) {
-				GvmClusterPair<K> pair = pairs[i];
+				GvmClusterPair<P,K> pair = pairs[i];
 				if (pair.c1.removed || pair.c2.removed) continue;
 				this.pairs.reprioritize(pair);
 			}
@@ -379,10 +379,10 @@ public class GvmClusters<K> {
 	//does not assume pairs are contiguous
 	//leaves pairs in cluster pair lists
 	//these are tidied when everything is made contiguous again
-	private void removePairs(GvmCluster<K> cluster) {
-		GvmClusterPair<K>[] pairs = cluster.pairs;
+	private void removePairs(GvmCluster<P,K> cluster) {
+		GvmClusterPair<P,K>[] pairs = cluster.pairs;
 		for (int i = 0; i < bound-1; i++) {
-			GvmClusterPair<K> pair = pairs[i];
+			GvmClusterPair<P,K> pair = pairs[i];
 			if (pair.c1.removed || pair.c2.removed) continue;
 			this.pairs.remove(pair);
 		}

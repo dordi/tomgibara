@@ -16,6 +16,13 @@ public abstract class GvmSpace<P extends GvmPoint> {
 
 	public abstract double sum(P pt);
 	
+	//not used in algorithm, but useful - override for good performance
+	public double distance(P pt1, P pt2) {
+		P p = newCopy(pt1);
+		p.subtract(pt2);
+		return Math.sqrt(magnitudeSqr(p));
+	}
+	
 	//naive implementation that must be overridden for good performance
 	// m - total mass (not zero)
 	// pt - aggregate point (prescaled by mass) 

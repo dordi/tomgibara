@@ -53,7 +53,7 @@ public class CityApp {
         JFrame frame = new JFrame("Clustering Demonstration - World Cities");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Container pane = frame.getContentPane();
-        CityDemo.insert(pane, cities, new Dimension(800, 400));
+        CityDemo.insert(pane, cities, new Dimension(800, 400), true);
         frame.pack();
         frame.setVisible(true);
     }

@@ -16,8 +16,6 @@
  */
 package com.tomgibara.cluster.gvm;
 
-import java.io.Serializable;
-
 /**
  * A snapshot of a cluster that has been produced as the result of clustering a
  * number of coordinates.
@@ -28,7 +26,7 @@ import java.io.Serializable;
  *            the key type
  */
 
-public class GvmResult<P extends GvmPoint, K> implements Serializable {
+public class GvmResult<P extends GvmPoint, K> {
 
 	/**
 	 * The space over which the result is defined.

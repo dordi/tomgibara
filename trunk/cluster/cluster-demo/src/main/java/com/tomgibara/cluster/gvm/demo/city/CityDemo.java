@@ -21,7 +21,15 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,22 +44,22 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.imageio.ImageIO;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.tomgibara.cluster.ClusterPainter;
 import com.tomgibara.cluster.gvm.GvmClusters;
 import com.tomgibara.cluster.gvm.GvmListKeyer;
 import com.tomgibara.cluster.gvm.GvmResult;
 import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 import com.tomgibara.cluster.gvm.space.GvmVectorSpace.Vector;
-
-/*
- * Created on 06-Aug-2007
- */
 
 public class CityDemo {
 
@@ -66,8 +74,16 @@ public class CityDemo {
         CONTINENT_COLORS.put("Asia", new Color(180, 128, 0));
         CONTINENT_COLORS.put("Australia", new Color(0, 180, 255));
     }
+
+    private static final List<Color> CLUSTER_COLORS = Arrays.asList(new Color[] {
+    		Color.RED,
+    		Color.GREEN,
+    		Color.CYAN,
+    		Color.ORANGE,
+    		Color.MAGENTA
+    		});
     
-    public static void insert(final Container c, final List<City> cities, Dimension d) {
+    public static void insert(final Container c, final List<City> cities, Dimension d, boolean allowSave) {
         c.setLayout(new BorderLayout());
         final WorldMap map = new WorldMap();
         if (d != null) map.setPreferredSize(d);
@@ -75,6 +91,8 @@ public class CityDemo {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JCheckBox checkbox = new JCheckBox("Display Cities", false);
         panel.add(checkbox);
+        JButton button = new JButton("Save Image");
+        panel.add(button);
         c.add(panel, BorderLayout.NORTH);
         JSlider slider = new JSlider(1, 200);
         slider.setValue(10);
@@ -115,6 +133,35 @@ public class CityDemo {
                 timer.schedule(update, new Date());
         	}
         });
+
+        button.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				//TODO lazy, should be done off event thread
+				int w = map.getWidth();
+				int h = map.getHeight();
+				BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+				Graphics2D g = img.createGraphics();
+				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+				map.paintComponent(g);
+				g.dispose();
+				for (int n = 0; n < 100; n++) {
+					String pathname = "city-capture-" + n + ".png";
+					File file = new File(pathname);
+					if (file.exists()) continue;
+					try {
+						ImageIO.write(img, "PNG", new File(pathname));
+					} catch (IOException e) {
+						//TODO lazy, should show dialog
+						e.printStackTrace();
+					} finally {
+						break;
+					}
+				}
+			}
+		});
         
         slider.addChangeListener(new ChangeListener() {
         	@Override
@@ -145,18 +192,15 @@ public class CityDemo {
     }
 
     private static List<Pin> pinsFromResults2(List<GvmResult<Vector, List<City>>> results) {
+    	ResultsPainter painter = new ResultsPainter(results);
         ArrayList<Pin> pins = new ArrayList<Pin>();
-        int count = 0;
         for (GvmResult<Vector, List<City>> result : results) {
-            double lng = result.getPoint().getCoord(0);
-            double lat = result.getPoint().getCoord(1);
-        	Color color = new Color((int) ((lng + 180.0) * 256.0 / 360.0), (int) ((lat + 90.0) * 256.0 / 180.0), count * 256 / results.size());
+            Color color = painter.getPaint(result);
         	List<City> cities = result.getKey();
         	for (City city : cities) {
         		Pin pin = pinFromCity2(city, color);
                 pins.add(pin);
 			}
-        	count++;
 		}
         return pins;
     }
@@ -327,6 +371,29 @@ public class CityDemo {
 	        map.repaint();
         }
         
+    }
+
+    private static class ResultsPainter extends ClusterPainter<GvmResult<Vector, List<City>>, Color> {
+
+    	public ResultsPainter(List<GvmResult<Vector, List<City>>> results) {
+			super(results, CLUSTER_COLORS);
+		}
+    	
+		@Override
+		protected double distance(GvmResult<Vector, List<City>> c1, GvmResult<Vector, List<City>> c2) {
+			return c1.getSpace().distance(c1.getPoint(), c2.getPoint());
+		}
+
+		@Override
+		protected double radius(GvmResult<Vector, List<City>> c) {
+			return Math.sqrt(c.getVariance() * 2); // 2 std deviations
+		}
+
+		@Override
+		protected long points(GvmResult<Vector, List<City>> c) {
+			return c.getCount();
+		}
+    	
     }
     
 }

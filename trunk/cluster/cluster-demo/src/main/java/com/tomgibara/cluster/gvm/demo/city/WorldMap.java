@@ -44,10 +44,6 @@ class WorldMap extends JComponent {
     private static final int DEFAULT_PIN_RADIUS = 10;
     private static final int PIN_SCALE = 800;
     
-    public int pinCount() {
-        return pins.size();
-    }
-
     private static final BufferedImage image;
     
     static {

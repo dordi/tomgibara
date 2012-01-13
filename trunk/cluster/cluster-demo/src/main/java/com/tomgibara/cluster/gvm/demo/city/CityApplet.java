@@ -30,7 +30,7 @@ public class CityApplet extends JApplet {
 		try {
 			in = CityApp.class.getClassLoader().getResourceAsStream("cities.txt");
 	        List<City> cities = City.readCities(in, 0);
-	        CityDemo.insert(this, cities, null);
+	        CityDemo.insert(this, cities, null, false);
 
 		} catch (IOException e) {
 			e.printStackTrace();

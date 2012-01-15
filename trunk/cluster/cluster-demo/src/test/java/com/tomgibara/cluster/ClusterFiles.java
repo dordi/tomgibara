@@ -43,7 +43,7 @@ public class ClusterFiles {
 		return pts;
 	}
 	
-	public static List<GvmResult<GvmVectorSpace, List<double[]>>> cluster(String name, int capacity) throws IOException {
+	public static List<GvmResult<List<double[]>>> cluster(String name, int capacity) throws IOException {
 		List<double[]> pts = ClusterFiles.read(name);
 		Collections.shuffle(pts, new Random(0L));
 		
@@ -60,7 +60,7 @@ public class ClusterFiles {
 		return clusters.results();
 	}
 
-	public static List<GvmResult<GvmVectorSpace, Void>> clusterOnly(String name, int capacity, List<double[]> pts) throws IOException {
+	public static List<GvmResult<Void>> clusterOnly(String name, int capacity, List<double[]> pts) throws IOException {
 		if (pts == null) {
 			pts = ClusterFiles.read(name);
 			Collections.shuffle(pts, new Random(0L));

@@ -61,7 +61,9 @@ import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 public class CityDemo {
 
-    private static final int CITY_NAME_MAX = 20;
+    private static final GvmVectorSpace SPACE = new GvmVectorSpace(2);
+
+	private static final int CITY_NAME_MAX = 20;
     
     private static final Map<String, Color> CONTINENT_COLORS = new HashMap<String, Color>();
     
@@ -107,7 +109,7 @@ public class CityDemo {
         slider.setPaintLabels(true);
         c.add(slider, BorderLayout.SOUTH);
 
-        List<GvmResult<GvmVectorSpace, City>> results = clusterCities(cities, slider.getValue());
+        List<GvmResult<City>> results = clusterCities(cities, slider.getValue());
         List<Pin> pins = pinsFromResults(results);
         map.addAllPins(pins);
         map.repaint();
@@ -174,8 +176,8 @@ public class CityDemo {
 
     // city methods
 
-    private static List<GvmResult<GvmVectorSpace, List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
-        GvmClusters<GvmVectorSpace, List<City>> clusters = new GvmClusters<GvmVectorSpace, List<City>>(new GvmVectorSpace(2), maxClusters);
+    private static List<GvmResult<List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
+        GvmClusters<GvmVectorSpace, List<City>> clusters = new GvmClusters<GvmVectorSpace, List<City>>(SPACE, maxClusters);
         clusters.setKeyer(new GvmListKeyer<City>());
         double[] vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
@@ -185,14 +187,14 @@ public class CityDemo {
             list.add(city);
             clusters.add(city.pop, vector, list);
         }
-        List<GvmResult<GvmVectorSpace, List<City>>> results = clusters.results();
+        List<GvmResult<List<City>>> results = clusters.results();
         return results;
     }
 
-    private static List<Pin> pinsFromResults2(List<GvmResult<GvmVectorSpace, List<City>>> results) {
+    private static List<Pin> pinsFromResults2(List<GvmResult<List<City>>> results) {
     	ResultsPainter painter = new ResultsPainter(results);
         ArrayList<Pin> pins = new ArrayList<Pin>();
-        for (GvmResult<GvmVectorSpace, List<City>> result : results) {
+        for (GvmResult<List<City>> result : results) {
             Color color = painter.getPaint(result);
         	List<City> cities = result.getKey();
         	for (City city : cities) {
@@ -229,8 +231,8 @@ public class CityDemo {
     
     //cluster methods
     
-    private static List<GvmResult<GvmVectorSpace,City>> clusterCities(Collection<City> cities, int maxClusters) {
-        GvmClusters<GvmVectorSpace, City> clusters = new GvmClusters<GvmVectorSpace,City>(new GvmVectorSpace(2), maxClusters);
+    private static List<GvmResult<City>> clusterCities(Collection<City> cities, int maxClusters) {
+        GvmClusters<GvmVectorSpace, City> clusters = new GvmClusters<GvmVectorSpace,City>(SPACE, maxClusters);
         clusters.setKeyer(new SingleCityKeyer());
         double[] vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
@@ -239,16 +241,16 @@ public class CityDemo {
             clusters.add(city.pop, vector, city);
         }
         
-        List<GvmResult<GvmVectorSpace, City>> results = clusters.results();
+        List<GvmResult<City>> results = clusters.results();
         return results;
     }
     
-    private static List<Pin> pinsFromResults(List<GvmResult<GvmVectorSpace, City>> results) {
+    private static List<Pin> pinsFromResults(List<GvmResult<City>> results) {
         ArrayList<Pin> pins = new ArrayList<Pin>();
         Collections.sort(results, new ResultComp());
         int pinCount = 0;
         int hiddenLimit = results.size() - 20;
-        for (GvmResult<GvmVectorSpace, City> result : results) {
+        for (GvmResult<City> result : results) {
             Pin pin = pinFromResult(result);
             if (pinCount >= hiddenLimit) pin.setChild(pinFromCity(result.getKey()));
             pins.add(pin);
@@ -280,7 +282,7 @@ public class CityDemo {
         return pin;
     }
 
-    private static Pin pinFromResult(GvmResult<GvmVectorSpace, City> result) {
+    private static Pin pinFromResult(GvmResult<City> result) {
         String continent = result.getKey().cont;
         double[] vector = (double[]) result.getPoint();
         double lng = vector[0];
@@ -307,8 +309,8 @@ public class CityDemo {
         return 3 + (int) (poplog*poplog*poplog/600.0);
     }
     
-    private static class ResultComp implements Comparator<GvmResult<GvmVectorSpace, City>> {
-        public int compare(GvmResult<GvmVectorSpace, City> r1, GvmResult<GvmVectorSpace, City> r2) {
+    private static class ResultComp implements Comparator<GvmResult<City>> {
+        public int compare(GvmResult<City> r1, GvmResult<City> r2) {
             double m1 = r1.getMass();
             double m2 = r2.getMass();
             if (m1 == m2) return 0;
@@ -349,7 +351,7 @@ public class CityDemo {
 
 		private void doCityUpdate(int count) {
 	    	long start = System.currentTimeMillis();
-	        List<GvmResult<GvmVectorSpace, List<City>>> results = clusterCities2(cities, count);
+	        List<GvmResult<List<City>>> results = clusterCities2(cities, count);
 	        long finish = System.currentTimeMillis();
 	        List<Pin> pins = pinsFromResults2(results);
 	        map.clearPins();
@@ -360,7 +362,7 @@ public class CityDemo {
 
 		private void doClusterUpdate(int count) {
 	    	long start = System.currentTimeMillis();
-	        List<GvmResult<GvmVectorSpace, City>> results = clusterCities(cities, count);
+	        List<GvmResult<City>> results = clusterCities(cities, count);
 	        long finish = System.currentTimeMillis();
 	        List<Pin> pins = pinsFromResults(results);
 	        map.clearPins();
@@ -371,24 +373,24 @@ public class CityDemo {
         
     }
 
-    private static class ResultsPainter extends ClusterPainter<GvmResult<GvmVectorSpace, List<City>>, Color> {
+    private static class ResultsPainter extends ClusterPainter<GvmResult<List<City>>, Color> {
 
-    	public ResultsPainter(List<GvmResult<GvmVectorSpace, List<City>>> results) {
+    	public ResultsPainter(List<GvmResult<List<City>>> results) {
 			super(results, CLUSTER_COLORS);
 		}
     	
 		@Override
-		protected double distance(GvmResult<GvmVectorSpace, List<City>> c1, GvmResult<GvmVectorSpace, List<City>> c2) {
-			return c1.getSpace().distance(c1.getPoint(), c2.getPoint());
+		protected double distance(GvmResult<List<City>> c1, GvmResult<List<City>> c2) {
+			return SPACE.distance(c1.getPoint(), c2.getPoint());
 		}
 
 		@Override
-		protected double radius(GvmResult<GvmVectorSpace, List<City>> c) {
+		protected double radius(GvmResult<List<City>> c) {
 			return Math.sqrt(c.getVariance() * 2); // 2 std deviations
 		}
 
 		@Override
-		protected long points(GvmResult<GvmVectorSpace, List<City>> c) {
+		protected long points(GvmResult<List<City>> c) {
 			return c.getCount();
 		}
     	

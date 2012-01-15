@@ -26,14 +26,8 @@ package com.tomgibara.cluster.gvm;
  *            the key type
  */
 
-public class GvmResult<S extends GvmSpace, K> {
+public class GvmResult<K> {
 
-	/**
-	 * The space over which the result is defined.
-	 */
-	
-	private final S space;
-	
 	/**
 	 * The number of points in the cluster.
 	 */
@@ -50,7 +44,7 @@ public class GvmResult<S extends GvmSpace, K> {
 	 * The coordinates of the cluster's centroid.
 	 */
 	
-	private final Object point;
+	private Object point;
 	
 	/**
 	 * The variance of the cluster.
@@ -66,36 +60,23 @@ public class GvmResult<S extends GvmSpace, K> {
 	//TODO consider adding key mass
 
 	/**
-	 * Creates a new result of the given dimension.
-	 * 
-	 * @param dimension the number of dimensions in the result
+	 * Creates an empty result object
 	 */
 	
-	public GvmResult(S space) {
-		if (space == null) throw new IllegalArgumentException("null space");
-		this.space = space;
-		point = space.newOrigin();
+	public GvmResult() {
 	}
 	
-	GvmResult(GvmCluster<S,K> cluster) {
-		space = cluster.clusters.space;
+	GvmResult(GvmCluster<?,K> cluster) {
 		count = cluster.count;
 		mass = cluster.m0;
 		variance = cluster.var / mass;
 		key = cluster.key;
 		
+		GvmSpace space = cluster.clusters.space;
 		point = space.newCopy(cluster.m1);
 		space.scale(point, 1.0 / mass);
 	}
 
-	/**
-	 * The space in which the cluster is defined.
-	 */
-	
-	public S getSpace() {
-		return space;
-	}
-	
 	/**
 	 * The number of points in the cluster.
 	 */
@@ -139,7 +120,7 @@ public class GvmResult<S extends GvmSpace, K> {
 	 */
 
 	public void setPoint(Object point) {
-		space.setTo(this.point, point);
+		this.point = point;
 	}
 
 	/**

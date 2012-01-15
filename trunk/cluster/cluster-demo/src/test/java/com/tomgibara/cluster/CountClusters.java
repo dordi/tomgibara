@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.tomgibara.cluster.gvm.GvmResult;
-import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 
 public class CountClusters {
@@ -24,12 +23,12 @@ public class CountClusters {
 		List<double[]> pts = ClusterFiles.read(name);
 		FileWriter writer = new FileWriter("../cluster-common/R/" + name + "-variances.txt");
 		for (int capacity = 1; capacity < MAX_CAPACITY; capacity++) {
-			final List<GvmResult<GvmVectorSpace, Void>> results = ClusterFiles.clusterOnly(name, capacity, pts);
+			final List<GvmResult<Void>> results = ClusterFiles.clusterOnly(name, capacity, pts);
 			
 			double totalVar = 0.0;
 			double totalVarSqr = 0.0;
 			for (int i = 0; i < results.size(); i++) {
-				final GvmResult<GvmVectorSpace, Void> result = results.get(i);
+				final GvmResult<Void> result = results.get(i);
 				final double var = result.getVariance();
 				totalVar += var;
 				totalVarSqr += var * var;

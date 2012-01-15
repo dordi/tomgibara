@@ -286,11 +286,10 @@ public class CityDemo {
         String continent = result.getKey().cont;
         double lng = result.getPoint().getCoord(0);
         double lat = result.getPoint().getCoord(1);
-        double pop = result.getMass();
 
         String label = null;
         Color color = CONTINENT_COLORS.get(continent);
-        int radius = (int) Math.sqrt( result.getVariance() / pop );
+        int radius = (int) Math.sqrt( result.getVariance() );
         float x = (float) ((180.0 + lng) / 360.0);
         float y = (float) ((90.0 - lat) / 180.0);
 

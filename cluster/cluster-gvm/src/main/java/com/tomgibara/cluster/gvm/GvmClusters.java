@@ -67,7 +67,7 @@ public class GvmClusters<S extends GvmSpace, K> {
 	 * The keyer used to apply keys to clusters.
 	 */
 	
-	private GvmKeyer<S,K> keyer = new GvmDefaultKeyer<S,K>();
+	private GvmKeyer<K> keyer = new GvmDefaultKeyer<K>();
 
 	/**
 	 * The clusters.
@@ -114,7 +114,7 @@ public class GvmClusters<S extends GvmSpace, K> {
 	 * The keyer used to assign keys to clusters.
 	 */
 	
-	public GvmKeyer<S,K> getKeyer() {
+	public GvmKeyer<K> getKeyer() {
 		return keyer;
 	}
 	
@@ -124,7 +124,7 @@ public class GvmClusters<S extends GvmSpace, K> {
 	 * @param keyer a keyer, not null
 	 */
 	
-	public void setKeyer(GvmKeyer<S,K> keyer) {
+	public void setKeyer(GvmKeyer<K> keyer) {
 		if (keyer == null) throw new IllegalArgumentException();
 		this.keyer = keyer;
 	}

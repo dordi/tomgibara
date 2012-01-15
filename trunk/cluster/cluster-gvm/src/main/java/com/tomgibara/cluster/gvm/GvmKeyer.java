@@ -29,7 +29,7 @@ package com.tomgibara.cluster.gvm;
  * @param <K>
  */
 
-public interface GvmKeyer<S extends GvmSpace, K> {
+public interface GvmKeyer<K> {
 
 	/**
 	 * Called when two clusters are being merged. One key needs to be
@@ -42,7 +42,7 @@ public interface GvmKeyer<S extends GvmSpace, K> {
 	 * @return a key for the cluster that combines those of c1 and c2, may be
 	 *         null
 	 */
-	K mergeKeys(GvmCluster<S,K> c1, GvmCluster<S,K> c2);
+	K mergeKeys(GvmCluster<?,K> c1, GvmCluster<?,K> c2);
 
 	/**
 	 * Called when a key is being added to a cluster.
@@ -53,6 +53,6 @@ public interface GvmKeyer<S extends GvmSpace, K> {
 	 *            the key for a newly clustered coordinate
 	 * @return the key to be assigned to the new cluster, may be null
 	 */
-	K addKey(GvmCluster<S,K> cluster, K key);
+	K addKey(GvmCluster<?,K> cluster, K key);
 
 }

@@ -27,16 +27,16 @@ package com.tomgibara.cluster.gvm;
  *            the key type
  */
 
-public class GvmDefaultKeyer<S extends GvmSpace, K> implements GvmKeyer<S,K> {
+public class GvmDefaultKeyer<K> implements GvmKeyer<K> {
 
 	@Override
-	public K mergeKeys(GvmCluster<S,K> c1, GvmCluster<S,K> c2) {
+	public K mergeKeys(GvmCluster<?,K> c1, GvmCluster<?,K> c2) {
 		K key = c1.getKey();
 		return key == null ? c2.getKey() : key;
 	}
 	
 	@Override
-	public K addKey(GvmCluster<S,K> cluster, K key) {
+	public K addKey(GvmCluster<?,K> cluster, K key) {
 		K k = cluster.getKey();
 		return k == null ? key : k;
 	}

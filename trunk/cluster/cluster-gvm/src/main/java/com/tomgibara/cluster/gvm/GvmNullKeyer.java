@@ -24,15 +24,15 @@ package com.tomgibara.cluster.gvm;
  * @param <K> the key type
  */
 
-public class GvmNullKeyer<S extends GvmSpace, K> implements GvmKeyer<S,K> {
+public class GvmNullKeyer<K> implements GvmKeyer<K> {
 
 	@Override
-	public K addKey(GvmCluster<S,K> cluster, K key) {
+	public K addKey(GvmCluster<?,K> cluster, K key) {
 		return null;
 	}
 	
 	@Override
-	public K mergeKeys(GvmCluster<S,K> c1, GvmCluster<S,K> c2) {
+	public K mergeKeys(GvmCluster<?,K> c1, GvmCluster<?,K> c2) {
 		return null;
 	}
 	

@@ -176,7 +176,7 @@ public class CityDemo {
 
     private static List<GvmResult<GvmVectorSpace, List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
         GvmClusters<GvmVectorSpace, List<City>> clusters = new GvmClusters<GvmVectorSpace, List<City>>(new GvmVectorSpace(2), maxClusters);
-        clusters.setKeyer(new GvmListKeyer<GvmVectorSpace, City>());
+        clusters.setKeyer(new GvmListKeyer<City>());
         double[] vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
         	vector[0] = city.lng;

@@ -49,7 +49,7 @@ public class ClusterFiles {
 		
 		long start = System.currentTimeMillis();
 		GvmClusters<GvmVectorSpace, List<double[]>> clusters = new GvmClusters<GvmVectorSpace, List<double[]>>(space, capacity);
-		clusters.setKeyer(new GvmListKeyer<GvmVectorSpace, double[]>());
+		clusters.setKeyer(new GvmListKeyer<double[]>());
 		for (double[] pt : pts) {
 			ArrayList<double[]> key = new ArrayList<double[]>();
 			key.add(pt);
@@ -68,7 +68,7 @@ public class ClusterFiles {
 		
 		long start = System.currentTimeMillis();
 		GvmClusters<GvmVectorSpace, Void> clusters = new GvmClusters<GvmVectorSpace, Void>(space, capacity);
-		clusters.setKeyer(new GvmNullKeyer<GvmVectorSpace, Void>());
+		clusters.setKeyer(new GvmNullKeyer<Void>());
 		for (double[] pt : pts) {
 			clusters.add(1.0, pt, null);
 		}

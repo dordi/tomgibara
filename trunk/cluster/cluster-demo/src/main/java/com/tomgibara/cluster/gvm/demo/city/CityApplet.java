@@ -24,6 +24,8 @@ import javax.swing.JApplet;
 
 public class CityApplet extends JApplet {
 
+	private static final long serialVersionUID = 1077860670861265613L;
+
 	@Override
 	public void init() {
 		InputStream in = null;

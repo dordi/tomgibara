@@ -31,6 +31,7 @@ class GvmClusterPairs<S extends GvmSpace, K> {
 	private GvmClusterPair<S,K>[] pairs;
 	private int size;
 
+	@SuppressWarnings("unchecked")
 	GvmClusterPairs(int initialCapacity) {
 		pairs = new GvmClusterPair[initialCapacity];
 		size = 0;

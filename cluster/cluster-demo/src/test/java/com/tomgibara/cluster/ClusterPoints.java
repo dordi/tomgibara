@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.tomgibara.cluster.gvm.GvmResult;
-import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 public class ClusterPoints {
 
@@ -34,7 +33,7 @@ public class ClusterPoints {
 
 	private static void cluster(String name, int capacity) throws IOException {
 
-		final List<GvmResult<GvmVectorSpace, List<double[]>>> results = ClusterFiles.cluster(name, capacity);
+		final List<GvmResult<List<double[]>>> results = ClusterFiles.cluster(name, capacity);
 			
 		FileWriter writer = new FileWriter("../cluster-common/R/" + name + "-clustered.txt");
 		for (int i = 0; i < results.size(); i++) {

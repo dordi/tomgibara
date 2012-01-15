@@ -82,6 +82,7 @@ public class GvmCluster<S extends GvmSpace, K> {
 	
 	// constructors
 	
+	@SuppressWarnings("unchecked")
 	GvmCluster(GvmClusters<S,K> clusters) {
 		this.clusters = clusters;
 		removed = false;

@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.tomgibara.cluster.NUMBER;
-
 /**
  * Maintains a collection of clusters which are adjusted as new elements are
  * added. The keyer assigned to this object should not be modified while there
@@ -99,6 +97,7 @@ public class GvmClusters<S extends GvmSpace, K> {
 	
 	private int bound = 0;
 	
+	@SuppressWarnings("unchecked")
 	public GvmClusters(S space, int capacity) {
 		if (space == null) throw new IllegalArgumentException("null space");
 		if (capacity < 0) throw new IllegalArgumentException("negative capacity");
@@ -329,12 +328,12 @@ public class GvmClusters<S extends GvmSpace, K> {
 	 * @return the result of clustering the points thus far added
 	 */
 	
-	public List<GvmResult<S,K>> results() {
-		ArrayList<GvmResult<S,K>> list = new ArrayList<GvmResult<S,K>>(count);
+	public List<GvmResult<K>> results() {
+		ArrayList<GvmResult<K>> list = new ArrayList<GvmResult<K>>(count);
 		for (int i = 0; i < count; i++) {
 			GvmCluster<S,K> cluster = clusters[i];
 			//TODO exclude massless clusters?
-			list.add(new GvmResult<S,K>(cluster));
+			list.add(new GvmResult<K>(cluster));
 		}
 		return list;
 	}

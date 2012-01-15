@@ -24,19 +24,19 @@ package com.tomgibara.cluster.gvm;
  * @param <K> the key type
  */
 
-public class GvmCluster<P extends GvmPoint, K> {
+public class GvmCluster<S extends GvmSpace, K> {
 
 	/**
 	 * The set of clusters to which this cluster belongs
 	 */
 	
-	final GvmClusters<?, P, K> clusters;
+	final GvmClusters<S, K> clusters;
 	
 	/**
 	 * The pairings of this cluster with all other clusters.
 	 */
 	
-	final GvmClusterPair<P,K>[] pairs;
+	final GvmClusterPair<S,K>[] pairs;
 
 	/**
 	 * Whether this cluster is in the process of being removed.
@@ -60,13 +60,13 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 * The mass-weighted coordinate sum.
 	 */
 	
-	final P m1;
+	final Object m1;
 	
 	/**
 	 * The mass-weighted coordinate-square sum.
 	 */
 	
-	final P m2;
+	final Object m2;
 	
 	/**
 	 * The computed variance of this cluster
@@ -82,7 +82,7 @@ public class GvmCluster<P extends GvmPoint, K> {
 	
 	// constructors
 	
-	GvmCluster(GvmClusters<?,P,K> clusters) {
+	GvmCluster(GvmClusters<S,K> clusters) {
 		this.clusters = clusters;
 		removed = false;
 		count = 0;
@@ -137,8 +137,8 @@ public class GvmCluster<P extends GvmPoint, K> {
 	void clear() {
 		count = 0;
 		m0 = 0.0;
-		m1.setToOrigin();
-		m2.setToOrigin();
+		clusters.space.setToOrigin(m1);
+		clusters.space.setToOrigin(m2);
 		var = 0.0;
 		key = null;
 	}
@@ -152,15 +152,15 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 *            the coordinates of the point
 	 */
 
-	void set(final double m, final P pt) {
+	void set(final double m, final Object pt) {
 		if (m == 0.0) {
 			if (count != 0) {
-				m1.setToOrigin();
-				m2.setToOrigin();
+				clusters.space.setToOrigin(m1);
+				clusters.space.setToOrigin(m2);
 			}
 		} else {
-			m1.setToScaled(m, pt);
-			m2.setToScaledSqr(m, pt);
+			clusters.space.setToScaled(m1, m, pt);
+			clusters.space.setToScaledSqr(m2, m, pt);
 		}
 		count = 1;
 		m0 = m;
@@ -176,17 +176,16 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 *            the coordinates of the point
 	 */
 	
-	void add(final double m, final P pt) {
+	void add(final double m, final Object pt) {
 		if (count == 0) {
 			set(m, pt);
 		} else {
 			count += 1;
 			
 			if (m != 0.0) {
-                //TODO accelerate add
 				m0 += m;
-				m1.addScaled(m, pt);
-				m2.addScaledSqr(m, pt);
+				clusters.space.addScaled(m1, m, pt);
+				clusters.space.addScaledSqr(m2, m, pt);
 				update();
 			}
 		}
@@ -198,12 +197,12 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 * @param cluster a cluster, not this or null
 	 */
 	
-	void set(GvmCluster<P,K> cluster) {
+	void set(GvmCluster<S,K> cluster) {
 		if (cluster == this) throw new IllegalArgumentException("cannot set cluster to itself");
 		
 		m0 = cluster.m0;
-		m1.setTo(cluster.m1);
-		m2.setTo(cluster.m2);
+		clusters.space.setTo(m1, cluster.m1);
+		clusters.space.setTo(m2, cluster.m2);
 		var = cluster.var;
 	}
 	
@@ -213,7 +212,7 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 * @param cluster the cluster to be added
 	 */
 	
-	void add(GvmCluster<P,K> cluster) {
+	void add(GvmCluster<S,K> cluster) {
 		if (cluster == this) throw new IllegalArgumentException();
 		if (cluster.count == 0) return; //nothing to do
 		
@@ -223,8 +222,8 @@ public class GvmCluster<P extends GvmPoint, K> {
 			count += cluster.count;
 			//TODO accelerate add
 			m0 += cluster.m0;
-            m1.add(cluster.m1);
-            m2.add(cluster.m2);
+            clusters.space.add(m1, cluster.m1);
+            clusters.space.add(m2, cluster.m2);
 			update();
 		}
 	}
@@ -237,7 +236,7 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 * @return the variance of this cluster inclusive of the point
 	 */
 	
-	double test(double m, final P pt) {
+	double test(double m, Object pt) {
 		return m0 == 0.0 && m == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, m, pt) - var;
 	}
 
@@ -251,7 +250,7 @@ public class GvmCluster<P extends GvmPoint, K> {
 	 */
 
 	//TODO: change for consistency with other test method : return increase in variance
-	double test(GvmCluster<P,K> cluster) {
+	double test(GvmCluster<S,K> cluster) {
 		return m0 == 0.0 && cluster.m0 == 0.0 ? 0.0 : clusters.space.variance(m0, m1, m2, cluster.m0, cluster.m1, cluster.m2);
 	}
 

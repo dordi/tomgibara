@@ -33,25 +33,25 @@ public class ClusterFiles {
 		files = Collections.unmodifiableMap(map);
 	}
 	
-	public static List<GvmVectorSpace.Vector> read(String name) throws FileNotFoundException {
+	public static List<double[]> read(String name) throws FileNotFoundException {
 		Scanner scanner = new Scanner(new File("../cluster-common/R/" + name + ".txt"));
-		ArrayList<GvmVectorSpace.Vector> pts = new ArrayList<GvmVectorSpace.Vector>();
+		ArrayList<double[]> pts = new ArrayList<double[]>();
 		while (scanner.hasNext()) {
-			pts.add( space.newVector(new double[] {scanner.nextDouble(), scanner.nextDouble()}) );
+			pts.add( new double[] {scanner.nextDouble(), scanner.nextDouble()} );
 		}
 		scanner.close();
 		return pts;
 	}
 	
-	public static List<GvmResult<GvmVectorSpace.Vector, List<GvmVectorSpace.Vector>>> cluster(String name, int capacity) throws IOException {
-		List<GvmVectorSpace.Vector> pts = ClusterFiles.read(name);
+	public static List<GvmResult<GvmVectorSpace, List<double[]>>> cluster(String name, int capacity) throws IOException {
+		List<double[]> pts = ClusterFiles.read(name);
 		Collections.shuffle(pts, new Random(0L));
 		
 		long start = System.currentTimeMillis();
-		GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, List<GvmVectorSpace.Vector>> clusters = new GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, List<GvmVectorSpace.Vector>>(space, capacity);
-		clusters.setKeyer(new GvmListKeyer<GvmVectorSpace.Vector, GvmVectorSpace.Vector>());
-		for (GvmVectorSpace.Vector pt : pts) {
-			ArrayList<GvmVectorSpace.Vector> key = new ArrayList<GvmVectorSpace.Vector>();
+		GvmClusters<GvmVectorSpace, List<double[]>> clusters = new GvmClusters<GvmVectorSpace, List<double[]>>(space, capacity);
+		clusters.setKeyer(new GvmListKeyer<GvmVectorSpace, double[]>());
+		for (double[] pt : pts) {
+			ArrayList<double[]> key = new ArrayList<double[]>();
 			key.add(pt);
 			clusters.add(1.0, pt, key);
 		}
@@ -60,16 +60,16 @@ public class ClusterFiles {
 		return clusters.results();
 	}
 
-	public static List<GvmResult<GvmVectorSpace.Vector, Void>> clusterOnly(String name, int capacity, List<GvmVectorSpace.Vector> pts) throws IOException {
+	public static List<GvmResult<GvmVectorSpace, Void>> clusterOnly(String name, int capacity, List<double[]> pts) throws IOException {
 		if (pts == null) {
 			pts = ClusterFiles.read(name);
 			Collections.shuffle(pts, new Random(0L));
 		}
 		
 		long start = System.currentTimeMillis();
-		GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, Void> clusters = new GvmClusters<GvmVectorSpace, GvmVectorSpace.Vector, Void>(space, capacity);
-		clusters.setKeyer(new GvmNullKeyer<GvmVectorSpace.Vector, Void>());
-		for (GvmVectorSpace.Vector pt : pts) {
+		GvmClusters<GvmVectorSpace, Void> clusters = new GvmClusters<GvmVectorSpace, Void>(space, capacity);
+		clusters.setKeyer(new GvmNullKeyer<GvmVectorSpace, Void>());
+		for (double[] pt : pts) {
 			clusters.add(1.0, pt, null);
 		}
 		long finish = System.currentTimeMillis();

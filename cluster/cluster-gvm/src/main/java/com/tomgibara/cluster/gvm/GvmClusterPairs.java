@@ -26,9 +26,9 @@ import java.util.Arrays;
  * @param <K> the key type
  */
 
-class GvmClusterPairs<P extends GvmPoint, K> {
+class GvmClusterPairs<S extends GvmSpace, K> {
 
-	private GvmClusterPair<P,K>[] pairs;
+	private GvmClusterPair<S,K>[] pairs;
 	private int size;
 
 	GvmClusterPairs(int initialCapacity) {
@@ -36,12 +36,12 @@ class GvmClusterPairs<P extends GvmPoint, K> {
 		size = 0;
 	}
 
-	GvmClusterPairs(GvmClusterPairs<P,K> that) {
+	GvmClusterPairs(GvmClusterPairs<S,K> that) {
 		pairs = Arrays.copyOf(that.pairs, that.size);
 		size = pairs.length;
 	}
 
-    public boolean add(GvmClusterPair<P,K> e) {
+    public boolean add(GvmClusterPair<S,K> e) {
         if (e == null) throw new IllegalArgumentException("null pair");
         int i = size;
         if (i >= pairs.length) grow(i + 1);
@@ -55,22 +55,22 @@ class GvmClusterPairs<P extends GvmPoint, K> {
         return true;
     }
 
-    public GvmClusterPair<P,K> peek() {
+    public GvmClusterPair<S,K> peek() {
     	return size == 0 ? null : pairs[0];
     }
 
-    public boolean remove(GvmClusterPair<P,K> pair) {
+    public boolean remove(GvmClusterPair<S,K> pair) {
 		int i = indexOf(pair);
 		if (i == -1) return false;
 	    removeAt(i);
 	    return true;
     }
 
-    public void reprioritize(GvmClusterPair<P,K> pair) {
+    public void reprioritize(GvmClusterPair<S,K> pair) {
     	int i = indexOf(pair);
     	if (i == -1) throw new IllegalArgumentException("no such pair");
     	pair.update();
-        GvmClusterPair<P,K> parent = i == 0 ? null : pairs[ (i - 1) >>> 1 ];
+        GvmClusterPair<S,K> parent = i == 0 ? null : pairs[ (i - 1) >>> 1 ];
         if (parent != null && parent.value > pair.value) {
         	heapifyUp(i, pair);
         } else {
@@ -84,7 +84,7 @@ class GvmClusterPairs<P extends GvmPoint, K> {
 
     public void clear() {
         for (int i = 0; i < size; i++) {
-        	GvmClusterPair<P,K> e = pairs[i];
+        	GvmClusterPair<S,K> e = pairs[i];
         	e.index = -1;
             pairs[i] = e;
         }
@@ -100,17 +100,17 @@ class GvmClusterPairs<P extends GvmPoint, K> {
         pairs = Arrays.copyOf(pairs, newCapacity);
     }
 
-    private int indexOf(GvmClusterPair<P,K> pair) {
+    private int indexOf(GvmClusterPair<S,K> pair) {
     	return pair == null ? -1 : pair.index;
     }
 
-    private GvmClusterPair<P,K> removeAt(int i) {
+    private GvmClusterPair<S,K> removeAt(int i) {
         int s = --size;
         if (s == i) { // removing last element
         	pairs[i].index = -1;
             pairs[i] = null;
         } else {
-            GvmClusterPair<P,K> moved = pairs[s];
+            GvmClusterPair<S,K> moved = pairs[s];
             pairs[s] = null;
             moved.index = -1;
             heapifyDown(i, moved);
@@ -122,10 +122,10 @@ class GvmClusterPairs<P extends GvmPoint, K> {
         return null;
     }
 
-    private void heapifyUp(int k, GvmClusterPair<P,K> pair) {
+    private void heapifyUp(int k, GvmClusterPair<S,K> pair) {
         while (k > 0) {
             int parent = (k - 1) >>> 1;
-            GvmClusterPair<P,K> e = pairs[parent];
+            GvmClusterPair<S,K> e = pairs[parent];
             if (pair.value >= e.value) break;
             pairs[k] = e;
             e.index = k;
@@ -135,11 +135,11 @@ class GvmClusterPairs<P extends GvmPoint, K> {
         pair.index = k;
     }
 
-    private void heapifyDown(int k, GvmClusterPair<P,K> pair) {
+    private void heapifyDown(int k, GvmClusterPair<S,K> pair) {
         int half = size >>> 1;
         while (k < half) {
             int child = (k << 1) + 1;
-            GvmClusterPair<P,K> c = pairs[child];
+            GvmClusterPair<S,K> c = pairs[child];
             int right = child + 1;
             if (right < size && c.value > pairs[right].value) c = pairs[child = right];
             if (pair.value <= c.value) break;

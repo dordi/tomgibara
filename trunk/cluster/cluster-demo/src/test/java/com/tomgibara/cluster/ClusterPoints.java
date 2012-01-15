@@ -34,12 +34,12 @@ public class ClusterPoints {
 
 	private static void cluster(String name, int capacity) throws IOException {
 
-		final List<GvmResult<GvmVectorSpace.Vector, List<GvmVectorSpace.Vector>>> results = ClusterFiles.cluster(name, capacity);
+		final List<GvmResult<GvmVectorSpace, List<double[]>>> results = ClusterFiles.cluster(name, capacity);
 			
 		FileWriter writer = new FileWriter("../cluster-common/R/" + name + "-clustered.txt");
 		for (int i = 0; i < results.size(); i++) {
-			for (GvmVectorSpace.Vector pt : results.get(i).getKey()) {
-				writer.write(String.format("%3.3f %3.3f %d%n", pt.getCoord(0), pt.getCoord(1), i+1));
+			for (double[] pt : results.get(i).getKey()) {
+				writer.write(String.format("%3.3f %3.3f %d%n", pt[0], pt[1], i+1));
 			}
 		}
 		writer.close();

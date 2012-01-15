@@ -40,7 +40,9 @@ import javax.swing.JComponent;
 
 class WorldMap extends JComponent {
 
-    private static final Color DEFAULT_PIN_COLOR = Color.GRAY;
+	private static final long serialVersionUID = 3983325206679090549L;
+	
+	private static final Color DEFAULT_PIN_COLOR = Color.GRAY;
     private static final int DEFAULT_PIN_RADIUS = 10;
     private static final int PIN_SCALE = 800;
     

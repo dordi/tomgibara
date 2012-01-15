@@ -81,7 +81,7 @@ public class GvmResult<P extends GvmPoint, K> {
 		space = cluster.clusters.space;
 		count = cluster.count;
 		mass = cluster.m0;
-		variance = cluster.var;
+		variance = cluster.var / mass;
 		key = cluster.key;
 		
 		point = space.newCopy(cluster.m1);

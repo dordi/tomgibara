@@ -30,9 +30,8 @@ public abstract class GvmSpace<P extends GvmPoint> {
 	public double variance(double m, P pt, P ptSqr) {
 		P x = newCopy(ptSqr);
 //		// Var is E(X^2) - E(X)^2, but squaring pt1 introduces an extra factor which is the total mass, so:
-		double scale = 1 / m;
-		x.subtractScaledSqr(scale, pt);
-		return sum(x) * scale;
+		x.subtractScaledSqr(1 / m, pt);
+		return sum(x);
 	}
 
 	//naive implementation that must be overridden for good performance

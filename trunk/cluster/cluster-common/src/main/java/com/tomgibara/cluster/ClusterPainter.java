@@ -1,5 +1,6 @@
 package com.tomgibara.cluster;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
@@ -8,25 +9,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ClusterPainter<C,P> {
+public class ClusterPainter<C,P> {
 
-	private final Map<C, P> map;
+	public interface Sizer<C> {
+
+		double distance(C c1, C c2);
+		
+		double radius(C c);
+		
+		long points(C c);
+		
+	}
 	
-	public ClusterPainter(Collection<C> clusters, List<P> paints) {
-		map = paint((C[]) clusters.toArray(), paints);
+	private final Sizer<C> sizer;
+	private final List<P> paints;
+	
+	public ClusterPainter(Sizer<C> sizer, List<P> paints) {
+		if (sizer == null) throw new IllegalArgumentException("null sizer");
+		if (paints == null) throw new IllegalArgumentException("null paints");
+		this.sizer = sizer;
+		this.paints = new ArrayList<P>(paints);
 	}
 
-	public P getPaint(C cluster) {
-		return map.get(cluster);
-	}
-	
-	protected abstract double distance(C c1, C c2);
-	
-	protected abstract double radius(C c);
-	
-	protected abstract long points(C c);
-	
-	private Map<C, P> paint(C[] clusters, List<P> paints) {
+	public Map<C, P> paint(Collection<? extends C> cs) {
+		C[] clusters = (C[]) cs.toArray();
 		int length = clusters.length;
 		
 		// sort clusters by radius - biggest first
@@ -35,7 +41,7 @@ public abstract class ClusterPainter<C,P> {
 		// build table of radii
 		double[] radii = new double[length];
 		for (int i = 0; i < length; i++) {
-			radii[i] = radius(clusters[i]);
+			radii[i] = sizer.radius(clusters[i]);
 		}
 		
 		// build table of distances
@@ -48,7 +54,7 @@ public abstract class ClusterPainter<C,P> {
 					distances[i][j] = NULL;
 				} else {
 					C c2 = clusters[j];
-					double d = distance(c1, c2) - radii[i] - radii[j];
+					double d = sizer.distance(c1, c2) - radii[i] - radii[j];
 					Distance distance = new Distance(c1, c2, d);
 					distances[i][j] = distance;
 					distances[j][i] = distance;
@@ -100,8 +106,8 @@ public abstract class ClusterPainter<C,P> {
 		
 		public int compare(C c1, C c2) {
 			if (c1 == c2) return 0;
-			long p1 = points(c1); 
-			long p2 = points(c2);
+			long p1 = sizer.points(c1); 
+			long p2 = sizer.points(c2);
 			if (p1 == p2) return 0;
 			return p1 < p2 ? 1 : 0;
 		}
@@ -126,6 +132,7 @@ public abstract class ClusterPainter<C,P> {
 			this.d = d;
 		}
 		
+		@SuppressWarnings("unchecked")
 		<C> C other(C c) {
 			if (c == c1) return (C) c2;
 			if (c == c2) return (C) c1;

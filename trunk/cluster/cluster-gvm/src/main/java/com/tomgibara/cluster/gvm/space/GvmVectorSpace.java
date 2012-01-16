@@ -1,7 +1,10 @@
 package com.tomgibara.cluster.gvm.space;
 
 import java.util.Arrays;
+import java.util.List;
 
+import com.tomgibara.cluster.ClusterPainter;
+import com.tomgibara.cluster.gvm.GvmResult;
 import com.tomgibara.cluster.gvm.GvmSpace;
 
 public class GvmVectorSpace extends GvmSpace {
@@ -151,5 +154,28 @@ public class GvmVectorSpace extends GvmSpace {
 			coords[i] *= coords[i];
 		}
 	}
+	
+	public <R extends GvmResult<?>, P> ClusterPainter<R, P> painter(List<P> paints) {
+		return new ClusterPainter<R, P>(new Sizer<R>(), paints);
+	}
 
+	private class Sizer<R extends GvmResult<?>> implements ClusterPainter.Sizer<R> {
+
+		@Override
+		public double distance(R r1, R r2) {
+			return GvmVectorSpace.this.distance(r1.getPoint(), r2.getPoint());
+		}
+
+		@Override
+		public double radius(R r) {
+			return Math.sqrt(r.getVariance() * 2); // 2 std deviations
+		}
+
+		@Override
+		public long points(R r) {
+			return r.getCount();
+		}
+		
+	}
+	
 }

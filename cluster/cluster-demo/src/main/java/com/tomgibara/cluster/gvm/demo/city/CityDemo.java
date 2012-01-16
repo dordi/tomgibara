@@ -61,7 +61,7 @@ import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 public class CityDemo {
 
-    private static final GvmVectorSpace SPACE = new GvmVectorSpace(2);
+    private static final GvmVectorSpace space = new GvmVectorSpace(2);
 
 	private static final int CITY_NAME_MAX = 20;
     
@@ -177,7 +177,7 @@ public class CityDemo {
     // city methods
 
     private static List<GvmResult<List<City>>> clusterCities2(Collection<City> cities, int maxClusters) {
-        GvmClusters<GvmVectorSpace, List<City>> clusters = new GvmClusters<GvmVectorSpace, List<City>>(SPACE, maxClusters);
+        GvmClusters<GvmVectorSpace, List<City>> clusters = new GvmClusters<GvmVectorSpace, List<City>>(space, maxClusters);
         clusters.setKeyer(new GvmListKeyer<City>());
         double[] vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
@@ -192,10 +192,10 @@ public class CityDemo {
     }
 
     private static List<Pin> pinsFromResults2(List<GvmResult<List<City>>> results) {
-    	ResultsPainter painter = new ResultsPainter(results);
+    	Map<GvmResult<?>, Color> painting = space.painter(CLUSTER_COLORS).paint(results);
         ArrayList<Pin> pins = new ArrayList<Pin>();
         for (GvmResult<List<City>> result : results) {
-            Color color = painter.getPaint(result);
+            Color color = painting.get(result);
         	List<City> cities = result.getKey();
         	for (City city : cities) {
         		Pin pin = pinFromCity2(city, color);
@@ -232,7 +232,7 @@ public class CityDemo {
     //cluster methods
     
     private static List<GvmResult<City>> clusterCities(Collection<City> cities, int maxClusters) {
-        GvmClusters<GvmVectorSpace, City> clusters = new GvmClusters<GvmVectorSpace,City>(SPACE, maxClusters);
+        GvmClusters<GvmVectorSpace, City> clusters = new GvmClusters<GvmVectorSpace,City>(space, maxClusters);
         clusters.setKeyer(new SingleCityKeyer());
         double[] vector = clusters.getSpace().newOrigin();
         for (City city : cities) {
@@ -373,27 +373,4 @@ public class CityDemo {
         
     }
 
-    private static class ResultsPainter extends ClusterPainter<GvmResult<List<City>>, Color> {
-
-    	public ResultsPainter(List<GvmResult<List<City>>> results) {
-			super(results, CLUSTER_COLORS);
-		}
-    	
-		@Override
-		protected double distance(GvmResult<List<City>> c1, GvmResult<List<City>> c2) {
-			return SPACE.distance(c1.getPoint(), c2.getPoint());
-		}
-
-		@Override
-		protected double radius(GvmResult<List<City>> c) {
-			return Math.sqrt(c.getVariance() * 2); // 2 std deviations
-		}
-
-		@Override
-		protected long points(GvmResult<List<City>> c) {
-			return c.getCount();
-		}
-    	
-    }
-    
 }

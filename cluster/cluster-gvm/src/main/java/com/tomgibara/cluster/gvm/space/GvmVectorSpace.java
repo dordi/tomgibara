@@ -9,20 +9,30 @@ import com.tomgibara.cluster.gvm.GvmSpace;
 
 public class GvmVectorSpace extends GvmSpace {
 
-	private final int dimensions;
+	// statics
 	
 	private static double[] coords(Object obj) {
 		return (double[]) obj;
 	}
+
+	// fields
+	
+	private final int dimensions;
+	
+	// constructors
 	
 	public GvmVectorSpace(int dimensions) {
 		if (dimensions < 1) throw new IllegalArgumentException("non-positive dimensions");
 		this.dimensions = dimensions;
 	}
 	
+	// accessors
+	
 	public int getDimensions() {
 		return dimensions;
 	}
+	
+	// space factory methods
 	
 	@Override
 	public double[] newOrigin() {
@@ -34,6 +44,8 @@ public class GvmVectorSpace extends GvmSpace {
 		return coords(pt).clone();
 	}
 
+	// space point operations
+	
 	@Override
 	public double magnitudeSqr(Object pt) {
 		double sum = 0.0;
@@ -155,9 +167,74 @@ public class GvmVectorSpace extends GvmSpace {
 		}
 	}
 	
+	// optimizations
+	
+	@Override
+	public double distance(Object pt1, Object pt2) {
+		double[] coords1 = coords(pt1);
+		double[] coords2 = coords(pt2);
+		double sum = 0.0;
+		for (int i = 0; i < dimensions; i++) {
+			double d = coords1[i] - coords2[i];
+			sum += d * d;
+		}
+		return Math.sqrt(sum);
+	}
+	
+	@Override
+	public double variance(double m, Object pt, Object ptSqr) {
+		double[] coords = coords(pt);
+		double[] sqrCoords = coords(ptSqr);
+		double sum = 0.0;
+		for (int i = 0; i < dimensions; i++) {
+			double c = coords[i];
+			sum += sqrCoords[i] - c * c / m;
+		}
+		return sum;
+	}
+	
+	@Override
+	public double variance(double m1, Object pt1, Object ptSqr1, double m2, Object pt2) {
+		double[] coords1 = coords(pt1);
+		double[] sqrCoords1 = coords(ptSqr1);
+		double[] coords2 = coords(pt2);
+
+		double m0 = m1 + m2;
+		double sum = 0.0;
+		for (int i = 0; i < dimensions; i++) {
+			double c2 = coords2[i];
+			double c = coords1[i] + m2 * c2;
+			double cSqr = sqrCoords1[i] + m2 * c2 * c2;
+			sum += cSqr - c * c / m0;
+		}
+		return sum;
+	}
+
+	@Override
+	public double variance(double m1, Object pt1, Object ptSqr1, double m2, Object pt2, Object ptSqr2) {
+		double[] coords1 = coords(pt1);
+		double[] sqrCoords1 = coords(ptSqr1);
+		double[] coords2 = coords(pt2);
+		double[] sqrCoords2 = coords(ptSqr2);
+		
+		double m0 = m1 + m2;
+		double sum = 0.0;
+		for (int i = 0; i < dimensions; i++) {
+			double c = coords1[i] + coords2[i];
+			double cSqr = sqrCoords1[i] + sqrCoords2[i];
+			sum += cSqr - c * c / m0;
+		}
+		
+		return sum;
+	}
+	
+	// helper methods
+	
 	public <R extends GvmResult<?>, P> ClusterPainter<R, P> painter(List<P> paints) {
 		return new ClusterPainter<R, P>(new Sizer<R>(), paints);
 	}
+	
+	// inner classes
 
 	private class Sizer<R extends GvmResult<?>> implements ClusterPainter.Sizer<R> {
 

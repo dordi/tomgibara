@@ -1,6 +1,5 @@
 package com.tomgibara.cluster.gvm;
 
-
 public abstract class GvmSpace {
 
 	//TODO use within cluster
@@ -15,12 +14,17 @@ public abstract class GvmSpace {
 	public abstract double magnitudeSqr(Object pt);
 
 	public abstract double sum(Object pt);
+
+	//not used directly in algorithm, but useful - override for good performance
+	public double magnitude(Object pt) {
+		return Math.sqrt(magnitudeSqr(pt));
+	}
 	
-	//not used in algorithm, but useful - override for good performance
+	//not used directly in algorithm, but useful - override for good performance
 	public double distance(Object pt1, Object pt2) {
 		Object p = newCopy(pt1);
 		subtract(p, pt2);
-		return Math.sqrt(magnitudeSqr(p));
+		return magnitude(p);
 	}
 	
 	//naive implementation that must be overridden for good performance
@@ -99,5 +103,4 @@ public abstract class GvmSpace {
 	
 	public abstract void square(Object pt);
 
-	
 }

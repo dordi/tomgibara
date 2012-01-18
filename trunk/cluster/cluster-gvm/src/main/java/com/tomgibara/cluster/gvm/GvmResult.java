@@ -41,6 +41,12 @@ public class GvmResult<K> {
 	private double mass;
 	
 	/**
+	 * The space over which the result is defined
+	 */
+	
+	private GvmSpace space;
+	
+	/**
 	 * The coordinates of the cluster's centroid.
 	 */
 	
@@ -71,8 +77,7 @@ public class GvmResult<K> {
 		mass = cluster.m0;
 		variance = cluster.var / mass;
 		key = cluster.key;
-		
-		GvmSpace space = cluster.clusters.space;
+		space = cluster.clusters.space;
 		point = space.newCopy(cluster.m1);
 		space.scale(point, 1.0 / mass);
 	}
@@ -103,6 +108,14 @@ public class GvmResult<K> {
 	
 	public void setMass(double mass) {
 		this.mass = mass;
+	}
+	
+	public GvmSpace getSpace() {
+		return space;
+	}
+	
+	public void setSpace(GvmSpace space) {
+		this.space = space;
 	}
 	
 	/**

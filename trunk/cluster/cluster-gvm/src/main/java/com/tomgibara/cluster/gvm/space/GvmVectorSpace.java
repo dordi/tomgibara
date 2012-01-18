@@ -228,31 +228,4 @@ public class GvmVectorSpace extends GvmSpace {
 		return sum;
 	}
 	
-	// helper methods
-	
-	public <R extends GvmResult<?>, P> ClusterPainter<R, P> painter(List<P> paints) {
-		return new ClusterPainter<R, P>(new Sizer<R>(), paints);
-	}
-	
-	// inner classes
-
-	private class Sizer<R extends GvmResult<?>> implements ClusterPainter.Sizer<R> {
-
-		@Override
-		public double distance(R r1, R r2) {
-			return GvmVectorSpace.this.distance(r1.getPoint(), r2.getPoint());
-		}
-
-		@Override
-		public double radius(R r) {
-			return Math.sqrt(r.getVariance() * 2); // 2 std deviations
-		}
-
-		@Override
-		public long points(R r) {
-			return r.getCount();
-		}
-		
-	}
-	
 }

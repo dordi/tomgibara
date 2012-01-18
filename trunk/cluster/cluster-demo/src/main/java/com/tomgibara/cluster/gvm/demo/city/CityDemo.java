@@ -57,6 +57,7 @@ import com.tomgibara.cluster.ClusterPainter;
 import com.tomgibara.cluster.gvm.GvmClusters;
 import com.tomgibara.cluster.gvm.GvmListKeyer;
 import com.tomgibara.cluster.gvm.GvmResult;
+import com.tomgibara.cluster.gvm.GvmSizer;
 import com.tomgibara.cluster.gvm.space.GvmVectorSpace;
 
 public class CityDemo {
@@ -82,6 +83,8 @@ public class CityDemo {
     		Color.ORANGE,
     		Color.MAGENTA
     		});
+    
+    private static final ClusterPainter<GvmResult<?>, Color> painter = new ClusterPainter<GvmResult<?>, Color>(new GvmSizer(), CLUSTER_COLORS);
     
     public static void insert(final Container c, final List<City> cities, Dimension d, boolean allowSave) {
         c.setLayout(new BorderLayout());
@@ -192,7 +195,7 @@ public class CityDemo {
     }
 
     private static List<Pin> pinsFromResults2(List<GvmResult<List<City>>> results) {
-    	Map<GvmResult<?>, Color> painting = space.painter(CLUSTER_COLORS).paint(results);
+    	Map<GvmResult<?>, Color> painting = painter.paint(results);
         ArrayList<Pin> pins = new ArrayList<Pin>();
         for (GvmResult<List<City>> result : results) {
             Color color = painting.get(result);

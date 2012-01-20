@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record.compact;
+package com.tomgibara.crinch.record.index;
 
 import java.io.DataInputStream;
 import java.io.File;

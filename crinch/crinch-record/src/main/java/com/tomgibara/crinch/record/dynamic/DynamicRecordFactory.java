@@ -33,6 +33,7 @@ import org.codehaus.janino.SimpleCompiler;
 
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.ProcessScoped;
 import com.tomgibara.crinch.record.def.ColumnDef;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
@@ -260,7 +261,7 @@ public class DynamicRecordFactory {
 		sb.append("\t\t\tif (value != null) ((").append(className).append(") value).populateStream(out);\n");
 		sb.append("\t\t}\n");
 		sb.append("\t};\n");
-		
+
 		// fields
 		if (definition.isOrdinal()) sb.append("\tprivate final long ordinal;\n");
 		if (definition.isPositional()) sb.append("\tprivate final long position;\n");
@@ -560,6 +561,10 @@ public class DynamicRecordFactory {
 				String accessorName = accessorName(type);
 				if (type.typeClass.isPrimitive()) {
 					sb.append("\t\t\tf_").append(field).append(" = record.next").append(accessorName).append("();\n");
+				} else if (type == ColumnType.STRING_OBJECT) {
+					sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(accessorName).append("();\n");
+					sb.append("\t\t\tif (tmp_").append(field).append(" instanceof ").append(ProcessScoped.class.getName()).append(") tmp_").append(field).append(" = ").append(" tmp_").append(field).append(".toString();");
+					sb.append("\t\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");
 				} else {
 					sb.append("\t\t\t").append(type).append(" tmp_").append(field).append(" = record.next").append(accessorName).append("();\n");
 					sb.append("\t\t\tf_").append(field).append(" = record.wasNull() ? null : tmp_").append(field).append(";\n");

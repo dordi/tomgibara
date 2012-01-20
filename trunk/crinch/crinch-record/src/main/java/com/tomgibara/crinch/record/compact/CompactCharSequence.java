@@ -1,6 +1,8 @@
 package com.tomgibara.crinch.record.compact;
 
-class CompactCharSequence implements CharSequence, Comparable<CharSequence> {
+import com.tomgibara.crinch.record.ProcessScoped;
+
+class CompactCharSequence implements CharSequence, Comparable<CharSequence>, ProcessScoped {
 
 	final CompactCharStore store;
 	final int columnIndex;

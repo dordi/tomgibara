@@ -36,7 +36,9 @@ public class HashRange {
 	private final static BigInteger LONG_MAXIMUM = BigInteger.valueOf(Long.MAX_VALUE);
 	
 	public static HashRange FULL_INT_RANGE = new HashRange(INT_MINIMUM, INT_MAXIMUM);
+	public static HashRange POSITIVE_INT_RANGE = new HashRange(BigInteger.ONE, INT_MAXIMUM);
 	public static HashRange FULL_LONG_RANGE = new HashRange(LONG_MINIMUM, LONG_MAXIMUM);
+	public static HashRange POSITIVE_LONG_RANGE = new HashRange(BigInteger.ONE, LONG_MAXIMUM);
 	
 	// fields
 	

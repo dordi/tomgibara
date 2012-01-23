@@ -91,6 +91,8 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		if (context.isClean()) file.delete();
 		Boolean skipUniqueCheck = recordDef.getBooleanProperty("hash.skipUniqueCheck");
 		checker = skipUniqueCheck != null && skipUniqueCheck ? null : new UniquenessChecker<LinearRecord>(recordCount.longValue(), AVERAGE_KEY_SIZE_IN_BYTES, hashSource);
+		Boolean ordinal = recordDef.getBooleanProperty("hash.ordinal");
+		hashStats.ordinal = ordinal == null ? false : ordinal.booleanValue();
 	}
 
 	@Override
@@ -143,9 +145,12 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		} else {
 			long value;
 			//TODO use position by default
-			if (true) {
+			if (hashStats.ordinal) {
 				value = record.getOrdinal();
 				if (value < 0L) throw new IllegalArgumentException("record without ordinal");
+			} else {
+				value = record.getPosition();
+				if (value < 0L) throw new IllegalArgumentException("record without position");
 			}
 			if (largestValue < value) largestValue = value;
 			

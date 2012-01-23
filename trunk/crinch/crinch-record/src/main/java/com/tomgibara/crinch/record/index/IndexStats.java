@@ -9,6 +9,7 @@ import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
+//TODO consider sharing across packages
 abstract class IndexStats implements CodedStreams.WriteTask, CodedStreams.ReadTask {
 
 	final String indexType;
@@ -24,7 +25,7 @@ abstract class IndexStats implements CodedStreams.WriteTask, CodedStreams.ReadTa
 		if (def == null) throw new IllegalArgumentException("no record definition");
 		definition = def.asBasis();
 		coding = context.getCoding();
-		file = context.file("hash", true, definition);
+		file = context.file(indexType, true, definition);
 		if (context.isClean()) file.delete();
 	}
 

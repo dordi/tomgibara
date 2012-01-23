@@ -56,13 +56,6 @@ public class UniquenessChecker<T> {
 		multiHash = new IntegerMultiHash<T>(hash, bloomSize - 1);
 	}
 
-	public boolean isSecondPassNeeded() {
-		switch (phase) {
-		case PHASE_BETWEEN_PASSES: return unique != null;
-		default: throw new IllegalStateException();
-		}
-	}
-	
 	public boolean isUniquenessDetermined() {
 		return unique != null;
 	}

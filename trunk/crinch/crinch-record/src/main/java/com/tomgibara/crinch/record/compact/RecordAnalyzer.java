@@ -182,7 +182,7 @@ class RecordAnalyzer {
 
 		@Override
 		boolean needsReanalysis() {
-			return checker.isSecondPassNeeded();
+			return !checker.isUniquenessDetermined();
 		}
 
 		@Override

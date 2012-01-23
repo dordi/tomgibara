@@ -338,10 +338,26 @@ public class RecordDef {
 		return properties;
 	}
 	
+	public Boolean getBooleanProperty(String name) {
+		String value = properties.get(name);
+		if (value == null) return null;
+		if (value.equalsIgnoreCase("true")) return Boolean.TRUE;
+		if (value.equalsIgnoreCase("false")) return Boolean.FALSE;
+		throw new IllegalArgumentException("property " + name + " not a boolean");
+	}
+	
+	public Long getLongProperty(String name) {
+		String value = properties.get(name);
+		if (value == null) return null;
+		try {
+			return Long.parseLong(value);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("property " + name + " not a long", e);
+		}
+	}
+	
 	public String getId() {
 		if (id == null) {
-//			String str = String.format(idPattern, hash.hashAsBigInt(this));
-//			id = basis == null ? str : basis.getId() + '_' + str;
 			id = String.format(idPattern, hash.hashAsBigInt(this));
 		}
 		return id;

@@ -68,8 +68,8 @@ public class SortConsumer extends OrderedConsumer {
 	@Override
 	public void prepare(ProcessContext context) {
 		super.prepare(context);
-		if (definition.getProperties().get("shuffle.hashSeed") != null) {
-			long seed = Long.parseLong( definition.getProperties().get("shuffle.hashSeed")	);
+		Long seed = definition.getLongProperty("shuffle.hashSeed");
+		if (seed != null) {
 			comparator = sHashComparator;
 			config = new ClassConfig(false, false, true);
 			hash = new LongHash<LinearRecord>(new LongSeededHashSource<LinearRecord>(factory.getHashSource(config), seed));

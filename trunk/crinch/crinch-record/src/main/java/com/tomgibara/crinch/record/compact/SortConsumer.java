@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record.index;
+package com.tomgibara.crinch.record.compact;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -33,14 +33,15 @@ import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.LongHash;
 import com.tomgibara.crinch.hashing.LongSeededHashSource;
 import com.tomgibara.crinch.record.LinearRecord;
-import com.tomgibara.crinch.record.compact.RecordCompactor;
+import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.Extended;
 import com.tomgibara.crinch.record.process.ProcessContext;
 import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
-public class SortConsumer extends OrderedConsumer {
+public class SortConsumer implements RecordConsumer<LinearRecord> {
 
 	private static Comparator<LinearRecord> sHashComparator = new Comparator<LinearRecord>() {
 		@Override
@@ -52,6 +53,11 @@ public class SortConsumer extends OrderedConsumer {
 		}
 	};
 	
+	private final SubRecordDef subRecDef;
+	
+	private ProcessContext context;
+	private CompactStats stats;
+	private DynamicRecordFactory factory;
 	private ClassConfig config;
 	private Comparator<LinearRecord> comparator;
 	private Hash<LinearRecord> hash;
@@ -60,15 +66,19 @@ public class SortConsumer extends OrderedConsumer {
 	private OutputStream out;
 	private BitWriter writer;
 	private CodedWriter coded;
+	private long bitsWritten;
 	
 	public SortConsumer(SubRecordDef subRecDef) {
-		super(subRecDef);
+		this.subRecDef = subRecDef;
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		super.prepare(context);
-		Long seed = definition.getLongProperty("shuffle.hashSeed");
+		this.context = context;
+		stats = new CompactStats(context, subRecDef);
+		factory = DynamicRecordFactory.getInstance(stats.definition);
+
+		Long seed = stats.definition.getLongProperty("shuffle.hashSeed");
 		if (seed != null) {
 			comparator = sHashComparator;
 			config = new ClassConfig(false, false, true);
@@ -78,7 +88,7 @@ public class SortConsumer extends OrderedConsumer {
 			config = new ClassConfig(false, false, false);
 			hash = null;
 		}
-		file = sortedFile(false);
+		file = file();
 		if (context.isClean()) file.delete();
 		
 	}
@@ -115,8 +125,10 @@ public class SortConsumer extends OrderedConsumer {
 	public void endPass() {
 		open();
 		try {
-			RecordCompactor compactor = new RecordCompactor(context, definition, 0);
-			while (!queue.isEmpty()) compactor.compact(coded, queue.poll());
+			RecordCompactor compactor = new RecordCompactor(context, stats.definition, 0);
+			while (!queue.isEmpty()) {
+				bitsWritten += compactor.compact(coded, queue.poll());
+			}
 		} finally {
 			queue = null;
 			factory = null;
@@ -126,12 +138,18 @@ public class SortConsumer extends OrderedConsumer {
 
 	@Override
 	public void complete() {
+		stats.bitsWritten = bitsWritten;
+		stats.write();
 		cleanup();
 	}
 
 	@Override
 	public void quit() {
 		cleanup();
+	}
+
+	private File file() {
+		return context.file("compact", false, stats.definition);
 	}
 
 	private void open() {
@@ -142,6 +160,7 @@ public class SortConsumer extends OrderedConsumer {
 		}
 		writer = new OutputStreamBitWriter(out);
 		coded = new CodedWriter(writer, context.getCoding());
+		bitsWritten = 0L;
 	}
 	
 	private void close() {

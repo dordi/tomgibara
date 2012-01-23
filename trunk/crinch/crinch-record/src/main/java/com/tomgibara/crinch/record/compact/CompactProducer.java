@@ -36,10 +36,9 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 
 	private final SubRecordDef subRecDef;
 	
+	private CompactStats compactStats;
 	private ExtendedCoding coding;
-	private long recordCount;
 	private RecordDecompactor decompactor;
-	private File file;
 	private FileBitReaderFactory fbrf;
 	
 	public CompactProducer() {
@@ -52,38 +51,44 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		RecordDef def = context.getRecordDef();
-		if (def == null) throw new IllegalArgumentException("no record definition");
-		if (subRecDef != null) def = def.asSubRecord(subRecDef);
 		RecordStats stats = context.getRecordStats();
+		compactStats = new CompactStats(context, subRecDef);
+		compactStats.read();
 		if (stats == null) throw new IllegalStateException("no statistics available");
-		stats = stats.adaptFor(def);
+		stats = stats.adaptFor(compactStats.definition);
+		
 		coding = context.getCoding();
-		recordCount = stats.getRecordCount();
 		decompactor = new RecordDecompactor(stats, 0);
-		file = context.file("compact", false, def);
-
+		File file = context.file("compact", false, compactStats.definition);
 		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 	}
 	
 	@Override
 	public RecordSequence<LinearRecord> open() {
-		return new Sequence();
+		return new Accessor();
 	}
 
-	private class Sequence implements RecordSequence<LinearRecord> {
+	public class Accessor implements RecordSequence<LinearRecord> {
 		
 		// local copy for possible performance gain
-		final long recordCount = CompactProducer.this.recordCount;
+		final long bitsWritten = compactStats.bitsWritten;
 		final RecordDecompactor decompactor = CompactProducer.this.decompactor.copy();
 		
 		final ByteBasedBitReader reader;
 		final CodedReader coded;
-		long recordsRead = 0;
+		long ordinal = 0;
 		
-		Sequence() {
+		Accessor() {
 			reader = fbrf.openReader();
 			coded = new CodedReader(reader, coding);
+		}
+		
+		public void setPosition(long position, long ordinal) {
+			if (position < 0L) throw new IllegalArgumentException("negative position");
+			if (position > bitsWritten) throw new IllegalArgumentException("position exceeds data length");
+			if (ordinal < 0L) ordinal = -1L;
+			reader.setPosition(position);
+			this.ordinal = ordinal;
 		}
 		
 		@Override
@@ -93,13 +98,16 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		
 		@Override
 		public boolean hasNext() {
-			return recordsRead < recordCount;
+			return reader.getPosition() < bitsWritten;
 		}
 		
 		@Override
 		public LinearRecord next() {
-			if (recordsRead == recordCount) throw new NoSuchElementException();
-			return decompactor.decompact(coded, recordsRead++, reader.getPosition());
+			if (reader.getPosition() == bitsWritten) throw new NoSuchElementException();
+			CompactRecord record = decompactor.decompact(coded, ordinal, reader.getPosition());
+			if (ordinal >= 0) ordinal++;
+			return record;
+			
 		}
 		
 		@Override
@@ -111,10 +119,10 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public void complete() {
+		compactStats = null;
 		coding = null;
-		recordCount = 0L;
 		decompactor = null;
-		file = null;
+		fbrf = null;
 	}
 	
 }

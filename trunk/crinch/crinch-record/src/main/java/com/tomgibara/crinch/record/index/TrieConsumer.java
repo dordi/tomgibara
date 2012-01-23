@@ -34,15 +34,24 @@ import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.coding.HuffmanCoding;
 import com.tomgibara.crinch.record.LinearRecord;
+import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.compact.RecordCompactor;
 import com.tomgibara.crinch.record.def.ColumnType;
+import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.def.SubRecordDef;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.process.ProcessContext;
 import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
-public class TrieConsumer extends OrderedConsumer {
+public class TrieConsumer implements RecordConsumer<LinearRecord> {
+
+	private final SubRecordDef subRecDef;
+	
+	private ProcessContext context;
+	private RecordDef definition;
+	private DynamicRecordFactory factory;
 
 	private RecordCompactor compactor;
 	private Node root;
@@ -56,14 +65,18 @@ public class TrieConsumer extends OrderedConsumer {
 
 	
 	public TrieConsumer(SubRecordDef subRecDef) {
-		super(subRecDef);
+		this.subRecDef = subRecDef;
 	}
 	
 	@Override
 	public void prepare(ProcessContext context) {
-		super.prepare(context);
-		File file = sortedFile(true);
-		if (!file.exists()) throw new IllegalStateException("no sorted file: " + file);
+		this.context = context;
+		RecordDef def = context.getRecordDef();
+		if (def == null) throw new IllegalArgumentException("no record definition");
+		definition = def.asBasis();
+		if (subRecDef != null) definition = definition.asSubRecord(subRecDef);
+		factory = DynamicRecordFactory.getInstance(definition);
+
 		if (definition.getTypes().isEmpty()) throw new IllegalArgumentException("no columns");
 		if (definition.getTypes().get(0) != ColumnType.STRING_OBJECT) throw new IllegalStateException("column not a string");
 		compactor = new RecordCompactor(context, definition, 1);

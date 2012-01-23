@@ -23,24 +23,17 @@ import java.util.List;
 import java.util.Set;
 
 import com.tomgibara.crinch.coding.CharFrequencyRecorder;
-import com.tomgibara.crinch.collections.BasicBloomFilter;
-import com.tomgibara.crinch.collections.BloomFilter;
-import com.tomgibara.crinch.hashing.MultiHash;
-import com.tomgibara.crinch.hashing.ObjectMultiHash;
 import com.tomgibara.crinch.record.ColumnStats;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.ColumnStats.Classification;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.util.UniquenessChecker;
 
 //TODO bloom filter parameters should be determined on a column-by-column basis
 //TODO avg length of string columns should inform bloom filter params
 class RecordAnalyzer {
-
-	private static final double LOG_2 = Math.log(2);
-	private static final int BLOOM_MIN_SIZE = 256;
-	private static final double BLOOM_PROB = 0.001;
 
 	private static boolean isFreqsUnique(long[] freqs) {
 		for (int i = 0; i < freqs.length; i++) {
@@ -51,10 +44,6 @@ class RecordAnalyzer {
 	
 	private final long recordCount;
 	private final ColumnAnalyzer[] analyzers;
-	private final int hashCount;
-	private final MultiHash<Long> longMultiHash; 
-	private final MultiHash<Double> dblMultiHash; 
-	private final MultiHash<String> strMultiHash;
 	
 	private int passCount = 0;
 	
@@ -65,11 +54,6 @@ class RecordAnalyzer {
 		recordCount = context.getRecordCount();
 		if (recordCount == -1L) throw new IllegalArgumentException("context has no record count");
 		analyzers = new ColumnAnalyzer[types.size()];
-		int bloomSize = Math.max(BLOOM_MIN_SIZE, (int) Math.min(Integer.MAX_VALUE, Math.round(recordCount * - Math.log(BLOOM_PROB) / (LOG_2 * LOG_2))));
-		hashCount = Math.max(1, Math.round( (float) LOG_2 * bloomSize / recordCount) );
-		longMultiHash = new ObjectMultiHash<Long>(bloomSize - 1);
-		dblMultiHash = new ObjectMultiHash<Double>(bloomSize - 1);
-		strMultiHash = new ObjectMultiHash<String>(bloomSize - 1);
 		newAnalyzers(types);
 	}
 
@@ -80,6 +64,10 @@ class RecordAnalyzer {
 			if (analyzers[i].needsReanalysis()) return true;
 		}
 		return false;
+	}
+	
+	void beginAnalysis() {
+		for (int i = 0; i < analyzers.length; i++) analyzers[i].begin();
 	}
 	
 	void analyze(LinearRecord record) {
@@ -93,6 +81,10 @@ class RecordAnalyzer {
 			default : throw new IllegalStateException("too many passes");
 			}
 		}
+	}
+	
+	void endAnalysis() {
+		for (int i = 0; i < analyzers.length; i++) analyzers[i].end();
 	}
 	
 	RecordStats getStats() {
@@ -163,8 +155,12 @@ class RecordAnalyzer {
 		
 		abstract boolean needsReanalysis();
 		
+		void begin() { }
+		
 		abstract void analyze(String str);
 
+		void end() { }
+		
 		void reanalyze(String str) { }
 		
 		abstract ColumnStats stats();
@@ -177,49 +173,41 @@ class RecordAnalyzer {
 	
 	private abstract class FilteredAnalyzer<T> extends ColumnAnalyzer {
 
-		BloomFilter<T> filter;
-		//TODO need a primitive collection for these
-		Set<T> candidates;
-		Set<T> verification = null;
-		boolean unique = true;
+		private final UniquenessChecker<T> checker;
 
-
-		FilteredAnalyzer(ColumnType type, MultiHash<T> multiHash) {
+		FilteredAnalyzer(ColumnType type, double averageObjectSizeInBytes) {
 			super(type);
-			filter = new BasicBloomFilter<T>(multiHash, hashCount);
-			candidates = new HashSet<T>();
+			checker = new UniquenessChecker<T>(recordCount, averageObjectSizeInBytes);
 		}
 
-		//TODO very ugly mutating on getter
 		@Override
 		boolean needsReanalysis() {
-			filter = null;
-			verification = new HashSet<T>();
-			return candidates != null && !candidates.isEmpty();
+			return checker.isSecondPassNeeded();
 		}
 
 		@Override
+		void begin() {
+			checker.beginPass();
+		}
+		
+		@Override
 		void reanalyze(String str) {
-			if (str == null || candidates == null) return;
-			T value = parse(str);
-			if (!candidates.contains(value)) return;
-			if (!verification.add(value)) {
-				candidates = null;
-				verification = null;
-				unique = false;
-			}
+			if (str != null && !checker.isUniquenessDetermined()) checker.add( parse(str) );
 		}
 
+		@Override
+		void end() {
+			checker.endPass();
+		}
+		
 		abstract T parse(String str);
 		
-		void filter(T value) {
-			if (!filter.add(value) && !candidates.add(value)) {
-				// we've found a definite dupe
-				// release memory (also prevents further analysis)
-				candidates = null;
-				filter = null;
-				unique = false;
-			}
+		void checkUniqueness(T value) {
+			if (!checker.isUniquenessDetermined()) checker.add(value);
+		}
+		
+		boolean isUnique() {
+			return checker.isUnique();
 		}
 		
 	}
@@ -232,7 +220,7 @@ class RecordAnalyzer {
 		private double maxValue = Double.MIN_VALUE;
 		
 		DoubleAnalyzer(ColumnType type) {
-			super(type, dblMultiHash);
+			super(type, 24 + 8);
 		}
 		
 		@Override
@@ -245,7 +233,7 @@ class RecordAnalyzer {
 				count++;
 				minValue = Math.min(value, minValue);
 				maxValue = Math.max(value, maxValue);
-				if (filter != null) filter(value);
+				checkUniqueness(value);
 			}
 		}
 		
@@ -264,7 +252,7 @@ class RecordAnalyzer {
 			stats.setSum(BigDecimal.valueOf(sum));
 			stats.setCount(count);
 			stats.setFrequencies(null);
-			stats.setUnique(unique);
+			stats.setUnique(isUnique());
 			return stats;
 		}
 		
@@ -394,7 +382,7 @@ class RecordAnalyzer {
 		private long maxValue = Long.MIN_VALUE;
 		
 		LargeIntAnalyzer(ColumnType type) {
-			super(type, longMultiHash);
+			super(type, 24 + 8);
 		}
 		
 		@Override
@@ -407,7 +395,7 @@ class RecordAnalyzer {
 				count++;
 				minValue = Math.min(value, minValue);
 				maxValue = Math.max(value, maxValue);
-				if (filter != null) filter(value);
+				checkUniqueness(value);
 			}
 		}
 		
@@ -426,7 +414,7 @@ class RecordAnalyzer {
 			stats.setSum(BigDecimal.valueOf(sum));
 			stats.setCount(count);
 			stats.setFrequencies(null);
-			stats.setUnique(unique);
+			stats.setUnique(isUnique());
 			return stats;
 		}
 
@@ -490,7 +478,7 @@ class RecordAnalyzer {
 		private int maxValue = Integer.MIN_VALUE;
 
 		StringAnalyzer(ColumnType type) {
-			super(type, strMultiHash);
+			super(type, 24 + 4 * 4 + 24 + 4 + 16 * 2);
 		}
 		
 		@Override
@@ -499,7 +487,7 @@ class RecordAnalyzer {
 				nullable = true;
 			} else {
 				cfr.record(str);
-				if (filter != null) filter(str);
+				checkUniqueness(str);
 				int value = str.length();
 				lengthSum += value;
 				count++;
@@ -549,7 +537,7 @@ class RecordAnalyzer {
 				stats.setEnumeration(Arrays.copyOfRange(enumValues, 0, enumCount));
 				stats.setFrequencies(Arrays.copyOfRange(enumFreqs, 0, enumCount));
 			}
-			stats.setUnique(unique);
+			stats.setUnique(isUnique());
 			return stats;
 		}
 

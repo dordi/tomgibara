@@ -30,6 +30,7 @@ public class StatsConsumer extends AbstractConsumer<LinearRecord> {
 		} else {
 			context.setPassName("Identifying unique values");
 		}
+		analyzer.beginAnalysis();
 	}
 	
 	@Override
@@ -39,6 +40,7 @@ public class StatsConsumer extends AbstractConsumer<LinearRecord> {
 	
 	@Override
 	public void endPass() {
+		analyzer.endAnalysis();
 		if (!analyzer.needsReanalysis()) {
 			context.setRecordStats(analyzer.getStats());
 		}

@@ -21,11 +21,13 @@ import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.util.UniquenessChecker;
 import com.tomgibara.crinch.util.WriteStream;
 
 //TODO unique keys will need to store extra state to link truly matching keys
 public class HashConsumer implements RecordConsumer<LinearRecord> {
 
+	private static final double AVERAGE_KEY_SIZE_IN_BYTES = 250.0;
 	// constructor state
 	private final SubRecordDef subRecDef;
 	// prepared state
@@ -34,13 +36,13 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private BigInteger recordCount;
 	private RecordDef recordDef;
 	private RecordCompactor compactor;
-	private boolean uniqueKeys;
 	private ClassConfig config;
 	DynamicRecordFactory factory;
 	private Hash<LinearRecord> hash;
 	//private PositionStats posStats;
 	private File file;
 	// pass state
+	private UniquenessChecker<LinearRecord> checker;
 	private long[] positions;
 	private int[] sizes;
 	
@@ -62,23 +64,27 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		def = def.asBasis();
 		recordDef = subRecDef == null ? def : def.asSubRecord(subRecDef);
 		if (recordDef.getColumns().isEmpty()) throw new IllegalStateException("record definition has no columns");
+		//TODO should be configurable
+		//hash = new PRNGMultiHash<LinearRecord>("SHA1PRNG", chooseHashSource(recordDef.getTypes().get(0)), HashRange.POSITIVE_INT_RANGE);
 		hash = new Murmur3_32Hash<LinearRecord>(new RecordHashSource(recordDef.getTypes()));
 		//TODO should base on size of hash
 		if (recStats.getRecordCount() > Integer.MAX_VALUE) throw new UnsupportedOperationException("long record counts not currently supported.");
-		uniqueKeys = compactor.getColumnStats(0).isUnique();
 		config = new ClassConfig(true, false, false);
 		factory = DynamicRecordFactory.getInstance(recordDef);
-		//TODO should be configurable
-		//hash = new PRNGMultiHash<LinearRecord>("SHA1PRNG", chooseHashSource(recordDef.getTypes().get(0)), HashRange.POSITIVE_INT_RANGE);
 		file = context.file("positions", false, recordDef);
 		if (context.isClean()) file.delete();
+		checker = new UniquenessChecker<LinearRecord>(recordCount.longValue(), AVERAGE_KEY_SIZE_IN_BYTES);
 	}
 
 	@Override
 	public int getRequiredPasses() {
-		if (positions == null) return 2;
-		if (!file.isFile()) return 1;
-		return 0;
+		if (!checker.isUniquenessDetermined()) {
+			return 2;
+		} else if (!file.isFile()) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 
 	@Override

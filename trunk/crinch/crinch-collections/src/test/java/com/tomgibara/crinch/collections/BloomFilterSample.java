@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.hashing.ObjectHash;
-import com.tomgibara.crinch.hashing.ObjectMultiHash;
+import com.tomgibara.crinch.hashing.IntegerMultiHash;
 
 public class BloomFilterSample {
 
@@ -55,7 +55,7 @@ public class BloomFilterSample {
 		 * of this too:
 		 */
 		
-		ObjectMultiHash<String> multiHash = new ObjectMultiHash<String>(99);
+		IntegerMultiHash<String> multiHash = new IntegerMultiHash<String>(hash, 99);
 		
 		/**
 		 * That 99 in the constructor specifies a maximum value for the hash

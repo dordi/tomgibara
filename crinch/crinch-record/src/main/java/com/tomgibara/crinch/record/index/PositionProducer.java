@@ -16,13 +16,12 @@
  */
 package com.tomgibara.crinch.record.index;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.ByteArrayBitReader;
+import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.FileBitReaderFactory;
+import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.FibonacciCoding;
 import com.tomgibara.crinch.record.EmptyRecord;
@@ -30,14 +29,12 @@ import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.process.ProcessContext;
-import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class PositionProducer implements RecordProducer<EmptyRecord> {
 
 	private RecordStats recStats;
 	private PositionStats posStats;
-	private File file;
-	private byte[] data;
+	private FileBitReaderFactory fbrf;
 	private long oversizedStart;
 	private long oversizedFinish;
 	
@@ -48,24 +45,9 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		posStats = new PositionStats(context);
 		posStats.read();
 
-		file = context.file("positions", false, posStats.definition);
-		int size = (int) file.length();
-		byte[] data = new byte[size];
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream(file);
-			new DataInputStream(in).readFully(data);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-				context.getLogger().log(Level.WARN, "Failed to close file", e);
-			}
-		}
-		this.data = data;
-		
+		File file = context.file("positions", false, posStats.definition);
+		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
+
 		oversizedStart = posStats.fixedBitSize * recStats.getRecordCount();
 		oversizedFinish = posStats.bitsWritten;
 	}
@@ -81,7 +63,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 
 	private class PositionSequence implements RecordSequence<EmptyRecord> {
 
-		private final ByteArrayBitReader reader;
+		private final ByteBasedBitReader reader;
 		private final CodedReader coded;
 		private final long recordCount = recStats.getRecordCount();
 		private final int fixedBitSize = posStats.fixedBitSize;
@@ -100,7 +82,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		private int depth;
 		
 		PositionSequence() {
-			reader = new ByteArrayBitReader(data);
+			reader = fbrf.openReader();
 			coded = new CodedReader(reader, FibonacciCoding.extended);
 			stack[0] = 0L;
 			stack[1] = posStats.bottomPosition;
@@ -174,6 +156,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 
 		@Override
 		public void close() {
+			fbrf.closeReader(reader);
 		}
 
 		// used to verify binary search implementation

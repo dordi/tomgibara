@@ -16,16 +16,11 @@
  */
 package com.tomgibara.crinch.record.index;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.ByteArrayBitReader;
 import com.tomgibara.crinch.bits.ByteBasedBitReader;
 import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
@@ -48,7 +43,6 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
 import com.tomgibara.crinch.record.process.ProcessContext;
-import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 //TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {

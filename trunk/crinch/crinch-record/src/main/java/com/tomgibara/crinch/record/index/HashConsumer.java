@@ -9,12 +9,8 @@ import java.util.Random;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.hashing.Hash;
-import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
-import com.tomgibara.crinch.hashing.Hashes;
 import com.tomgibara.crinch.hashing.Murmur3_32Hash;
-import com.tomgibara.crinch.hashing.PRNGMultiHash;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordConsumer;
 import com.tomgibara.crinch.record.RecordStats;
@@ -31,6 +27,7 @@ import com.tomgibara.crinch.util.WriteStream;
 
 //TODO should avoid confirming uniqueness in single column cases
 //TODO should allow confirming uniqueness to be overridden
+//TODO should allow hash to store both position and ordinal
 public class HashConsumer implements RecordConsumer<LinearRecord> {
 
 	private static final int HASH_COUNT = 3;

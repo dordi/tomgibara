@@ -61,7 +61,6 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 
 	private final SubRecordDef subRecDef;
 	
-	private File file;
 	private HuffmanCoding huffmanCoding;
 	private ExtendedCoding coding;
 	private FileBitReaderFactory fbrf;
@@ -103,10 +102,10 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		maxLength = keyStats.getMaximum().intValue();
 		uniqueKeys = keyStats.isUnique();
 
-		file = context.file("trie", false, recordDef);
 		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
 		coding = context.getCoding();
 		
+		File file = context.file("trie", false, recordDef);
 		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 	}
 	
@@ -117,7 +116,6 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	
 	@Override
 	public void complete() {
-		file = null;
 		huffmanCoding = null;
 		coding = null;
 		fbrf = null;

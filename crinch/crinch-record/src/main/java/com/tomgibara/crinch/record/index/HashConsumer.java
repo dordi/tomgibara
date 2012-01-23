@@ -4,7 +4,11 @@ import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
+import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.coding.CodedStreams;
+import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
@@ -21,15 +25,27 @@ import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.process.ProcessContext;
+import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 import com.tomgibara.crinch.record.util.UniquenessChecker;
 import com.tomgibara.crinch.util.WriteStream;
 
-//TODO unique keys will need to store extra state to link truly matching keys
+//TODO should avoid confirming uniqueness in single column cases
+//TODO should allow confirming uniqueness to be overridden
 public class HashConsumer implements RecordConsumer<LinearRecord> {
 
+	private static final int HASH_COUNT = 3;
+	private static final int ENTRY_SIZE = HASH_COUNT + 2;
+	private static final float DEFAULT_LOAD_FACTOR = 0.85f;
+	//TODO estimate this properly!
 	private static final double AVERAGE_KEY_SIZE_IN_BYTES = 250.0;
+	
 	// constructor state
 	private final SubRecordDef subRecDef;
+	@SuppressWarnings("unchecked")
+	private final Murmur3_32Hash<LinearRecord>[] hashes = new Murmur3_32Hash[HASH_COUNT];
+	private final Random random = new Random();
+	private final int[] first = new int[HASH_COUNT + 2];
+	private final int[] second = new int[HASH_COUNT + 2];
 	// prepared state
 	private ProcessContext context;
 	private RecordStats recStats;
@@ -38,13 +54,15 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private RecordCompactor compactor;
 	private ClassConfig config;
 	DynamicRecordFactory factory;
-	private Hash<LinearRecord> hash;
-	//private PositionStats posStats;
+	private RecordHashSource hashSource;
+	private HashStats hashStats;
 	private File file;
 	// pass state
 	private UniquenessChecker<LinearRecord> checker;
-	private long[] positions;
-	private int[] sizes;
+	float loadFactor;
+	private int[] map;
+	private boolean passAborted;
+	private long largestValue = -1L;
 	
 	public HashConsumer(SubRecordDef subRecDef) {
 		this.subRecDef = subRecDef;
@@ -53,9 +71,9 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		//posStats = new PositionStats(context);
 		recStats = context.getRecordStats();
 		if (recStats == null) throw new IllegalStateException("no stats");
+		hashStats = new HashStats(context);
 		recordCount = BigInteger.valueOf(recStats.getRecordCount());
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
@@ -64,21 +82,20 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		def = def.asBasis();
 		recordDef = subRecDef == null ? def : def.asSubRecord(subRecDef);
 		if (recordDef.getColumns().isEmpty()) throw new IllegalStateException("record definition has no columns");
-		//TODO should be configurable
-		//hash = new PRNGMultiHash<LinearRecord>("SHA1PRNG", chooseHashSource(recordDef.getTypes().get(0)), HashRange.POSITIVE_INT_RANGE);
-		hash = new Murmur3_32Hash<LinearRecord>(new RecordHashSource(recordDef.getTypes()));
-		//TODO should base on size of hash
-		if (recStats.getRecordCount() > Integer.MAX_VALUE) throw new UnsupportedOperationException("long record counts not currently supported.");
+		hashSource = new RecordHashSource(recordDef.getTypes());
 		config = new ClassConfig(true, false, false);
 		factory = DynamicRecordFactory.getInstance(recordDef);
-		file = context.file("positions", false, recordDef);
+		//TODO pull from record def
+		loadFactor = DEFAULT_LOAD_FACTOR;
+		file = context.file("hash", false, recordDef);
 		if (context.isClean()) file.delete();
-		checker = new UniquenessChecker<LinearRecord>(recordCount.longValue(), AVERAGE_KEY_SIZE_IN_BYTES);
+		Boolean skipUniqueCheck = recordDef.getBooleanProperty("hash.skipUniqueCheck");
+		checker = skipUniqueCheck != null && skipUniqueCheck ? null : new UniquenessChecker<LinearRecord>(recordCount.longValue(), AVERAGE_KEY_SIZE_IN_BYTES, hashSource);
 	}
 
 	@Override
 	public int getRequiredPasses() {
-		if (!checker.isUniquenessDetermined()) {
+		if (checker != null) {
 			return 2;
 		} else if (!file.isFile()) {
 			return 1;
@@ -89,45 +106,106 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void beginPass() {
-		context.setPassName("Building hash table");
-		if (positions == null) {
-			positions = new long[ recordCount.intValue() ];
-			Arrays.fill(positions, -1L);
+		if (checker != null) {
+			context.setPassName("Confirming uniqueness of hash keys");
+			checker.beginPass();
 		} else {
-			throw new UnsupportedOperationException("File creation not supported yet");
+			context.setPassName("Building hash table");
+			// set up stats
+			// table size
+			double tableSize = recordCount.doubleValue() / loadFactor;
+			if (tableSize > Integer.MAX_VALUE / ENTRY_SIZE) throw new IllegalStateException("large record counts not currently supported");
+			hashStats.tableSize = (int) Math.ceil(tableSize);
+			// hash seeds
+			int[] hashSeeds = new int[HASH_COUNT];
+			for (int i = 0; i < HASH_COUNT; i++) {
+				hashSeeds[i] = random.nextInt();
+				hashes[i] = new Murmur3_32Hash<LinearRecord>(hashSource, hashSeeds[i]);
+			}
+			hashStats.hashSeeds = hashSeeds;
+			// init map
+			if (map == null || map.length != hashStats.tableSize * ENTRY_SIZE) {
+				map = null;
+				map = new int[hashStats.tableSize * ENTRY_SIZE];
+			}
+			Arrays.fill(map, -1);
 		}
+		passAborted = false;
 	}
 
 	@Override
 	public void consume(LinearRecord record) {
-		long ordinal = record.getOrdinal();
-		if (ordinal < 0L) throw new IllegalArgumentException("record without ordinal");
+		if (passAborted) return;
 		LinearRecord subRec = factory.newRecord(config, record, subRecDef != null);
 		subRec.mark();
-		/*
-		BigInteger bigInt = hash.hashAsBigInt(subRec);
-		int index = bigInt.mod(recordCount).intValue();
-		*/
-		int index = (hash.hashAsInt(subRec) & 0x7fffffff) % (int) recStats.getRecordCount();
-		positions[index] = ordinal;
-//		System.out.println(index + " -> " + ordinal);
+		if (checker != null) {
+			passAborted = checker.add(subRec);
+		} else {
+			long value;
+			//TODO use position by default
+			if (true) {
+				value = record.getOrdinal();
+				if (value < 0L) throw new IllegalArgumentException("record without ordinal");
+			}
+			if (largestValue < value) largestValue = value;
+			
+			first[0] = (int) (value >> 32);
+			first[1] = (int) value;
+			for (int i = 0; i < HASH_COUNT; i++) {
+				subRec.reset();
+				first[2 + i] = ENTRY_SIZE * ((hashes[i].hashAsInt(subRec) & 0x7fffffff) % (int) hashStats.tableSize);
+			}
+			putEntry(first, 0);
+		}
 		
+	}
+	
+	private void putEntry(int[] entry, int attempts) {
+		//TODO need to set attempt limit correctly
+		if (attempts >= 1000) {
+			context.getLogger().log(Level.WARN, "Hash building failed, may retry");
+			passAborted = true;
+		} else {
+			for (int i = 0; i < HASH_COUNT; i++) {
+				int index = entry[2 + i];
+				if (map[index] == -1 && map[index+1] == -1) {
+					System.arraycopy(entry, 0, map, index, ENTRY_SIZE);
+					return;
+				}
+			}
+			int[] other = entry == first ? second : first;
+			int i = random.nextInt(HASH_COUNT);
+			int index = entry[2 + i];
+			System.arraycopy(map, index, other, 0, ENTRY_SIZE);
+			System.arraycopy(entry, 0, map, index, ENTRY_SIZE);
+			putEntry(other, attempts + 1);
+		}
 	}
 	
 	@Override
 	public void endPass() {
-		int count = 0;
-//		Arrays.sort(positions);
-//		for (int i = 1; i < positions.length; i++) {
-//			if (positions[i] == positions[i-1]) count++;
-//		}
-		for (int i = 0; i < positions.length; i++) {
-		if (positions[i] < 0) {
-			count++;
+		if (checker != null) {
+			checker.endPass();
+			if (checker.isUniquenessDetermined()) {
+				if (checker.isUnique()) {
+					// we're finished with the checker, prevent further checking
+					checker = null;
+				} else {
+					throw new IllegalStateException("hash keys not unique");
+				}
+			}
+		} else {
+			if (!passAborted) {
+				// record final stats info
+				hashStats.valueBits = 64 - Long.numberOfLeadingZeros(largestValue + 1);
+				// write the stats
+				hashStats.write();
+				// write the table
+				writeFile();
+				// clear memory asap
+				map = null;
+			}
 		}
-	}
-		System.out.println("CLASHES: " + count);
-		System.out.println("RECORDS: " + recordCount);
 	}
 	
 	@Override
@@ -144,6 +222,21 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private void cleanup() {
 	}
 
+	private void writeFile() {
+		CodedStreams.writeToFile(new CodedStreams.WriteTask() {
+			@Override
+			public void writeTo(CodedWriter writer) {
+				final BitWriter w = writer.getWriter();
+				final int[] map = HashConsumer.this.map;
+				final int valueBits = hashStats.valueBits;
+				for (int i = 0; i < map.length; i += ENTRY_SIZE) {
+					long value = (((long) map[i]) << 32) | (map[i+1] & 0x00000000ffffffffL);
+					w.write(value, valueBits);
+				}
+			}
+		}, hashStats.coding, file);
+	}
+	
 	// inner classes
 	
 	private static class BooleanHashSource implements HashSource<LinearRecord> {

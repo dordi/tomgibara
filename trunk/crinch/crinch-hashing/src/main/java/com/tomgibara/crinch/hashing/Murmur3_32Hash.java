@@ -23,6 +23,10 @@ public class Murmur3_32Hash<T> extends AbstractHash<T> {
 		this.seed = seed;
 	}
 	
+	public int getSeed() {
+		return seed;
+	}
+	
 	@Override
 	public HashRange getRange() {
 		return HashRange.FULL_INT_RANGE;

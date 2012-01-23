@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package com.tomgibara.crinch.record.sort;
+package com.tomgibara.crinch.record.index;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

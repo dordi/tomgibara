@@ -75,6 +75,7 @@ public class UniquenessChecker<T> {
 		}
 	}
 	
+	// TODO consider removing return
 	// returns false if pass can end early
 	public boolean add(T value) {
 		if (unique != null) return false;

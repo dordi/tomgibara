@@ -5,10 +5,12 @@ import java.util.Set;
 
 import com.tomgibara.crinch.collections.BasicBloomFilter;
 import com.tomgibara.crinch.collections.BloomFilter;
+import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.MultiHash;
 import com.tomgibara.crinch.hashing.Murmur3_32Hash;
-import com.tomgibara.crinch.hashing.ObjectMultiHash;
+import com.tomgibara.crinch.hashing.IntegerMultiHash;
+import com.tomgibara.crinch.hashing.ObjectHash;
 
 //TODO want to support primitive collections
 public class UniquenessChecker<T> {
@@ -21,7 +23,6 @@ public class UniquenessChecker<T> {
 	
 	private static final double LOG_2 = Math.log(2);
 	private static final int BLOOM_MIN_SIZE = 256;
-	private static final double BLOOM_PROB = 0.001;
 
 	private final int hashCount;
 	private final MultiHash<T> multiHash;
@@ -45,13 +46,14 @@ public class UniquenessChecker<T> {
 		double optimalBloomSize = expectedObjectCount * Math.log( bitsPerObject * LOG_2 * LOG_2 ) / LOG_2;
 		int bloomSize = Math.max(BLOOM_MIN_SIZE, (int) Math.min(Integer.MAX_VALUE, optimalBloomSize));
 		hashCount = Math.max(1, Math.round( (float) LOG_2 * bloomSize / expectedObjectCount) );
+		final Hash<T> hash;
 		if (hashSource == null) {
-			multiHash = new ObjectMultiHash<T>(bloomSize - 1);
+			hash = new ObjectHash<T>();
 		} else {
-			//TODO
-			throw new UnsupportedOperationException();
-			//multiHash = new Murmur3_32Hash(hashSource);
+			//TODO would be nice to make this configurable somehow
+			hash = new Murmur3_32Hash<T>(hashSource);
 		}
+		multiHash = new IntegerMultiHash<T>(hash, bloomSize - 1);
 	}
 
 	public boolean isSecondPassNeeded() {

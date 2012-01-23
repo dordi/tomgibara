@@ -20,8 +20,8 @@ import java.math.BigInteger;
 
 /**
  * A MultiHash implementation that uses double-hashing to generate an arbitrary
- * number of hash-values based on the hashCode of an object. This implementation
- * is derived from
+ * number of hash-values based on an integer hash value. This implementation is
+ * derived from
  * 
  * http://code.google.com/p/concurrentlinkedhashmap/wiki/BloomFilter
  * by Benjamin Manes.
@@ -32,13 +32,17 @@ import java.math.BigInteger;
  *            the type of objects for which hashes will be generated
  */
 
-public class ObjectMultiHash<T> extends AbstractMultiHash<T> {
+public class IntegerMultiHash<T> extends AbstractMultiHash<T> {
 
+	private final Hash<T> hash;
 	private final HashRange range;
 	private final int size;
-	
-	public ObjectMultiHash(int max) {
+
+	public IntegerMultiHash(Hash<T> hash, int max) {
+		if (hash == null) throw new IllegalArgumentException("null hash");
+		if (!hash.getRange().equals(HashRange.FULL_INT_RANGE)) throw new IllegalArgumentException("hash does not have full integer range");
 		if (max < 0) throw new IllegalArgumentException();
+		this.hash = hash;
 		range = new HashRange(0, max);
 		size = range.getSize().intValue();
 	}
@@ -56,7 +60,7 @@ public class ObjectMultiHash<T> extends AbstractMultiHash<T> {
 	@Override
 	public int[] hashAsInts(T value, int[] array) {
         // Double hashing allows calculating multiple index locations
-        int hashCode = value.hashCode();
+        int hashCode = hash.hashAsInt(value);
         int probe = 1 + Math.abs(hashCode % size);
         int h = spread(hashCode);
         for (int i = 0; i < array.length; i++) {
@@ -87,15 +91,17 @@ public class ObjectMultiHash<T> extends AbstractMultiHash<T> {
     
     @Override
     public int hashCode() {
-    	return size;
+    	return hash.hashCode() ^ size;
     }
     
     @Override
     public boolean equals(Object obj) {
     	if (obj == this) return true;
-    	if (!(obj instanceof ObjectMultiHash<?>)) return false;
-    	ObjectMultiHash<?> that = (ObjectMultiHash<?>) obj;
-    	return this.size == that.size;
+    	if (!(obj instanceof IntegerMultiHash<?>)) return false;
+    	IntegerMultiHash<?> that = (IntegerMultiHash<?>) obj;
+    	if (this.size != that.size) return false;
+    	if (!this.hash.equals(that.hash)) return false;
+    	return true;
     }
     
     @Override

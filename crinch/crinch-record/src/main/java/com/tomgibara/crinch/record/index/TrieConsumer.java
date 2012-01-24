@@ -103,7 +103,7 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void consume(LinearRecord record) {
-		LinearRecord subRec = factory.newRecord(config, record, true);
+		LinearRecord subRec = factory.newRecord(config, record, subRecDef != null);
 		final CharSequence key = subRec.nextString();
 		subRec.mark();
 		final int length = key.length();

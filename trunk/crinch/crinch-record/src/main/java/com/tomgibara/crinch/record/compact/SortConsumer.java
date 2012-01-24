@@ -138,8 +138,6 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void complete() {
-		stats.bitsWritten = bitsWritten;
-		stats.write();
 		cleanup();
 	}
 
@@ -184,6 +182,8 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 				out = null;
 			}
 		}
+		stats.bitsWritten = bitsWritten;
+		stats.write();
 	}
 
 	private void cleanup() {

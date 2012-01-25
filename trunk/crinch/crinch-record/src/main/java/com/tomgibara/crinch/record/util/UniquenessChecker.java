@@ -24,6 +24,7 @@ public class UniquenessChecker<T> {
 	private static final double LOG_2 = Math.log(2);
 	private static final int BLOOM_MIN_SIZE = 256;
 
+	private final double expectedFalsePositives;
 	private final int hashCount;
 	private final MultiHash<T> multiHash;
 
@@ -44,6 +45,7 @@ public class UniquenessChecker<T> {
 		
 		double bitsPerObject = 8.0 * averageObjectSizeInBytes;
 		double optimalBloomSize = expectedObjectCount * Math.log( bitsPerObject * LOG_2 * LOG_2 ) / LOG_2;
+		expectedFalsePositives = expectedObjectCount * Math.pow(2.0, - optimalBloomSize/expectedObjectCount * LOG_2);
 		int bloomSize = Math.max(BLOOM_MIN_SIZE, (int) Math.min(Integer.MAX_VALUE, optimalBloomSize));
 		hashCount = Math.max(1, Math.round( (float) LOG_2 * bloomSize / expectedObjectCount) );
 		final Hash<T> hash;

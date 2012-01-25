@@ -75,7 +75,7 @@ public class SortConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		this.context = context;
-		stats = new CompactStats(context, subRecDef);
+		stats = new CompactStats("compact", context, subRecDef);
 		factory = DynamicRecordFactory.getInstance(stats.definition);
 
 		Long seed = stats.definition.getLongProperty("shuffle.hashSeed");

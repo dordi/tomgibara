@@ -3,7 +3,7 @@
   <artifactId>crinch-coding</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.5</version>
+  	<version>0.6-SNAPSHOT</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Coding</name>
@@ -11,7 +11,7 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-bits</artifactId>
-  		<version>0.5</version>
+  		<version>0.6-SNAPSHOT</version>
   	</dependency>
   </dependencies>
 </project>

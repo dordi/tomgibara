@@ -28,6 +28,10 @@ public class ArrayRecord extends AbstractLinearRecord {
 		this.values = values;
 	}
 
+	public ArrayRecord(Object[] values) {
+		this(-1L, -1L, values);
+	}
+
 	@Override
 	protected Object getValue(int index, boolean free) {
 		if (free) {

@@ -20,23 +20,26 @@ class CompactStats implements CodedStreams.WriteTask, CodedStreams.ReadTask {
 		return def.asBasis();
 	}
 
+	final String type;
 	final RecordDef definition;
 	final ExtendedCoding coding;
 	final File file;
 	
 	long bitsWritten;
 
-	CompactStats(ProcessContext context) {
-		this(context, (SubRecordDef) null);
+	CompactStats(String type, ProcessContext context) {
+		this(type, context, (SubRecordDef) null);
 	}
 
-	CompactStats(ProcessContext context, SubRecordDef subRecDef) {
-		this(context, definition(context, subRecDef));
+	CompactStats(String type, ProcessContext context, SubRecordDef subRecDef) {
+		this(type, context, definition(context, subRecDef));
 	}
 	
-	CompactStats(ProcessContext context, RecordDef definition) {
+	CompactStats(String type, ProcessContext context, RecordDef definition) {
+		if (type == null) throw new IllegalArgumentException("null type");
 		if (context == null) throw new IllegalArgumentException("null context");
 		if (definition == null) throw new IllegalArgumentException("null definition");
+		this.type = type;
 		this.definition = definition;
 		coding = context.getCoding();
 		file = context.file("compact", true, definition);

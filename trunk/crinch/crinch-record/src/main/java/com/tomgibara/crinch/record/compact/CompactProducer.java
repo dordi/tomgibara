@@ -52,19 +52,19 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 	@Override
 	public void prepare(ProcessContext context) {
 		RecordStats stats = context.getRecordStats();
-		compactStats = new CompactStats(context, subRecDef);
+		compactStats = new CompactStats("compact", context, subRecDef);
 		compactStats.read();
 		if (stats == null) throw new IllegalStateException("no statistics available");
 		stats = stats.adaptFor(compactStats.definition);
 		
 		coding = context.getCoding();
 		decompactor = new RecordDecompactor(stats, 0);
-		File file = context.file("compact", false, compactStats.definition);
+		File file = context.file(compactStats.type, false, compactStats.definition);
 		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 	}
 	
 	@Override
-	public RecordSequence<LinearRecord> open() {
+	public Accessor open() {
 		return new Accessor();
 	}
 
@@ -83,12 +83,13 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 			coded = new CodedReader(reader, coding);
 		}
 		
-		public void setPosition(long position, long ordinal) {
+		public Accessor setPosition(long position, long ordinal) {
 			if (position < 0L) throw new IllegalArgumentException("negative position");
 			if (position > bitsWritten) throw new IllegalArgumentException("position exceeds data length");
 			if (ordinal < 0L) ordinal = -1L;
 			reader.setPosition(position);
 			this.ordinal = ordinal;
+			return this;
 		}
 		
 		@Override

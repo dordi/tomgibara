@@ -69,7 +69,7 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 
 	@Override
 	public void endPass() {
-		CompactStats stats = new CompactStats(context);
+		CompactStats stats = new CompactStats("compact", context);
 		stats.bitsWritten = bitsWritten;
 		stats.write();
 	}

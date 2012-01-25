@@ -45,7 +45,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		posStats = new PositionStats(context);
 		posStats.read();
 
-		File file = context.file("positions", false, posStats.definition);
+		File file = context.file(posStats.type, false, posStats.definition);
 		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
 
 		oversizedStart = posStats.fixedBitSize * recStats.getRecordCount();
@@ -53,15 +53,16 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 	}
 	
 	@Override
-	public RecordSequence<EmptyRecord> open() {
-		return new PositionSequence();
+	public Accessor open() {
+		return new Accessor();
 	}
 
 	@Override
 	public void complete() {
+		fbrf = null;
 	}
 
-	private class PositionSequence implements RecordSequence<EmptyRecord> {
+	public class Accessor implements RecordSequence<EmptyRecord> {
 
 		private final ByteBasedBitReader reader;
 		private final CodedReader coded;
@@ -81,7 +82,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		private long count;
 		private int depth;
 		
-		PositionSequence() {
+		Accessor() {
 			reader = fbrf.openReader();
 			coded = new CodedReader(reader, FibonacciCoding.extended);
 			stack[0] = 0L;

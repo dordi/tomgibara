@@ -3,6 +3,7 @@ package com.tomgibara.crinch.record.index;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
 class HashStats extends IndexStats {
@@ -14,8 +15,8 @@ class HashStats extends IndexStats {
 	int positionBits;
 	int ordinalBits;
 	
-	HashStats(ProcessContext context) {
-		super("hash", context);
+	HashStats(ProcessContext context, SubRecordDef subRecDef) {
+		super("hash", context, subRecDef);
 	}
 
 	@Override

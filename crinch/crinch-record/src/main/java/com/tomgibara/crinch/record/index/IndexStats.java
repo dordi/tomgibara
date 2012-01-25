@@ -7,25 +7,40 @@ import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
-//TODO consider sharing across packages
+//TODO consider sharing across packages (difference in definition!)
 abstract class IndexStats implements CodedStreams.WriteTask, CodedStreams.ReadTask {
 
-	final String indexType;
+	private static RecordDef definition(ProcessContext context, SubRecordDef subRecDef) {
+		RecordDef def = context.getRecordDef();
+		if (def == null) throw new IllegalArgumentException("no record definition");
+		def = def.asBasis();
+		if (subRecDef != null) def = def.asSubRecord(subRecDef);
+		return def;
+	}
+
+	final String type;
 	final RecordDef definition;
 	final ExtendedCoding coding;
 	final File file;
 	
-	IndexStats(String indexType, ProcessContext context) {
-		if (indexType == null) throw new IllegalArgumentException("null indexType");
+	IndexStats(String type, ProcessContext context) {
+		this(type, context, (SubRecordDef) null);
+	}
+
+	IndexStats(String type, ProcessContext context, SubRecordDef subRecDef) {
+		this(type, context, definition(context, subRecDef));
+	}
+	
+	IndexStats(String type, ProcessContext context, RecordDef definition) {
+		if (type == null) throw new IllegalArgumentException("null type");
 		if (context == null) throw new IllegalArgumentException("null context");
-		this.indexType = indexType;
-		RecordDef def = context.getRecordDef();
-		if (def == null) throw new IllegalArgumentException("no record definition");
-		definition = def.asBasis();
+		this.type = type;
+		this.definition = definition;
 		coding = context.getCoding();
-		file = context.file(indexType, true, definition);
+		file = context.file(type, true, definition);
 		if (context.isClean()) file.delete();
 	}
 

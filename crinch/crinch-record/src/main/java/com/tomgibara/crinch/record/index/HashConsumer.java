@@ -9,7 +9,6 @@ import java.util.Random;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
-import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.Murmur3_32Hash;
 import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordConsumer;
@@ -22,7 +21,6 @@ import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 import com.tomgibara.crinch.record.process.ProcessContext;
 import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 import com.tomgibara.crinch.record.util.UniquenessChecker;
-import com.tomgibara.crinch.util.WriteStream;
 
 //TODO should avoid confirming uniqueness in single column cases
 //TODO should allow confirming uniqueness to be overridden
@@ -33,6 +31,8 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private static final float DEFAULT_LOAD_FACTOR = 0.85f;
 	//TODO estimate this properly!
 	private static final double AVERAGE_KEY_SIZE_IN_BYTES = 250.0;
+
+	private static ClassConfig sConfig = new ClassConfig(true, false, false);
 	
 	// constructor state
 	private final SubRecordDef subRecDef;
@@ -43,8 +43,6 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private ProcessContext context;
 	private RecordStats recStats;
 	private BigInteger recordCount;
-	private RecordDef recordDef;
-	private ClassConfig config;
 	DynamicRecordFactory factory;
 	private RecordHashSource hashSource;
 	private HashStats hashStats;
@@ -62,6 +60,7 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private long largestOrdinal = -1L;
 	private long largestPosition = -1L;
 	
+	// not much point passing null in here, but we support it
 	public HashConsumer(SubRecordDef subRecDef) {
 		this.subRecDef = subRecDef;
 	}
@@ -71,17 +70,13 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		this.context = context;
 		recStats = context.getRecordStats();
 		if (recStats == null) throw new IllegalStateException("no stats");
-		hashStats = new HashStats(context);
+		hashStats = new HashStats(context, subRecDef);
+		RecordDef recordDef = hashStats.definition;
 		recordCount = BigInteger.valueOf(recStats.getRecordCount());
 		List<ColumnType> types = context.getColumnTypes();
 		if (types == null) throw new IllegalStateException("no types");
-		RecordDef def = context.getRecordDef();
-		if (def == null) throw new IllegalStateException("no record definition");
-		def = def.asBasis();
-		recordDef = subRecDef == null ? def : def.asSubRecord(subRecDef);
 		if (recordDef.getColumns().isEmpty()) throw new IllegalStateException("record definition has no columns");
 		hashSource = new RecordHashSource(recordDef.getTypes());
-		config = new ClassConfig(true, false, false);
 		factory = DynamicRecordFactory.getInstance(recordDef);
 		//TODO pull from record def
 		loadFactor = DEFAULT_LOAD_FACTOR;
@@ -143,7 +138,7 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	@Override
 	public void consume(LinearRecord record) {
 		if (passAborted) return;
-		LinearRecord subRec = factory.newRecord(config, record, subRecDef != null);
+		LinearRecord subRec = factory.newRecord(sConfig, record, subRecDef != null);
 		subRec.mark();
 		if (checker != null) {
 			passAborted = checker.add(subRec);
@@ -181,7 +176,7 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 			for (int j = 0; j < HASH_COUNT; j++) {
 				subRec.reset();
 				//TODO use hash reranging
-				first[i++] = entrySize * ((hashes[j].hashAsInt(subRec) & 0x7fffffff) % (int) hashStats.tableSize);
+				first[i++] = entrySize * ((hashes[j].hashAsInt(subRec) & 0x7fffffff) % hashStats.tableSize);
 			}
 			
 			//put entry
@@ -290,151 +285,6 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 				}
 			}
 		}, hashStats.coding, file);
-	}
-	
-	// inner classes
-	
-	private static class BooleanHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			boolean value = record.nextBoolean();
-			if (!record.wasNull()) out.writeBoolean(value);
-		}
-		
-	}
-	
-	private static class ByteHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			byte value = record.nextByte();
-			if (!record.wasNull()) out.writeByte(value);
-		}
-		
-	}
-	
-	private static class CharHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			char value = record.nextChar();
-			if (!record.wasNull()) out.writeChar(value);
-		}
-		
-	}
-	
-	private static class DoubleHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			double value = record.nextDouble();
-			if (!record.wasNull()) out.writeDouble(value);
-		}
-		
-	}
-	
-	private static class FloatHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			float value = record.nextFloat();
-			if (!record.wasNull()) out.writeFloat(value);
-		}
-		
-	}
-	
-	private static class IntHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			int value = record.nextInt();
-			if (!record.wasNull()) out.writeInt(value);
-		}
-		
-	}
-	
-	private static class LongHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			long value = record.nextLong();
-			if (!record.wasNull()) out.writeLong(value);
-		}
-		
-	}
-	
-	private static class ShortHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			short value = record.nextShort();
-			if (!record.wasNull()) out.writeShort(value);
-		}
-		
-	}
-	
-	private static class StringHashSource implements HashSource<LinearRecord> {
-		
-		@Override
-		public void sourceData(LinearRecord record, WriteStream out) {
-			CharSequence value = record.nextString();
-			if (!record.wasNull()) out.writeChars(value.toString());
-		}
-		
-	}
-	
-	private static class RecordHashSource implements HashSource<LinearRecord> {
-		
-		private static HashSource<LinearRecord> chooseHashSource(ColumnType type) {
-			switch (type) {
-			case BOOLEAN_PRIMITIVE:
-			case BOOLEAN_WRAPPER:
-				return new BooleanHashSource();
-			case BYTE_PRIMITIVE:
-			case BYTE_WRAPPER:
-				return new ByteHashSource();
-			case CHAR_PRIMITIVE:
-			case CHAR_WRAPPER:
-				return new CharHashSource();
-			case DOUBLE_PRIMITIVE:
-			case DOUBLE_WRAPPER:
-				return new DoubleHashSource();
-			case FLOAT_PRIMITIVE:
-			case FLOAT_WRAPPER:
-				return new FloatHashSource();
-			case INT_PRIMITIVE:
-			case INT_WRAPPER:
-				return new IntHashSource();
-			case LONG_PRIMITIVE:
-			case LONG_WRAPPER:
-				return new LongHashSource();
-			case SHORT_PRIMITIVE:
-			case SHORT_WRAPPER:
-				return new ShortHashSource();
-			case STRING_OBJECT:
-				return new StringHashSource();
-			default:
-				throw new IllegalStateException("Unsupported type: " + type);
-			}
-		}
-
-		private final HashSource<LinearRecord>[] hashSources;
-		
-		RecordHashSource(List<ColumnType> types) {
-			hashSources = new HashSource[types.size()];
-			for (int i = 0; i < hashSources.length; i++) {
-				hashSources[i] = chooseHashSource(types.get(i));
-			}
-		}
-		
-		@Override
-		public void sourceData(LinearRecord value, WriteStream out) {
-			for (int i = 0; i < hashSources.length; i++) {
-				hashSources[i].sourceData(value, out);
-			}
-		}
-		
 	}
 	
 }

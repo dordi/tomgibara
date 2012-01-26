@@ -28,7 +28,7 @@ import com.tomgibara.crinch.record.util.UniquenessChecker;
 public class HashConsumer implements RecordConsumer<LinearRecord> {
 
 	private static final int HASH_COUNT = 3;
-	private static final float DEFAULT_LOAD_FACTOR = 0.85f;
+	private static final float DEFAULT_LOAD_FACTOR = 0.90f;
 	//TODO estimate this properly!
 	private static final double AVERAGE_KEY_SIZE_IN_BYTES = 250.0;
 
@@ -50,6 +50,7 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	private int entrySize;
 	private int[] first;
 	private int[] second;
+	private int maxAttempts;
 
 	private File file;
 	// pass state
@@ -93,6 +94,8 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 		entrySize = recordSize + hashes.length;
 		first = new int[entrySize];
 		second = new int[entrySize];
+		//TODO how should this depend on the number of hash functions?
+		maxAttempts = (int) (Math.log(recordCount.doubleValue()) / Math.log1p(0.001));
 	}
 
 	@Override
@@ -186,8 +189,7 @@ public class HashConsumer implements RecordConsumer<LinearRecord> {
 	}
 	
 	private void putEntry(int[] entry, int attempts) {
-		//TODO need to set attempt limit correctly
-		if (attempts >= 1000) {
+		if (attempts >= maxAttempts) {
 			context.getLogger().log(Level.WARN, "Hash building failed, may retry");
 			passAborted = true;
 		} else {

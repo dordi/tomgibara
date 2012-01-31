@@ -60,7 +60,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		coding = context.getCoding();
 		decompactor = new RecordDecompactor(stats, 0);
 		File file = context.file(compactStats.type, false, compactStats.definition);
-		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
+		fbrf = new FileBitReaderFactory(file, context.isInMemory() ? Mode.MEMORY : Mode.CHANNEL);
 	}
 	
 	@Override

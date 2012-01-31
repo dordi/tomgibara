@@ -100,7 +100,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		coding = context.getCoding();
 		
 		File file = context.file("trie", false, recordDef);
-		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
+		fbrf = new FileBitReaderFactory(file, context.isInMemory() ? Mode.MEMORY : Mode.CHANNEL);
 	}
 	
 	@Override

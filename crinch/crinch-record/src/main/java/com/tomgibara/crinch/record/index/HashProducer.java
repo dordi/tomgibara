@@ -56,7 +56,7 @@ public class HashProducer implements RecordProducer<LinearRecord> {
 		}
 		
 		File file = context.file(hashStats.type, false, hashStats.definition);
-		fbrf = new FileBitReaderFactory(file, Mode.CHANNEL);
+		fbrf = new FileBitReaderFactory(file, context.isInMemory() ? Mode.MEMORY : Mode.CHANNEL);
 	}
 
 	@Override

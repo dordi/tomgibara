@@ -30,8 +30,10 @@ import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
+import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
+import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
 import com.tomgibara.crinch.coding.CodedStreams;
 import com.tomgibara.crinch.coding.CodedWriter;
@@ -54,6 +56,7 @@ public class StdProcessContext implements ProcessContext {
 	
 	private float progressStep = 1.0f;
 	private ExtendedCoding coding = EliasOmegaCoding.extended;
+	private boolean inMemory;
 	private boolean clean = false;
 	private ColumnParser columnParser = new StdColumnParser();
 	private File dataDir = new File("");
@@ -97,6 +100,16 @@ public class StdProcessContext implements ProcessContext {
 	@Override
 	public ExtendedCoding getCoding() {
 		return coding;
+	}
+	
+	@Override
+	public void setInMemory(boolean inMemory) {
+		this.inMemory = inMemory;
+	}
+	
+	@Override
+	public boolean isInMemory() {
+		return inMemory;
 	}
 	
 	@Override
@@ -150,8 +163,6 @@ public class StdProcessContext implements ProcessContext {
 	public String getDataName() {
 		return dataName;
 	}
-	
-	
 	
 	@Override
 	public void setRecordsTransferred(long recordsTransferred) {

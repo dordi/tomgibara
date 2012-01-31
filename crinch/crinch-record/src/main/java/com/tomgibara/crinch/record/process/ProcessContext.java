@@ -35,6 +35,11 @@ public interface ProcessContext {
 	
 	ExtendedCoding getCoding();
 
+	//TODO should move onto component
+	void setInMemory(boolean inMemory);
+	
+	boolean isInMemory();
+	
 	void setClean(boolean clean);
 	
 	boolean isClean();
@@ -43,12 +48,13 @@ public interface ProcessContext {
 	
 	File getDataDir();
 	
+	//TODO data name should move onto RecordDef
 	void setDataName(String dataName);
 	
 	String getDataName();
 	
 	void setColumnParser(ColumnParser columnParser);
-	
+
 	ColumnParser getColumnParser();
 	
 	void setRecordsTransferred(long recordsTransferred);

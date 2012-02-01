@@ -36,6 +36,7 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.ProcessScoped;
 import com.tomgibara.crinch.record.def.ColumnDef;
 import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.util.WriteStream;
@@ -452,19 +453,21 @@ public class DynamicRecordFactory {
 		{
 			sb.append("\tpublic int compareTo(Object obj) {\n");
 			sb.append("\t\t" + className + " that = (" + className + ") obj;\n");
+			//TODO support disordered sort
 			for (ColumnDef column : definition.getOrderedColumns()) {
 				int field = column.getIndex();
 				ColumnOrder order = column.getOrder();
+				boolean ascending = (order.getSort() != Sort.DESCENDING);
 				ColumnType type = definition.getTypes().get(field);
 				if (type == BOOLEAN_PRIMITIVE) {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " ? -1 : 1;\n");
 				} else if (type.typeClass.isPrimitive()) {
-					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " " + (order.isAscending() ? '<' : '>') + " that.f_" + field + " ? -1 : 1;\n");
+					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") return this.f_" + field + " " + (ascending ? '<' : '>') + " that.f_" + field + " ? -1 : 1;\n");
 				} else {
 					sb.append("\t\tif (this.f_" + field + " != that.f_" + field + ") {\n");
 					sb.append("\t\t\tif (this.f_" + field + " == null) return " + (order.isNullFirst() ? "-1" : "1") + ";\n");
 					sb.append("\t\t\tif (that.f_" + field + " == null) return " + (order.isNullFirst() ? "1" : "-1") + ";\n");
-					sb.append("\t\t\treturn ((Comparable)").append(order.isAscending() ? "this" : "that").append(".f_").append(field).append(").compareTo(((Comparable) ").append(order.isAscending() ? "that" : "this").append(".f_").append(field).append("));\n");
+					sb.append("\t\t\treturn ((Comparable)").append(ascending ? "this" : "that").append(".f_").append(field).append(").compareTo(((Comparable) ").append(ascending ? "that" : "this").append(".f_").append(field).append("));\n");
 					sb.append("\t\t}\n");
 				}
 			}

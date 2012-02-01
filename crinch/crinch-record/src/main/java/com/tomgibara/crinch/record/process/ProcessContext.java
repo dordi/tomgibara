@@ -75,10 +75,6 @@ public interface ProcessContext {
 	
 	List<ColumnType> getColumnTypes();
 	
-	void setColumnOrders(List<ColumnOrder> columnOrders);
-	
-	List<ColumnOrder> getColumnOrders();
-
 	RecordDef getRecordDef();
 	
 	File file(String type, boolean stats, RecordDef def);

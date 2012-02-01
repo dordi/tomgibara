@@ -26,12 +26,18 @@ public class ColumnOrder {
 
 	// statics
 	
+	public enum Sort {
+		ASCENDING,
+		DESCENDING,
+		DISORDERED;
+	}
+	
 	static Comparator<ColumnOrder> comparator = new Comparator<ColumnOrder>() {
 		
 		@Override
 		public int compare(ColumnOrder a, ColumnOrder b) {
 			if (a.precedence != b.precedence) return a.precedence - b.precedence;
-			if (a.ascending != b.ascending) return a.ascending ? -1 : 1;
+			if (a.sort != b.sort) return a.sort.ordinal() - b.sort.ordinal();
 			if (a.nullFirst != b.nullFirst) return a.nullFirst ? -1 : 1;
 			return 0;
 		}
@@ -54,7 +60,7 @@ public class ColumnOrder {
 		@Override
 		public void sourceData(ColumnOrder order, WriteStream out) {
 			out.writeInt(order.precedence);
-			out.writeBoolean(order.ascending);
+			out.writeInt(order.sort.ordinal());
 			out.writeBoolean(order.nullFirst);
 		}
 	};
@@ -62,15 +68,16 @@ public class ColumnOrder {
 	// fields
 	
 	private final int precedence;
-	private final boolean ascending;
+	private final Sort sort;
 	private final boolean nullFirst;
 	
 	// constructors
 	
-	public ColumnOrder(int precedence, boolean ascending, boolean nullFirst) {
+	public ColumnOrder(int precedence, Sort sort, boolean nullFirst) {
 		if (precedence < 0) throw new IllegalArgumentException("negative precedence");
+		if (sort == null) throw new IllegalArgumentException("null sort");
 		this.precedence = precedence;
-		this.ascending = ascending;
+		this.sort = sort;
 		this.nullFirst = nullFirst;
 	}
 	
@@ -80,8 +87,8 @@ public class ColumnOrder {
 		return precedence;
 	}
 	
-	public boolean isAscending() {
-		return ascending;
+	public Sort getSort() {
+		return sort;
 	}
 	
 	public boolean isNullFirst() {
@@ -91,14 +98,14 @@ public class ColumnOrder {
 	// package scoped methods
 	
 	ColumnOrder withPrecedence(int precedence) {
-		return precedence == this.precedence ? this : new ColumnOrder(precedence, ascending, nullFirst);
+		return precedence == this.precedence ? this : new ColumnOrder(precedence, sort, nullFirst);
 	}
 	
 	// object methods
 
 	@Override
 	public int hashCode() {
-		return this.precedence ^ Hashes.hashCode(ascending) ^ (31 * Hashes.hashCode(nullFirst));
+		return this.precedence ^ (31 * (sort.ordinal() ^ (31 * Hashes.hashCode(nullFirst))));
 	}
 	
 	@Override
@@ -107,14 +114,14 @@ public class ColumnOrder {
 		if (!(obj instanceof ColumnOrder)) return false;
 		ColumnOrder that = (ColumnOrder) obj;
 		if (this.precedence != that.precedence) return false;
-		if (this.ascending != that.ascending) return false;
+		if (this.sort != that.sort) return false;
 		if (this.nullFirst != that.nullFirst) return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "[precedence: " + precedence + ", ascending: " + ascending + ", nullFirst: " + nullFirst + "]";
+		return "[precedence: " + precedence + ", sort: " + sort + ", nullFirst: " + nullFirst + "]";
 	}
 	
 	// inner classes

@@ -28,6 +28,7 @@ import java.util.Set;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
+import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
 import com.tomgibara.crinch.util.WriteStream;
 
 public class RecordDef {
@@ -35,7 +36,7 @@ public class RecordDef {
 	// statics
 	
 	// slightly hacky way of recording that builder clients are specifically nullifying an order
-	private static final ColumnOrder NO_ORDER = new ColumnOrder(0, true, true);
+	private static final ColumnOrder NO_ORDER = new ColumnOrder(0, Sort.ASCENDING, true);
 	private static final Map<String, String> NO_PROPS = Collections.emptyMap();
 
 	private static Map<String, String> combineProperties(Map<String, String> basisProps, Map<String, String> extraProps) {

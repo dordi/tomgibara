@@ -68,7 +68,6 @@ public class StdProcessContext implements ProcessContext {
 	private String passName;
 	private RecordStats recordStats;
 	private List<ColumnType> columnTypes;
-	private List<ColumnOrder> columnOrders;
 	private RecordDef recordDef;
 
 	public StdProcessContext() {
@@ -265,33 +264,10 @@ public class StdProcessContext implements ProcessContext {
 	public RecordDef getRecordDef() {
 		if (recordDef == null) {
 			if (columnTypes != null) {
-				RecordDef def;
-				def = RecordDef.fromTypes(columnTypes).build();
-				if (columnOrders != null) {
-					def = def.withOrdering(columnOrders);
-				}
-				recordDef = def;
+				recordDef = RecordDef.fromTypes(columnTypes).build();
 			}
 		}
 		return recordDef;
-	}
-	
-	//TODO I think this can be eliminated
-	@Override
-	public void setColumnOrders(List<ColumnOrder> columnOrders) {
-		if (columnOrders != null && !columnOrders.equals(this.columnOrders)) {
-			int col = 1;
-			for (ColumnOrder order : columnOrders) {
-				logger.log("Order - column " + col++ + ": " + (order.isAscending() ? "ascending" : "descending") + " " + (order.isNullFirst() ? "(null first)" : "(null last)"));
-			}
-		}
-		this.columnOrders = columnOrders;
-		recordDef = null;
-	}
-	
-	@Override
-	public List<ColumnOrder> getColumnOrders() {
-		return columnOrders;
 	}
 	
 	@Override

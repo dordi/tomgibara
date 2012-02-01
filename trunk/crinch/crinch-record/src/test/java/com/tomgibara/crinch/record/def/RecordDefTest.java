@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
+
 import junit.framework.TestCase;
 
 public class RecordDefTest extends TestCase {
@@ -58,14 +60,14 @@ public class RecordDefTest extends TestCase {
 	
 	public void testWithOrdering() {
 		
-		RecordDef def = RecordDef.fromTypes(types(ColumnType.INT_PRIMITIVE, ColumnType.BOOLEAN_PRIMITIVE)).build().withOrdering(orders(new ColumnOrder(0, true, true), new ColumnOrder(1, false, false))).asBasis();
+		RecordDef def = RecordDef.fromTypes(types(ColumnType.INT_PRIMITIVE, ColumnType.BOOLEAN_PRIMITIVE)).build().withOrdering(orders(new ColumnOrder(0, Sort.ASCENDING, true), new ColumnOrder(1, Sort.DESCENDING, false))).asBasis();
 		assertEquals(0, def.getColumns().get(0).getOrder().getPrecedence());
 		assertEquals(1, def.getColumns().get(1).getOrder().getPrecedence());
 		RecordDef sub = def.withOrdering(orders());
 		assertNull(sub.getColumns().get(0).getOrder());
 		assertNull(sub.getColumns().get(1).getOrder());
 		
-		sub = sub.withOrdering(orders(null, new ColumnOrder(0, true, false)));
+		sub = sub.withOrdering(orders(null, new ColumnOrder(0, Sort.ASCENDING, false)));
 		assertNull(sub.getColumns().get(0).getOrder());
 		assertEquals(0, sub.getColumns().get(1).getOrder().getPrecedence());
 	}

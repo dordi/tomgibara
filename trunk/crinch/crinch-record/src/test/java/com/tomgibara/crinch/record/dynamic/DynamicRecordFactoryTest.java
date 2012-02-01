@@ -24,7 +24,6 @@ import static com.tomgibara.crinch.record.def.ColumnType.INT_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.STRING_OBJECT;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.tomgibara.crinch.hashing.CondensingWriteStream;
@@ -37,8 +36,8 @@ import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.StringRecord;
 import com.tomgibara.crinch.record.ColumnParser;
 import com.tomgibara.crinch.record.def.ColumnOrder;
-import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
 
 import junit.framework.TestCase;
 
@@ -48,8 +47,8 @@ public class DynamicRecordFactoryTest extends TestCase {
 	
 	public void testGetName() {
 		
-		RecordDef def1 = RecordDef.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, STRING_OBJECT)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, false, false)));
-		RecordDef def2 = RecordDef.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, false, false)));
+		RecordDef def1 = RecordDef.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, STRING_OBJECT)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, Sort.DESCENDING, false)));
+		RecordDef def2 = RecordDef.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE)).build().withOrdering(Arrays.asList(null, null, new ColumnOrder(0, Sort.DESCENDING, false)));
 		RecordDef def3 = RecordDef.fromTypes(Arrays.asList(INT_PRIMITIVE, INT_PRIMITIVE, INT_PRIMITIVE)).build();
 		
 		DynamicRecordFactory fac1 = DynamicRecordFactory.getInstance(def1);
@@ -65,7 +64,7 @@ public class DynamicRecordFactoryTest extends TestCase {
 		RecordDef def = RecordDef
 				.fromTypes(Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER))
 				.setPositional(false)
-				.build().withOrdering(Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)));
+				.build().withOrdering(Arrays.asList(new ColumnOrder(0, Sort.ASCENDING, false), new ColumnOrder(1, Sort.ASCENDING, false), new ColumnOrder(2, Sort.DESCENDING, true), new ColumnOrder(3, Sort.ASCENDING, false), new ColumnOrder(4, Sort.ASCENDING, false)));
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
 		LinearRecord rec = fac.newRecord(new DynamicRecordFactory.ClassConfig(false, false, false), new ParsedRecord(parser, new StringRecord(0L, -1L, "1", "true", "", "Tom", "3847239847239843", "")));
 		assertEquals("[1,true,null,Tom,3847239847239843,null]", rec.toString());
@@ -76,7 +75,7 @@ public class DynamicRecordFactoryTest extends TestCase {
 				.fromTypes(Arrays.asList(INT_PRIMITIVE, BOOLEAN_PRIMITIVE, BOOLEAN_WRAPPER, STRING_OBJECT, LONG_PRIMITIVE, CHAR_WRAPPER))
 				.setPositional(false)
 				.build()
-				.withOrdering(Arrays.asList(new ColumnOrder(0, true, false), new ColumnOrder(1, true, false), new ColumnOrder(2, false, true), new ColumnOrder(3, true, false), new ColumnOrder(4, true, false)))
+				.withOrdering(Arrays.asList(new ColumnOrder(0, Sort.ASCENDING, false), new ColumnOrder(1, Sort.ASCENDING, false), new ColumnOrder(2, Sort.DESCENDING, true), new ColumnOrder(3, Sort.ASCENDING, false), new ColumnOrder(4, Sort.ASCENDING, false)))
 				.asBasis();
 		RecordDef def = basis.asBasisToBuild().select(5).add().select(3).add().select(1).add().build();
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);

@@ -26,6 +26,8 @@ import java.util.BitSet;
 import java.util.ListIterator;
 import java.util.Random;
 
+import com.tomgibara.crinch.bits.BitVector.Operation;
+
 import junit.framework.TestCase;
 
 public class BitVectorTest extends TestCase {
@@ -655,26 +657,34 @@ public class BitVectorTest extends TestCase {
 				w.setBit(c, true);
 			}
 
-			assertEquals(c, w.firstOne());
-			assertEquals(c, w.lastOne());
 			if (c >= 0) {
+				assertEquals(c, w.firstOne());
+				assertEquals(c, w.lastOne());
+
 				assertEquals(c, w.nextOne(c));
 				assertEquals(-1, w.previousOne(c));
 				if (c > 0) assertEquals(c, w.nextOne(c-1));
 				if (c < wSize) assertEquals(c, w.previousOne(c+1));
 				assertEquals(c, w.nextOne(0));
 				assertEquals(c, w.previousOne(wSize));
+			} else {
+				assertEquals(0, w.firstOne());
+				assertEquals(-1, w.lastOne());
 			}
 			w.flip();
-			assertEquals(c, w.firstZero());
-			assertEquals(c, w.lastZero());
 			if (c >= 0) {
+				assertEquals(c, w.firstZero());
+				assertEquals(c, w.lastZero());
+
 				assertEquals(c, w.nextZero(c));
 				assertEquals(-1, w.previousZero(c));
 				if (c > 0) assertEquals(c, w.nextZero(c-1));
 				if (c < wSize) assertEquals(c, w.previousZero(c+1));
 				assertEquals(c, w.nextZero(0));
 				assertEquals(c, w.previousZero(wSize));
+			} else {
+				assertEquals(0, w.firstZero());
+				assertEquals(-1, w.lastZero());
 			}
 		}
 	}
@@ -745,7 +755,7 @@ public class BitVectorTest extends TestCase {
 
 	private void testNextOne(BitVector v) {
 		int count = 0;
-		for (int i = v.firstOne(); i >= 0; i = v.nextOne(i+1)) {
+		for (int i = v.firstOne(); i < v.size(); i = v.nextOne(i+1)) {
 			count++;
 		}
 		assertEquals(v.countOnes(), count);
@@ -782,5 +792,78 @@ public class BitVectorTest extends TestCase {
 		v.setBytes(position, bytes, offset, length);
 		assertEquals(r.rangeView(offset, offset + length), v.rangeView(position, position + length));
 	}
+	
+	public void testGetAndModifyBit() {
+		for (int i = 0; i < 1000; i++) {
+			BitVector v = randomVector(100);
+			testGetAndModifyBit(BitVector.Operation.AND, v);
+		}
+	}
 
+	private void testGetAndModifyBit(Operation op, BitVector v3) {
+		for (int i = 0; i < 100; i++) {
+			int p = random.nextInt(v3.size());
+			boolean v = random.nextBoolean();
+
+			BitVector v1 = v3.copy();
+			BitVector v2 = v3.copy();
+
+			// expected result
+			boolean b3 = v3.getBit(p);
+			v3.modifyBit(op, p, v);
+
+			// result using general method
+			boolean b1 = v1.getAndModifyBit(op, p, v);
+			
+			// result using specific method
+			boolean b2;
+			switch (op) {
+			case AND:
+				b2 = v2.getAndAndBit(p, v);
+				break;
+			case OR:
+				b2 = v2.getAndOrBit(p, v);
+				break;
+			case SET:
+				b2 = v2.getAndSetBit(p, v);
+				break;
+			case XOR:
+				b2 = v2.getAndXorBit(p, v);
+				break;
+				default : throw new IllegalStateException();
+			}
+			
+			assertEquals(v3, v1);
+			assertEquals(v3, v2);
+			assertEquals(b3, b1);
+			assertEquals(b3, b2);
+		}
+	}
+
+	public void testPositionIterator() {
+		
+		BitVector v = new BitVector("010010010010");
+		v = v.rangeView(3, 9);
+		ListIterator<Integer> it = v.positionIterator();
+		assertTrue(it.hasNext());
+		assertEquals(1, (int) it.next());
+		it.add(2);
+		assertTrue(it.hasPrevious());
+		assertEquals(2, it.nextIndex());
+		assertEquals(1, it.previousIndex());
+		assertEquals(2, (int) it.previous());
+		assertEquals(2, (int) it.next());
+		assertEquals(4, (int) it.next());
+		assertFalse(it.hasNext());
+		it.remove();
+		assertEquals(2, (int) it.previous());
+		assertEquals(1, (int) it.previous());
+		assertEquals(-1, it.previousIndex());
+		it.remove();
+		assertEquals(2, (int) it.next());
+		assertFalse(it.hasNext());
+		it.set(4);
+		assertEquals(4, (int) it.previous());
+	}
+	
 }

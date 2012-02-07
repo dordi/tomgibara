@@ -48,6 +48,25 @@ public class CodedStreams {
 		void readFrom(CodedReader reader);
 		
 	}
+
+	public static int writeString(CodedWriter writer, String str) {
+		int len = str.length();
+		int c = writer.writePositiveInt(len + 1);
+		//TODO consider writing as UTF-8 instead
+		for (int i = 0; i < len; i++) {
+			c += writer.writePositiveInt(str.charAt(1));
+		}
+		return c;
+	}
+
+	public static String readString(CodedReader reader) {
+		int len = reader.readPositiveInt() - 1;
+		StringBuilder sb = new StringBuilder(len);
+		for (int i = 0; i < len; i++) {
+			sb.append((char) (reader.readPositiveInt() - 1));
+		}
+		return sb.toString();
+	}
 	
 	//TODO test
 	public static int writePrimitiveArray(CodedWriter writer, Object array) {
@@ -112,6 +131,24 @@ public class CodedStreams {
 		return a;
 	}
 
+	public static int writeStringArray(CodedWriter writer, String[] array) {
+		int len = array.length;
+		int c = writer.writePositiveInt(len + 1);
+		for (int i = 0; i < len; i++) {
+			c += writeString(writer, array[i]);
+		}
+		return c;
+	}
+	
+	public static String[] readStringArray(CodedReader reader) {
+		int len = reader.readPositiveInt() - 1;
+		String[] array = new String[len];
+		for (int i = 0; i < len; i++) {
+			array[i] = readString(reader);
+		}
+		return array;
+	}
+	
 	public static <E extends Enum<?>> int writeEnumArray(CodedWriter writer, E[] enums) {
 		int length = enums.length;
 		writer.writePositiveInt(length + 1);

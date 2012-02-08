@@ -547,8 +547,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(operation.ordinal(), position, value);
 	}
 	
-	public boolean getAndModifyBit(Operation operation, int position, boolean value) {
-		return getAndPerform(operation.ordinal(), position, value);
+	public boolean getThenModifyBit(Operation operation, int position, boolean value) {
+		return getThenPerform(operation.ordinal(), position, value);
 	}
 	
 	public void modifyBits(Operation operation, int position, long bits, int length) {
@@ -738,9 +738,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(SET, position, value);
 	}
 
-	//TODO consider better name than "And" because of dual meaning in this context
-	public boolean getAndSetBit(int position, boolean value) {
-		return getAndPerform(SET, position, value);
+	public boolean getThenSetBit(int position, boolean value) {
+		return getThenPerform(SET, position, value);
 	}
 
 	public void setByte(int position, byte value) {
@@ -787,8 +786,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(AND, position, value);
 	}
 	
-	public boolean getAndAndBit(int position, boolean value) {
-		return getAndPerform(AND, position, value);
+	public boolean getThenAndBit(int position, boolean value) {
+		return getThenPerform(AND, position, value);
 	}
 
 	public void andByte(int position, byte value) {
@@ -827,8 +826,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		performAdj(OR, start, finish, value);
 	}
 	
-	public boolean getAndOrBit(int position, boolean value) {
-		return getAndPerform(OR, position, value);
+	public boolean getThenOrBit(int position, boolean value) {
+		return getThenPerform(OR, position, value);
 	}
 
 	public void orRange(int from, int to, boolean value) {
@@ -883,8 +882,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		perform(XOR, position, value);
 	}
 
-	public boolean getAndXorBit(int position, boolean value) {
-		return getAndPerform(XOR, position, value);
+	public boolean getThenXorBit(int position, boolean value) {
+		return getThenPerform(XOR, position, value);
 	}
 
 	public void xorByte(int position, byte value) {
@@ -1255,11 +1254,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		performAdj(operation, position, value);
 	}
 	
-	private boolean getAndPerform(int operation, int position, boolean value) {
+	private boolean getThenPerform(int operation, int position, boolean value) {
 		if (position < 0)  throw new IllegalArgumentException();
 		position += start;
 		if (position >= finish) throw new IllegalArgumentException();
-		return getAndPerformAdj(operation, position, value);
+		return getThenPerformAdj(operation, position, value);
 	}
 	
 	private void perform(int operation, int from, int to, boolean value) {
@@ -1740,7 +1739,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	//separate implementation from performAdj is an optimization
 	
-	private boolean getAndPerformAdj(int operation, int position, boolean value) {
+	private boolean getThenPerformAdj(int operation, int position, boolean value) {
 		if (!mutable) throw new IllegalStateException();
 		final int i = position >> ADDRESS_BITS;
 		final long m = 1L << (position & ADDRESS_MASK);
@@ -1793,7 +1792,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			do {
 				j += distance;
 				if (j >= to) j -= length;
-				m = getAndPerformAdj(SET, j, m);
+				m = getThenPerformAdj(SET, j, m);
 			} while (j != i);
 		}
 	}
@@ -1822,7 +1821,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private void reverseAdj(int from, int to) {
 		to--;
 		while (from < to) {
-			performSetAdj(to, getAndPerformAdj(SET, from, getBitAdj(to)));
+			performSetAdj(to, getThenPerformAdj(SET, from, getBitAdj(to)));
 			from++; to--;
 		}
 	}
@@ -2132,7 +2131,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			if (i < start || i >= finish) throw new IllegalArgumentException("e out of bounds: [" + 0 + "," + (finish - start) + "]");
 			if (i < previous) throw new IllegalArgumentException("e less than previous value: " + (previous - start));
 			if (i >= next) throw new IllegalArgumentException("e not less than next value: " + (next - start));
-			boolean changed = !getAndPerformAdj(SET, i, true);
+			boolean changed = !getThenPerformAdj(SET, i, true);
 			if (changed) {
 				if (nextIndex != NOT_SET) nextIndex ++;
 				previous = i;

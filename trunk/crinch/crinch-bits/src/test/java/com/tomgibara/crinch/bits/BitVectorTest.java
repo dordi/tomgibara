@@ -813,22 +813,22 @@ public class BitVectorTest extends TestCase {
 			v3.modifyBit(op, p, v);
 
 			// result using general method
-			boolean b1 = v1.getAndModifyBit(op, p, v);
+			boolean b1 = v1.getThenModifyBit(op, p, v);
 			
 			// result using specific method
 			boolean b2;
 			switch (op) {
 			case AND:
-				b2 = v2.getAndAndBit(p, v);
+				b2 = v2.getThenAndBit(p, v);
 				break;
 			case OR:
-				b2 = v2.getAndOrBit(p, v);
+				b2 = v2.getThenOrBit(p, v);
 				break;
 			case SET:
-				b2 = v2.getAndSetBit(p, v);
+				b2 = v2.getThenSetBit(p, v);
 				break;
 			case XOR:
-				b2 = v2.getAndXorBit(p, v);
+				b2 = v2.getThenXorBit(p, v);
 				break;
 				default : throw new IllegalStateException();
 			}

@@ -330,7 +330,7 @@ public class BitVectorTest extends TestCase {
 		a = size == 0 ? 1 : size + random.nextInt(size);
 		w = v.resizedCopy(a);
 		assertEquals(v, w.rangeView(0, size));
-		w.isRangeAllZeros(size, w.size());
+		w.isAllZerosRange(size, w.size());
 	}
 
 	public void testMutability() {
@@ -446,9 +446,9 @@ public class BitVectorTest extends TestCase {
 			int a = random.nextInt(v.size()+1);
 			int b = a + random.nextInt(v.size()+1-a);
 			v.setRange(a, b, false);
-			assertTrue(v.isRangeAllZeros(a, b));
+			assertTrue(v.isAllZerosRange(a, b));
 			v.setRange(a, b, true);
-			assertTrue(v.isRangeAllOnes(a, b));
+			assertTrue(v.isAllOnesRange(a, b));
 		}
 	}
 	
@@ -563,14 +563,14 @@ public class BitVectorTest extends TestCase {
 			if (d >= size) {
 				assertTrue(v.isAllOnes());
 			} else {
-				assertTrue( v.isRangeAllOnes(0, d) );
+				assertTrue( v.isAllOnesRange(0, d) );
 				assertTrue( v.rangeView(d, size).testEquals(w.rangeView(0, size - d)) );
 			}
 		} else {
 			if (d <= -size) {
 				assertTrue(v.isAllOnes());
 			} else {
-				assertTrue( v.isRangeAllOnes(size + d, size));
+				assertTrue( v.isAllOnesRange(size + d, size));
 				assertTrue( v.rangeView(0, size + d).testEquals(w.rangeView(-d, size)));
 			}
 		}

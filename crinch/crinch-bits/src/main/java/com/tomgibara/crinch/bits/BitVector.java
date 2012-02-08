@@ -620,7 +620,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return isAllAdj(start, finish, value);
 	}
 	
-	public boolean isRangeAll(int from, int to, boolean value) {
+	public boolean isAllRange(int from, int to, boolean value) {
 		if (from < 0) throw new IllegalArgumentException();
 		if (from > to) throw new IllegalArgumentException();
 		from += start;
@@ -939,16 +939,16 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return isAllAdj(start, finish, false);
 	}
 	
-	public boolean isRangeAllZeros(int from, int to) {
-		return isRangeAll(from, to, false);
+	public boolean isAllZerosRange(int from, int to) {
+		return isAllRange(from, to, false);
 	}
 	
 	public boolean isAllOnes() {
 		return isAllAdj(start, finish, true);
 	}
 	
-	public boolean isRangeAllOnes(int from, int to) {
-		return isRangeAll(from, to, true);
+	public boolean isAllOnesRange(int from, int to) {
+		return isAllRange(from, to, true);
 	}
 	
 	

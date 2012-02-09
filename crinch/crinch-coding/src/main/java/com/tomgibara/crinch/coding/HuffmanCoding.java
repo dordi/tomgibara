@@ -363,11 +363,12 @@ public class HuffmanCoding implements Coding {
     
     private int encodeIndex(BitWriter writer, int index) {
     	int x = getCodeLengthForIndex(index);
-        writer.write(codes[x] + index - cumm[x - 1], x);
+        if (x > 0) writer.write(codes[x] + index - cumm[x - 1], x);
         return x;
     }
     
     private int getCodeLengthForIndex(int index) {
+    	if (cumm.length == 1) return 0;
         int x = Arrays.binarySearch(cumm, index + 1);
         //we may not have an exact match
         if (x < 0) x = - 1 - x;

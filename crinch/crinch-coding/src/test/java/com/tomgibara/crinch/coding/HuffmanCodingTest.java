@@ -44,6 +44,7 @@ public class HuffmanCodingTest extends TestCase {
     	testDecodeBoth(new long[] {1, 2, 4, 8, 16});
     	testDecodeBoth(new long[] {1, 1});
     	testDecodeBoth(new long[] {1, 1000});
+    	testDecodeBoth(new long[] {10});
     }
 
     private static void testDecodeBoth(long[] freqs) {

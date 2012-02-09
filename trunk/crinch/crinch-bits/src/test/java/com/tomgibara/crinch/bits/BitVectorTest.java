@@ -23,9 +23,12 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
+import java.util.SortedSet;
 
 import com.tomgibara.crinch.bits.BitVector.Operation;
 
@@ -932,5 +935,40 @@ public class BitVectorTest extends TestCase {
 			// expected
 		}
 	}
+
+	public void testAsSet() throws Exception {
+		BitVector v = new BitVector(30);
+		SortedSet<Integer> set = v.asSet();
+		set = set.tailSet(10);
+		assertTrue(set.isEmpty());
+		assertEquals(0, set.size());
+		set.remove(null);
+		set.remove(1);
+		set.retainAll(Collections.singleton("STR"));
+		set.add(10);
+		assertEquals(new BitVector("000000000000000000010000000000"), v);
+		assertEquals(1, set.size());
+		assertEquals(set, Collections.singleton(10));
+		set.retainAll(Collections.singleton(10));
+		assertFalse(set.isEmpty());
+		assertTrue(set.iterator().hasNext());
+		assertEquals(10, (int) set.iterator().next());
+		set.addAll(Arrays.asList(15, 18));
+		assertEquals(3, set.size());
+		assertEquals(10, (int) set.first());
+		assertEquals(18, (int) set.last());
+		assertEquals(1, set.headSet(15).size());
+		assertEquals(Collections.singleton(10), set.headSet(15));
+		assertEquals(new HashSet<Integer>(Arrays.asList(15, 18)), set.tailSet(15));
+		assertEquals(Collections.singleton(15), set.subSet(13, 17));
+
+		try {
+			v.immutableView().asSet().add(1);
+			fail();
+		} catch (IllegalStateException e) {
+			// expected
+		}
+	}
+
 	
 }

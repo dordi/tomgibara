@@ -24,14 +24,17 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.PrivilegedAction;
 import java.util.AbstractList;
+import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.SortedSet;
 
 /**
  * <p>
@@ -90,7 +93,14 @@ import java.util.Random;
  * <p>
  * In addition, the the {@link #positionIterator()} method exposes a
  * {@link ListIterator} that ranges over the indices of the bits that are set
- * within the {@link BitVector}.
+ * within the {@link BitVector}. The class can also expose the bits as a
+ * {@link SortedSet} of these indices via the {@link #asSet()} method.
+ * </p>
+ * 
+ * <p>
+ * All iterators and collections are mutable if the underlying {@link BitVector}
+ * is, though naturally, any operations that would modify the size cannot be
+ * supported.
  * </p>
  * 
  * <p>
@@ -128,9 +138,9 @@ import java.util.Random;
  * Performance should be adequate for most uses. There is scope to improve the
  * performance of many methods, but none of the methods operate in anything more
  * than linear time and inner loops are mostly 'tight'. An implementation detail
- * (which may be important on some platforms) is that, with few exceptions,
- * none of the methods perform any object creation. The exceptions are: methods
- * that require an object to be returned, {@link #floatValue()},
+ * (which may be important on some platforms) is that, with few exceptions, none
+ * of the methods perform any object creation. The exceptions are: methods that
+ * require an object to be returned, {@link #floatValue()},
  * {@link #doubleValue()}, {@link #toString(int)}, and situations where an
  * operation is applied with overlapping ranges of bits, in which case it may be
  * necessary to create a temporary copy of the {@link BitVector}.
@@ -384,7 +394,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	public BitVector duplicate(boolean copy, boolean mutable) {
 		if (mutable && !copy && !this.mutable) throw new IllegalStateException("Cannot obtain mutable view of an immutable BitVector");
-		return new BitVector(start, finish, copy ? bits.clone() : bits, mutable);
+		return duplicateAdj(start, finish, copy, mutable);
 	}
 	
 	public BitVector duplicate(int from, int to, boolean copy, boolean mutable) {
@@ -394,7 +404,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		from += start;
 		to += start;
 		if (to > finish) throw new IllegalArgumentException();
-		return new BitVector(from, to, copy ? bits.clone() : bits, mutable);
+		return duplicateAdj(from, to, copy, mutable);
 	}
 	
 	//only creates a new bit vector if necessary
@@ -1171,6 +1181,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return new BitList();
 	}
 	
+	public SortedSet<Integer> asSet() {
+		return new IntSet(start);
+	}
+	
 	// object methods
 	
 	public boolean equals(Object obj) {
@@ -1426,6 +1440,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		performAdj(operation, position, bytes, offset, length);
 	}
 	
+	private BitVector duplicateAdj(int from, int to, boolean copy, boolean mutable) {
+		return new BitVector(from, to, copy ? bits.clone() : bits, mutable);
+	}
+
 	private boolean compare(final int comp, final BitVector that) {
 		if (this.finish - this.start != that.finish - that.start) throw new IllegalArgumentException();
 		//trivial case
@@ -1975,6 +1993,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return start - 1;
 	}
 	
+	private IntSet asSet(int offset) {
+		return new IntSet(offset);
+	}
+	
 	// inner classes
 	
 	//TODO make public and expose more efficient methods?
@@ -2236,6 +2258,191 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			return rangeView(fromIndex, toIndex).asList();
 		}
 		
+	}
+	
+	private class IntSet extends AbstractSet<Integer> implements SortedSet<Integer> {
+
+		private final int offset; // the value that must be added to received values to map them onto the bits
+
+		// constructors
+		
+		private IntSet(int offset) {
+			this.offset = offset;
+		}
+		
+		// set methods
+		
+		@Override
+		public int size() {
+			return countOnesAdj(start, finish);
+		}
+		
+		@Override
+		public boolean isEmpty() {
+			return isAllAdj(start, finish, false);
+		}
+		
+		@Override
+		public boolean contains(Object o) {
+			if (!(o instanceof Integer)) return false;
+			int position = offset + (Integer) o;
+			return position >= start && position < finish && getBitAdj(position);
+		}
+
+		@Override
+		public boolean add(Integer e) {
+			return !getThenPerformAdj(SET, position(e), true);
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			if (!(o instanceof Integer)) return false;
+			int i = offset + (Integer) o;
+			if (i < start || i >= finish) return false;
+			return getThenSetBit(i, false);
+		}
+		
+		@Override
+		public void clear() {
+			performAdj(SET, start, finish, false);
+		}
+		
+		@Override
+		public Iterator<Integer> iterator() {
+			return new Iterator<Integer>() {
+				final Iterator<Integer> it = positionIterator();
+				
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+				
+				@Override
+				public Integer next() {
+					//TODO build offset into positionIterator?
+					return it.next() + start - offset;
+				}
+				
+				@Override
+				public void remove() {
+					it.remove();
+				}
+				
+			};
+		}
+
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			//TODO optimize
+//			if (c instanceof IntSet) {
+//			}
+			
+			return super.containsAll(c);
+		}
+		
+		@Override
+		public boolean addAll(Collection<? extends Integer> c) {
+			//TODO optimize
+//			if (c instanceof IntSet) {
+//			}
+			
+			for (Integer e : c) position(e);
+			Iterator<? extends Integer> it = c.iterator();
+			boolean changed = false;
+			while (!changed && it.hasNext()) {
+				changed = !getThenPerformAdj(SET, it.next() + offset, true);
+			}
+			while (it.hasNext()) {
+				performAdj(SET, it.next() + offset, true);
+			}
+			return changed;
+		}
+		
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			//TODO optimize
+//			if (c instanceof IntSet) {
+//			}
+			
+			return super.removeAll(c);
+		}
+		
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			//TODO optimize
+//			if (c instanceof IntSet) {
+//			}
+			
+			return super.retainAll(c);
+		}
+		
+		// sorted set methods
+		
+		@Override
+		public Comparator<? super Integer> comparator() {
+			return null;
+		}
+
+		@Override
+		public Integer first() {
+			int i = firstOneInRangeAdj(start, finish);
+			if (i == finish) throw new NoSuchElementException();
+			return i - offset;
+		}
+		
+		@Override
+		public Integer last() {
+			int i = lastOneInRangeAdj(start, finish);
+			if (i == start - 1) throw new NoSuchElementException();
+			return i - offset;
+		}
+		
+		@Override
+		public SortedSet<Integer> headSet(Integer toElement) {
+			if (toElement == null) throw new NullPointerException();
+			int to = Math.max(toElement + offset, start);
+			return duplicateAdj(start, to, false, mutable).asSet(offset);
+		}
+		
+		@Override
+		public SortedSet<Integer> tailSet(Integer fromElement) {
+			if (fromElement == null) throw new NullPointerException();
+			int from = Math.min(fromElement + offset, finish);
+			return duplicateAdj(from, finish, false, mutable).asSet(offset);
+		}
+		
+		@Override
+		public SortedSet<Integer> subSet(Integer fromElement, Integer toElement) {
+			if (fromElement == null) throw new NullPointerException();
+			if (toElement == null) throw new NullPointerException();
+			int fromInt = fromElement;
+			int toInt = toElement;
+			if (fromInt > toInt) throw new IllegalArgumentException("from exceeds to");
+			int from = Math.min(fromInt + offset, finish);
+			int to = Math.max(toInt + offset, start);
+			return duplicateAdj(from, to, false, mutable).asSet(offset);
+		}
+		
+		// object methods
+		
+		@Override
+		public boolean equals(Object o) {
+			//TODO optimize
+//			if (c instanceof IntSet) {
+//			}
+			return super.equals(o);
+		}
+
+		// private methods
+		
+		private int position(Integer e) {
+			if (e == null) throw new NullPointerException("null value");
+			int i = e + offset;
+			if (i < start) throw new IllegalArgumentException("value less than lower bound");
+			if (i >= finish) throw new IllegalArgumentException("value greater than upper bound");
+			return i;
+		}
+
 	}
 	
 	private static class Serial implements Serializable {

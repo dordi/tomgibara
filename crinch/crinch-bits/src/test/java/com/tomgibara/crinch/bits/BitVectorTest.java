@@ -23,6 +23,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 
@@ -840,6 +841,30 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
+	public void testBitIterator() {
+		BitVector v = new BitVector("0100");
+		ListIterator<Boolean> i = v.rangeView(1, 3).listIterator();
+		assertFalse(i.hasPrevious());
+		assertFalse(i.next());
+		assertTrue(i.next());
+		assertFalse(i.hasNext());
+		assertTrue(i.previous());
+		assertFalse(i.previous());
+		assertFalse(i.hasPrevious());
+		i.next();
+		i.set(true);
+		assertEquals(new BitVector("0110"), v);
+		
+		i = v.immutableView().listIterator();
+		try {
+			i.next();
+			i.set(true);
+			fail();
+		} catch (IllegalStateException e) {
+			// expected
+		}
+	}
+	
 	public void testPositionIterator() {
 		
 		BitVector v = new BitVector("010010010010");
@@ -864,6 +889,48 @@ public class BitVectorTest extends TestCase {
 		assertFalse(it.hasNext());
 		it.set(4);
 		assertEquals(4, (int) it.previous());
+		
+		it = v.immutable().positionIterator();
+		try {
+			it.next();
+			it.set(0);
+			fail();
+		} catch (IllegalStateException e) {
+			// expected
+		}
+	}
+	
+	public void testAsList() {
+		BitVector v = new BitVector(20);
+		List<Boolean> list = v.rangeView(5, 15).asList();
+		assertEquals(10, list.size());
+		for (int i = 0; i < list.size(); i++) {
+			assertTrue(list.set(i, true));
+		}
+		assertEquals(new BitVector("00000111111111100000"), v);
+		for (int i = 0; i < list.size(); i++) {
+			assertFalse(list.set(i, true));
+		}
+		{
+			int i = 0;
+			for (Boolean b : list) {
+				assertEquals(v.getBit(5 + i++), (boolean) b);
+			}
+		}
+		
+		for (ListIterator<Boolean> i = list.listIterator(); i.hasNext();) {
+			i.next();
+			i.set(false);
+		}
+		assertEquals(new BitVector(20), v);
+
+		list = v.immutableRangeView(5, 15).asList();
+		try {
+			list.set(0, true);
+			fail();
+		} catch (IllegalStateException e) {
+			// expected
+		}
 	}
 	
 }

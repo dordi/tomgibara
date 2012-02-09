@@ -23,8 +23,10 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.PrivilegedAction;
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -61,9 +63,9 @@ import java.util.Random;
  * instances. Instances may also be immutable (see {@link #isMutable()},
  * {@link #mutable()} and {@link #immutable()}). In addition to a number of
  * copying operations, the class also supports views; views create new
- * {@link BitVector} instances that are backed by the same bit data, this allows
- * applications to expose mutable {@link BitVector} instances 'safely' via
- * immutable views.
+ * {@link BitVector} instances that are backed by the same bit data. Amongst
+ * other things this allows applications to expose mutable {@link BitVector}
+ * instances 'safely' via immutable views.
  * </p>
  * 
  * <p>
@@ -78,15 +80,18 @@ import java.util.Random;
  * 
  * <p>
  * The class also implements {@link Iterable} and provides methods to obtain
- * {@link ListIterator} as one would for a {@link List}, but stops short of
- * implementing the {@link List} interface. This allows a {@link BitVector} to
- * be used with a range of Java language constructs and standard library
- * classes.
+ * {@link ListIterator} as one would for a {@link List}. This allows a
+ * {@link BitVector} to be directly used with a range of Java language
+ * constructs and standard library classes. Though the class stops short of
+ * implementing the {@link List} interface, the {@link #asList()} method
+ * provides this.
  * </p>
  * 
- * <p>In addition, the class exposes a {@link ListIterator} that ranges over
- * the indices of the bits that are set within the {@link BitVector}. All
- * iterators are mutable.</p>
+ * <p>
+ * In addition, the the {@link #positionIterator()} method exposes a
+ * {@link ListIterator} that ranges over the indices of the bits that are set
+ * within the {@link BitVector}.
+ * </p>
  * 
  * <p>
  * The class is {@link Serializable} and {@link Cloneable} too (clones are
@@ -123,7 +128,7 @@ import java.util.Random;
  * Performance should be adequate for most uses. There is scope to improve the
  * performance of many methods, but none of the methods operate in anything more
  * than linear time and inner loops are mostly 'tight'. An implementation detail
- * (which may be important on some platforms) is that, with some exceptions,
+ * (which may be important on some platforms) is that, with few exceptions,
  * none of the methods perform any object creation. The exceptions are: methods
  * that require an object to be returned, {@link #floatValue()},
  * {@link #doubleValue()}, {@link #toString(int)}, and situations where an
@@ -1133,7 +1138,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return toBigInteger().doubleValue();
 	}
 	
-	// iterable methods
+	// collection methods
 	
 	@Override
 	public Iterator<Boolean> iterator() {
@@ -1160,6 +1165,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		position += start;
 		if (position > finish) throw new IllegalArgumentException();
 		return new PositionIterator(position);
+	}
+	
+	public List<Boolean> asList() {
+		return new BitList();
 	}
 	
 	// object methods
@@ -1968,13 +1977,14 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	
 	// inner classes
 	
-	//TODO make public and expose more efficient methods
+	//TODO make public and expose more efficient methods?
 	private class BitIterator implements ListIterator<Boolean> {
 		
 		private final int from;
 		private final int to;
 		// points to the element that will be returned  by next
 		private int index;
+		private int recent = -1;
 
 		BitIterator(int from, int to, int index) {
 			this.from = from;
@@ -1998,6 +2008,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		@Override
 		public Boolean next() {
 			if (!hasNext()) throw new NoSuchElementException();
+			recent = index;
 			return Boolean.valueOf( getBitAdj(index++) );
 		}
 		
@@ -2014,7 +2025,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		@Override
 		public Boolean previous() {
 			if (!hasPrevious()) throw new NoSuchElementException();
-			return Boolean.valueOf( getBitAdj(--index) );
+			recent = --index;
+			return Boolean.valueOf( getBitAdj(recent) );
 		}
 
 		@Override
@@ -2024,7 +2036,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 		@Override
 		public void set(Boolean bit) {
-			setBit(index, bit);
+			if (recent == -1) throw new IllegalStateException();
+			performAdj(SET, recent, bit);
 		}
 		
 		@Override
@@ -2038,7 +2051,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 
-	//TODO make public and expose more efficient methods
+	//TODO make public and expose more efficient methods?
 	private class PositionIterator implements ListIterator<Integer> {
 		
 		private static final int NOT_SET = Integer.MIN_VALUE;
@@ -2148,6 +2161,79 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				throw new IllegalStateException();
 			}
 			performAdj(SET, recent, false);
+		}
+		
+	}
+	
+	private class BitList extends AbstractList<Boolean> {
+		
+		@Override
+		public boolean isEmpty() {
+			return BitVector.this.size() == 0;
+		}
+		
+		@Override
+		public int size() {
+			return BitVector.this.size();
+		}
+		
+		@Override
+		public boolean contains(Object o) {
+			if (!(o instanceof Boolean)) return false;
+			return !isAll(!(Boolean)o);
+		}
+		
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			for (Object o : c) {
+				if (!(o instanceof Boolean)) return false;
+				if (isAll(!(Boolean)o)) return false;
+			}
+			return true;
+		}
+
+		@Override
+		public Boolean get(int index) {
+			return getBit(index);
+		}
+
+		@Override
+		public Iterator<Boolean> iterator() {
+			return BitVector.this.listIterator();
+		}
+		
+		@Override
+		public ListIterator<Boolean> listIterator() {
+			return BitVector.this.listIterator();
+		}
+		
+		@Override
+		public ListIterator<Boolean> listIterator(int index) {
+			return BitVector.this.listIterator(index);
+		}
+		
+		@Override
+		public int indexOf(Object o) {
+			if (!(o instanceof Boolean)) return -1;
+			int position = firstBit((Boolean) o);
+			return position == finish ? -1 : position - start;
+		}
+		
+		@Override
+		public int lastIndexOf(Object object) {
+			if (!(object instanceof Boolean)) return -1;
+			return lastBit((Boolean) object);
+		}
+
+		@Override
+		public Boolean set(int index, Boolean element) {
+			boolean b = element;
+			return getThenSetBit(index, b) != b;
+		}
+		
+		@Override
+		public List<Boolean> subList(int fromIndex, int toIndex) {
+			return rangeView(fromIndex, toIndex).asList();
 		}
 		
 	}

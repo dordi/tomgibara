@@ -57,6 +57,12 @@ public class GvmResult<K> {
 	 */
 	
 	private double variance;
+
+	/**
+	 * The standard deviation of the cluster.
+	 */
+	
+	private double stdDeviation;
 	
 	/**
 	 * The key associated with the cluster.
@@ -76,6 +82,7 @@ public class GvmResult<K> {
 		count = cluster.count;
 		mass = cluster.m0;
 		variance = cluster.var / mass;
+		stdDeviation = -1.0;
 		key = cluster.key;
 		space = cluster.clusters.space;
 		point = space.newCopy(cluster.m1);
@@ -145,11 +152,21 @@ public class GvmResult<K> {
 	}
 	
 	/**
+	 * The standard deviation of the cluster.
+	 */
+	
+	public double getStdDeviation() {
+		return stdDeviation < 0.0 ? stdDeviation = Math.sqrt(variance) : stdDeviation;
+	}
+	
+	/**
 	 * Sets the variance of the cluster.
 	 */
 	
 	public void setVariance(double variance) {
+		if (variance < 0.0) throw new IllegalArgumentException("negative variance");
 		this.variance = variance;
+		this.stdDeviation = -1.0;
 	}
 	
 	/**
@@ -173,7 +190,7 @@ public class GvmResult<K> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("point: %s  count: %d  variance: %3.3f  mass: %3.3f  key: %s", point, count, variance, mass, key));
+		sb.append(String.format("point: %s  count: %d  variance: %3.3f  mass: %3.3f  key: %s", space.toString(point), count, variance, mass, key));
 		return sb.toString();
 	}
 }

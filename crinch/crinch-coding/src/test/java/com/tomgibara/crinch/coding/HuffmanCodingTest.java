@@ -20,11 +20,17 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
+import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitStreams;
+import com.tomgibara.crinch.bits.ByteArrayBitReader;
+import com.tomgibara.crinch.bits.ByteArrayBitWriter;
 import com.tomgibara.crinch.bits.PrintStreamBitWriter;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
+import com.tomgibara.crinch.coding.HuffmanCoding.DescendingFrequencyValues;
+import com.tomgibara.crinch.coding.HuffmanCoding.Dictionary;
+import com.tomgibara.crinch.coding.HuffmanCoding.UnorderedFrequencyValues;
 
 
 public class HuffmanCodingTest extends TestCase {
@@ -47,10 +53,28 @@ public class HuffmanCodingTest extends TestCase {
     	testDecodeBoth(new long[] {10});
     }
 
+    public void testDictionary() {
+    	HuffmanCoding coding = new HuffmanCoding(new UnorderedFrequencyValues(9L, 16L, 25L, 36L));
+    	int[] sequence = {1,2,3,4,3,2,1,4,3,2,1};
+    	byte[] bytes = new byte[11];
+    	ByteArrayBitWriter writer = new ByteArrayBitWriter(bytes);
+    	for (int i = 0; i < sequence.length; i++) {
+			coding.encodePositiveInt(writer, sequence[i]);
+		}
+    	writer.padToBoundary(BitBoundary.BYTE);
+    	writer.flush();
+    	Dictionary dictionary = coding.getDictionary();
+    	coding = new HuffmanCoding(dictionary);
+    	ByteArrayBitReader reader = new ByteArrayBitReader(bytes);
+    	for (int i = 0; i < sequence.length; i++) {
+    		assertEquals("mismatch at index " + i, sequence[i], coding.decodePositiveInt(reader));
+    	}
+    }
+    
     private static void testDecodeBoth(long[] freqs) {
-    	final HuffmanCoding.UnorderedFrequencyValues f1 = new HuffmanCoding.UnorderedFrequencyValues(freqs);
+    	final UnorderedFrequencyValues f1 = new UnorderedFrequencyValues(freqs);
         descendingSort(freqs);
-        final HuffmanCoding.DescendingFrequencyValues f2 = new HuffmanCoding.DescendingFrequencyValues(freqs);
+        final DescendingFrequencyValues f2 = new DescendingFrequencyValues(freqs);
         assertEquals(f1.getCorrespondence().getCount(), f2.getCorrespondence().getCount());
         int count = f1.getCorrespondence().getCount();
         for (int i = 0; i < count; i++) {

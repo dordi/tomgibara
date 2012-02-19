@@ -40,6 +40,16 @@ public class HuffmanCoding implements Coding {
 		
 	}
 	
+	public interface Dictionary {
+		
+		Correspondence getCorrespondence();
+		
+		int getMaximumCodeLength();
+		
+		int getCodeLengthCount(int codeLength);
+		
+	}
+	
 	public interface Frequencies {
 		
 		int getCount();
@@ -114,15 +124,26 @@ public class HuffmanCoding implements Coding {
 	public static class DescendingFrequencyValues implements Frequencies {
 		
 		private final long[] frequencies;
+		private final int count;
 
-		public DescendingFrequencyValues(long[] frequencies) {
+		public DescendingFrequencyValues(long... frequencies) {
 			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
+			int length = frequencies.length;
+			int count = length;
+			long previous = Long.MAX_VALUE;
+			for (int i = 0; i < frequencies.length; i++) {
+				long freq = frequencies[i];
+				if (freq < 0) throw new IllegalArgumentException("negative frequency");
+				if (freq > previous) throw new IllegalArgumentException("frequencies not monotonically descending");
+				if (freq == 0 && count == length) count = i;
+			}
 			this.frequencies = frequencies;
+			this.count = count;
 		}
 
 		@Override
 		public int getCount() {
-			return frequencies.length;
+			return count;
 		}
 		
 		@Override
@@ -132,7 +153,7 @@ public class HuffmanCoding implements Coding {
 		
 		@Override
 		public Correspondence getCorrespondence() {
-			return new DirectCorrespondence(frequencies.length);
+			return new DirectCorrespondence(count);
 		}
 
 	}
@@ -142,7 +163,7 @@ public class HuffmanCoding implements Coding {
 		private final long[] frequencies;
 		private final Correspondence correspondence;
 		
-		public UnorderedFrequencyValues(long[] frequencies) {
+		public UnorderedFrequencyValues(long... frequencies) {
 			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
 			int count = frequencies.length;
 			El[] els = new El[count];
@@ -209,6 +230,16 @@ public class HuffmanCoding implements Coding {
 			
 		}
 
+	}
+	
+	public static long getEncodedLength(Frequencies frequencies) {
+		HuffmanCoding coding = new HuffmanCoding(frequencies);
+		int count = frequencies.getCount();
+		long length = 0L;
+		for (int i = 0; i < count; i++) {
+			length += frequencies.getFrequency(i) * coding.getCodeLength(frequencies.getCorrespondence().getValue(i));
+		}
+		return length;
 	}
 	
     private static Node buildTree(PriorityQueue<Node> nodes) {
@@ -291,19 +322,18 @@ public class HuffmanCoding implements Coding {
     // fields
     
     private final Correspondence correspondence;
-    private final int symbols;
     private final int[] counts;
     private final int[] codes;
     private final int[] cumm;
     private final Nid root;
+    private final Dictionary dictionary;
     
     // constructors
     
     public HuffmanCoding(Frequencies frequencies) {
     	if (frequencies == null) throw new IllegalArgumentException("null frequencies");
     	correspondence = frequencies.getCorrespondence();
-    	symbols = frequencies.getCount();
-        Node [] nodes = createNodes(frequencies);
+        Node[] nodes = createNodes(frequencies);
         int[] lengths = calculateLengths(nodes);
         counts = countLengths(lengths);
         codes = encodeCounts(counts);
@@ -311,8 +341,36 @@ public class HuffmanCoding implements Coding {
         root = produceNids();
         root.computeLeastHeights();
         root.computeLookups();
+        dictionary = new HuffmanDictionary(correspondence, counts);
     }
 
+    public HuffmanCoding(Dictionary dictionary) {
+    	if (dictionary == null) throw new IllegalArgumentException("null dictionary");
+        this.dictionary = dictionary;
+    	this.correspondence = dictionary.getCorrespondence();
+    	if (correspondence == null) throw new IllegalArgumentException("no correspondence");
+    	int maxLength = dictionary.getMaximumCodeLength();
+    	if (maxLength < 0) throw new IllegalArgumentException("negative maximum code length");
+    	int[] counts = new int[maxLength + 1];
+    	for (int i = 1; i <= maxLength; i++) {
+			int count = dictionary.getCodeLengthCount(i);
+			if (count < 0) throw new IllegalArgumentException("negative code length count");
+			counts[i] = count;
+		}
+    	this.counts = counts;
+        codes = encodeCounts(counts);
+        cumm = accumulateCounts(counts);
+        root = produceNids();
+        root.computeLeastHeights();
+        root.computeLookups();
+    }
+    
+    // accessors
+    
+    public Dictionary getDictionary() {
+		return dictionary;
+	}
+    
     // methods
     
     public int getCodeLength(int value) {
@@ -391,7 +449,8 @@ public class HuffmanCoding implements Coding {
     	IntArrayBitWriter w = new IntArrayBitWriter(mem, size*32);
     	IntArrayBitReader r = new IntArrayBitReader(mem, size*32);
     	Nid root = new Nid();
-    	for (int i = 0; i < symbols; i++) {
+    	int count = correspondence.getCount();
+    	for (int i = 0; i < count; i++) {
         	w.setPosition(0);
         	w.flush();
         	encodeIndex(w, i);
@@ -494,6 +553,34 @@ public class HuffmanCoding implements Coding {
 			return lookup == null ? index == -1 ? "(zero: " + zero + "  one: " + one + ")" : Integer.toString(index) : Arrays.toString(lookup);
 		}
 
+    }
+    
+    private static class HuffmanDictionary implements Dictionary {
+
+    	private final Correspondence correspondence;
+    	private final int[] counts;
+    	
+    	HuffmanDictionary(Correspondence correspondence, int[] counts) {
+    		this.correspondence = correspondence;
+    		this.counts = counts;
+		}
+    	
+		@Override
+		public Correspondence getCorrespondence() {
+			return correspondence;
+		}
+
+		@Override
+		public int getMaximumCodeLength() {
+			return counts.length - 1;
+		}
+
+		@Override
+		public int getCodeLengthCount(int codeLength) {
+			if (codeLength <= 0) throw new IllegalArgumentException("non-positive codeLength");
+			return counts[codeLength];
+		}
+    	
     }
     
 }

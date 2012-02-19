@@ -349,6 +349,20 @@ public class CodingFrequencies implements Iterable<Integer> {
 		return fromFrequencies(frequencies, -1);
 	}
 
+	// static helper method
+
+	//TODO try to support longs directly in API
+	public static int[] intsFromLongs(long[] longs) {
+		if (longs == null) throw new IllegalArgumentException("null longs");
+		int[] ints = new int[longs.length];
+		for (int i = 0; i < longs.length; i++) {
+			long value = longs[i];
+			if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) throw new IllegalArgumentException();
+			ints[i] = (int) value;
+		}
+		return ints;
+	}
+	
 	//fields
 	
 	/**
@@ -593,6 +607,16 @@ public class CodingFrequencies implements Iterable<Integer> {
 	
 	public double binaryEntropy() {
 		return entropy(2.0);
+	}
+	
+	/**
+	 * The idealized number of bits necessary to encode a sequence of the values with these frequencies.
+	 * 
+	 * @return a number of bits
+	 */
+	
+	public double bits() {
+		return binaryEntropy() * getFrequencyTotal();
 	}
 	
 	/**

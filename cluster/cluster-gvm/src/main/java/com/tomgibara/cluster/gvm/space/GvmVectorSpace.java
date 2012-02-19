@@ -228,4 +228,9 @@ public class GvmVectorSpace extends GvmSpace {
 		return sum;
 	}
 	
+	@Override
+	public String toString(Object pt) {
+		return Arrays.toString(coords(pt));
+	}
+	
 }

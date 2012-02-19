@@ -103,4 +103,8 @@ public abstract class GvmSpace {
 	
 	public abstract void square(Object pt);
 
+	public String toString(Object pt) {
+		return pt == null ? "null" : pt.toString();
+	}
+	
 }

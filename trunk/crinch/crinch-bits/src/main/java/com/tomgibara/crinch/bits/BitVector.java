@@ -1804,7 +1804,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return v != 0;
 	}
 	
-	public void rotateAdj(int from, int to, int distance) {
+	private void rotateAdj(int from, int to, int distance) {
 		final int length = to - from;
 		if (length < 2) return;
 		distance = distance % length;
@@ -1824,7 +1824,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 
-	public void shiftAdj(int from, int to, int distance, boolean fill) {
+	private void shiftAdj(int from, int to, int distance, boolean fill) {
 		if (from == to) return;
 		if (distance == 0) return;
 		

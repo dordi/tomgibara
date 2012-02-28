@@ -196,13 +196,13 @@ public class BitVectorSample extends TestCase {
 			assertEquals(0, BitVector.fromBigInteger(BigInteger.ZERO).size());
 
 			/**
-			 * If a greater number of bits is required, the size of a BitVector
-			 * constructed from a BigInteger can be supplied as an extra
-			 * parameter:
+			 * If a greater number of bits is required, the size can be supplied
+			 * as an extra parameter when constructing a BitVector from a
+			 * BigInteger:
 			 */
 
-			assertEquals(new BitVector("00000001"), BitVector.fromBigInteger(
-					BigInteger.ONE, 8));
+			assertEquals(new BitVector("00000001"),
+					BitVector.fromBigInteger(BigInteger.ONE, 8));
 
 			/**
 			 * Note that, because BitVectors are unsigned, any attempt to
@@ -290,7 +290,7 @@ public class BitVectorSample extends TestCase {
 
 			/**
 			 * As with shifting, there is no limit to the distance over which
-			 * bits can be rotated. Unlike shifting, bits are never lost.
+			 * bits can be rotated. But unlike shifting, bits are never lost.
 			 */
 
 			v = new BitVector("11001010");
@@ -304,7 +304,7 @@ public class BitVectorSample extends TestCase {
 
 			v.reverse();
 			assertEquals(new BitVector("01010011"), v);
-			
+
 			/**
 			 * Reversing a BitVector twice will naturally restore the bits to
 			 * their original order.
@@ -326,11 +326,187 @@ public class BitVectorSample extends TestCase {
 			assertEquals(new BitVector("11100000"), v);
 			v.reverseRange(2, 8);
 			assertEquals(new BitVector("00011100"), v);
-			
+
 		}
 
 		{ // COPIES AND VIEWS
 
+			/**
+			 * It is frequently necessary to duplicate BitVectors. There are two
+			 * ways of doing this which have very different semantics. One of
+			 * them is copying; this forms a new copy of the bits inside the
+			 * BitVector that won't be modified by changes to the original.
+			 */
+
+			BitVector original = new BitVector(10);
+			BitVector copy = original.copy();
+			assertNotSame(original, copy);
+			assertEquals(original, copy);
+			original.setBit(0, true);
+			assertFalse(original.equals(copy));
+
+			/**
+			 * On the other hand, it's possible to create a new view over the
+			 * bits of the original BitVector. In this case changes to either
+			 * one will be reflected in the other.
+			 */
+
+			BitVector view = original.view();
+			assertNotSame(original, view);
+			assertEquals(original, view);
+			original.setBit(0, false);
+			assertEquals(original, view);
+
+			/**
+			 * If the creation of views was limited to this one method, they
+			 * wouldn't be very useful. But there are many other methods for
+			 * creating views and copies, two of which can create views/copies
+			 * of a subrange of the original BitVector.
+			 */
+
+			original = new BitVector("0011100000");
+			copy = original.rangeCopy(5, 8);
+			assertEquals(3, copy.size());
+			assertTrue(copy.isAllOnes());
+
+			/**
+			 * Although most BitVector operations can be performed over
+			 * subranges, some cannot and ranged views can prove very useful
+			 * limiting the scope of such operations.
+			 */
+
+			view = original.rangeView(5, 8);
+			view.flip();
+			assertTrue(original.isAllZeros());
+
+			/**
+			 * Ranged views can also be used to adjust the indexing of bits,
+			 * since the bits of a view are always indexed from zero. This can
+			 * simplify the implementation of some algorithms at the expense of
+			 * creating intermediate view objects.
+			 */
+
+			view.setBit(0, true);
+			assertTrue(original.getBit(5));
+
+			/**
+			 * In addition to adjusting ranges, views and copies can also
+			 * control mutability. When first constructed, all BitVectors are
+			 * mutable, this means that the bits they contain can be changed.
+			 */
+
+			assertTrue(original.isMutable());
+
+			/**
+			 * But in many situations it's important to prevent code from
+			 * accidentally modifying a BitVector. The simplest way to do this
+			 * is to create an immutable copy.
+			 */
+
+			copy = original.immutableCopy();
+			try {
+				copy.reverse();
+				// the method won't complete normally ...
+				fail();
+			} catch (IllegalStateException e) {
+				// ... the copy cannot be modified
+			}
+			
+			/**
+			 * But this may not be the most efficient way, depending on the
+			 * application. The immutableCopy() will always create a copy
+			 * even if the original is itself immutable.
+			 */
+			
+			assertNotSame(copy, copy.immutableCopy());
+			
+			/**
+			 * This is often unnecessary, so an immutable() method is also
+			 * available which only creates a copy if the original is not
+			 * already immutable.
+			 */
+			
+			assertNotSame(original, original.immutable());
+			assertSame(copy, copy.immutable());
+			
+			/**
+			 * The corresponding methods mutableCopy() and mutable() go the
+			 * other way. They can take an immutable BitVector and make one that
+			 * is mutable. The difference between the two is again that the
+			 * latter method will avoid creating a copy if the BitVector is
+			 * already mutable.
+			 */
+
+			assertSame(original, original.mutable());
+			assertNotSame(copy, copy.mutable());
+			assertNotSame(original, original.mutableCopy());
+			
+			/**
+			 * The problem with creating all of these copies is that all the bit
+			 * data is repeatedly duplicated. This takes may require significant
+			 * amounts of memory and processor time for large BitVectors.
+			 * 
+			 * Often a copy is not required, and all that is needed instead is
+			 * an immutable view. Immutable views can be safely shared between
+			 * methods (the methods cannot modify the bits) but changes to the
+			 * original BitVector (the one over which the view was taken) WILL
+			 * be visible.
+			 * 
+			 * Immutable views are much more efficient than immutable copies for
+			 * large BitVectors. Whether it is necessary to create a copy, or a
+			 * view suffices depends on the application.
+			 */
+			
+			original.set(false);
+			view = original.immutableView();
+			assertTrue(view.isAllZeros());
+			try {
+				view.flip();
+				// the method won't complete normally ...
+				fail();
+			} catch (IllegalStateException e) {
+				// ... the view cannot be modified directly ...
+			}
+			// ... but it can be modified via the original
+			original.flip();
+			assertTrue(view.isAllOnes());
+			
+			/**
+			 * Returning to the simple view() and copy() methods described
+			 * earlier. It's important to know that both of these methods
+			 * preserve the mutability of the original. A new BitVector created
+			 * with these methods will be mutable if and only if the original is
+			 * mutable.
+			 */
+
+			BitVector mutable = original.mutableCopy();
+			assertTrue(mutable.copy().isMutable());
+			assertTrue(mutable.view().isMutable());
+
+			BitVector immutable = original.immutableCopy();
+			assertFalse(immutable.copy().isMutable());
+			assertFalse(immutable.view().isMutable());
+			
+			/**
+			 * In addition to all the copy and view related methods described above,
+			 * versions of the methods that operate on ranges are also available.
+			 * For example:
+			 */
+			
+			copy = original.immutableRangeCopy(0, 5);
+			view = original.immutableRangeView(0, 5);
+			assertTrue(copy.equals(view));
+			original.flip();
+			assertFalse(copy.equals(view));
+			
+			/**
+			 * Finally, it's worth noting that the BitVector class implements
+			 * Cloneable. The clone() method is logically equivalent to calling
+			 * view() but may be slightly more efficient, though perhaps less
+			 * explicit.
+			 */
+			
+			view = original.clone();
 		}
 
 		{ // VECTOR OPERATIONS

@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.SortedSet;
 
 import com.tomgibara.crinch.bits.BitVector.Operation;
+import com.tomgibara.crinch.bits.BitVector.Test;
 
 import junit.framework.TestCase;
 
@@ -468,31 +469,46 @@ public class BitVectorTest extends TestCase {
 	private void testCompare(BitVector v) {
 		int size = v.size();
 		assertTrue(v.testEquals(v));
+		assertTrue(v.test(Test.EQUALS, v));
 		assertTrue(v.testContains(v));
-		if (!v.isAllZeros()) assertTrue(v.testIntersects(v));
+		assertTrue(v.test(Test.CONTAINS, v));
+		if (!v.isAllZeros()) {
+			assertTrue(v.testIntersects(v));
+			assertTrue(v.test(Test.INTERSECTS, v));
+		}
 		
 		BitVector w = v.alignedCopy(true);
 		assertTrue(v.testEquals(w));
+		assertTrue(v.test(Test.EQUALS, w));
 		assertTrue(w.testEquals(v));
+		assertTrue(w.test(Test.EQUALS, v));
 		assertTrue(v.testContains(w));
+		assertTrue(v.test(Test.CONTAINS, w));
 		assertTrue(w.testContains(v));
+		assertTrue(w.test(Test.CONTAINS, v));
 		if (!v.isAllZeros()) {
 			assertTrue(v.testIntersects(w));
+			assertTrue(v.test(Test.INTERSECTS, w));
 			assertTrue(w.testIntersects(v));
+			assertTrue(w.test(Test.INTERSECTS, v));
 		}
 		
 		w = v.alignedCopy(true);
 		for (int i = 0; i < size; i++) {
 			w.setBit(i, true);
 			assertTrue( w.testContains(v) );
+			assertTrue( w.test(Test.CONTAINS, v) );
 			assertTrue( v.testEquals(w) || !v.testContains(w) );
+			assertTrue( v.test(Test.EQUALS, w) || !v.test(Test.CONTAINS, w) );
 		}
 		
 		w = v.alignedCopy(true);
 		for (int i = 0; i < size; i++) {
 			w.setBit(i, false);
 			assertTrue( v.testContains(w) );
+			assertTrue( v.test(Test.CONTAINS, w) );
 			assertTrue( w.testEquals(v) || !w.testContains(v) );
+			assertTrue( w.test(Test.EQUALS, v) || !w.test(Test.CONTAINS, v) );
 		}
 		
 	}

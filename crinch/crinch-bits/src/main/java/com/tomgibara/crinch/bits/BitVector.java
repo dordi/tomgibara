@@ -179,7 +179,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		XOR
 	}
 
-	public enum Comparison {
+	public enum Test {
 		EQUALS,
 		INTERSECTS,
 		CONTAINS
@@ -725,8 +725,8 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return this.size() < that.size() ? compareNumeric(this, that) : -compareNumeric(that, this);
 	}
 	
-	public boolean compare(Comparison comparison, BitVector vector) {
-		return compare(comparison.ordinal(), vector);
+	public boolean test(Test test, BitVector vector) {
+		return test(test.ordinal(), vector);
 	}
 
 	// tests
@@ -1036,15 +1036,15 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	// convenience comparisons
 	
 	public boolean testEquals(BitVector vector) {
-		return compare(EQUALS, vector);
+		return test(EQUALS, vector);
 	}
 	
 	public boolean testIntersects(BitVector vector) {
-		return compare(INTERSECTS, vector);
+		return test(INTERSECTS, vector);
 	}
 	
 	public boolean testContains(BitVector vector) {
-		return compare(CONTAINS, vector);
+		return test(CONTAINS, vector);
 	}
 
 	// convenience tests
@@ -1292,7 +1292,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (!(obj instanceof BitVector)) return false;
 		final BitVector that = (BitVector) obj;
 		if (this.finish - this.start != that.finish - that.start) return false;
-		return compare(EQUALS, that);
+		return test(EQUALS, that);
 	}
 	
 	@Override
@@ -1544,15 +1544,15 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return new BitVector(from, to, copy ? bits.clone() : bits, mutable);
 	}
 
-	private boolean compare(final int comp, final BitVector that) {
+	private boolean test(final int test, final BitVector that) {
 		if (this.finish - this.start != that.finish - that.start) throw new IllegalArgumentException();
 		//trivial case
 		if (this.start == this.finish) {
-			switch (comp) {
+			switch (test) {
 			case EQUALS : return true;
 			case INTERSECTS : return false;
 			case CONTAINS : return true;
-			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
+			default : throw new IllegalArgumentException("Unexpected comparison constant: " + test);
 			}
 		}
 		//TODO worth optimizing for case where this == that?
@@ -1562,7 +1562,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			final long[] thisBits = this.bits;
 			final long[] thatBits = that.bits;
 			final int t = (finish-1) >> ADDRESS_BITS;
-			switch (comp) {
+			switch (test) {
 			case EQUALS :
 				for (int i = t-1; i >= 0; i--) {
 					if (thisBits[i] != thatBits[i]) return false;
@@ -1579,18 +1579,18 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 					if ((bits | thatBits[i]) != bits) return false;
 				}
 				break;
-			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp); 
+			default : throw new IllegalArgumentException("Unexpected comparison constant: " + test); 
 			}
 			{
 				// same length & same start so same finish mask
 				final long m = -1L >>> (ADDRESS_SIZE - finish & ADDRESS_MASK);
 				final long thisB = thisBits[t] & m;
 				final long thatB = thatBits[t] & m;
-				switch (comp) {
+				switch (test) {
 				case EQUALS : return thisB == thatB;
 				case INTERSECTS : return (thisB & thatB) != 0;
 				case CONTAINS : return (thisB | thatB) == thisB;
-				default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
+				default : throw new IllegalArgumentException("Unexpected comparison constant: " + test);
 				}
 			}
 		}
@@ -1602,7 +1602,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			final int f = this.start >> ADDRESS_BITS;
 			final int t = this.finish >> ADDRESS_BITS;
 			final int d = (that.start - this.start) >> ADDRESS_BITS;
-			switch (comp) {
+			switch (test) {
 			case EQUALS :
 				for (int i = f; i < t; i++) {
 					if (thisBits[i] != thatBits[i+d]) return false;
@@ -1619,13 +1619,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 					if ((bits | thatBits[i+d]) != bits) return false;
 				}
 				return true;
-			default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
+			default : throw new IllegalArgumentException("Unexpected comparison constant: " + test);
 			}
 		}
 		//non-optimized case
 		//TODO consider if this can be gainfully optimized
 		final int size = finish - start;
-		switch (comp) {
+		switch (test) {
 		case EQUALS :
 			for (int i = 0; i < size; i++) {
 				if (that.getBitAdj(that.start + i) != this.getBitAdj(this.start + i)) return false;
@@ -1641,7 +1641,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 				if (that.getBitAdj(that.start + i) && !this.getBitAdj(this.start + i)) return false;
 			}
 			return true;
-		default : throw new IllegalArgumentException("Unexpected comparison constant: " + comp);
+		default : throw new IllegalArgumentException("Unexpected comparison constant: " + test);
 		}
 	}
 

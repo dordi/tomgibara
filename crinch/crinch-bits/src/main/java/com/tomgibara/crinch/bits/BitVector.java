@@ -155,9 +155,22 @@ import java.util.SortedSet;
  * 
  */
 
-public final class BitVector extends Number implements Cloneable, Iterable<Boolean> {
+public final class BitVector extends Number implements Cloneable, Iterable<Boolean>, Comparable<BitVector> {
 
 	// statics
+	
+	private static final int ADDRESS_BITS = 6;
+	private static final int ADDRESS_SIZE = 1 << ADDRESS_BITS;
+	private static final int ADDRESS_MASK = ADDRESS_SIZE - 1;
+	
+	private static final int SET = 0;
+	private static final int AND = 1;
+	private static final int OR  = 2;
+	private static final int XOR = 3;
+
+	private static final int EQUALS = 0;
+	private static final int INTERSECTS = 1;
+	private static final int CONTAINS = 2;
 	
 	public enum Operation {
 		SET,
@@ -250,20 +263,72 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return vector;
 	}
 
-	private static final int SET = 0;
-	private static final int AND = 1;
-	private static final int OR  = 2;
-	private static final int XOR = 3;
-
-	private static final int EQUALS = 0;
-	private static final int INTERSECTS = 1;
-	private static final int CONTAINS = 2;
+	public static final Comparator<BitVector> sComparator = new Comparator<BitVector>() {
+		
+		@Override
+		public int compare(BitVector a, BitVector b) {
+			if (a == null) throw new IllegalArgumentException("null a");
+			if (b == null) throw new IllegalArgumentException("null b");
+			if (a == b) return 0;
+			return a.size() < b.size() ? compareImpl(a, b) : - compareImpl(b, a);
+		}
+		
+	};
 	
-	private static final int ADDRESS_BITS = 6;
-	private static final int ADDRESS_SIZE = 1 << ADDRESS_BITS;
-	private static final int ADDRESS_MASK = ADDRESS_SIZE - 1;
+	//a, b not null a size not greater than b size
+	private static int compareImpl(BitVector a, BitVector b) {
+		final int aSize = a.size();
+		final int bSize = b.size();
+		if (aSize != bSize && !b.isAllAdj(b.finish - bSize + aSize, b.finish, false)) return -1;
+		// more optimizations are possible but probably not worthwhile
+		if (a.isAligned() && b.isAligned()) {
+			int pos = aSize & ~ADDRESS_MASK;
+			if (pos != aSize) {
+				int bits = aSize - pos;
+				long aBits = a.getBitsAdj(pos, bits);
+				long bBits = b.getBitsAdj(pos, bits);
+				if (aBits != bBits) {
+					return aBits < bBits ? -1 : 1;
+				}
+			}
+			final long[] aArr = a.bits;
+			final long[] bArr = b.bits;
+			for (int i = (pos >> ADDRESS_BITS) - 1; i >= 0; i--) {
+				long aBits = aArr[i];
+				long bBits = bArr[i];
+				if (aBits == bBits) continue;
+				boolean aNeg = aBits < 0L;
+				boolean bNeg = bBits < 0L;
+				if (bNeg && !aNeg) return -1;
+				if (aNeg && !bNeg) return 1;
+				return aBits < bBits ? -1 : 1;
+			}
+			return 0;
+		} else {
+			final int aStart = a.start;
+			final int bStart = b.start;
+			int offset;
+			for (offset = aSize - ADDRESS_SIZE; offset >= 0; offset -= ADDRESS_SIZE) {
+				long aBits = a.getBitsAdj(offset + aStart, ADDRESS_SIZE);
+				long bBits = b.getBitsAdj(offset + bStart, ADDRESS_SIZE);
+				if (aBits == bBits) continue;
+				boolean aNeg = aBits < 0L;
+				boolean bNeg = bBits < 0L;
+				if (bNeg && !aNeg) return -1;
+				if (aNeg && !bNeg) return 1;
+				return aBits < bBits ? -1 : 1;
+			}
+			if (offset != 0) {
+				long aBits = a.getBitsAdj(aStart, ADDRESS_SIZE + offset);
+				long bBits = b.getBitsAdj(bStart, ADDRESS_SIZE + offset);
+				if (aBits == bBits) return 0;
+				return aBits < bBits ? -1 : 1;
+			}
+			return 0;
+		}
+	}
 	
-	private boolean overlapping(int thisFrom, int thisTo, int thatFrom, int thatTo) {
+	private static boolean overlapping(int thisFrom, int thisTo, int thatFrom, int thatTo) {
 		return thisTo > thatFrom && thisFrom < thatTo;
 	}
 
@@ -624,6 +689,13 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 	
 	// comparisons
+	
+	@Override
+	public int compareTo(BitVector that) {
+		if (that == null) throw new IllegalArgumentException("null that");
+		if (this == that) return 0; // cheap check
+		return this.size() < that.size() ? compareImpl(this, that) : -compareImpl(that, this);
+	}
 	
 	public boolean compare(Comparison comparison, BitVector vector) {
 		return compare(comparison.ordinal(), vector);

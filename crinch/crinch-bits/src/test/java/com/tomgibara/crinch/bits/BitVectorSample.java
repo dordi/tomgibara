@@ -156,7 +156,7 @@ public class BitVectorSample extends TestCase {
 			v.modifyRange(Operation.SET, 8, 10, true);
 
 		}
-
+		
 		{ // NUMBERS
 
 			/**
@@ -249,6 +249,11 @@ public class BitVectorSample extends TestCase {
 
 		}
 
+		/*
+		 * To make the following exposition clearer, we define a method
+		 * bitVector() which simply constructs a BitVector from a string.
+		 */
+
 		{ // SHIFTS AND ROTATIONS
 
 			/**
@@ -263,11 +268,11 @@ public class BitVectorSample extends TestCase {
 			 * vacated bits.
 			 */
 
-			BitVector v = new BitVector("11001010");
+			BitVector v = bitVector("11001010");
 			v.shift(1, true);
-			assertEquals(new BitVector("10010101"), v);
+			assertEquals(bitVector("10010101"), v);
 			v.shift(-2, false);
-			assertEquals(new BitVector("00100101"), v);
+			assertEquals(bitVector("00100101"), v);
 
 			/**
 			 * There is no limit to the distance that a BitVector may be
@@ -276,7 +281,7 @@ public class BitVectorSample extends TestCase {
 			 */
 
 			v.shift(8, false);
-			assertEquals(new BitVector("00000000"), v);
+			assertEquals(bitVector("00000000"), v);
 
 			/**
 			 * Similar to bit shifts, BitVector can also rotate bits. Bits that
@@ -284,18 +289,18 @@ public class BitVectorSample extends TestCase {
 			 * other.
 			 */
 
-			v = new BitVector("11001010");
+			v = bitVector("11001010");
 			v.rotate(1);
-			assertEquals(new BitVector("10010101"), v);
+			assertEquals(bitVector("10010101"), v);
 
 			/**
 			 * As with shifting, there is no limit to the distance over which
 			 * bits can be rotated. But unlike shifting, bits are never lost.
 			 */
 
-			v = new BitVector("11001010");
+			v = bitVector("11001010");
 			v.rotate(v.size());
-			assertEquals(new BitVector("11001010"), v);
+			assertEquals(bitVector("11001010"), v);
 
 			/**
 			 * In addition to shifts and rotations, BitVector can reverse the
@@ -303,7 +308,7 @@ public class BitVectorSample extends TestCase {
 			 */
 
 			v.reverse();
-			assertEquals(new BitVector("01010011"), v);
+			assertEquals(bitVector("01010011"), v);
 
 			/**
 			 * Reversing a BitVector twice will naturally restore the bits to
@@ -311,7 +316,7 @@ public class BitVectorSample extends TestCase {
 			 */
 
 			v.reverse();
-			assertEquals(new BitVector("11001010"), v);
+			assertEquals(bitVector("11001010"), v);
 
 			/**
 			 * Finally, you should be aware that all of these operations
@@ -319,13 +324,13 @@ public class BitVectorSample extends TestCase {
 			 * ranges. Here are some examples:
 			 */
 
-			v = new BitVector("11001010");
+			v = bitVector("11001010");
 			v.shiftRange(0, 4, 1, false);
-			assertEquals(new BitVector("11000100"), v);
+			assertEquals(bitVector("11000100"), v);
 			v.rotateRange(2, 7, -1);
-			assertEquals(new BitVector("11100000"), v);
+			assertEquals(bitVector("11100000"), v);
 			v.reverseRange(2, 8);
-			assertEquals(new BitVector("00011100"), v);
+			assertEquals(bitVector("00011100"), v);
 
 		}
 
@@ -509,7 +514,76 @@ public class BitVectorSample extends TestCase {
 			view = original.clone();
 		}
 
+		/*
+		 * Again, for clarity we introduce a new method bitVector() that just
+		 * constructs a BitVector from a BigInteger.
+		 */
+
 		{ // VECTOR OPERATIONS
+
+			/**
+			 * The BitVector class implements the Comparable interface to allow
+			 * different instances to be ordered in relation to each other.
+			 * Comparison is consistent with the BigInteger value of the
+			 * BitVector.
+			 */
+
+			BigInteger a = BigInteger.valueOf(86400000);
+			BigInteger b = BigInteger.valueOf(16777216);
+			BigInteger c = BigInteger.valueOf(10000000);
+			
+			assertTrue(bitVector(a).compareTo(bitVector(b)) > 0);
+			assertTrue(bitVector(b).compareTo(bitVector(b)) == 0);
+			assertTrue(bitVector(c).compareTo(bitVector(b)) < 0);
+			
+			/**
+			 * Under this comparison equal BitVectors will always compare to
+			 * zero, but the converse is not necessarily true since the
+			 * shorter BitVector is implicitly padded with leading zeros.
+			 */
+			
+			assertTrue(bitVector("00110").compareTo(bitVector("00110")) == 0);
+			assertTrue(bitVector( "0110").compareTo(bitVector("00110")) == 0);
+			assertTrue(bitVector(  "110").compareTo(bitVector("00110")) == 0);
+			
+			/**
+			 * The same ordering is provided by a statically defined comparator
+			 * which may be useful if the ordering needs to be adapted.
+			 */
+
+			BitVector.sNumericComparator.compare(bitVector("100"), bitVector("001"));
+			
+			/**
+			 * For BitVectors that are the same size, this numerical ordering is
+			 * equivalent to a lexical ordering of the bits.
+			 */
+
+			String s = "00110";
+			String t = "01011";
+			String u = "01101";
+			
+			assertEquals(
+					Integer.signum(t.compareTo(s)),
+					Integer.signum(bitVector(t).compareTo(bitVector(s)))
+					);
+			
+			assertEquals(
+					Integer.signum(t.compareTo(t)),
+					Integer.signum(bitVector(t).compareTo(bitVector(t)))
+					);
+			
+			assertEquals(
+					Integer.signum(t.compareTo(u)),
+					Integer.signum(bitVector(t).compareTo(bitVector(u)))
+					);
+			
+			/**
+			 * If a real lexical ordering is required, a second statically
+			 * defined comparator is available.
+			 */
+			
+			BitVector.sLexicalComparator.compare(bitVector("100"), bitVector("11"));
+			
 			// compare, testX
 		}
 
@@ -541,4 +615,13 @@ public class BitVectorSample extends TestCase {
 			// getThen... methods
 		}
 	}
+	
+	private static BitVector bitVector(String str) {
+		return new BitVector(str);
+	}
+	
+	private static BitVector bitVector(BigInteger bigInt) {
+		return BitVector.fromBigInteger(bigInt);
+	}
+	
 }

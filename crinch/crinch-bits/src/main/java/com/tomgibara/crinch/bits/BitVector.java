@@ -263,20 +263,32 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return vector;
 	}
 
-	public static final Comparator<BitVector> sComparator = new Comparator<BitVector>() {
+	public static final Comparator<BitVector> sNumericComparator = new Comparator<BitVector>() {
 		
 		@Override
 		public int compare(BitVector a, BitVector b) {
 			if (a == null) throw new IllegalArgumentException("null a");
 			if (b == null) throw new IllegalArgumentException("null b");
 			if (a == b) return 0;
-			return a.size() < b.size() ? compareImpl(a, b) : - compareImpl(b, a);
+			return a.size() < b.size() ? compareNumeric(a, b) : - compareNumeric(b, a);
+		}
+		
+	};
+	
+	public static final Comparator<BitVector> sLexicalComparator = new Comparator<BitVector>() {
+		
+		@Override
+		public int compare(BitVector a, BitVector b) {
+			if (a == null) throw new IllegalArgumentException("null a");
+			if (b == null) throw new IllegalArgumentException("null b");
+			if (a == b) return 0;
+			return a.size() < b.size() ? compareLexical(a, b) : -compareLexical(b, a);
 		}
 		
 	};
 	
 	//a, b not null a size not greater than b size
-	private static int compareImpl(BitVector a, BitVector b) {
+	private static int compareNumeric(BitVector a, BitVector b) {
 		final int aSize = a.size();
 		final int bSize = b.size();
 		if (aSize != bSize && !b.isAllAdj(b.finish - bSize + aSize, b.finish, false)) return -1;
@@ -326,6 +338,22 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			}
 			return 0;
 		}
+	}
+	
+	//a, b not null a size not greater than b size
+	private static int compareLexical(BitVector a, BitVector b) {
+		final int aSize = a.size();
+		final int bSize = b.size();
+		if (aSize == bSize) return compareNumeric(a, b); // more efficient
+		final int size = Math.min(aSize, bSize);
+		final int aStart = a.finish - size;
+		final int bStart = b.finish - size;
+		for (int i = size - 1; i >= 0; i--) {
+			boolean aBit = a.getBitAdj(aStart + i);
+			boolean bBit = b.getBitAdj(bStart + i);
+			if (aBit != bBit) return bBit ? -1 : 1;
+		}
+		return aSize < bSize ? -1 : 1; 
 	}
 	
 	private static boolean overlapping(int thisFrom, int thisTo, int thatFrom, int thatTo) {
@@ -694,7 +722,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	public int compareTo(BitVector that) {
 		if (that == null) throw new IllegalArgumentException("null that");
 		if (this == that) return 0; // cheap check
-		return this.size() < that.size() ? compareImpl(this, that) : -compareImpl(that, this);
+		return this.size() < that.size() ? compareNumeric(this, that) : -compareNumeric(that, this);
 	}
 	
 	public boolean compare(Comparison comparison, BitVector vector) {

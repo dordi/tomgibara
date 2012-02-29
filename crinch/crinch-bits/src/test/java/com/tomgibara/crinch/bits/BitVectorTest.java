@@ -498,7 +498,7 @@ public class BitVectorTest extends TestCase {
 	}
 
 	public void testCompareTo() {
-		BitVector[] vs = randomVectorFamily(1000);
+		BitVector[] vs = randomVectorFamily(500);
 		for (int i = 1; i < vs.length; i++) {
 			for (int j = 0; j < i; j++) {
 				testCompareTo(vs[i], vs[j]);
@@ -508,13 +508,17 @@ public class BitVectorTest extends TestCase {
 	}
 
 	private void testCompareTo(BitVector u, BitVector v) {
-		int c = u.toBigInteger().compareTo(v.toBigInteger());
-		assertEquals(c, u.compareTo(v));
-		assertEquals(c, BitVector.sComparator.compare(u, v));
+		int cn = Integer.signum(u.toBigInteger().compareTo(v.toBigInteger()));
+		int cl = Integer.signum(u.toString().compareTo(v.toString()));
+		assertEquals(cn, u.compareTo(v));
+		assertEquals(cn, BitVector.sNumericComparator.compare(u, v));
+		assertEquals(cl, BitVector.sLexicalComparator.compare(u, v));
 		u = u.alignedCopy(false);
 		v = v.alignedCopy(false);
-		assertEquals(c, u.compareTo(v));
-		assertEquals(c, BitVector.sComparator.compare(u, v));
+		assertEquals(cn, u.compareTo(v));
+		assertEquals(cn, BitVector.sNumericComparator.compare(u, v));
+		assertEquals(cl, BitVector.sLexicalComparator.compare(u, v));
+		
 	}
 
 	public void testReadAndWrite() throws Exception {

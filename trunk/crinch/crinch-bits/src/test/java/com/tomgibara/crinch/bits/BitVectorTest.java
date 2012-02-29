@@ -497,6 +497,26 @@ public class BitVectorTest extends TestCase {
 		
 	}
 
+	public void testCompareTo() {
+		BitVector[] vs = randomVectorFamily(1000);
+		for (int i = 1; i < vs.length; i++) {
+			for (int j = 0; j < i; j++) {
+				testCompareTo(vs[i], vs[j]);
+			}
+		}
+		
+	}
+
+	private void testCompareTo(BitVector u, BitVector v) {
+		int c = u.toBigInteger().compareTo(v.toBigInteger());
+		assertEquals(c, u.compareTo(v));
+		assertEquals(c, BitVector.sComparator.compare(u, v));
+		u = u.alignedCopy(false);
+		v = v.alignedCopy(false);
+		assertEquals(c, u.compareTo(v));
+		assertEquals(c, BitVector.sComparator.compare(u, v));
+	}
+
 	public void testReadAndWrite() throws Exception {
 		for (int i = 0; i < 10; i++) {
 			BitVector[] vs = randomVectorFamily(10);
@@ -970,5 +990,5 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
-	
+
 }

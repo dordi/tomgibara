@@ -2,6 +2,7 @@ package com.tomgibara.crinch.bits;
 
 import java.math.BigInteger;
 
+import com.tomgibara.crinch.bits.BitVector.Test;
 import com.tomgibara.crinch.bits.BitVector.Operation;
 
 import junit.framework.TestCase;
@@ -16,7 +17,7 @@ public class BitVectorSample extends TestCase {
 		 * A BitVector is a fixed-length sequence of bits. It's an extremely
 		 * powerful class because of the huge number of ways that it allows the
 		 * bits to be accessed and modified. Algorithms that rely heavily on bit
-		 * manipulation, may improve their performance by reducing the frequency
+		 * manipulation can improve their performance by reducing the frequency
 		 * with which bit data needs to be moved between different data
 		 * structures; they can rely on BitVector for all the bit manipulations
 		 * they require.
@@ -519,7 +520,7 @@ public class BitVectorSample extends TestCase {
 		 * constructs a BitVector from a BigInteger.
 		 */
 
-		{ // VECTOR OPERATIONS
+		{ // COMPARISONS AND TESTS
 
 			/**
 			 * The BitVector class implements the Comparable interface to allow
@@ -584,9 +585,74 @@ public class BitVectorSample extends TestCase {
 			
 			BitVector.sLexicalComparator.compare(bitVector("100"), bitVector("11"));
 			
-			// compare, testX
+			/**
+			 * In addition to the orderings provided by these comparators, the
+			 * BitVector class supports a second notion of comparison that is
+			 * related to operations on sets.
+			 * 
+			 * The AND operation of one bit vector on another can be viewed as
+			 * finding the intersection of the two vectors, ie. identifying all
+			 * of the bits which are set in both vectors.
+			 * 
+			 * Sometimes, it can be useful to know whether two bit vectors
+			 * intersect without going so far as to compute the intersection.
+			 * This can be done as follows:
+			 */
+
+			BitVector v = new BitVector("01110");
+			BitVector w = new BitVector("01010");
+			BitVector x = new BitVector("10101");
+
+			assertTrue(v.testIntersects(x));
+			assertFalse(w.testIntersects(x));
+
+			/**
+			 * It is also possible to test whether one bit vector contains all
+			 * the bits set in a second bit vector:
+			 */
+			
+			assertTrue(v.testContains(w));
+			assertFalse(v.testContains(x));
+			
+			/**
+			 * Finally, it is possible to test that one bit vector contains
+			 * exactly those bits set in a second bit vector, ie. that the
+			 * two vectors have the same pattern of bits.
+			 */
+			
+			assertFalse(v.testEquals(w));
+			assertTrue(v.testEquals(v));
+			
+			/**
+			 * Each test (INTERSECTS, CONTAINS and EQUALS) can be performed
+			 * using a single method which takes the test to perform as an
+			 * additional parameter. The following pairs of tests are
+			 * equivalent:
+			 */
+			
+			assertEquals(
+					v.testIntersects(x),
+					v.test(Test.INTERSECTS, x)
+					);
+			
+			assertEquals(
+					v.testContains(w),
+					v.test(Test.CONTAINS, w)
+					);
+			
+			assertEquals(
+					v.testEquals(w),
+					v.test(Test.EQUALS, w)
+					);
+			
+			/**
+			 * Note that tests can only be performed between bit vectors of the
+			 * same length.
+			 */
 		}
 
+		// TODO
+		
 		{ // ANALYZING
 			// first, last, count, all, next
 		}

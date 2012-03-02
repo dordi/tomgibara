@@ -17,7 +17,7 @@
 package com.tomgibara.crinch.bits;
 
 
-public class ByteArrayBitReaderTest extends AbstractByteBasedBitReaderTest {
+public class ByteArrayBitReaderTest extends AbstractBitReaderTest {
 
 	@Override
 	ByteArrayBitReader readerFor(BitVector vector) {

@@ -22,6 +22,7 @@ import java.nio.IntBuffer;
 public class IntArrayBitReaderTest extends AbstractBitReaderTest {
 
 	@Override
+	//TODO support arbitrary length vectors
 	BitReader readerFor(BitVector vector) {
 		vector = vector.mutableCopy();
 		vector.reverse();
@@ -30,7 +31,9 @@ public class IntArrayBitReaderTest extends AbstractBitReaderTest {
 		final IntBuffer intBuffer = byteBuffer.asIntBuffer();
 		int[] ints = new int[ intBuffer.capacity() ];
 		intBuffer.get(ints);
-		return new IntArrayBitReader(ints);
+		IntArrayBitReader reader = new IntArrayBitReader(ints);
+		if (reader.getSize() != vector.size()) throw new IllegalStateException("possibly passed vector that doesn't match int size?");
+		return reader;
 	}
 	
 }

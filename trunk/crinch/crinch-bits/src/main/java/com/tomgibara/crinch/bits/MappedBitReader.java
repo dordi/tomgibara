@@ -29,11 +29,13 @@ public class MappedBitReader extends AbstractBitReader {
 
     // constructors
     
+    //TODO should offer constructor without position?
     public MappedBitReader(MappedByteBuffer buffer, long size, long position) {
         this.buffer = buffer;
         setSize(size);
         buffer.position();
-        //setPosition(position);
+        //TODO should check for position > size?
+        setPosition(position);
     }
 
     public void setSize(long size) {
@@ -55,12 +57,14 @@ public class MappedBitReader extends AbstractBitReader {
     	}
     }
     
-    void setPosition(long position) {
+    @Override
+    public long setPosition(long position) {
         if (position < 0) throw new IllegalArgumentException();
-        if (position > size) throw new IllegalArgumentException();
+        if (position > size) position = size;
         buffer.position((int) (position/8));
         offset = position % 8;
         updateCurrent();
+        return position;
     }
     
 	@Override

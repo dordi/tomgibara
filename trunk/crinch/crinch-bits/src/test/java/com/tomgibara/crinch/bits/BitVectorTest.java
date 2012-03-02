@@ -555,6 +555,22 @@ public class BitVectorTest extends TestCase {
 		BitVector w = new BitVector(v.size());
 		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
 		w.read(in);
+		
+		assertEquals(v, w);
+
+		out = new ByteArrayOutputStream();
+		OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
+		v.write(writer);
+		writer.padToBoundary(BitBoundary.BYTE);
+		writer.flush();
+		out.flush();
+		bytes = out.toByteArray();
+		
+		w = new BitVector(v.size());
+		in = new ByteArrayInputStream(bytes);
+		InputStreamBitReader reader = new InputStreamBitReader(in);
+		w.read(reader);
+		
 		assertEquals(v, w);
 	}
 	
@@ -1010,5 +1026,8 @@ public class BitVectorTest extends TestCase {
 		}
 	}
 
+	public void testBitVectorRead() {
+		
+	}
 
 }

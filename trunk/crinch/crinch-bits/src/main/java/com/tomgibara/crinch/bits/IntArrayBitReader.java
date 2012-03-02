@@ -35,6 +35,14 @@ public class IntArrayBitReader extends AbstractBitReader {
     
     // constructors
 
+    public IntArrayBitReader(long size) {
+        if (size < 0) throw new IllegalArgumentException("negative size");
+        long length = size >> 5;
+        if (length > Integer.MAX_VALUE) throw new IllegalArgumentException("size exceeds maximum possible array bits");
+        ints = new int[(int) length];
+        this.size = size;
+    }
+    
     public IntArrayBitReader(int[] ints) {
     	if (ints == null) throw new IllegalArgumentException("null ints");
     	this.ints = ints;
@@ -92,6 +100,12 @@ public class IntArrayBitReader extends AbstractBitReader {
         return position;
     }
     
+    public long setPosition(long position) {
+        if (position < 0) throw new IllegalArgumentException();
+        return this.position = Math.min(position, size);
+    }
+    
+
     // accessors
     
     public int[] getInts() {
@@ -100,12 +114,6 @@ public class IntArrayBitReader extends AbstractBitReader {
 
     public long getSize() {
         return size;
-    }
-    
-    public void setPosition(long position) {
-        if (position < 0) throw new IllegalArgumentException();
-        if (position > size) throw new IllegalArgumentException();
-        this.position = position;
     }
     
 }

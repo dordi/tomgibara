@@ -100,6 +100,7 @@ public interface BitReader {
 
     //TODO consider whether this method is really worthwhile
     
+    // returns number of other bits read
     int readUntil(boolean one) throws BitStreamException;
     
 	/**
@@ -111,6 +112,28 @@ public interface BitReader {
 	 */
     
     long getPosition();
+    
+    /**
+	 * Attempts to move the position of the reader to the new position.
+	 * Implementations that cannot adjust their position in this way should
+	 * consistently return -1L.
+	 * 
+	 * If this method is supported, the reader is obligated to move the position
+	 * as close to the requested new position as it can. It may be that the
+	 * position remains unchanged if the reader is already at the end of the
+	 * stream, or if the new position is before the current position and
+	 * backward seeking is not supported.
+	 * 
+	 * @param newPosition
+	 *            the desired position, not negative
+	 * @return the resulting position in the stream, or -1L
+	 * @throws IllegalArgumentException
+	 *             if the new position is negative
+	 * @throws BitStreamException
+	 *             if an exception occurs when reading the stream
+	 */
+    
+    long setPosition(long newPosition) throws BitStreamException, IllegalArgumentException;
 
 	/**
 	 * Skip the specified number of bits, possibly null. The number of bits

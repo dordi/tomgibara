@@ -47,8 +47,7 @@ public class FileBitReaderFactory {
 		return bufferSize;
 	}
 	
-	//TODO should be generalized to just BitReader, but setPosition is necessary
-	public ByteBasedBitReader openReader() throws BitStreamException {
+	public BitReader openReader() throws BitStreamException {
 		try {
 			switch(mode) {
 			case MEMORY : return new ByteArrayBitReader(getBytes());
@@ -61,7 +60,7 @@ public class FileBitReaderFactory {
 		}
 	}
 	
-	public void closeReader(ByteBasedBitReader reader) throws BitStreamException {
+	public void closeReader(BitReader reader) throws BitStreamException {
 		if (reader == null) throw new IllegalArgumentException("null reader");
 		if (reader instanceof InputStreamBitReader) {
 			try {

@@ -19,7 +19,7 @@ package com.tomgibara.crinch.record.compact;
 import java.io.File;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
@@ -28,7 +28,6 @@ import com.tomgibara.crinch.record.LinearRecord;
 import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
-import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
@@ -74,7 +73,7 @@ public class CompactProducer implements RecordProducer<LinearRecord> {
 		final long bitsWritten = compactStats.bitsWritten;
 		final RecordDecompactor decompactor = CompactProducer.this.decompactor.copy();
 		
-		final ByteBasedBitReader reader;
+		final BitReader reader;
 		final CodedReader coded;
 		long ordinal = 0;
 		

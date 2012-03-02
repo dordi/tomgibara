@@ -18,7 +18,7 @@ package com.tomgibara.crinch.bits;
 
 import java.io.ByteArrayInputStream;
 
-public class InputStreamBitReaderTest extends AbstractByteBasedBitReaderTest {
+public class InputStreamBitReaderTest extends AbstractBitReaderTest {
 
 	@Override
 	InputStreamBitReader readerFor(BitVector vector) {

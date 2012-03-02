@@ -59,18 +59,19 @@ public abstract class ByteBasedBitReader extends AbstractBitReader {
 
 	// public methods
 
-	public void setPosition(long position) {
+	public long setPosition(long position) {
 		if (position < 0) throw new IllegalArgumentException("negative position");
-		if (position == this.position) return;
-		long index = seekByte(position >> 3);
-		if (index < 0L) {
-			long count = position - this.position;
-			if (count < 0L) throw new IllegalArgumentException("Backward seek not supported");
-			skipBits(count);
-		} else {
-			this.position = index << 3;
-			skipBits(position - this.position);
+		if (position != this.position) {
+			long index = seekByte(position >> 3);
+			if (index < 0L) {
+				long count = position - this.position;
+				if (count > 0L) skipBits(count);
+			} else {
+				this.position = index << 3;
+				skipBits(position - this.position);
+			}
 		}
+		return this.position;
 	}
 	
 	// bit reader methods

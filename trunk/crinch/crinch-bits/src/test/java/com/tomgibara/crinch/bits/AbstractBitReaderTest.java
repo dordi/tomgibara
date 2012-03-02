@@ -115,4 +115,25 @@ public abstract class AbstractBitReaderTest extends TestCase {
 		}
 	}
 	
+	//TODO should test return value
+	public void testSetPosition() {
+		Random r = new Random(0L);
+		for (int i = 0; i < 1000; i++) {
+			int size = 64 + 64 * r.nextInt(10);
+			BitVector source = new BitVector(r, size);
+			BitReader reader = readerFor(source);
+
+			for (int j = 0; j < 100; j++) {
+				int position = r.nextInt(size);
+				long newPosition = reader.setPosition(position);
+				if (newPosition != position) {
+					// assume it's that backward seek not supported
+					reader = readerFor(source);
+					reader.setPosition(position);
+				}
+				assertEquals("at bit " + position, source.getBit(position), reader.readBoolean());
+			}
+		}
+	}
+
 }

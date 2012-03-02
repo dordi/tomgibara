@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
@@ -44,7 +44,6 @@ import com.tomgibara.crinch.record.dynamic.LinkedRecord;
 import com.tomgibara.crinch.record.dynamic.LinkedRecordList;
 import com.tomgibara.crinch.record.process.ProcessContext;
 
-//TODO lots of work here - make reading into memory optional, support memory mapping too
 public class TrieProducer implements RecordProducer<LinearRecord> {
 
 	public static enum Case {
@@ -120,7 +119,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 	
 	public class Accessor implements RecordSequence<LinearRecord> {
 	
-		private final ByteBasedBitReader reader;
+		private final BitReader reader;
 		private final RecordDecompactor decompactor = TrieProducer.this.decompactor.copy();
 		private final CodedReader coded;
 

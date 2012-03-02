@@ -79,7 +79,7 @@ public abstract class AbstractBitWriterTest extends TestCase {
     private void testRuns(int size, long seed) {
         int maxrunlength = 100;
         int asize = size * maxrunlength * 2;
-        BitWriter writer = newBitWriter(asize * 32);
+        BitWriter writer = newBitWriter((asize + 31) / 32 * 32);
         ArrayList<Point> list = new ArrayList<Point>(size);
         
         Random r = new Random(1);
@@ -97,7 +97,7 @@ public abstract class AbstractBitWriterTest extends TestCase {
         writer.padToBoundary(BitBoundary.BYTE);
         writer.flush();
         
-        BitReader reader = bitReaderFor(writer);							
+        BitReader reader = bitReaderFor(writer);
         for (int i = 0; i < size; i++) {
             Point pt = list.get(i);
             for(int x = 0; x < pt.x; x++) {

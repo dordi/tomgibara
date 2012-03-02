@@ -21,16 +21,17 @@ import java.math.BigInteger;
 
 public class ProfiledBitReader implements BitReader {
 
-	private static final int POIS = 0;
-	private static final int R = 1;
-	private static final int RBI = 2;
-	private static final int RB = 3;
-	private static final int RBS = 4;
-	private static final int RZ = 5;
-	private static final int RL = 6;
-	private static final int RC = 7;
-	private static final int SB = 8;
-	private static final int STB = 9;
+	private static final int GP = 0;
+	private static final int SP = 1;
+	private static final int R = 2;
+	private static final int RBI = 3;
+	private static final int RB = 4;
+	private static final int RBS = 5;
+	private static final int RZ = 6;
+	private static final int RL = 7;
+	private static final int RU = 8;
+	private static final int SB = 9;
+	private static final int STB = 10;
 	
 	private final BitReader reader;
 	private final long[] calls = new long[9];
@@ -42,10 +43,16 @@ public class ProfiledBitReader implements BitReader {
 
 	@Override
 	public long getPosition() {
-		calls[POIS]++;
+		calls[GP]++;
 		return reader.getPosition();
 	}
 
+	@Override
+	public long setPosition(long newPosition) throws IllegalArgumentException {
+		calls[SP]++;
+		return reader.setPosition(newPosition);
+	}
+	
 	@Override
 	public int read(int count) throws BitStreamException {
 		calls[R]++;
@@ -84,7 +91,7 @@ public class ProfiledBitReader implements BitReader {
 
 	@Override
 	public int readUntil(boolean one) {
-		calls[RC]++;
+		calls[RU]++;
 		return reader.readUntil(one);
 	}
 	

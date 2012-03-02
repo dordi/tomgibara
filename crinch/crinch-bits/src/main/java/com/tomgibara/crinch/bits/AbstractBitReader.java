@@ -47,22 +47,21 @@ public abstract class AbstractBitReader implements BitReader {
     public long readLong(int count) {
     	if (count < 0) throw new IllegalArgumentException("negative count");
     	if (count > 64) throw new IllegalArgumentException("count too great");
-        if (count == 0) return 0;
+        if (count == 0) return 0L;
         if (count <= 32) return read(count) & 0x00000000ffffffffL;
         return (((long)read(count - 32)) << 32) | (read(32) & 0x00000000ffffffffL);
     }
 
-    //TODO knowing alignment of bit vector would allow this to be optimized
     @Override
     public void readBits(BitVector bits) throws BitStreamException {
     	if (bits == null) throw new IllegalArgumentException("null bits");
-    	for (int i = bits.size() - 1; i >= 0; i--) {
-			bits.setBit(i, readBoolean());
-		}
+    	// subclasses may be able to provide more efficient implementations
+    	bits.read(this);
     }
 
     @Override
     public BigInteger readBigInt(int count) throws BitStreamException {
+    	// subclasses may be able to provide more efficient implementations
     	BitVector bits = new BitVector(count);
     	readBits(bits);
     	return bits.toBigInteger();
@@ -99,6 +98,11 @@ public abstract class AbstractBitReader implements BitReader {
 	
 	@Override
 	public long getPosition() {
+		return -1;
+	}
+	
+	@Override
+	public long setPosition(long position) {
 		return -1;
 	}
 	

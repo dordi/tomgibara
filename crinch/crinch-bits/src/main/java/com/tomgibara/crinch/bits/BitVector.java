@@ -830,6 +830,40 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
+	public void read(BitReader reader) {
+		if (reader == null) throw new IllegalArgumentException("null reader");
+		int size = finish - start;
+		if (size <= 64) {
+			performAdj(SET, start, reader.readLong(size), size) ;
+		} else {
+			int head = finish & ADDRESS_MASK;
+			if (head != 0) performAdj(SET, finish - head, reader.readLong(head), head);
+			final int f = (finish     ) >> ADDRESS_BITS;
+			final int t = (start  + 63) >> ADDRESS_BITS;
+			for (int i = f - 1; i >= t; i--) bits[i] = reader.readLong(ADDRESS_SIZE);
+			int tail = 64 - (start & ADDRESS_MASK);
+			if (tail != 64) performAdj(SET, start, reader.readLong(tail), tail);
+		}
+	}
+	
+	public long write(BitWriter writer) {
+		if (writer == null) throw new IllegalArgumentException("null writer");
+		int size = finish - start;
+		long count = 0L;
+		if (size <= 64) {
+			count += writer.write(getBitsAdj(start, size), size);
+		} else {
+			int head = finish & ADDRESS_MASK;
+			if (head != 0) count += writer.write(getBitsAdj(finish - head, head), head);
+			final int f = (finish     ) >> ADDRESS_BITS;
+			final int t = (start  + 63) >> ADDRESS_BITS;
+			for (int i = f - 1; i >= t; i--) count += writer.write(bits[i], ADDRESS_SIZE);
+			int tail = 64 - (start & ADDRESS_MASK);
+			if (tail != 64) count += writer.write(getBitsAdj(start, tail), tail);
+		}
+		return count;
+	}
+	
 	// convenience setters
 	
 	//named flip for consistency with BigInteger and BitSet
@@ -1284,7 +1318,36 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	public SortedSet<Integer> asSet() {
 		return new IntSet(start);
 	}
+
+	// stream methods
 	
+	public BitReader openReader() {
+		return new VectorReader();
+	}
+	
+	public BitReader openReader(int position) {
+		if (position < 0) throw new IllegalArgumentException();
+		position = finish - position;
+		if (position < start) throw new IllegalArgumentException();
+		return new VectorReader(position);
+	}
+	
+	public BitWriter openWriter() {
+		return new VectorWriter();
+	}
+	
+	public BitWriter openWriter(int position) {
+		return openWriter(Operation.SET, position);
+	}
+	
+	private BitWriter openWriter(Operation operation, int position) {
+		if (operation == null) throw new IllegalArgumentException("null operation");
+		if (position < 0) throw new IllegalArgumentException();
+		position = finish - position;
+		if (position < start) throw new IllegalArgumentException();
+		return new VectorWriter(operation.ordinal(), position);
+	}
+
 	// object methods
 	
 	public boolean equals(Object obj) {
@@ -1513,20 +1576,11 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 
 	private void perform(int operation, int position, BitVector that) {
 		if (that == null) throw new IllegalArgumentException("null vector");
-		final int thatSize = that.size();
-		if (this.bits == that.bits && overlapping(position, position + thatSize, that.start, that.finish)) that = that.copy();
-		if (thatSize == 0) return;
-		if (thatSize <= ADDRESS_SIZE) {
-			perform(operation, position, that.getBits(0, thatSize), thatSize);
-			return;
-		}
 		if (position < 0) throw new IllegalArgumentException("negative position");
+		if (!mutable) throw new IllegalStateException();
 		position += this.start;
 		if (position + that.finish - that.start > this.finish) throw new IllegalArgumentException();
-		//TODO *really* need to optimize this
-		for (int s = that.start; s < that.finish; s++) {
-			performAdj(operation, position++, that.getBitAdj(s));
-		}
+		performAdj(operation, position, that);
 	}
 	
 	private void perform(int operation, int position, byte[] bytes, int offset, int length) {
@@ -1851,6 +1905,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		if (length > 0) performAdj(operation, position, bytes[j], length);
 	}
 */
+
+	private void performAdj(int operation, int position, BitVector that) {
+		final int thatSize = that.size();
+		if (thatSize == 0) return;
+		if (this.bits == that.bits && overlapping(position, position + thatSize, that.start, that.finish)) that = that.copy();
+		if (thatSize <= ADDRESS_SIZE) {
+			performAdj(operation, position, that.getBitsAdj(that.start, thatSize), thatSize);
+		} else {
+			//TODO *really* need to optimize this
+			for (int s = that.start; s < that.finish; s++) {
+				performAdj(operation, position++, that.getBitAdj(s));
+			}
+		}
+	}
+	
 	//specialized implementation for the common case of setting an individual bit
 	
 	private void performSetAdj(int position, boolean value) {
@@ -2100,7 +2169,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	// inner classes
 	
 	//TODO make public and expose more efficient methods?
-	private class BitIterator implements ListIterator<Boolean> {
+	private final class BitIterator implements ListIterator<Boolean> {
 		
 		private final int from;
 		private final int to;
@@ -2174,7 +2243,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	}
 
 	//TODO make public and expose more efficient methods?
-	private class PositionIterator implements ListIterator<Integer> {
+	private final class PositionIterator implements ListIterator<Integer> {
 		
 		private static final int NOT_SET = Integer.MIN_VALUE;
 		
@@ -2287,7 +2356,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 	}
 	
-	private class BitList extends AbstractList<Boolean> {
+	private final class BitList extends AbstractList<Boolean> {
 		
 		@Override
 		public boolean isEmpty() {
@@ -2360,7 +2429,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 	}
 	
-	private class IntSet extends AbstractSet<Integer> implements SortedSet<Integer> {
+	private final class IntSet extends AbstractSet<Integer> implements SortedSet<Integer> {
 
 		private final int offset; // the value that must be added to received values to map them onto the bits
 
@@ -2567,7 +2636,202 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		
 	}
 
-	// classes to accomodate environments that don't have Arrays.copyOfRange
+	// classes for reading and writing bits
+	
+	private final class VectorReader extends AbstractBitReader {
+		
+		private final long initialPosition;
+		private int position;
+		
+		private VectorReader(int position) {
+			this.initialPosition = position;
+			this.position = position;
+		}
+		
+		private VectorReader() {
+			this(finish);
+		}
+		
+		@Override
+		public int readBit() {
+			if (position == start) throw new EndOfBitStreamException();
+			return getBitAdj(--position) ? 1 : 0;
+		}
+		
+		@Override
+		public int read(int count) {
+	    	if (count < 0) throw new IllegalArgumentException("negative count");
+	    	if (count > 32) throw new IllegalArgumentException("count too great");
+	        if (count == 0) return 0;
+	        if (position - count < start) throw new EndOfBitStreamException();
+	        return (int) getBitsAdj(position -= count, count);
+		}
+		
+		@Override
+		public long readLong(int count) {
+	    	if (count < 0) throw new IllegalArgumentException("negative count");
+	    	if (count > 64) throw new IllegalArgumentException("count too great");
+	        if (count == 0) return 0L;
+	        if (position - count < start) throw new EndOfBitStreamException();
+	        return getBitsAdj(position -= count, count);
+		}
+
+		@Override
+		public void readBits(BitVector bits) throws BitStreamException {
+			final int size = bits.size();
+	        if (position - size < start) throw new EndOfBitStreamException();
+			//TODO find a more efficient way to do this
+			final int from = position - size;
+			bits.setVector(duplicateAdj(from, position, true, false));
+			position = from;
+		}
+		
+		@Override
+		public BigInteger readBigInt(int count) throws BitStreamException {
+	        if (position - count < start) throw new EndOfBitStreamException();
+			switch(count) {
+			case 0 : return BigInteger.ZERO;
+			case 1 : return getBitAdj(position--) ? BigInteger.ZERO : BigInteger.ONE;
+			default :
+				final int from = position - count;
+				final int to = position;
+				position = from;
+				return duplicateAdj(from, to, false, false).toBigInteger();
+			}
+		}
+		
+		@Override
+		public boolean readBoolean() {
+			if (position == start) throw new EndOfBitStreamException();
+			return getBitAdj(--position);
+		}
+
+		@Override
+		public int readUntil(boolean one) throws BitStreamException {
+			int index = one ? lastOneInRangeAdj(start, position) : lastZeroInRangeAdj(start, position);
+			if (index < start) throw new EndOfBitStreamException();
+			int read = position - index - 1;
+			position = index;
+			return read;
+		}
+		
+		@Override
+		public long skipBits(long count) {
+			if (count < 0L) throw new IllegalArgumentException("negative count");
+			int remaining = position - start;
+			long advance = remaining < count ? remaining : count;
+			position -= (int) advance;
+			return advance;
+		}
+		
+		@Override
+		public long getPosition() {
+			return initialPosition - position;
+		}
+		
+		@Override
+		public long setPosition(long position) {
+			if (position < 0) throw new IllegalArgumentException();
+			//TODO need to guard against overflow?
+			return this.position = Math.max((int) (initialPosition - position), start);
+		}
+		
+	}
+
+	private final class VectorWriter extends AbstractBitWriter {
+
+		private final long initialPosition;
+		private final int operation;
+		private int position;
+		
+		private VectorWriter(int operation, int position) {
+			this.operation = operation;
+			this.initialPosition = position;
+			this.position = position;
+		}
+		
+		private VectorWriter() {
+			this(SET, finish);
+		}
+
+		@Override
+		public int writeBit(int bit) {
+			if (position == start) throw new EndOfBitStreamException();
+			//TODO consider an optimized version of this
+			performAdj(operation, position--, (bit & 1) == 1);
+			return 1;
+		}
+		
+		@Override
+		public int writeBoolean(boolean bit) {
+			if (position == start) throw new EndOfBitStreamException();
+			performAdj(operation, position--, bit);
+			return 1;
+		}
+		
+		@Override
+		public long writeBooleans(boolean value, long count) {
+			//TODO need to guard against overflow?
+			if (position - count < start) throw new EndOfBitStreamException();
+			int from = position - (int) count;
+			performAdj(operation, from, position, value);
+			position = from;
+			return count;
+		}
+		
+		@Override
+		public int write(int bits, int count) {
+	    	if (count < 0) throw new IllegalArgumentException("negative count");
+	    	if (count > 32) throw new IllegalArgumentException("count too great");
+	        if (count == 0) return 0;
+	        if (position - count < start) throw new EndOfBitStreamException();
+	        performAdj(operation, position -= count, bits, count);
+	        return count;
+		}
+
+		@Override
+		public int write(long bits, int count) {
+	    	if (count < 0) throw new IllegalArgumentException("negative count");
+	    	if (count > 64) throw new IllegalArgumentException("count too great");
+	        if (count == 0) return 0;
+	        if (position - count < start) throw new EndOfBitStreamException();
+	        performAdj(operation, position -= count, bits, count);
+	        return count;
+		}
+		
+		@Override
+		public int write(BitVector bits) {
+			if (bits == null) throw new IllegalArgumentException("null bits");
+			int size = bits.size();
+			int from = position - size;
+			if (from < start) throw new EndOfBitStreamException();
+			performAdj(operation, position = from, bits);
+			return size;
+		}
+		
+		@Override
+		public int write(BigInteger bits, int count) {
+			if (bits == null) throw new IllegalArgumentException("null bits");
+	    	if (count < 0) throw new IllegalArgumentException("negative count");
+	    	if (count == 0) return 0;
+	    	if (count <= 64) {
+		        performAdj(operation, position -= count, bits.longValue(), count);
+	    	} else {
+	        	for (int i = count - 1; i >= 0; i--) {
+	        		performAdj(operation, position--, bits.testBit(i));
+	        	}
+	    	}
+			return count;
+		}
+		
+		@Override
+		public long getPosition() {
+			return initialPosition - position;
+		}
+		
+	}
+	
+	// classes to accommodate environments that don't have Arrays.copyOfRange
 	
 	private interface ArrayCopier {
 		

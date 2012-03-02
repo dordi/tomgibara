@@ -19,7 +19,7 @@ package com.tomgibara.crinch.record.index;
 import java.io.File;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.coding.CodedReader;
@@ -64,7 +64,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 
 	public class Accessor implements RecordSequence<EmptyRecord> {
 
-		private final ByteBasedBitReader reader;
+		private final BitReader reader;
 		private final CodedReader coded;
 		private final long recordCount = recStats.getRecordCount();
 		private final int fixedBitSize = posStats.fixedBitSize;

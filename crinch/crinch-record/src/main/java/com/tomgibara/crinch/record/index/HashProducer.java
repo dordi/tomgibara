@@ -1,10 +1,9 @@
 package com.tomgibara.crinch.record.index;
 
 import java.io.File;
-import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.tomgibara.crinch.bits.ByteBasedBitReader;
+import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.FileBitReaderFactory;
 import com.tomgibara.crinch.bits.FileBitReaderFactory.Mode;
 import com.tomgibara.crinch.hashing.HashSource;
@@ -14,7 +13,6 @@ import com.tomgibara.crinch.record.RecordProducer;
 import com.tomgibara.crinch.record.RecordSequence;
 import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.compact.CompactProducer;
-import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.SubRecordDef;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory;
 import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
@@ -87,7 +85,7 @@ public class HashProducer implements RecordProducer<LinearRecord> {
 		private final int noPosition = (1 << hashStats.positionBits) - 1;
 		private final int noOrdinal = (1 << hashStats.ordinalBits) - 1;
 		
-		private final ByteBasedBitReader reader;
+		private final BitReader reader;
 
 		private CompactProducer.Accessor records = null;
 		private PositionProducer.Accessor positions = null;

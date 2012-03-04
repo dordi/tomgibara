@@ -15,7 +15,6 @@ public class BitVectorDeBruijnTest extends TestCase {
 
 	private void testDeBruijn(int size) {
 		BitVector sequence = generateDeBruijn(size);
-		System.out.println(sequence);
 		HashSet<Integer> values = new HashSet<Integer>();
 		for (int i = 0; i < sequence.size() - size; i++) {
 			int value = (int) sequence.getBits(i, size);
@@ -38,16 +37,15 @@ public class BitVectorDeBruijnTest extends TestCase {
 		BitVector sequence = new BitVector(length + n);
 		// Seed the sequence with the initial value (n 1s)
 		sequence.setRange(0, n, true);
-		// Iterate over the sequence
+		// Populate the sequence
 		for (int i = 0; i < length; i++) {
 			// Extract the current word from the sequence
-			int bits = (int) sequence.getBits(i, n);
+			int word = (int) sequence.getBits(i, n);
 			// Record that we've seen it
-			memory.add(bits);
-			// Shift it right, populating the leftmost bit with zero
-			bits >>= 1;
-			// If we've seen the word before, use a one instead.
-			sequence.setBit(i + n, memory.contains(bits));
+			memory.add(word);
+			// Shift the word right, populating the leftmost bit with zero
+			// if we've seen the word before, use a one instead
+			sequence.setBit(i + n, memory.contains(word >> 1));
 		}
 		return sequence;
 	}

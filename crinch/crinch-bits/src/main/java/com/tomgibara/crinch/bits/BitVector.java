@@ -1340,7 +1340,7 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		return openWriter(Operation.SET, position);
 	}
 	
-	private BitWriter openWriter(Operation operation, int position) {
+	public BitWriter openWriter(Operation operation, int position) {
 		if (operation == null) throw new IllegalArgumentException("null operation");
 		if (position < 0) throw new IllegalArgumentException();
 		position = finish - position;

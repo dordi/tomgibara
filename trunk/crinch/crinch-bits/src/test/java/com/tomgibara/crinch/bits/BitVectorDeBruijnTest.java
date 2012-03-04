@@ -24,17 +24,30 @@ public class BitVectorDeBruijnTest extends TestCase {
 		assertEquals(1 << size, values.size());
 	}
 
-	private BitVector generateDeBruijn(int size) {
-		if (size > 31) throw new IllegalArgumentException("size too big");
-		int count = 1 << size;
-		Set<Integer> memory = new BitVector(count).asSet();
-		BitVector sequence = new BitVector(count + size);
-		sequence.setRange(0, size, true);
-		for (int i = 0; i < count; i++) {
-			int bits = (int) sequence.getBits(i, size);
+	// generates a binary De Bruijn sequence over words of length n
+	private BitVector generateDeBruijn(int n) {
+		// Check arguments
+		if (n < 0) throw new IllegalArgumentException("n is negative");
+		if (n > 31) throw new IllegalArgumentException("n exceeds 31");
+		// There are 2^n words in the entire sequence
+		int length = 1 << n;
+		// Create a set that records which words we have already seen
+		Set<Integer> memory = new BitVector(length).asSet();
+		// Store the sequence with an extra n bits
+		// makes things easier for enumerating the values 
+		BitVector sequence = new BitVector(length + n);
+		// Seed the sequence with the initial value (n 1s)
+		sequence.setRange(0, n, true);
+		// Iterate over the sequence
+		for (int i = 0; i < length; i++) {
+			// Extract the current word from the sequence
+			int bits = (int) sequence.getBits(i, n);
+			// Record that we've seen it
 			memory.add(bits);
+			// Shift it right, populating the leftmost bit with zero
 			bits >>= 1;
-			sequence.setBit(i + size, memory.contains(bits));
+			// If we've seen the word before, use a one instead.
+			sequence.setBit(i + n, memory.contains(bits));
 		}
 		return sequence;
 	}

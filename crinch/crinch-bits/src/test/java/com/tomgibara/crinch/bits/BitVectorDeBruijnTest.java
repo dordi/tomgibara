@@ -43,7 +43,7 @@ public class BitVectorDeBruijnTest extends TestCase {
 			int word = (int) sequence.getBits(i, n);
 			// Record that we've seen it
 			memory.add(word);
-			// Shift the word right, populating the leftmost bit with zero
+			// Shift the word left, populating the rightmost bit with zero
 			// if we've seen the word before, use a one instead
 			sequence.setBit(i + n, memory.contains(word >> 1));
 		}

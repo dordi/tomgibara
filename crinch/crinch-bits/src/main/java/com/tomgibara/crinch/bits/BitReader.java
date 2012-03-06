@@ -98,9 +98,24 @@ public interface BitReader {
     
     void readBits(BitVector bits) throws BitStreamException;
 
-    //TODO consider whether this method is really worthwhile
-    
-    // returns number of other bits read
+	/**
+	 * Reads as many consecutive bits as possible together with a single
+	 * terminating bit of the opposite value and returns the number of
+	 * consecutive bits read.
+	 * 
+	 * This means that at least one bit is always read (the terminating bit)
+	 * unless the end of the stream has been reached in which case an
+	 * {@link EndOfBitStreamException} is raised.
+	 * 
+	 * The number returned does not include the terminating bit in the count.
+	 * 
+	 * @param one
+	 *            whether ones should be counted instead of zeros
+	 * @return the number of consecutive bits read.
+	 * @throws BitStreamException
+	 *             if an exception occurs when reading the stream
+	 */
+
     int readUntil(boolean one) throws BitStreamException;
     
 	/**

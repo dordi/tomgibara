@@ -18,6 +18,16 @@ package com.tomgibara.crinch.bits;
 
 import java.math.BigInteger;
 
+/**
+ * A convenient base class for creating {@link BitReader} implementations.
+ * Implementations MUST implement either {@link #readBit()} or
+ * {@link #read(int)}, SHOULD implement {@link #getPosition()} and/or
+ * {@link #setPosition(long)} where practical and MAY override any other methods
+ * as necessary, say to improve performance.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
 public abstract class AbstractBitReader implements BitReader {
 
@@ -55,13 +65,11 @@ public abstract class AbstractBitReader implements BitReader {
     @Override
     public void readBits(BitVector bits) throws BitStreamException {
     	if (bits == null) throw new IllegalArgumentException("null bits");
-    	// subclasses may be able to provide more efficient implementations
     	bits.read(this);
     }
 
     @Override
     public BigInteger readBigInt(int count) throws BitStreamException {
-    	// subclasses may be able to provide more efficient implementations
     	BitVector bits = new BitVector(count);
     	readBits(bits);
     	return bits.toBigInteger();

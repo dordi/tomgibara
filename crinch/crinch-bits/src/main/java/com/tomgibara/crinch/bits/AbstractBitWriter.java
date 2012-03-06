@@ -18,8 +18,17 @@ package com.tomgibara.crinch.bits;
 
 import java.math.BigInteger;
 
+/**
+ * A convenient base class for creating {@link BitWriter} implementations.
+ * Implementations MUST implement either {@link #writeBit(int)} or
+ * {@link #write(int, int)}, SHOULD implement {@link #getPosition()} where
+ * practical and MAY override any other methods as necessary, say to improve
+ * performance.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
-//must override write(int, int) or writeBit(int)
 public abstract class AbstractBitWriter implements BitWriter {
 
     @Override

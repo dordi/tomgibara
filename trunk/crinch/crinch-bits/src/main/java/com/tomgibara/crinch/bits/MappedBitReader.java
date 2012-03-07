@@ -18,7 +18,8 @@ package com.tomgibara.crinch.bits;
 
 import java.nio.MappedByteBuffer;
 
-public class MappedBitReader extends AbstractBitReader {
+//TODO implement this properly
+class MappedBitReader extends AbstractBitReader {
 
     private final MappedByteBuffer buffer;
     private long size;

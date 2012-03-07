@@ -57,8 +57,6 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 	 *             if an exception occurs when writing
 	 */
 	
-	//TODO change name: fillBytes
-	//TODO don't return number written, throw exception for EOS
 	protected abstract void fillBytes(int value, long count) throws BitStreamException;
 	
 	// bit writer methods

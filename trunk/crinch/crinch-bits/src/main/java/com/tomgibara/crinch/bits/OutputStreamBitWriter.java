@@ -25,7 +25,7 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 	private static byte[] sZerosBuffer = null;
 	private static byte[] sOnesBuffer = null;
 	
-	private static final int PAD_BUFFER = 100;
+	private static final int PAD_BUFFER = 128;
 	private static final int PAD_LIMIT = 3;
 	private final OutputStream out;
 	
@@ -71,11 +71,11 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 			}
 			
 			// write the buffer as many times as we need to
-			long i;
-			for (i = 0; i < count; i += PAD_BUFFER) {
+			long limit = count / len;
+			for (long i = 0; i < limit; i++) {
 				out.write(buffer);
 			}
-			int r = (int) (count - i);
+			int r = (int) (count - limit * len);
 			if (r != 0) out.write(buffer, 0, r);
 
 		} catch (IOException e) {

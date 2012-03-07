@@ -16,6 +16,7 @@
  */
 package com.tomgibara.crinch.bits;
 
+import java.io.OutputStream;
 import java.math.BigInteger;
 
 /**
@@ -128,23 +129,36 @@ public interface BitWriter {
     
 	/**
 	 * Flushes this output stream and forces any buffered output bits to be
-	 * written out.
+	 * written out to an underlying stream. This does not necessarily cause an
+	 * underlying stream to flush should that operation is supported (eg. if
+	 * bits are being written to an {@link OutputStream}).
+	 * 
+	 * NOTE: Implementations that write bits to an underlying medium that cannot
+	 * persist individual bits (eg files) may necessarily retain some number of
+	 * bits that cannot be persisted until a boundary has been reached.
 	 * 
 	 * @throws BitStreamException
 	 *             if an exception occurs flushing the stream
+	 * @see #padToBoundary(BitBoundary)
 	 */
     
     void flush() throws BitStreamException;
     
 	/**
-	 * Pads the stream with zeros upto the specified boundary. If the stream is
+	 * Pads the stream with zeros up to the specified boundary. If the stream is
 	 * already positioned on a boundary, zero bits will be written.
+	 * 
+	 * It may be necessary to call this method prior to {@link #flush()} on some
+	 * {@link BitWriter} implementations.
+	 * 
+	 * NOTE: This method may not be supported by writers that cannot track their
+	 * position in the bit stream.
 	 * 
 	 * @param boundary
 	 *            the 'size' of boundary
 	 * @return the number of zero bits written to the stream
 	 * @throws UnsupportedOperationException
-	 *             if the stream does not support alignment
+	 *             if the stream does not support padding
 	 * @throws BitStreamException
 	 *             if an exception occurs when padding
 	 */

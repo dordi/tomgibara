@@ -16,6 +16,13 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * A convenient base class for creating {@link BitReader} implementations that
+ * source their bits from a sequence of bytes.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
 public abstract class ByteBasedBitReader extends AbstractBitReader {
 
@@ -47,14 +54,55 @@ public abstract class ByteBasedBitReader extends AbstractBitReader {
 	private long position = 0;
 	
 	// methods for overriding
-	
-	// returns -1 for end of stream
+
+	/**
+	 * The next byte in the stream.
+	 * 
+	 * @return the next byte in the stream, or -1 if the end of the byte stream
+	 *         has been reached
+	 * 
+	 * @throws BitStreamException
+	 *             if an exception occurs when reading
+	 */
+
 	protected abstract int readByte() throws BitStreamException;
-	
-	// permitted to skip fewer - possibly zero
+
+	/**
+	 * Instructs the byte stream to skip a specified number of bytes.
+	 * Implementations are permitted to skip fewer, and possibly zero, bytes.
+	 * Any attempt to skip past the end of the stream should curtail the number
+	 * of bytes skipped and not necessarily raise a {@link BitStreamException}.
+	 * 
+	 * Implementations that cannot support this method MAY safely return zero on
+	 * every call.
+	 * 
+	 * @param count
+	 *            the number of bytes to skip, never zero
+	 * @return the number of bytes skipped
+	 * @throws BitStreamException
+	 *             if an exception occurs when skipping
+	 */
+
 	protected abstract long skipBytes(long count) throws BitStreamException;
 
-	// returns -1 if seek not supported
+	/**
+	 * Instructs the byte stream to reposition itself so that the next read will
+	 * return the byte at the specified index. Attempting to seek beyond the
+	 * length of the stream is not an error, in this case, implementations that
+	 * support seeking SHOULD return the first index after that of the last
+	 * byte.
+	 * 
+	 * Implementations that cannot support this method SHOULD return
+	 * consistently return -1L.
+	 * 
+	 * @param index
+	 *            the next byte to be read via {@link #readByte()}
+	 * @return the index of the next byte that will be returned from
+	 *         {@link #readByte()}
+	 * @throws BitStreamException
+	 *             if an exception occurs when seeking
+	 */
+	
 	protected abstract long seekByte(long index) throws BitStreamException;
 
 	// public methods

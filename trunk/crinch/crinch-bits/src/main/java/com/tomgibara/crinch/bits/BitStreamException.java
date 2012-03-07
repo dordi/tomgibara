@@ -16,6 +16,14 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * This exception is raised when methods on a {@link BitReader} or
+ * {@link BitWriter} encounter the end of a bit stream during the operation.
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 public class BitStreamException extends RuntimeException {
 
 	private static final long serialVersionUID = 6076037872218957434L;

@@ -18,6 +18,13 @@ package com.tomgibara.crinch.bits;
 
 import java.util.Arrays;
 
+/**
+ * Writes bits to an array of bytes,
+ * 
+ * @author Tom Gibara
+ *
+ */
+
 public class ByteArrayBitWriter extends ByteBasedBitWriter {
 
 	private final byte[] bytes;

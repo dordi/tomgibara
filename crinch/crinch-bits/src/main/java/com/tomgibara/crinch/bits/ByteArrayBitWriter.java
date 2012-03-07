@@ -43,13 +43,11 @@ public class ByteArrayBitWriter extends ByteBasedBitWriter {
 	}
 
 	@Override
-	protected long padBytes(boolean padWithOnes, long count) throws BitStreamException {
+	protected void fillBytes(int value, long count) throws BitStreamException {
 		count = Math.min(count, bytes.length - index);
-		byte value = padWithOnes ? (byte) 255 : (byte) 0;
 		int newIndex = index + (int) count;
-		Arrays.fill(bytes, index, newIndex, value);
+		Arrays.fill(bytes, index, newIndex, (byte) value);
 		index = newIndex;
-		return count;
 	}
 
 	public byte[] getBytes() {

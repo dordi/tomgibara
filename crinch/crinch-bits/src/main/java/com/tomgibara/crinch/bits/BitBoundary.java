@@ -16,6 +16,13 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * A boundary between bits.
+ * 
+ * @author Tom Gibara
+ *
+ */
+
 public enum BitBoundary {
 
 	BYTE(3),

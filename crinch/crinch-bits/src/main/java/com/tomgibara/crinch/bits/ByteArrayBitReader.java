@@ -16,6 +16,13 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * Reads bits from an array of bytes.
+ * 
+ * @author Tom Gibara
+ *
+ */
+
 public class ByteArrayBitReader extends ByteBasedBitReader {
 
 	private final byte[] bytes;

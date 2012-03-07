@@ -17,6 +17,14 @@
 package com.tomgibara.crinch.bits;
 
 
+/**
+ * A convenient base class for creating {@link BitWriter} implementations that
+ * store their bits in a byte sequence.
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 //TODO optimize write
 public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 
@@ -25,9 +33,33 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 	private long position = 0;
 	
 	// methods for implementation
-	
+
+	/**
+	 * Writes a byte into the sequence. The byte to be written is provided as
+	 * the least-significant byte of the supplied int.
+	 * 
+	 * @param value
+	 *            the value to write
+	 * @throws BitStreamException
+	 *             if an exception occurs when writing
+	 */
+
 	protected abstract void writeByte(int value) throws BitStreamException;
+
+	/**
+	 * Writes a single value repeatedly into the sequence.
+	 * 
+	 * @param value
+	 *            the value to be written
+	 * @param count
+	 *            the number of bytes to write
+	 * @return the number of bytes written
+	 * @throws BitStreamException
+	 *             if an exception occurs when writing
+	 */
 	
+	//TODO change name: fillBytes
+	//TODO don't return number written, throw exception for EOS
 	protected abstract long padBytes(boolean padWithOnes, long count) throws BitStreamException;
 	
 	// bit writer methods

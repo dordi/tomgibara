@@ -25,7 +25,6 @@ package com.tomgibara.crinch.bits;
  * 
  */
 
-//TODO optimize write
 public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 
 	private int buffer = 0;
@@ -89,6 +88,34 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 		}
 		position++;
 		return 1;
+	}
+
+	@Override
+	public int write(int bits, int count) {
+    	if (count < 0) throw new IllegalArgumentException("negative count");
+    	if (count > 32) throw new IllegalArgumentException("count too great");
+		if (count == 0) return 0;
+		int c = count;
+		// first buffer fill, we need to mix bits 
+		if (this.count + c >= 8) {
+			int b = 8 - this.count;
+			c -= b;
+			writeByte( (buffer << b) | ((bits >> c) & (-1 >>> -b)) );
+			this.count = 0;
+		}
+		while (c > 7) {
+			c -= 8;
+			writeByte(bits >> c);
+		}
+		if (this.count == 0) {
+			buffer = bits;
+			this.count = c;
+		} else {
+			buffer = (buffer << c) | (bits & (-1 >>> -c));
+			this.count += c;
+		}
+		position += count;
+		return count;
 	}
 	
 	@Override

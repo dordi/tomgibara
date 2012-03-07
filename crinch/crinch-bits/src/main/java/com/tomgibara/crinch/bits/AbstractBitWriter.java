@@ -57,6 +57,8 @@ public abstract class AbstractBitWriter implements BitWriter {
 
     @Override
     public int write(int bits, int count) {
+    	if (count < 0) throw new IllegalArgumentException("negative count");
+    	if (count > 32) throw new IllegalArgumentException("count too great");
         if (count == 0) return 0;
         int c = 0;
         for (count--; count >= 0; count--) {
@@ -67,6 +69,8 @@ public abstract class AbstractBitWriter implements BitWriter {
 
     @Override
     public int write(long bits, int count) {
+    	if (count < 0) throw new IllegalArgumentException("negative count");
+    	if (count > 64) throw new IllegalArgumentException("count too great");
     	if (count <= 32) {
     		return write((int) bits, count);
     	} else {
@@ -76,6 +80,7 @@ public abstract class AbstractBitWriter implements BitWriter {
 
     @Override
     public int write(BigInteger bits, int count) {
+    	if (count < 0) throw new IllegalArgumentException("negative count");
     	if (count <= 32) return write(bits.intValue(), count);
     	if (count <= 64) return write(bits.longValue(), count);
     	int c = 0;

@@ -18,7 +18,7 @@ package com.tomgibara.crinch.bits;
 
 /**
  * This exception is raised when methods on a {@link BitReader} or
- * {@link BitWriter} encounter the end of a bit stream during the operation.
+ * {@link BitWriter} cannot read-from or write-to the bit stream.
  * 
  * @author Tom Gibara
  * 

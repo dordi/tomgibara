@@ -22,10 +22,8 @@ import junit.framework.TestCase;
 
 import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.BitStreams;
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
 import com.tomgibara.crinch.bits.ByteArrayBitWriter;
-import com.tomgibara.crinch.bits.PrintStreamBitWriter;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 import com.tomgibara.crinch.coding.HuffmanCoding.DescendingFrequencyValues;

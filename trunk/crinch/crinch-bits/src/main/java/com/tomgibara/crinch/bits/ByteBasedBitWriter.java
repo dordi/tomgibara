@@ -59,7 +59,7 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 	
 	//TODO change name: fillBytes
 	//TODO don't return number written, throw exception for EOS
-	protected abstract long padBytes(boolean padWithOnes, long count) throws BitStreamException;
+	protected abstract void fillBytes(int value, long count) throws BitStreamException;
 	
 	// bit writer methods
 	
@@ -71,7 +71,9 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 		if (count <= boundary) return write(bits, (int) count);
 		
 		long c = write(bits, boundary);
-		long d = padBytes(value, (count - c) >> 3) << 3;
+		long d = (count - c) >> 3;
+		fillBytes(bits, d);
+		d <<= 3;
 		position += d;
 		c += d;
 		c += write(bits, (int) (count - c));

@@ -43,34 +43,59 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 	}
 	
 	@Override
-	protected long padBytes(boolean padWithOnes, long count) throws BitStreamException {
+	protected void fillBytes(int value, long count) throws BitStreamException {
 		try {
+			// if it's short, write bytes directly
 			if (count < PAD_LIMIT) {
-				final int value = padWithOnes ? 0xff : 0x00;
 				for (int i = 0; i < count; i++) out.write(value);
-			} else if (count < PAD_BUFFER) {
-				out.write(getBuffer(padWithOnes), 0, (int) count);
-			} else {
-				byte[] buffer = getBuffer(padWithOnes);
-				long i;
-				for (i = 0; i < count; i += PAD_BUFFER) {
-					out.write(buffer);
-				}
-				int r = (int) (count - i);
-				if (r != 0) out.write(buffer, 0, r);
+				return;
 			}
+			
+			// obtain an array we can use to write the bytes efficiently
+			byte b = (byte) value;
+			byte[] buffer = getBuffer(b);
+			int len;
+			if (buffer == null) {
+				//TODO should all buffers be cached?
+				len = count > PAD_BUFFER ? PAD_BUFFER : (int) count;
+				buffer = new byte[len];
+				Arrays.fill(buffer, b);
+			} else {
+				len = PAD_BUFFER;
+			}
+			
+			// if can, just do it with a single buffer
+			if (count <= len) {
+				out.write(buffer, 0, (int) count);
+				return;
+			}
+			
+			// write the buffer as many times as we need to
+			long i;
+			for (i = 0; i < count; i += PAD_BUFFER) {
+				out.write(buffer);
+			}
+			int r = (int) (count - i);
+			if (r != 0) out.write(buffer, 0, r);
+
 		} catch (IOException e) {
 			throw new BitStreamException(e);
 		}
-		return count;
 	}
 	
-	private byte[] getBuffer(boolean withOnes) {
-		byte[] buffer = withOnes ? sOnesBuffer : sZerosBuffer;
+	private byte[] getBuffer(byte b) {
+		if (b != 0 & b != -1) return null;
+		byte[] buffer;
+		switch (b) {
+		case 0: buffer = sZerosBuffer; break;
+		case 1 : buffer = sOnesBuffer; break;
+		default: return null;
+		}
+
 		if (buffer == null) {
 			buffer = new byte[PAD_BUFFER];
-			if (withOnes) {
-				Arrays.fill(buffer, (byte) 255);
+			if (b != 0) {
+				Arrays.fill(buffer, b);
 				sOnesBuffer = buffer;
 			} else {
 				sZerosBuffer = buffer;

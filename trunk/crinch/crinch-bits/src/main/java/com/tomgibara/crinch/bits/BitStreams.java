@@ -16,11 +16,14 @@
  */
 package com.tomgibara.crinch.bits;
 
-public class BitStreams {
+//TODO implement transfer methods that move bits from readers to writers and make public
+class BitStreams {
 
 	private BitStreams() {}
 	
-	public static boolean isSameBits(BitReader r, BitReader s) {
+	// package scoped
+	
+	static boolean isSameBits(BitReader r, BitReader s) {
 		int rBit;
 		int sBit;
 		do {
@@ -39,7 +42,7 @@ public class BitStreams {
 		return true;
 	}
 	
-	public static String bitsToString(BitReader reader) {
+	static String bitsToString(BitReader reader) {
 		StringBuilder sb = new StringBuilder();
 		while (true) {
 			try {
@@ -50,7 +53,7 @@ public class BitStreams {
 		}
 	}
 	
-	public static long countBits(BitReader reader) {
+	static long countBits(BitReader reader) {
 		return reader.skipBits(Long.MAX_VALUE);
 	}
 	

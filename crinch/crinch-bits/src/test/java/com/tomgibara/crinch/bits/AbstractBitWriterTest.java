@@ -77,7 +77,7 @@ public abstract class AbstractBitWriterTest extends TestCase {
     }
     
     private void testRuns(int size, long seed) {
-        int maxrunlength = 100;
+        int maxrunlength = 8192;
         int asize = size * maxrunlength * 2;
         BitWriter writer = newBitWriter((asize + 31) / 32 * 32);
         ArrayList<Point> list = new ArrayList<Point>(size);

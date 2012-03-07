@@ -19,7 +19,11 @@ package com.tomgibara.crinch.bits;
 import java.io.PrintStream;
 import java.math.BigInteger;
 
-public class ProfiledBitReader implements BitReader {
+// not ready to be a public part of the API yet
+//TODO implement a companion ProfiledBitWriter
+//TODO revaluate name
+//TODO record stats on distribution bit counts supplied to methods
+class ProfiledBitReader implements BitReader {
 
 	private static final int GP = 0;
 	private static final int SP = 1;
@@ -108,15 +112,17 @@ public class ProfiledBitReader implements BitReader {
 	}
 
 	public void dumpProfile(PrintStream out) {
-		dump(out, "getPositionInStream", 0);
-		dump(out, "read", 1);
-		dump(out, "readBigInt", 2);
-		dump(out, "readBit", 3);
-		dump(out, "readBits", 4);
-		dump(out, "readBoolean", 5);
-		dump(out, "readLong", 6);
-		dump(out, "skipBits", 7);
-		dump(out, "skipToBoundary", 8);
+		dump(out, "getPosition", 0);
+		dump(out, "setPosition", 1);
+		dump(out, "read", 2);
+		dump(out, "readBigInt", 3);
+		dump(out, "readBit", 4);
+		dump(out, "readBits", 5);
+		dump(out, "readBoolean", 6);
+		dump(out, "readLong", 7);
+		dump(out, "readUntil", 8);
+		dump(out, "skipBits", 9);
+		dump(out, "skipToBoundary", 10);
 	}
 	
 	private void dump(PrintStream out, String label, int i) {

@@ -27,8 +27,12 @@ package com.tomgibara.crinch.bits;
 
 public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 
+	//stores up to 8 bits - higher bits may include garbage
 	private int buffer = 0;
+	// number of bits in buffer
+	// buffer is flushed immediately when count reaches 8 
 	private int count = 0;
+	// the position in the stream
 	private long position = 0;
 	
 	// methods for implementation
@@ -119,11 +123,13 @@ public abstract class ByteBasedBitWriter extends AbstractBitWriter {
 	}
 	
 	@Override
-	public void flush() {
-		if (count == 8) {
-			writeByte(buffer);
-			count = 0;
-		}
+	public int flush() {
+		if (count == 0) return 0;
+		int c = 8 - count;
+		writeByte(buffer << c);
+		count = 0;
+		position += c;
+		return c;
 	}
 
 	@Override

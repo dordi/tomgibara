@@ -129,27 +129,27 @@ public interface BitWriter {
     
 	/**
 	 * Flushes this output stream and forces any buffered output bits to be
-	 * written out to an underlying stream. This does not necessarily cause an
-	 * underlying stream to flush should that operation is supported (eg. if
-	 * bits are being written to an {@link OutputStream}).
+	 * written out to an underlying stream. This DOES NOT necessarily flush an
+	 * underlying stream.
 	 * 
 	 * NOTE: Implementations that write bits to an underlying medium that cannot
-	 * persist individual bits (eg files) may necessarily retain some number of
-	 * bits that cannot be persisted until a boundary has been reached.
+	 * persist individual bits may necessarily pad their output to make the
+	 * flush possible.
 	 * 
+	 * The number of bits with which the output stream was padded is returned
+	 * from the call. Padding is always performed with zero bits.
+	 * 
+	 * @return the number of bits with which the stream was padded to enable
+	 *         flushing
 	 * @throws BitStreamException
 	 *             if an exception occurs flushing the stream
-	 * @see #padToBoundary(BitBoundary)
 	 */
     
-    void flush() throws BitStreamException;
+    int flush() throws BitStreamException;
     
 	/**
 	 * Pads the stream with zeros up to the specified boundary. If the stream is
-	 * already positioned on a boundary, zero bits will be written.
-	 * 
-	 * It may be necessary to call this method prior to {@link #flush()} on some
-	 * {@link BitWriter} implementations.
+	 * already positioned on the boundary, no bits will be written.
 	 * 
 	 * NOTE: This method may not be supported by writers that cannot track their
 	 * position in the bit stream.

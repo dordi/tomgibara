@@ -27,9 +27,9 @@ public class ByteArrayBitWriterTest extends AbstractByteBasedBitWriterTest {
 	BitReader bitReaderFor(BitWriter writer) {
 		return new ByteArrayBitReader(getWrittenBytes((ByteArrayBitWriter) writer));
 	}
-	
+
 	@Override
-	byte[] getWrittenBytes(ByteBasedBitWriter writer) {
+	byte[] getWrittenBytes(BitWriter writer) {
 		return ((ByteArrayBitWriter) writer).getBytes();
 	}
 	

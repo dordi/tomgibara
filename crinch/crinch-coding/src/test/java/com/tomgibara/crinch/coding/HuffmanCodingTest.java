@@ -59,7 +59,6 @@ public class HuffmanCodingTest extends TestCase {
     	for (int i = 0; i < sequence.length; i++) {
 			coding.encodePositiveInt(writer, sequence[i]);
 		}
-    	writer.padToBoundary(BitBoundary.BYTE);
     	writer.flush();
     	Dictionary dictionary = coding.getDictionary();
     	coding = new HuffmanCoding(dictionary);

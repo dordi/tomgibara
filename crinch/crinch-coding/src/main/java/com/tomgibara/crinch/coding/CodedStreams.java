@@ -196,7 +196,6 @@ public class CodedStreams {
 			BitWriter writer = new OutputStreamBitWriter(out);
 			CodedWriter coded = new CodedWriter(writer, coding);
 			task.writeTo(coded);
-			writer.padToBoundary(BitBoundary.BYTE);
 			writer.flush();
 		} catch (IOException e) {
 			throw new BitStreamException(e);

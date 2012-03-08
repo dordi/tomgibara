@@ -18,9 +18,14 @@ package com.tomgibara.crinch.bits;
 
 public abstract class AbstractByteBasedBitWriterTest extends AbstractBitWriterTest {
 
+	@Override
+	BitBoundary getBoundary() {
+		return BitBoundary.BYTE;
+	}
+	
 	abstract ByteBasedBitWriter newBitWriter(long size);
 
-	abstract byte[] getWrittenBytes(ByteBasedBitWriter writer);
+	abstract byte[] getWrittenBytes(BitWriter writer);
 	
 	public void testBitOrder() {
 		testBitOrder("1111111100000000");

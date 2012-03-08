@@ -3,20 +3,24 @@ package com.tomgibara.crinch.bits;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-public class OutputStreamBitWriterTest extends AbstractBitWriterTest {
+public class OutputStreamBitWriterTest extends AbstractByteBasedBitWriterTest {
 
 	@Override
-	BitWriter newBitWriter(long size) {
+	ByteBasedBitWriter newBitWriter(long size) {
 		return new Writer(new ByteArrayOutputStream((int) size));
 	}
 
 	@Override
 	BitReader bitReaderFor(BitWriter writer) {
-		Writer w = (Writer) writer;
-		byte[] bytes = w.out.toByteArray();
-		return new InputStreamBitReader(new ByteArrayInputStream(bytes));
+		return new InputStreamBitReader(new ByteArrayInputStream(getWrittenBytes(writer)));
 	}
 
+	@Override
+	byte[] getWrittenBytes(BitWriter writer) {
+		Writer w = (Writer) writer;
+		return w.out.toByteArray();
+	}
+	
 	private static class Writer extends OutputStreamBitWriter {
 		
 		final ByteArrayOutputStream out;

@@ -30,6 +30,11 @@ public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 		return new IntArrayBitReader(mw.getInts(), mw.getSize());
 	}
 	
+	@Override
+	BitBoundary getBoundary() {
+		return BitBoundary.BIT;
+	}
+	
 	public void testBitOrder() {
 		testBitOrder("11111111111111110000000000000000");
 		testBitOrder("11111111000000001111111100000000");

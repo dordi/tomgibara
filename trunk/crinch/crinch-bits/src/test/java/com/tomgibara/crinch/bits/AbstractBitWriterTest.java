@@ -29,13 +29,11 @@ public abstract class AbstractBitWriterTest extends TestCase {
 		return (byte) Integer.parseInt(binary, 2);
 	}
 	
-
-	
 	abstract BitWriter newBitWriter(long size);
 	
 	abstract BitReader bitReaderFor(BitWriter writer);
 	
-	
+	abstract BitBoundary getBoundary();
 	
 	
     public void testPass() {
@@ -57,8 +55,8 @@ public abstract class AbstractBitWriterTest extends TestCase {
             list.add( new Point(x, y) );
         }
         long pos = writer.getPosition();
-        writer.padToBoundary(BitBoundary.BYTE);
         writer.flush();
+        assertEquals(0, writer.padToBoundary(getBoundary()));
         
         BitReader reader = bitReaderFor(writer);
         for (int i = 0; i < size; i++) {

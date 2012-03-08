@@ -102,7 +102,8 @@ public abstract class AbstractBitWriter implements BitWriter {
     	return c;
     }
     
-    public void flush() {
+    public int flush() {
+    	return 0;
     }
 
 	@Override

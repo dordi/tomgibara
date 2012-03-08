@@ -20,5 +20,9 @@ public class BitVectorBitWriterTest extends AbstractBitWriterTest {
 		return vector.openReader();
 	}
 	
+	@Override
+	BitBoundary getBoundary() {
+		return BitBoundary.BIT;
+	}
 
 }

@@ -143,8 +143,9 @@ public class IntArrayBitWriter extends AbstractBitWriter {
         return ints;
     }
     
-    public void flush() {
+    public int flush() {
         flushBuffer();
+        return 0;
     }
     
     // object methods

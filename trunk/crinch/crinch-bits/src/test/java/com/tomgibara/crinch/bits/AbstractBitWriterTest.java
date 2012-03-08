@@ -92,8 +92,8 @@ public abstract class AbstractBitWriterTest extends TestCase {
             list.add( new Point(x, y) );
         }
         long pos = writer.getPosition();
-        writer.padToBoundary(BitBoundary.BYTE);
         writer.flush();
+        assertEquals(0, writer.padToBoundary(getBoundary()));
         
         BitReader reader = bitReaderFor(writer);
         for (int i = 0; i < size; i++) {

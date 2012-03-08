@@ -561,9 +561,7 @@ public class BitVectorTest extends TestCase {
 		out = new ByteArrayOutputStream();
 		OutputStreamBitWriter writer = new OutputStreamBitWriter(out);
 		v.write(writer);
-		writer.padToBoundary(BitBoundary.BYTE);
 		writer.flush();
-		out.flush();
 		bytes = out.toByteArray();
 		
 		w = new BitVector(v.size());

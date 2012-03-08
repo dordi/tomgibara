@@ -16,7 +16,6 @@
  */
 package com.tomgibara.crinch.bits;
 
-import java.io.OutputStream;
 import java.math.BigInteger;
 
 /**

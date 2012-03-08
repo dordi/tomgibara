@@ -25,9 +25,34 @@ package com.tomgibara.crinch.bits;
 
 public enum BitBoundary {
 
+	/**
+	 * A boundary between each bit.
+	 */
+	
+	BIT(0),
+	
+	/**
+	 * A boundary between every eight bits
+	 */
+	
 	BYTE(3),
+	
+	/**
+	 * A boundary between every sixteen bits.
+	 */
+	
 	SHORT(4),
+	
+	/**
+	 * A boundary between every thirty two bits.
+	 */
+	
 	INT(5),
+	
+	/**
+	 * A boundary between every sixty four bits.
+	 */
+	
 	LONG(6);
 	
 	final int scale;

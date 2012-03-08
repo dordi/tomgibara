@@ -36,7 +36,7 @@ public abstract class AbstractByteBasedBitWriterTest extends AbstractBitWriterTe
 	
 	private void testBitOrder(String binary) {
 		ByteBasedBitWriter writer = newBitWriter(16);
-		writer.write(new BitVector(binary));
+		new BitVector(binary).write(writer);
 		byte[] bytes = getWrittenBytes(writer);
 		assertEquals(bite(binary.substring(0, 8)), bytes[0]);
 		assertEquals(bite(binary.substring(8, 16)), bytes[1]);

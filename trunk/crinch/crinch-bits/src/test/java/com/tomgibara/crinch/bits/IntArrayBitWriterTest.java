@@ -45,7 +45,7 @@ public class IntArrayBitWriterTest extends AbstractBitWriterTest {
 	
 	private void testBitOrder(String binary) {
 		IntArrayBitWriter writer = newBitWriter(32);
-		writer.write(new BitVector(binary));
+		new BitVector(binary).write(writer);
 		writer.flush();
 		int[] ints = writer.getInts();
 		assertEquals(bite(binary.substring(0,   8)), (byte) (ints[0] >> 24));

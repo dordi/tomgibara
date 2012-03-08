@@ -86,19 +86,6 @@ public interface BitReader {
     BigInteger readBigInt(int count) throws BitStreamException;
     
 	/**
-	 * Fills the supplied bit vector with bits from the stream. Bits are
-	 * recorded from the most significant places down to the the least
-	 * significant places.
-	 * 
-	 * @param bits
-	 *            records the bits read
-	 * @throws BitStreamException
-	 *             if an exception occurs when reading the stream
-	 */
-    
-    void readBits(BitVector bits) throws BitStreamException;
-
-	/**
 	 * Reads as many consecutive bits as possible together with a single
 	 * terminating bit of the opposite value and returns the number of
 	 * consecutive bits read.

@@ -168,7 +168,7 @@ public class FibonacciCoding extends UniversalCoding {
         }
         bits.setBit(0, true);
         
-        return writer.write(bits);
+        return bits.write(writer);
     }
     
     @Override

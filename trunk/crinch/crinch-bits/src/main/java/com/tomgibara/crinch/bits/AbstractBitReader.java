@@ -63,15 +63,9 @@ public abstract class AbstractBitReader implements BitReader {
     }
 
     @Override
-    public void readBits(BitVector bits) throws BitStreamException {
-    	if (bits == null) throw new IllegalArgumentException("null bits");
-    	bits.read(this);
-    }
-
-    @Override
     public BigInteger readBigInt(int count) throws BitStreamException {
     	BitVector bits = new BitVector(count);
-    	readBits(bits);
+    	bits.read(this);
     	return bits.toBigInteger();
     }
 

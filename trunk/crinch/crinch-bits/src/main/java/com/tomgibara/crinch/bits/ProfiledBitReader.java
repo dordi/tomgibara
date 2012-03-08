@@ -30,15 +30,14 @@ class ProfiledBitReader implements BitReader {
 	private static final int R = 2;
 	private static final int RBI = 3;
 	private static final int RB = 4;
-	private static final int RBS = 5;
-	private static final int RZ = 6;
-	private static final int RL = 7;
-	private static final int RU = 8;
-	private static final int SB = 9;
-	private static final int STB = 10;
+	private static final int RZ = 5;
+	private static final int RL = 6;
+	private static final int RU = 7;
+	private static final int SB = 8;
+	private static final int STB = 9;
 	
 	private final BitReader reader;
-	private final long[] calls = new long[9];
+	private final long[] calls = new long[10];
 	
 	public ProfiledBitReader(BitReader reader) {
 		if (reader == null) throw new IllegalArgumentException("null reader");
@@ -76,12 +75,6 @@ class ProfiledBitReader implements BitReader {
 	}
 
 	@Override
-	public void readBits(BitVector bits) throws BitStreamException {
-		calls[RBS]++;
-		reader.readBits(bits);
-	}
-
-	@Override
 	public boolean readBoolean() throws BitStreamException {
 		calls[RZ]++;
 		return reader.readBoolean();
@@ -112,17 +105,16 @@ class ProfiledBitReader implements BitReader {
 	}
 
 	public void dumpProfile(PrintStream out) {
-		dump(out, "getPosition", 0);
-		dump(out, "setPosition", 1);
-		dump(out, "read", 2);
-		dump(out, "readBigInt", 3);
-		dump(out, "readBit", 4);
-		dump(out, "readBits", 5);
-		dump(out, "readBoolean", 6);
-		dump(out, "readLong", 7);
-		dump(out, "readUntil", 8);
-		dump(out, "skipBits", 9);
-		dump(out, "skipToBoundary", 10);
+		dump(out, "getPosition", GP);
+		dump(out, "setPosition", SP);
+		dump(out, "read", R);
+		dump(out, "readBigInt", RBI);
+		dump(out, "readBit", RB);
+		dump(out, "readBoolean", RZ);
+		dump(out, "readLong", RL);
+		dump(out, "readUntil", RU);
+		dump(out, "skipBits", SB);
+		dump(out, "skipToBoundary", STB);
 	}
 	
 	private void dump(PrintStream out, String label, int i) {

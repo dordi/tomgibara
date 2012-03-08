@@ -109,7 +109,7 @@ final public class EliasOmegaCoding extends UniversalCoding {
     		} else {
     			BitVector vector = new BitVector(value + 1);
     			vector.setBit(value, true);
-    			reader.readBits(vector.rangeView(0, value));
+    			vector.rangeView(0, value).read(reader);
     			if (reader.readBoolean()) throw new BitStreamException("value too large for BigInteger");
     			return vector.toBigInteger();
     		}

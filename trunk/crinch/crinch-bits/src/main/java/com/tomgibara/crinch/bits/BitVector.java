@@ -846,10 +846,10 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 	}
 	
-	public long write(BitWriter writer) {
+	public int write(BitWriter writer) {
 		if (writer == null) throw new IllegalArgumentException("null writer");
 		int size = finish - start;
-		long count = 0L;
+		int count = 0;
 		if (size <= 64) {
 			count += writer.write(getBitsAdj(start, size), size);
 		} else {
@@ -2677,16 +2677,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		}
 
 		@Override
-		public void readBits(BitVector bits) throws BitStreamException {
-			final int size = bits.size();
-	        if (position - size < start) throw new EndOfBitStreamException();
-			//TODO find a more efficient way to do this
-			final int from = position - size;
-			bits.setVector(duplicateAdj(from, position, true, false));
-			position = from;
-		}
-		
-		@Override
 		public BigInteger readBigInt(int count) throws BitStreamException {
 	        if (position - count < start) throw new EndOfBitStreamException();
 			switch(count) {
@@ -2797,16 +2787,6 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	        if (position - count < start) throw new EndOfBitStreamException();
 	        performAdj(operation, position -= count, bits, count);
 	        return count;
-		}
-		
-		@Override
-		public int write(BitVector bits) {
-			if (bits == null) throw new IllegalArgumentException("null bits");
-			int size = bits.size();
-			int from = position - size;
-			if (from < start) throw new EndOfBitStreamException();
-			performAdj(operation, position = from, bits);
-			return size;
 		}
 		
 		@Override

@@ -114,19 +114,6 @@ public interface BitWriter {
     int write(BigInteger bits, int count) throws BitStreamException;
     
 	/**
-	 * Writes the supplied bits to the stream. Bits are written most-significant bits first.
-	 * 
-	 * @param bits
-	 *            the bits to write
-	 * 
-	 * @return the number of bits written, always the size of the bit vector
-	 * @throws BitStreamException
-	 *             if an exception occurs when writing to the stream
-	 */
-
-    int write(BitVector bits) throws BitStreamException;
-    
-	/**
 	 * Flushes this output stream and forces any buffered output bits to be
 	 * written out to an underlying stream. This DOES NOT necessarily flush an
 	 * underlying stream.

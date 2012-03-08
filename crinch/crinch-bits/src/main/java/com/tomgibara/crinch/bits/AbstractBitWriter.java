@@ -90,18 +90,6 @@ public abstract class AbstractBitWriter implements BitWriter {
     	return c;
     }
     
-    @Override
-    public int write(BitVector bits) {
-    	int size = bits.size();
-    	if (size <= 32) return write(bits.intValue(), size);
-    	if (size <= 64) return write(bits.longValue(), size);
-    	int c = 0;
-    	for (size--; size >= 0; size--) {
-        	c += writeBoolean( bits.getBit(size) );
-		}
-    	return c;
-    }
-    
     public int flush() {
     	return 0;
     }

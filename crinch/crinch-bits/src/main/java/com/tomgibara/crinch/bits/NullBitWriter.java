@@ -69,13 +69,6 @@ public class NullBitWriter extends AbstractBitWriter {
 	}
 	
 	@Override
-	public int write(BitVector bits) {
-		int count = bits.size();
-		position += count;
-		return count;
-	}
-	
-	@Override
 	public long getPosition() {
 		return position;
 	}

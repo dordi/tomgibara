@@ -320,7 +320,6 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 
 		void close() {
 			try {
-				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
 				context.getLogger().log(Level.ERROR, "Failed to flush writer", e);

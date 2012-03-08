@@ -102,7 +102,6 @@ public class CompactConsumer implements RecordConsumer<LinearRecord> {
 	private void close() {
 		if (writer != null) {
 			try {
-				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (RuntimeException e) {
 				context.getLogger().log(Level.ERROR, "Failed to flush writer", e);

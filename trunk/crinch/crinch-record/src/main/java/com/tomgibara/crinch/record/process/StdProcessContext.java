@@ -383,7 +383,6 @@ public class StdProcessContext implements ProcessContext {
 				BitWriter writer = new OutputStreamBitWriter(out);
 				CodedWriter coded = new CodedWriter(writer, coding);
 				op.write(coded);
-				writer.padToBoundary(BitBoundary.BYTE);
 				writer.flush();
 			} catch (IOException e) {
 				throw new BitStreamException(e);

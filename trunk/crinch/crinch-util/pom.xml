@@ -3,7 +3,7 @@
   <artifactId>crinch-util</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.6</version>
+  	<version>0.7-SNAPSHOT</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Utilities</name>

@@ -16,6 +16,14 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * A {@link BitWriter} that writes bits into an array of integers. Bits are
+ * written into the int array starting at index zero. Within each int, the most
+ * signficant bits are written first.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
 public class IntArrayBitWriter extends AbstractBitWriter {
 
@@ -45,12 +53,50 @@ public class IntArrayBitWriter extends AbstractBitWriter {
     private int bufferBits = 0;
     
     // constructors
+
+    /**
+	 * Creates a new {@link BitWriter} which is backed by an int array with
+	 * least capacity required to store the specified number of bits.
+	 * 
+	 * @param size
+	 *            the number of bits that can be written, not negative, not
+	 *            greater than greatest possible number of bits in an int array
+	 * @see #getInts()
+	 */
     
-    public IntArrayBitWriter(int[] ints) {
+   public IntArrayBitWriter(long size) {
+        if (size < 0) throw new IllegalArgumentException("negative size");
+        long length = size >> 5;
+        if (length > Integer.MAX_VALUE) throw new IllegalArgumentException("size exceeds maximum possible array bits");
+        ints = new int[(int) length];
+        this.size = size;
+    }
+    
+   /**
+	 * Creates a new {@link BitWriter} which is backed by the specified int array.
+	 * The size of the writer will equal the total number of bits in the array.
+	 * 
+	 * @param ints
+	 *            the ints to which bits will be written, not null
+	 * @see #getSize()
+	 */
+
+   public IntArrayBitWriter(int[] ints) {
     	if (ints == null) throw new IllegalArgumentException("null ints");
         this.ints = ints;
     	size = ((long) ints.length) << 5;
     }
+
+	/**
+	 * Creates a new {@link BitWriter} which is backed by the specified int
+	 * array. Bits will be written to the int array up to the specified size.
+	 * 
+	 * @param ints
+	 *            the ints to which bits will be written, not null
+	 * @param size
+	 *            the number of bits that may be written, not negative and no
+	 *            greater than the number of bits available in the array
+	 */
 
     public IntArrayBitWriter(int[] ints, long size) {
     	if (ints == null) throw new IllegalArgumentException("null ints");
@@ -126,7 +172,21 @@ public class IntArrayBitWriter extends AbstractBitWriter {
         return position;
     }
     
+    @Override
+    public int flush() {
+        flushBuffer();
+        return 0;
+    }
+    
     // accessors
+
+	/**
+	 * Changes the position of to which the next bit will be written.
+	 * 
+	 * @param position
+	 *            the position to which the next bit will be written, not
+	 *            negative and not exceeding the size
+	 */
     
     public void setPosition(long position) {
         if (position < 0) throw new IllegalArgumentException();
@@ -135,17 +195,25 @@ public class IntArrayBitWriter extends AbstractBitWriter {
         this.position = position;
     }
     
+	/**
+	 * The maximum number of bits that may be written by this {@link BitWriter}.
+	 * 
+	 * @return the least position at which there bits cannot be written, never
+	 *         negative
+	 */
+    
     public long getSize() {
         return size;
     }
     
+    /**
+     * The int array the backs this {@link BitWriter}.
+     * 
+     * @return the ints written by this {@link BitWriter}, never null
+     */
+    
     public int[] getInts() {
         return ints;
-    }
-    
-    public int flush() {
-        flushBuffer();
-        return 0;
     }
     
     // object methods

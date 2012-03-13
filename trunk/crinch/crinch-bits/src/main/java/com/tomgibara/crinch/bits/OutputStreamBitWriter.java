@@ -20,8 +20,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+/**
+ * A {@link BitWriter} that writes its bits to an OutputStream.
+ * 
+ * @author Tom Gibara
+ */
+
 public class OutputStreamBitWriter extends ByteBasedBitWriter {
 
+	// fields
+	
 	private static byte[] sZerosBuffer = null;
 	private static byte[] sOnesBuffer = null;
 	
@@ -29,10 +37,14 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 	private static final int PAD_LIMIT = 3;
 	private final OutputStream out;
 	
+	// constructors
+	
 	public OutputStreamBitWriter(OutputStream out) {
 		this.out = out;
 	}
 
+	// byte based methods
+	
 	@Override
 	protected void writeByte(int value) throws BitStreamException {
 		try {
@@ -82,6 +94,20 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 			throw new BitStreamException(e);
 		}
 	}
+
+	// accessors
+
+	/**
+	 * The OutputStream to which this {@link BitWriter} writes bits.
+	 * 
+	 * @return an output stream, never null
+	 */
+	
+	public OutputStream getOutputStream() {
+		return out;
+	}
+
+	// private utility methods
 	
 	private byte[] getBuffer(byte b) {
 		if (b != 0 & b != -1) return null;
@@ -103,5 +129,5 @@ public class OutputStreamBitWriter extends ByteBasedBitWriter {
 		}
 		return buffer;
 	}
-	
+
 }

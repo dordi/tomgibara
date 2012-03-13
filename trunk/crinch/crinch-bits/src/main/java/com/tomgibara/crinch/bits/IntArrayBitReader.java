@@ -16,6 +16,15 @@
  */
 package com.tomgibara.crinch.bits;
 
+/**
+ * A {@link BitReader} that sources its bits from an InputStream. Bits are read
+ * from the int array starting at index zero. Within each int, the most
+ * signficant bits are read first.
+ * 
+ * 
+ * @author Tom Gibara
+ */
+
 //TODO optimize readUntil
 public class IntArrayBitReader extends AbstractBitReader {
 
@@ -35,6 +44,16 @@ public class IntArrayBitReader extends AbstractBitReader {
     
     // constructors
 
+    /**
+	 * Creates a new {@link BitReader} which is backed by an int array with
+	 * least capacity required to store the specified number of bits.
+	 * 
+	 * @param size
+	 *            the number of bits that can be read, not negative, not greater
+	 *            than greatest possible number of bits in an int array
+	 * @see #getInts()
+	 */
+    
     public IntArrayBitReader(long size) {
         if (size < 0) throw new IllegalArgumentException("negative size");
         long length = size >> 5;
@@ -43,12 +62,32 @@ public class IntArrayBitReader extends AbstractBitReader {
         this.size = size;
     }
     
+    /**
+	 * Creates a new {@link BitReader} which is backed by the specified int array.
+	 * The size of the reader will equal the total number of bits in the array.
+	 * 
+	 * @param ints
+	 *            the ints from which bits will be read, not null
+	 * @see #getSize()
+	 */
+    
     public IntArrayBitReader(int[] ints) {
     	if (ints == null) throw new IllegalArgumentException("null ints");
     	this.ints = ints;
     	size = ((long) ints.length) << 5;
     }
 
+	/**
+	 * Creates a new {@link BitReader} which is backed by the specified int
+	 * array. Bits will be read from the int array up to the specified size.
+	 * 
+	 * @param ints
+	 *            the ints from which bits will be read, not null
+	 * @param size
+	 *            the number of bits that may be read, not negative and no
+	 *            greater than the number of bits supplied by the array
+	 */
+    
     public IntArrayBitReader(int[] ints, long size) {
     	if (ints == null) throw new IllegalArgumentException("null ints");
         if (size < 0) throw new IllegalArgumentException("negative size");
@@ -107,11 +146,24 @@ public class IntArrayBitReader extends AbstractBitReader {
     
 
     // accessors
+
+    /**
+     * The int array the backs this {@link BitReader}.
+     * 
+     * @return the ints read by this {@link BitReader}, never null
+     */
     
     public int[] getInts() {
         return ints;
     }
 
+	/**
+	 * The maximum number of bits that may be read by this {@link BitReader}.
+	 * 
+	 * @return the least position at which there is no bit to read, never
+	 *         negative
+	 */
+    
     public long getSize() {
         return size;
     }

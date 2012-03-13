@@ -172,16 +172,62 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 	private static final int INTERSECTS = 1;
 	private static final int CONTAINS = 2;
 	
+	/**
+	 * An operation that can modify one bit (the destination) based on the value
+	 * of another (the source).
+	 */
+	
 	public enum Operation {
+		
+		/**
+		 * The destination bit is set to the value of the source bit.
+		 */
+		
 		SET,
+		
+		/**
+		 * The destination bit is set to true if and only if both the source and destination bits are true.
+		 */
+		
 		AND,
+
+		/**
+		 * The destination bit is set to true if and only if the source and destination bits are not both false.
+		 */
+		
 		OR,
+
+		/**
+		 * The destination bit is set to true if and only if exactly one of the source and destination bits is true.
+		 */
+		
 		XOR
 	}
 
+	/**
+	 * A test that can be made of one {@link BitVector} against another.
+	 */
+	
 	public enum Test {
+		
+		/**
+		 * Whether two {@link BitVector} have the same pattern of true/false-bits.
+		 */
+		
 		EQUALS,
+		
+		/**
+		 * Whether there exists a position at which both {@link BitVector}s have
+		 * a true-bit.
+		 */
+		
 		INTERSECTS,
+		
+		/**
+		 * Whether one {@link BitVector} has true-bits at every position that
+		 * another does.
+		 */
+		
 		CONTAINS
 	}
 

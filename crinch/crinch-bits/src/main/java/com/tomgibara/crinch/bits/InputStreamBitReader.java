@@ -19,6 +19,12 @@ package com.tomgibara.crinch.bits;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * A {@link BitReader} that sources its bits from an InputStream.
+ * 
+ * @author Tom Gibara
+ */
+
 public class InputStreamBitReader extends ByteBasedBitReader {
 
 	private final InputStream in;
@@ -50,7 +56,13 @@ public class InputStreamBitReader extends ByteBasedBitReader {
 		return -1L;
 	}
 	
-	InputStream getInputStream() {
+	/**
+	 * The InputStream from which this {@link BitReader} obtains bits.
+	 * 
+	 * @return an input stream, never null
+	 */
+	
+	public InputStream getInputStream() {
 		return in;
 	}
 	

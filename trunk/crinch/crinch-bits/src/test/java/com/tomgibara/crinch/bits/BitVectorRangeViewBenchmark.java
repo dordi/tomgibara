@@ -11,7 +11,7 @@ public class BitVectorRangeViewBenchmark {
 
 	private static void pause(long ms) {
 		try {
-			Thread.sleep(1L);
+			Thread.sleep(ms);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -19,7 +19,7 @@ public class BitVectorRangeViewBenchmark {
 
 	private static void gc() {
 		System.gc();
-		pause(1000);
+		pause(1);
 	}
 	
 	private static final int wordSize = 128;

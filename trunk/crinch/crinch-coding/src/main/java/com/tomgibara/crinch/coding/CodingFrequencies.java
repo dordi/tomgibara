@@ -21,10 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
-/*
- * This source code has been placed into the public domain.
- */
-
 /**
  * This class records the frequencies of byte and integer data from which it
  * calculates the 'zero-order' information entropy. The implementation places no

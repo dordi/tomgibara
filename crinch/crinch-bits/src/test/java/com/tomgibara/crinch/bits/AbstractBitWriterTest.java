@@ -35,6 +35,18 @@ public abstract class AbstractBitWriterTest extends TestCase {
 	
 	abstract BitBoundary getBoundary();
 	
+	public void testWriteBit() {
+		Random r = new Random();
+		for (int i = 0; i < 100; i++) {
+			BitWriter writer = newBitWriter(64);
+			long bits = r.nextLong();
+			for (int j = 63; j >= 0; j--) {
+				writer.writeBit((int) (bits >> j));
+			}
+			BitReader reader = bitReaderFor(writer);
+			assertEquals(bits, reader.readLong(64));
+		}
+	}
 	
     public void testPass() {
         int size = 1000;

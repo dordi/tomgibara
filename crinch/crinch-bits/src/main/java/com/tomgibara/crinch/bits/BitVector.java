@@ -2794,14 +2794,14 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		public int writeBit(int bit) {
 			if (position == start) throw new EndOfBitStreamException();
 			//TODO consider an optimized version of this
-			performAdj(operation, position--, (bit & 1) == 1);
+			performAdj(operation, --position, (bit & 1) == 1);
 			return 1;
 		}
 		
 		@Override
 		public int writeBoolean(boolean bit) {
 			if (position == start) throw new EndOfBitStreamException();
-			performAdj(operation, position--, bit);
+			performAdj(operation, --position, bit);
 			return 1;
 		}
 		

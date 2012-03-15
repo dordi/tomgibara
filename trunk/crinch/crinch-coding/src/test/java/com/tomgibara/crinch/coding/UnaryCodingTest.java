@@ -1,15 +1,20 @@
 package com.tomgibara.crinch.coding;
 
-import junit.framework.TestCase;
+import java.util.Arrays;
 
 
-public class UnaryCodingTest extends TestCase {
 
-	/*
+public class UnaryCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
+
 	@Override
-	ExtendedCoding getCoding() {
-		return UnaryCoding.oneExtended;
+	Iterable<ExtendedCoding> getCodings() {
+		return Arrays.asList(UnaryCoding.oneExtended, UnaryCoding.zeroExtended);
 	}
-	*/
+
+	// put a limit on it, otherwise encodings take too much memory
+	@Override
+	int getMaxEncodableValue(ExtendedCoding coding) {
+		return 100;
+	}
 	
 }

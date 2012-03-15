@@ -20,7 +20,6 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
-import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
 import com.tomgibara.crinch.bits.ByteArrayBitWriter;

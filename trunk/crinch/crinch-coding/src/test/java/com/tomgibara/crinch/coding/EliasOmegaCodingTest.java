@@ -16,12 +16,14 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.util.Collections;
 
-public class EliasOmegaCodingTest extends ExtendedUniversalCodingTest {
+
+public class EliasOmegaCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
 
 	@Override
-	ExtendedCoding getCoding() {
-		return EliasOmegaCoding.extended;
+	Iterable<ExtendedCoding> getCodings() {
+		return Collections.singleton(EliasOmegaCoding.extended);
 	}
-	
+
 }

@@ -20,62 +20,20 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Random;
 
-import junit.framework.TestCase;
-
-import com.tomgibara.crinch.bits.BitReader;
-import com.tomgibara.crinch.bits.BitVector;
-import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 // TODO should allow number of bits to be configured
-public abstract class ExtendedUniversalCodingTest extends TestCase {
+public abstract class ExtendedUniversalCodingTest<C extends ExtendedCoding> extends CodingTest<C> {
 
-	abstract ExtendedCoding getCoding();
-	
-	final ExtendedCoding coding = getCoding();
-
-	/* Only really applies to univesal coding
-	public void testFirstThousandNumbers() {
-		int min = 1;
-		int max = 1000;
-		
-		int size = ((max + 1) * (max + 2) - min * (min + 1)) / 2;
-		
-		BitVector v = new BitVector(size);
-		
-		BitWriter w = v.openWriter();
-		for (int i = min; i <= max; i++) {
-			assertEquals(i+1, coding.encodePositiveInt(w, i));
-		}
-		
-		assertEquals(size, w.getPosition());
-		
-		BitReader r = v.openReader();
-		for (int i = min; i <= max; i++) {
-			assertEquals(i, coding.decodePositiveInt(r));
-		}
+	@Override
+	int getMaxEncodableValue(C coding) {
+		return -1;
 	}
-	*/
-
-    public void testCorrectness() {
-        int[] memory = new int[1];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 32);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, 32);
-        for (int i = 0; i <= 10; i++) {
-            writer.setPosition(0);
-            coding.encodePositiveInt(writer, i);
-            writer.flush();
-            reader.setPosition(0);
-            int j = coding.decodePositiveInt(reader);
-            assertEquals(i, j);
-        }
-    }
-
+	
     public void testSignedInt() {
-        int[] memory = new int[16];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 512);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, 512);
+        IntArrayBitWriter writer = new IntArrayBitWriter(30000);
+        IntArrayBitReader reader = new IntArrayBitReader(writer.getInts(), 30000);
     	for (int i = -10000; i < 10000; i++) {
     		checkInt(writer, reader, i);
     	}
@@ -98,19 +56,21 @@ public abstract class ExtendedUniversalCodingTest extends TestCase {
     }
 
     private void checkInt(IntArrayBitWriter writer, IntArrayBitReader reader, int i) {
-        writer.setPosition(0);
-        coding.encodeSignedInt(writer, i);
-        writer.flush();
-        reader.setPosition(0);
-        int j = coding.decodeSignedInt(reader);
-        assertEquals(i, j);
-        reader.setPosition(0);
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding) && Math.abs(i) > getMaxEncodableValue(coding)) return;
+	        writer.setPosition(0);
+	        coding.encodeSignedInt(writer, i);
+	        writer.flush();
+	        reader.setPosition(0);
+	        int j = coding.decodeSignedInt(reader);
+	        assertEquals(i, j);
+	        reader.setPosition(0);
+		}
     }
     
     public void testSignedLong() {
-        int[] memory = new int[4];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 128);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, 128);
+        IntArrayBitWriter writer = new IntArrayBitWriter(30000);
+        IntArrayBitReader reader = new IntArrayBitReader(writer.getInts(), 30000);
     	for (long i = -10000; i < 10000; i++) {
     		checkLong(writer, reader, i);
     	}
@@ -133,20 +93,22 @@ public abstract class ExtendedUniversalCodingTest extends TestCase {
     }
 
     private void checkLong(IntArrayBitWriter writer, IntArrayBitReader reader, long i) {
-        writer.setPosition(0);
-        coding.encodeSignedLong(writer, i);
-        writer.flush();
-        reader.setPosition(0);
-        long j = coding.decodeSignedLong(reader);
-        assertEquals(i, j);
-        reader.setPosition(0);
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding) && Math.abs(i) > getMaxEncodableValue(coding)) return;
+	        writer.setPosition(0);
+	        coding.encodeSignedLong(writer, i);
+	        writer.flush();
+	        reader.setPosition(0);
+	        long j = coding.decodeSignedLong(reader);
+	        assertEquals(i, j);
+	        reader.setPosition(0);
+		}
     }
     
     public void testSignedBigInt() {
     	int bits = 4096;
-        int[] memory = new int[bits / 32];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, bits);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, bits);
+        IntArrayBitWriter writer = new IntArrayBitWriter(bits);
+        IntArrayBitReader reader = new IntArrayBitReader(writer.getInts(), writer.getSize());
 
     	for (long i = 0; i < 100L; i++) {
     		checkPositiveBigInt(writer, reader, BigInteger.valueOf(i));
@@ -164,93 +126,96 @@ public abstract class ExtendedUniversalCodingTest extends TestCase {
     }
 
     private void checkPositiveBigInt(IntArrayBitWriter writer, IntArrayBitReader reader, BigInteger i) {
-        writer.setPosition(0);
-        coding.encodePositiveBigInt(writer, i);
-        writer.flush();
-        reader.setPosition(0);
-        BigInteger j = coding.decodePositiveBigInt(reader);
-        assertEquals(i, j);
-        reader.setPosition(0);
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding) && i.compareTo(BigInteger.valueOf(getMaxEncodableValue(coding))) > 0) return;
+	        writer.setPosition(0);
+	        coding.encodePositiveBigInt(writer, i);
+	        writer.flush();
+	        reader.setPosition(0);
+	        BigInteger j = coding.decodePositiveBigInt(reader);
+	        assertEquals(i, j);
+	        reader.setPosition(0);
+		}
     }
     
     private void checkBigInt(IntArrayBitWriter writer, IntArrayBitReader reader, BigInteger i) {
-        writer.setPosition(0);
-        coding.encodeSignedBigInt(writer, i);
-        writer.flush();
-        reader.setPosition(0);
-        BigInteger j = coding.decodeSignedBigInt(reader);
-        assertEquals(i, j);
-        reader.setPosition(0);
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding) && i.abs().compareTo(BigInteger.valueOf(getMaxEncodableValue(coding))) > 0) return;
+	        writer.setPosition(0);
+	        coding.encodeSignedBigInt(writer, i);
+	        writer.flush();
+	        reader.setPosition(0);
+	        BigInteger j = coding.decodeSignedBigInt(reader);
+	        assertEquals(i, j);
+	        reader.setPosition(0);
+		}
     }
     
     public void testDouble() {
-    	int bytes = 16;
-        int[] memory = new int[bytes];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, bytes * 8);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, bytes * 8);
-        checkDouble(writer, reader, 0.0);
-        checkDouble(writer, reader, -0.0);
-        checkDouble(writer, reader, 1.0);
-        checkDouble(writer, reader, 2.0);
-        checkDouble(writer, reader, 3.0);
-        checkDouble(writer, reader, 4.0);
-
-        {
-	        int count = 0;
-	        long sum = 0;
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding)) return;
+	    	int bytes = 16;
+	        int[] memory = new int[bytes];
+	        IntArrayBitWriter writer = new IntArrayBitWriter(memory, bytes * 8);
+	        IntArrayBitReader reader = new IntArrayBitReader(memory, bytes * 8);
+	        checkDouble(writer, reader, 0.0);
+	        checkDouble(writer, reader, -0.0);
+	        checkDouble(writer, reader, 1.0);
+	        checkDouble(writer, reader, 2.0);
+	        checkDouble(writer, reader, 3.0);
+	        checkDouble(writer, reader, 4.0);
+	
 	        for (double d = -100.0; d < 100.0; d += 0.1) {
-	            sum += checkDouble(writer, reader, d);
-	            count++;
+	            checkDouble(writer, reader, d);
 			}
-	        //System.out.println(sum +" / " + count + " = " + (sum / (double) count));
-        }
-        
-        {
-	        int count = 0;
-	        long sum = 0;
+
 		    Random r = new Random(0L);
 			for (int i = 0; i < 10000; i++) {
 				double d = Double.longBitsToDouble(r.nextLong());
 				if (Double.isNaN(d) || Double.isInfinite(d)) continue;
-				sum += checkDouble(writer, reader, d);
-	            count++;
+				checkDouble(writer, reader, d);
 			}
-		    //System.out.println(sum +" / " + count + " = " + (sum / (double) count));
-        }
-
+		}
     }
 
-    private long checkDouble(IntArrayBitWriter writer, IntArrayBitReader reader, double d) {
-        writer.setPosition(0);
-        coding.encodeDouble(writer, d);
-        writer.flush();
-        reader.setPosition(0);
-        double e = coding.decodeDouble(reader);
-        assertEquals(d, e);
-        return reader.getPosition();
+    private void checkDouble(IntArrayBitWriter writer, IntArrayBitReader reader, double d) {
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding)) return;
+	        writer.setPosition(0);
+	        coding.encodeDouble(writer, d);
+	        writer.flush();
+	        reader.setPosition(0);
+	        double e = coding.decodeDouble(reader);
+	        assertEquals(d, e);
+		}
     }
     
     public void testDecimal() {
-    	int bits = 10240;
-        int[] memory = new int[bits / 8];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, bits);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, bits);
-
-        Random r = new Random(0L);
-    	for (int i = 0; i < 10000; i++) {
-    		checkDecimal(writer, reader, new BigDecimal(new BigInteger(r.nextInt(bits/4), r), r.nextInt(100) - 50));
-    	}
-
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding)) return;
+	    	int bits = 10240;
+	        int[] memory = new int[bits / 8];
+	        IntArrayBitWriter writer = new IntArrayBitWriter(memory, bits);
+	        IntArrayBitReader reader = new IntArrayBitReader(memory, bits);
+	
+	        Random r = new Random(0L);
+	    	for (int i = 0; i < 10000; i++) {
+	    		checkDecimal(writer, reader, new BigDecimal(new BigInteger(r.nextInt(bits/4), r), r.nextInt(100) - 50));
+	    	}
+		}
     }
 
     private void checkDecimal(IntArrayBitWriter writer, IntArrayBitReader reader, BigDecimal d) {
-        writer.setPosition(0);
-        coding.encodeDecimal(writer, d);
-        writer.flush();
-        reader.setPosition(0);
-        BigDecimal e = coding.decodeDecimal(reader);
-        assertEquals(d, e);
-        reader.setPosition(0);
+		for (C coding : getCodings()) {
+	    	if (isEncodableValueLimited(coding)) return;
+	        writer.setPosition(0);
+	        coding.encodeDecimal(writer, d);
+	        writer.flush();
+	        reader.setPosition(0);
+	        BigDecimal e = coding.decodeDecimal(reader);
+	        assertEquals(d, e);
+	        reader.setPosition(0);
+		}
     }
     
 }

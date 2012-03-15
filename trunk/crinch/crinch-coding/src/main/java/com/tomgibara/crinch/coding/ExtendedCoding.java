@@ -37,6 +37,12 @@ public class ExtendedCoding implements Coding {
 		this.coding = coding;
 	}
 	
+	// accessors
+	
+	public UniversalCoding getUniversalCoding() {
+		return coding;
+	}
+	
     // delegated coding methods
     
 	@Override

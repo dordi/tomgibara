@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 
 
-public class UnaryCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
+public class UnaryCodingTest extends ExtendedCodingTest<ExtendedCoding> {
 
 	@Override
 	Iterable<ExtendedCoding> getCodings() {

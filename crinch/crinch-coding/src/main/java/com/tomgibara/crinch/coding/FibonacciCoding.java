@@ -61,6 +61,7 @@ public class FibonacciCoding extends UniversalCoding {
     
     @Override
     int unsafeEncodePositiveInt(BitWriter writer, int value) {
+    	value++;
     	if (value < 0) return unsafeEncodePositiveLong(writer, value & 0x00000000ffffffffL);
         int fi = Arrays.binarySearch(fibLong, value);
         if (fi < 0) fi = -2 - fi;
@@ -100,6 +101,7 @@ public class FibonacciCoding extends UniversalCoding {
 
     @Override
     int unsafeEncodePositiveLong(BitWriter writer, long value) {
+    	value++;
     	if (value < 0)return unsafeEncodePositiveBigInt(writer, LONG_ADJ.add(BigInteger.valueOf(value)));
         int fi = Arrays.binarySearch(fibLong, value);
         if (fi < 0) fi = -2 - fi;
@@ -141,6 +143,7 @@ public class FibonacciCoding extends UniversalCoding {
 
     @Override
     int unsafeEncodePositiveBigInt(BitWriter writer, BigInteger value) {
+    	value = value.add(BigInteger.ONE);
     	ArrayList<BigInteger> fibs = getFibBigInt();
     	
         int fi = Collections.binarySearch(fibs, value);
@@ -182,7 +185,7 @@ public class FibonacciCoding extends UniversalCoding {
         for (int i = 0; i < 47; i++) {
             int bit = reader.readBit();
             if (bit == 1) {
-                if (last == 1) return value;
+                if (last == 1) return value - 1;
                 value += (int) fibLong[i];
             }
             last = bit;
@@ -198,11 +201,11 @@ public class FibonacciCoding extends UniversalCoding {
         for (int i = 0;; i++) {
             int bit = reader.readBit();
             if (bit == 1) {
-                if (last == 1) return value;
+                if (last == 1) return value - 1L;
                 if (i == fibLong.length) {
                 	value += fibLong[i - 2] + fibLong[i - 1];
                 	if (!reader.readBoolean()) throw new BitStreamException("Value too large for long");
-                	return value;
+                	return value - 1L;
                 } else {
                 	value += fibLong[i];
                 }
@@ -221,7 +224,7 @@ public class FibonacciCoding extends UniversalCoding {
         for (int i = 0;; i++) {
             boolean bit = reader.readBoolean();
             if (bit) {
-                if (last) return value;
+                if (last) return value.subtract(BigInteger.ONE);
                 if (i == size) {
                 	fibs.add( fibs.get(size - 1).add(fibs.get(size - 2)) );
                 	size++;

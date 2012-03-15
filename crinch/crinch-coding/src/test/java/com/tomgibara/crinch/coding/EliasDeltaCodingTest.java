@@ -19,7 +19,7 @@ package com.tomgibara.crinch.coding;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
-public class EliasDeltaCodingTest extends ExtendedCodingTest {
+public class EliasDeltaCodingTest extends ExtendedUniversalCodingTest {
 
 	@Override
 	ExtendedCoding getCoding() {

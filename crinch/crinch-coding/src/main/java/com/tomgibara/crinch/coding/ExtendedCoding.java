@@ -24,6 +24,8 @@ import com.tomgibara.crinch.bits.BitWriter;
 
 public class ExtendedCoding implements Coding {
 
+	private static final BigInteger MINUS_ONE = BigInteger.ONE.negate();
+	
 	// fields
 	
 	private final UniversalCoding coding;
@@ -70,7 +72,7 @@ public class ExtendedCoding implements Coding {
 	// extra methods
 
     public int encodeSignedInt(BitWriter writer, int value) {
-    	value = value > 0 ? value << 1 : 1 - (value << 1);
+    	value = value < 0 ? -1 - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveInt(writer, value);
     }
 
@@ -79,41 +81,41 @@ public class ExtendedCoding implements Coding {
     	// the term ... | (value & (1 << 31) serves to restore sign bit
     	// in the special case where decoding overflows
     	// but we have enough info to reconstruct the correct value
-   		return (value & 1) == 1 ? ((1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
+   		return (value & 1) == 1 ? ((-1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
     }
     
     public int encodeSignedLong(BitWriter writer, long value) {
-    	value = value > 0L ? value << 1 : 1L - (value << 1);
+    	value = value < 0L ? -1L - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveLong(writer, value);
     }
 
     public long decodeSignedLong(BitReader reader) {
     	long value = decodePositiveLong(reader);
     	// see comments in decodeSignedInt
-   		return (value & 1L) == 1L ? ((1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
+   		return (value & 1L) == 1L ? ((-1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
     }
     
     public int encodeSignedBigInt(BitWriter writer, BigInteger value) {
-    	value = value.signum() == 1 ? value = value.shiftLeft(1) : BigInteger.ONE.subtract(value.shiftLeft(1));
+    	value = value.signum() < 0 ? MINUS_ONE.subtract(value.shiftLeft(1)) : value.shiftLeft(1);
     	return coding.unsafeEncodePositiveBigInt(writer, value);
     }
     
     public BigInteger decodeSignedBigInt(BitReader reader) {
     	BigInteger value = decodePositiveBigInt(reader);
-    	return value.testBit(0) ? BigInteger.ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
+    	return value.testBit(0) ? MINUS_ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
     }
     
     public int encodeDouble(BitWriter writer, double value) {
     	if (Double.isNaN(value) || Double.isInfinite(value)) throw new IllegalArgumentException();
     	long bits = Double.doubleToLongBits(value);
     	long sign = bits & 0x8000000000000000L;
-    	if (sign == bits) return coding.unsafeEncodePositiveInt(writer, sign == 0L ? 1 : 2);
+    	if (sign == bits) return coding.unsafeEncodePositiveInt(writer, sign == 0L ? 0 : 1);
     	
     	long mantissa = bits & 0x000fffffffffffffL;
 		if (sign == 0) {
-			mantissa = (mantissa << 1) + 3L;
+			mantissa = (mantissa << 1) + 2L;
 		} else {
-			mantissa = (mantissa << 1) + 4L;
+			mantissa = (mantissa << 1) + 3L;
 		}
 		int exponent = (int) ((bits & 0x7ff0000000000000L) >> 52) - 1023;
     	return coding.unsafeEncodePositiveLong(writer, mantissa) + encodeSignedInt(writer, exponent);
@@ -121,14 +123,14 @@ public class ExtendedCoding implements Coding {
     
     public double decodeDouble(BitReader reader) {
     	long mantissa = decodePositiveLong(reader);
-    	if (mantissa == 1L) return 0.0;
-    	if (mantissa == 2L) return -0.0;
+    	if (mantissa == 0L) return 0.0;
+    	if (mantissa == 1L) return -0.0;
     	int exponent = decodeSignedInt(reader);
     	long bits = (exponent + 1023L) << 52;
     	if ((mantissa & 1L) == 0) {
-    		bits |= 0x8000000000000000L;
-    		mantissa = (mantissa - 4L) >> 1;
+    		mantissa = (mantissa - 2L) >> 1;
     	} else {
+    		bits |= 0x8000000000000000L;
     		mantissa = (mantissa - 3L) >> 1;
     	}
     	bits |= mantissa;

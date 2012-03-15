@@ -64,17 +64,17 @@ final public class EliasOmegaCoding extends UniversalCoding {
 //    	return value;
 		
 		// optimized version
-    	if (!reader.readBoolean()) return 1;
+    	if (!reader.readBoolean()) return 0;
     	int value = 2 | reader.read(1);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1;
     	value = (1 << value) | reader.read(value);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1;
     	value = (1 << value) | reader.read(value);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1;
     	//TODO could check value < 32 to catch call decoding errors
 		value = (1 << value) | reader.read(value);
     	if (reader.readBoolean()) throw new BitStreamException("value too large for int");
-    	return value;
+    	return value - 1;
     }
 
 	@Override
@@ -87,17 +87,17 @@ final public class EliasOmegaCoding extends UniversalCoding {
 //    	return value;
 		
 		// optimized version
-    	if (!reader.readBoolean()) return 1L;
+    	if (!reader.readBoolean()) return 0L;
     	int value = 2 | reader.read(1);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1L;
     	value = (1 << value) | reader.read(value);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1L;
     	value = (1 << value) | reader.read(value);
-    	if (!reader.readBoolean()) return value;
+    	if (!reader.readBoolean()) return value - 1L;
     	//TODO could check value < 64 to catch call decoding errors
 		long lvalue = (1L << value) | reader.readLong(value);
     	if (reader.readBoolean()) throw new BitStreamException("value too large for long");
-    	return lvalue;
+    	return lvalue - 1L;
     }
     
 	@Override
@@ -111,25 +111,27 @@ final public class EliasOmegaCoding extends UniversalCoding {
     			vector.setBit(value, true);
     			vector.rangeView(0, value).read(reader);
     			if (reader.readBoolean()) throw new BitStreamException("value too large for BigInteger");
-    			return vector.toBigInteger();
+    			//TODO yuk, decrement is very inefficient here
+    			return vector.toBigInteger().subtract(BigInteger.ONE);
     		}
     	}
-    	return BigInteger.valueOf(value & 0xffffffffL);
+    	return BigInteger.valueOf((value & 0xffffffffL) - 1L);
     }
 
     @Override
     int unsafeEncodePositiveInt(BitWriter writer, int value) {
-    	return encodeInt0(writer, value) + writer.writeBit(0);
+    	return encodeInt0(writer, value + 1) + writer.writeBit(0);
     }
 
     @Override
     int unsafeEncodePositiveLong(BitWriter writer, long value) {
-    	return encodeLong0(writer, value) + writer.writeBit(0);
+    	return encodeLong0(writer, value + 1) + writer.writeBit(0);
     }
     
     @Override
     int unsafeEncodePositiveBigInt(BitWriter writer, BigInteger value) {
-    	return encodeBigInt0(writer, value) + writer.writeBit(0);
+    	//TODO again yuk at incremement
+    	return encodeBigInt0(writer, value.add(BigInteger.ONE)) + writer.writeBit(0);
     }
     
 }

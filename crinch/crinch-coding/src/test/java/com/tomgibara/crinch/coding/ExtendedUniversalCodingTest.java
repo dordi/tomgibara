@@ -22,21 +22,47 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 
+import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitVector;
+import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 // TODO should allow number of bits to be configured
-public abstract class ExtendedCodingTest extends TestCase {
+public abstract class ExtendedUniversalCodingTest extends TestCase {
 
 	abstract ExtendedCoding getCoding();
 	
 	final ExtendedCoding coding = getCoding();
-	
+
+	/* Only really applies to univesal coding
+	public void testFirstThousandNumbers() {
+		int min = 1;
+		int max = 1000;
+		
+		int size = ((max + 1) * (max + 2) - min * (min + 1)) / 2;
+		
+		BitVector v = new BitVector(size);
+		
+		BitWriter w = v.openWriter();
+		for (int i = min; i <= max; i++) {
+			assertEquals(i+1, coding.encodePositiveInt(w, i));
+		}
+		
+		assertEquals(size, w.getPosition());
+		
+		BitReader r = v.openReader();
+		for (int i = min; i <= max; i++) {
+			assertEquals(i, coding.decodePositiveInt(r));
+		}
+	}
+	*/
+
     public void testCorrectness() {
         int[] memory = new int[1];
         IntArrayBitWriter writer = new IntArrayBitWriter(memory, 32);
         IntArrayBitReader reader = new IntArrayBitReader(memory, 32);
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 0; i <= 10; i++) {
             writer.setPosition(0);
             coding.encodePositiveInt(writer, i);
             writer.flush();
@@ -65,7 +91,7 @@ public abstract class ExtendedCodingTest extends TestCase {
     	checkInt(writer, reader, -(1 << 30) - 1);
     	
     	Random r = new Random(0L);
-    	for (int i = -0; i < 1000000; i++) {
+    	for (int i = 0; i < 1000000; i++) {
     		checkInt(writer, reader, r.nextInt());
     	}
 
@@ -122,11 +148,11 @@ public abstract class ExtendedCodingTest extends TestCase {
         IntArrayBitWriter writer = new IntArrayBitWriter(memory, bits);
         IntArrayBitReader reader = new IntArrayBitReader(memory, bits);
 
-    	for (long i = 1; i < 100L; i++) {
+    	for (long i = 0; i < 100L; i++) {
     		checkPositiveBigInt(writer, reader, BigInteger.valueOf(i));
     	}
 
-    	for (long i = 1; i < 10000000000L; i+=1000000L) {
+    	for (long i = 0; i < 10000000000L; i+=1000000L) {
    			checkPositiveBigInt(writer, reader, BigInteger.valueOf(i));
     	}
 

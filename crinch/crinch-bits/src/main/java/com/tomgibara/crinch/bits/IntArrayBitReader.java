@@ -56,7 +56,7 @@ public class IntArrayBitReader extends AbstractBitReader {
     
     public IntArrayBitReader(long size) {
         if (size < 0) throw new IllegalArgumentException("negative size");
-        long length = size >> 5;
+        long length = (size + 31L) >> 5;
         if (length > Integer.MAX_VALUE) throw new IllegalArgumentException("size exceeds maximum possible array bits");
         ints = new int[(int) length];
         this.size = size;

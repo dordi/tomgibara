@@ -43,8 +43,10 @@ public abstract class AbstractBitWriterTest extends TestCase {
 			for (int j = 63; j >= 0; j--) {
 				writer.writeBit((int) (bits >> j));
 			}
+			writer.flush();
 			BitReader reader = bitReaderFor(writer);
-			assertEquals(bits, reader.readLong(64));
+			long back = reader.readLong(64);
+			assertEquals(bits, back);
 		}
 	}
 	

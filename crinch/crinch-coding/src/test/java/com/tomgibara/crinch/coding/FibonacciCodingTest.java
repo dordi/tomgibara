@@ -16,65 +16,69 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.util.Collections;
 import java.util.Random;
 
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
-public class FibonacciCodingTest extends ExtendedUniversalCodingTest {
+public class FibonacciCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
 	
 	@Override
-	ExtendedCoding getCoding() {
-		return FibonacciCoding.extended;
+	Iterable<ExtendedCoding> getCodings() {
+		return Collections.singleton(FibonacciCoding.extended);
 	}
+
 	
     public void testGeneral() {
-        int[] memory = new int[3];
-        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 96);
-        IntArrayBitReader reader = new IntArrayBitReader(memory, 96);
-        for (int i = 1; i <= 12; i++) {
-            coding.encodePositiveInt(writer, i);
-            writer.setPosition(0);
-            //System.out.println(String.format("%3d = %s", i, writer));
-            reader.setPosition(0);
-            int j = coding.decodePositiveInt(reader);
-            assertEquals(i, j);
-        }
-
-        coding.encodePositiveInt(writer, 2057509736);
-        writer.setPosition(0);
-        reader.setPosition(0);
-        coding.decodePositiveInt(reader);
-        writer.setPosition(0);
-        writer.writeBooleans(false, 96);
-        writer.setPosition(0);
-        coding.encodePositiveInt(writer, 3005096);
-        writer.setPosition(0);
-        reader.setPosition(0);
-        coding.decodePositiveInt(reader);
-        
-        Random r = new Random(0L);
-
-        for (int i = 0; i < 100000; i++) {
-            int j = -1;
-            while (j < 1) j = r.nextInt();
-            coding.encodePositiveInt(writer, j);
-            writer.setPosition(0);
-            reader.setPosition(0);
-            int k = coding.decodePositiveInt(reader);
-            assertEquals(j, k);
-        }
-        
-        for (int i = 0; i < 100000; i++) {
-            long l = -1;
-            while (l < 1) l = r.nextLong();
-            coding.encodePositiveLong(writer, l);
-            writer.setPosition(0);
-            reader.setPosition(0);
-            long m = coding.decodePositiveLong(reader);
-            assertEquals(l, m);
-        }
-        
+    	for (ExtendedCoding coding : getCodings()) {
+	
+	        int[] memory = new int[3];
+	        IntArrayBitWriter writer = new IntArrayBitWriter(memory, 96);
+	        IntArrayBitReader reader = new IntArrayBitReader(memory, 96);
+	        for (int i = 1; i <= 12; i++) {
+	            coding.encodePositiveInt(writer, i);
+	            writer.setPosition(0);
+	            //System.out.println(String.format("%3d = %s", i, writer));
+	            reader.setPosition(0);
+	            int j = coding.decodePositiveInt(reader);
+	            assertEquals(i, j);
+	        }
+	
+	        coding.encodePositiveInt(writer, 2057509736);
+	        writer.setPosition(0);
+	        reader.setPosition(0);
+	        coding.decodePositiveInt(reader);
+	        writer.setPosition(0);
+	        writer.writeBooleans(false, 96);
+	        writer.setPosition(0);
+	        coding.encodePositiveInt(writer, 3005096);
+	        writer.setPosition(0);
+	        reader.setPosition(0);
+	        coding.decodePositiveInt(reader);
+	        
+	        Random r = new Random(0L);
+	
+	        for (int i = 0; i < 100000; i++) {
+	            int j = -1;
+	            while (j < 1) j = r.nextInt();
+	            coding.encodePositiveInt(writer, j);
+	            writer.setPosition(0);
+	            reader.setPosition(0);
+	            int k = coding.decodePositiveInt(reader);
+	            assertEquals(j, k);
+	        }
+	        
+	        for (int i = 0; i < 100000; i++) {
+	            long l = -1;
+	            while (l < 1) l = r.nextLong();
+	            coding.encodePositiveLong(writer, l);
+	            writer.setPosition(0);
+	            reader.setPosition(0);
+	            long m = coding.decodePositiveLong(reader);
+	            assertEquals(l, m);
+	        }
+    	}
     }
 
 }

@@ -24,7 +24,7 @@ import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
 // TODO should allow number of bits to be configured
-public abstract class ExtendedUniversalCodingTest<C extends ExtendedCoding> extends CodingTest<C> {
+public abstract class ExtendedCodingTest<C extends ExtendedCoding> extends CodingTest<C> {
 
 	@Override
 	int getMaxEncodableValue(C coding) {

@@ -21,7 +21,7 @@ import java.util.Collections;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
-public class EliasDeltaCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
+public class EliasDeltaCodingTest extends ExtendedCodingTest<ExtendedCoding> {
 
 	@Override
 	Iterable<ExtendedCoding> getCodings() {

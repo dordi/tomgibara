@@ -19,7 +19,7 @@ package com.tomgibara.crinch.coding;
 import java.util.Collections;
 
 
-public class EliasOmegaCodingTest extends ExtendedUniversalCodingTest<ExtendedCoding> {
+public class EliasOmegaCodingTest extends ExtendedCodingTest<ExtendedCoding> {
 
 	@Override
 	Iterable<ExtendedCoding> getCodings() {

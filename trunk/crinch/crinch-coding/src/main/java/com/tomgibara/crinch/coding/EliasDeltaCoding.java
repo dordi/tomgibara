@@ -38,6 +38,7 @@ public final class EliasDeltaCoding extends UniversalCoding {
     
     @Override
     int unsafeEncodePositiveInt(BitWriter writer, int value) {
+    	value++;
         int size = 32 - Integer.numberOfLeadingZeros(value); //position of leading 1
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
@@ -50,6 +51,7 @@ public final class EliasDeltaCoding extends UniversalCoding {
     
     @Override
     int unsafeEncodePositiveLong(BitWriter writer, long value) {
+    	value++;
         int size = 64 - Long.numberOfLeadingZeros(value); //position of leading 1
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
@@ -61,6 +63,8 @@ public final class EliasDeltaCoding extends UniversalCoding {
     
     @Override
     int unsafeEncodePositiveBigInt(BitWriter writer, BigInteger value) {
+    	//TODO can we avoid this?
+    	value = value.add(BigInteger.ONE);
     	int size = value.bitLength();
         int sizeLength = 32 - Integer.numberOfLeadingZeros(size);
         int count = 0;
@@ -76,30 +80,30 @@ public final class EliasDeltaCoding extends UniversalCoding {
 	public int decodePositiveInt(BitReader reader) {
         int sizeLength = 0;
         while (!reader.readBoolean()) sizeLength++;
-        if (sizeLength == 0) return 1;
+        if (sizeLength == 0) return 0;
         int size = (1 << sizeLength) | reader.read(sizeLength);
         int x = reader.read(size - 1);
-        return (1 << (size-1)) | x;
+        return ((1 << (size-1)) | x) - 1;
 	}
 
 	@Override
 	public long decodePositiveLong(BitReader reader) {
         int sizeLength = 0;
         while (!reader.readBoolean()) sizeLength++;
-        if (sizeLength == 0) return 1L;
+        if (sizeLength == 0) return 0L;
         int size = (1 << sizeLength) | reader.read(sizeLength);
         long x = reader.readLong(size - 1);
-        return (1L << (size-1)) | x;
+        return ((1L << (size-1)) | x) - 1L;
 	}
 
 	@Override
 	public BigInteger decodePositiveBigInt(BitReader reader) {
         int sizeLength = 0;
         while (!reader.readBoolean()) sizeLength++;
-        if (sizeLength == 0) return BigInteger.ONE;
+        if (sizeLength == 0) return BigInteger.ZERO;
         int size = (1 << sizeLength) | reader.read(sizeLength);
         BigInteger x = reader.readBigInt(size - 1);
-        return x.or(BigInteger.ONE.shiftLeft(size - 1));
+        return x.or(BigInteger.ONE.shiftLeft(size - 1)).subtract(BigInteger.ONE);
 	}
     
 }

@@ -30,20 +30,20 @@ public abstract class UniversalCoding implements Coding {
 
 	@Override
 	public int encodePositiveInt(BitWriter writer, int value) {
-		if (value <= 0) throw new IllegalArgumentException("non-positive value");
+		if (value < 0) throw new IllegalArgumentException("negative value");
 		return unsafeEncodePositiveInt(writer, value);
 	}
 
 	@Override
 	public int encodePositiveLong(BitWriter writer, long value) {
-		if (value <= 0L) throw new IllegalArgumentException("non-positive value");
+		if (value < 0L) throw new IllegalArgumentException("negative value");
 		return unsafeEncodePositiveLong(writer, value);
 	}
 
 	@Override
 	public int encodePositiveBigInt(BitWriter writer, BigInteger value) {
 		if (value == null) throw new IllegalArgumentException("null value");
-		if (value.signum() != 1) throw new IllegalArgumentException("non-positive value");
+		if (value.signum() < 0) throw new IllegalArgumentException("negative value");
 		return unsafeEncodePositiveBigInt(writer, value);
 	}
 

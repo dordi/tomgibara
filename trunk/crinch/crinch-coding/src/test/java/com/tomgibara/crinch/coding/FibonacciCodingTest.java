@@ -21,7 +21,7 @@ import java.util.Random;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
 
-public class FibonacciCodingTest extends ExtendedCodingTest {
+public class FibonacciCodingTest extends ExtendedUniversalCodingTest {
 	
 	@Override
 	ExtendedCoding getCoding() {

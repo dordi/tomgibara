@@ -62,7 +62,7 @@ public class FibonacciCoding extends UniversalCoding {
     @Override
     int unsafeEncodePositiveInt(BitWriter writer, int value) {
     	value++;
-    	if (value < 0) return unsafeEncodePositiveLong(writer, value & 0x00000000ffffffffL);
+    	if (value < 0) return unsafeEncodePositiveLong(writer, (value-1) & 0x00000000ffffffffL);
         int fi = Arrays.binarySearch(fibLong, value);
         if (fi < 0) fi = -2 - fi;
         int count = fi + 3; //one for index adjustment, one for trailing 1, one for leading zero
@@ -102,8 +102,8 @@ public class FibonacciCoding extends UniversalCoding {
     @Override
     int unsafeEncodePositiveLong(BitWriter writer, long value) {
     	value++;
-    	if (value < 0)return unsafeEncodePositiveBigInt(writer, LONG_ADJ.add(BigInteger.valueOf(value)));
-        int fi = Arrays.binarySearch(fibLong, value);
+    	if (value < 0)return unsafeEncodePositiveBigInt(writer, LONG_ADJ.add(BigInteger.valueOf(value-1)));
+        int fi = Arrays.binarySearch(fibLong, 0, 91, value);
         if (fi < 0) fi = -2 - fi;
         int count = fi + 3; //one for index adjustment, one for trailing 1, one for leading zero
 
@@ -202,13 +202,12 @@ public class FibonacciCoding extends UniversalCoding {
             int bit = reader.readBit();
             if (bit == 1) {
                 if (last == 1) return value - 1L;
-                if (i == fibLong.length) {
+                if (i == 91) {
                 	value += fibLong[i - 2] + fibLong[i - 1];
-                	if (!reader.readBoolean()) throw new BitStreamException("Value too large for long");
-                	return value - 1L;
-                } else {
-                	value += fibLong[i];
+                	if (reader.readBoolean()) return value - 1L;
                 }
+                if (i >= 91) throw new BitStreamException("Value too large for long");
+               	value += fibLong[i];
             }
             last = bit;
         }

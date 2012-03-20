@@ -75,15 +75,15 @@ public class HuffmanCoding implements Coding {
 		
 		@Override
 		public int getIndex(int value) {
-			if (value <= 0) throw new IllegalArgumentException("non-positive value");
-			if (value > count) throw new IllegalArgumentException("invalid value");
-			return value - 1;
+			if (value < 0) throw new IllegalArgumentException("negative value");
+			if (value >= count) throw new IllegalArgumentException("invalid value");
+			return value;
 		}
 		
 		@Override
 		public int getValue(int index) {
 			if (index >= count) throw new BitStreamException("invalid huffman encoding: " + index);
-			return index + 1;
+			return index;
 		}
 		
 	}
@@ -105,9 +105,9 @@ public class HuffmanCoding implements Coding {
 		
 		@Override
 		public int getIndex(int value) {
-			if (value <= 0) throw new IllegalArgumentException("non-positive value");
-			if (value > indices.length) throw new IllegalArgumentException("invalid value: " + value);
-			int index = indices[value - 1];
+			if (value < 0) throw new IllegalArgumentException("negative value");
+			if (value >= indices.length) throw new IllegalArgumentException("invalid value: " + value);
+			int index = indices[value];
 			if (index < 0) throw new IllegalArgumentException("invalid value: " + value);
 			return index;
 		}
@@ -185,7 +185,7 @@ public class HuffmanCoding implements Coding {
 				if (i < limit) {
 					frequencies[i] = el.freq;
 					int j = el.index;
-					values[i] = j + 1;
+					values[i] = j;
 					indices[j] = i;
 				} else {
 					values[i] = -1;

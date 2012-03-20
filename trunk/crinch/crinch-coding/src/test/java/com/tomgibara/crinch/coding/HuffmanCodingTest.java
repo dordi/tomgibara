@@ -52,7 +52,7 @@ public class HuffmanCodingTest extends TestCase {
 
     public void testDictionary() {
     	HuffmanCoding coding = new HuffmanCoding(new UnorderedFrequencyValues(9L, 16L, 25L, 36L));
-    	int[] sequence = {1,2,3,4,3,2,1,4,3,2,1};
+    	int[] sequence = {0,1,2,3,2,1,0,3,2,1,0};
     	byte[] bytes = new byte[11];
     	ByteArrayBitWriter writer = new ByteArrayBitWriter(bytes);
     	for (int i = 0; i < sequence.length; i++) {
@@ -90,7 +90,7 @@ public class HuffmanCodingTest extends TestCase {
 		int count = frequencies.getCorrespondence().getCount();
 		IntArrayBitWriter w = new IntArrayBitWriter(memory);
 //		PrintStreamBitWriter d = new PrintStreamBitWriter();
-		for (int i = 1; i <= count; i++) {
+		for (int i = 0; i < count; i++) {
 			huffman.encodePositiveInt(w, i);
 //			huffman.encodePositiveInt(d, i);
 		}
@@ -98,7 +98,7 @@ public class HuffmanCodingTest extends TestCase {
 //		System.out.println();
 		
 		IntArrayBitReader r = new IntArrayBitReader(memory);
-		for (int i = 1; i <= count; i++) {
+		for (int i = 0; i < count; i++) {
 			assertEquals(i, huffman.decodePositiveInt(r));
 		}
 		

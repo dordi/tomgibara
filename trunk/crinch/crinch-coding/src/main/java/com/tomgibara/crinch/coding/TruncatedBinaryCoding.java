@@ -112,29 +112,29 @@ public class TruncatedBinaryCoding implements Coding {
 		return decodeBigInt(reader);
 	}
 
-	private int encodeInt(BitWriter writer, int value) {
+	int encodeInt(BitWriter writer, int value) {
 		return value < intCutoff ? writer.write(value, bits) : writer.write(value + intCutoff, bits + 1);
 	}
 
-	private int decodeInt(BitReader reader) {
+	int decodeInt(BitReader reader) {
 		int value = reader.read(bits);
 		return value < intCutoff ? value : ((value << 1) | reader.readBit()) - intCutoff;
 	}
 	
-	private int encodeLong(BitWriter writer, long value) {
+	int encodeLong(BitWriter writer, long value) {
 		return value < longCutoff ? writer.write(value, bits) : writer.write(value + longCutoff, bits + 1);
 	}
 
-	private long decodeLong(BitReader reader) {
+	long decodeLong(BitReader reader) {
 		long value = reader.readLong(bits);
 		return value < longCutoff ? value : ((value << 1) | reader.readBit()) - longCutoff;
 	}
 	
-	private int encodeBigInt(BitWriter writer, BigInteger value) {
+	int encodeBigInt(BitWriter writer, BigInteger value) {
 		return value.compareTo(bigIntCutoff) < 0 ? writer.write(value, bits) : writer.write(value.add(bigIntCutoff), bits + 1);
 	}
 
-	private BigInteger decodeBigInt(BitReader reader) {
+	BigInteger decodeBigInt(BitReader reader) {
 		BigInteger value = reader.readBigInt(bits);
 		if (value.compareTo(bigIntCutoff) < 0) return value;
 		value = value.shiftLeft(1);

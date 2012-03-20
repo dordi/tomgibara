@@ -42,17 +42,4 @@ public class RiceCodingTest extends ExtendedCodingTest<ExtendedCoding> {
 		}
 	}
 	
-//	public void testKnownValues() {
-//		test(10, 5, "1100000");
-//		test(4, 5, "00100");
-//		test(4, 4, "0100");
-//		test(4, 3, "101");
-//		test(4, 2, "100");
-//		test(4, 1, "1110");
-//	}
-//
-//	private static void test(int value, int divisor, String expected) {
-//		
-//	}
-	
 }

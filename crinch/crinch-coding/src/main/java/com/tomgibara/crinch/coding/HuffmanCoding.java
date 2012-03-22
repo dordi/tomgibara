@@ -114,9 +114,7 @@ public class HuffmanCoding implements Coding {
 		
 		public int getValue(int index) {
 			if (index >= values.length) throw new BitStreamException("invalid huffman encoding: " + index);
-			int value = values[index];
-			if (value < 0) throw new BitStreamException("invalid huffman encoding: " + index);
-			return value;
+			return values[index];
 		}
 		
 	}
@@ -171,6 +169,7 @@ public class HuffmanCoding implements Coding {
 				els[i] = new El(i, frequencies[i]);
 			}
 			Arrays.sort(els);
+			//TODO could use binary search?
 			int limit;
 			for (limit = 0; limit < count; limit++) {
 				if (els[limit].freq == 0) break;
@@ -178,7 +177,7 @@ public class HuffmanCoding implements Coding {
 			
 			frequencies = new long[limit];
 			//TODO support 'non-dense' lookups
-			int[] values = new int[count];
+			int[] values = new int[limit];
 			int[] indices = new int[count];
 			for (int i = 0; i < count; i++) {
 				El el = els[i];
@@ -188,7 +187,6 @@ public class HuffmanCoding implements Coding {
 					values[i] = j;
 					indices[j] = i;
 				} else {
-					values[i] = -1;
 					indices[el.index] = -1;
 				}
 			}
@@ -285,7 +283,7 @@ public class HuffmanCoding implements Coding {
                 if (length >= count.length) {
                     int newLen = Math.max(length + 1, 2 * count.length);
                     int[] tmp = new int[newLen];
-                    System.arraycopy(count, 0, tmp, 0, maxLen);
+                    System.arraycopy(count, 0, tmp, 0, maxLen+1);
                     count = tmp;
                 }
                 maxLen = length;
@@ -444,17 +442,14 @@ public class HuffmanCoding implements Coding {
     }
 
     private Nid produceNids() {
-    	int size = (codes.length+31)/32;
-    	int[] mem = new int[size];
-    	IntArrayBitWriter w = new IntArrayBitWriter(mem, size*32);
-    	IntArrayBitReader r = new IntArrayBitReader(mem, size*32);
+    	IntArrayBitWriter w = new IntArrayBitWriter(codes.length);
+    	IntArrayBitReader r = new IntArrayBitReader(w.getInts());
     	Nid root = new Nid();
     	int count = correspondence.getCount();
     	for (int i = 0; i < count; i++) {
         	w.setPosition(0);
+        	int length = encodeIndex(w, i);
         	w.flush();
-        	encodeIndex(w, i);
-        	int length = (int) w.getPosition();
         	r.setPosition(0);
         	Nid nid = root;
         	for (int j = 0; j < length; j++) {

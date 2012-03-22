@@ -56,12 +56,12 @@ class CompactStats implements CodedStreams.WriteTask, CodedStreams.ReadTask {
 
 	@Override
 	public void writeTo(CodedWriter writer) {
-		writer.writePositiveLong(bitsWritten + 1L);
+		writer.writePositiveLong(bitsWritten);
 	}
 	
 	@Override
 	public void readFrom(CodedReader reader) {
-		bitsWritten = reader.readPositiveLong() - 1L;
+		bitsWritten = reader.readPositiveLong();
 	}
 	
 }

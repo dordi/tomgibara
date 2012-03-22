@@ -33,18 +33,18 @@ class PositionStats extends IndexStats {
 	
 	@Override
 	public void writeTo(CodedWriter writer) {
-		writer.writePositiveLong(bottomPosition + 1L);
-		writer.writePositiveLong(topPosition + 1L);
-		writer.writePositiveInt(fixedBitSize + 1);
-		writer.writePositiveLong(bitsWritten + 1L);
+		writer.writePositiveLong(bottomPosition);
+		writer.writePositiveLong(topPosition);
+		writer.writePositiveInt(fixedBitSize);
+		writer.writePositiveLong(bitsWritten);
 	}
 	
 	@Override
 	public void readFrom(CodedReader reader) {
-		bottomPosition = reader.readPositiveLong() - 1L;
-		topPosition = reader.readPositiveLong() - 1L;
-		fixedBitSize = reader.readPositiveInt() - 1;
-		bitsWritten = reader.readPositiveLong() - 1L;
+		bottomPosition = reader.readPositiveLong();
+		topPosition = reader.readPositiveLong();
+		fixedBitSize = reader.readPositiveInt();
+		bitsWritten = reader.readPositiveLong();
 	}
 	
 }

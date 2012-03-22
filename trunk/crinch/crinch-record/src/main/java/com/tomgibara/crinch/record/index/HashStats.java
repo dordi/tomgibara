@@ -23,7 +23,7 @@ class HashStats extends IndexStats {
 	public void writeTo(CodedWriter writer) {
 		writer.getWriter().writeBoolean(positional);
 		writer.getWriter().writeBoolean(ordinal);
-		writer.writePositiveInt(tableSize + 1);
+		writer.writePositiveInt(tableSize);
 		CodedStreams.writePrimitiveArray(writer, hashSeeds);
 		writer.writePositiveInt(positionBits);
 		writer.writePositiveInt(ordinalBits);
@@ -33,7 +33,7 @@ class HashStats extends IndexStats {
 	public void readFrom(CodedReader reader) {
 		positional = reader.getReader().readBoolean();
 		ordinal = reader.getReader().readBoolean();
-		tableSize = reader.readPositiveInt() - 1;
+		tableSize = reader.readPositiveInt();
 		hashSeeds = CodedStreams.readIntArray(reader);
 		positionBits = reader.readPositiveInt();
 		ordinalBits = reader.readPositiveInt();

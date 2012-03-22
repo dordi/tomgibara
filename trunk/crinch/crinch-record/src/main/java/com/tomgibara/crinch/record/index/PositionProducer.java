@@ -164,7 +164,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 		private long findPositionSlow(long ordinal) {
 			reader.setPosition(oversizedStart);
 			while (reader.getPosition() < oversizedFinish) {
-				long ord = coded.readPositiveLong() / 2 - 1;
+				long ord = coded.readPositiveLong() / 2;
 				long pos = (coded.readPositiveLong() - 1L) / 2;
 				if (ord == ordinal) return pos;
 			}
@@ -201,7 +201,7 @@ public class PositionProducer implements RecordProducer<EmptyRecord> {
 				if ((a & 1L) == 1L) continue; // we need to start with ordinal which is always even
 				long b = coded.readPositiveLong();
 				long right = reader.getPosition();
-				long ord = a / 2 - 1L;
+				long ord = a / 2;
 				long pos = (b - 1L) / 2;
 				if (ord == ordinal) {
 					return pos;

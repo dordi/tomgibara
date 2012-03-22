@@ -26,8 +26,8 @@ import com.tomgibara.crinch.record.def.RecordDef;
 public class RecordStats {
 
 	public static int write(CodedWriter writer, RecordStats stats) {
-		int c = writer.writePositiveLong(stats.recordCount + 1L);
-		c += writer.writePositiveInt(stats.columnStats.size() + 1);
+		int c = writer.writePositiveLong(stats.recordCount);
+		c += writer.writePositiveInt(stats.columnStats.size());
 		for (ColumnStats cs : stats.columnStats) {
 			c += ColumnStats.write(writer, cs);
 		}
@@ -36,8 +36,8 @@ public class RecordStats {
 
 	public static RecordStats read(CodedReader reader) {
 		RecordStats stats = new RecordStats();
-		stats.recordCount = reader.readPositiveLong() - 1L;
-		int size = reader.readPositiveInt() - 1;
+		stats.recordCount = reader.readPositiveLong();
+		int size = reader.readPositiveInt();
 		for (; size > 0; size--) {
 			stats.columnStats.add(ColumnStats.read(reader));
 		}

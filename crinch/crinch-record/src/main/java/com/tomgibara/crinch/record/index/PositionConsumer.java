@@ -37,7 +37,7 @@ public class PositionConsumer implements RecordConsumer<LinearRecord> {
 	
 	private static void writeEntry(CodedWriter coded, int ordinal, long position) {
 //		//TODO we don't guard against overflow here
-		coded.writePositiveInt(2 * (ordinal + 1));
+		coded.writePositiveInt(2 * ordinal);
 		coded.writePositiveLong(2 * position + 1);
 	}
 

@@ -234,7 +234,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 					followChild = true;
 					root = false;
 				} else {
-					char c = (char) (huffmanCoding.decodePositiveInt(reader) - 1);
+					char c = (char) (huffmanCoding.decodePositiveInt(reader));
 					if (charsMatch(key.charAt(index), c)) {
 						sb.append(c);
 						if (++index == key.length()) {
@@ -250,10 +250,10 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				if (uniqueKeys) {
 					if (reader.readBoolean()) readRecord(key);
 				} else {
-					reader.skipBits(coded.readPositiveLong() - 1L);
+					reader.skipBits(coded.readPositiveLong());
 				}
-				long childOffset = coded.readPositiveLong() - 2L;
-				long siblingOffset = coded.readPositiveLong() - 2L;
+				long childOffset = coded.readPositiveLong() - 1L;
+				long siblingOffset = coded.readPositiveLong() - 1L;
 				if (followChild) {
 					if (childOffset < 0) {
 						prefixKey = null;
@@ -283,8 +283,8 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		
 		//TODO unfortunate to create so much garbage when walking trie
 		private LinearRecord readRecord(CharSequence key) {
-			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() - 1L : -1L;
-			long position = recordDef.isPositional() ? coded.readPositiveLong() - 1L : -1L;
+			long ordinal = recordDef.isOrdinal() ? coded.readPositiveLong() : -1L;
+			long position = recordDef.isPositional() ? coded.readPositiveLong() : -1L;
 			LinearRecord record = decompactor.decompact(coded, ordinal, position);
 			return factory.newRecord(sConfig, new CombinedRecord(new SingletonRecord(record.getOrdinal(), record.getPosition(), key.toString()), record));
 		}
@@ -342,7 +342,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 
 						key.setLength(--depth);
 					}
-					key.append( (char) (huffmanCoding.decodePositiveInt(reader) - 1) );
+					key.append( (char) (huffmanCoding.decodePositiveInt(reader)) );
 					depth++;
 				}
 				
@@ -351,7 +351,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 				if (uniqueKeys) {
 					record = reader.readBoolean() ? readRecord(key) : null;
 				} else {
-					long reclen = coded.readPositiveLong() - 1L;
+					long reclen = coded.readPositiveLong();
 					if (reclen == 0L) {
 						record = null;
 					} else {
@@ -361,8 +361,8 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 						reader.setPosition(finalRecordPosition);
 					}
 				}
-				long childOffset = coded.readPositiveLong() - 2L;
-				long siblingOffset = coded.readPositiveLong() - 2L;
+				long childOffset = coded.readPositiveLong() - 1L;
+				long siblingOffset = coded.readPositiveLong() - 1L;
 				long position = reader.getPosition();
 				childPositions[depth] = childOffset < 0 ? -1L : childOffset + position;
 				siblingPositions[depth] = siblingOffset < 0 ? -1L : siblingOffset + position;

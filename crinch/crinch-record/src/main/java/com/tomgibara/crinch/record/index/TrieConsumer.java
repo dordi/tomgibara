@@ -191,14 +191,14 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 	}
 	
 	private void writeNode(CodedWriter coded, Node node) {
-		if (node != root) huffmanCoding.encodePositiveInt(coded.getWriter(), node.c + 1);
+		if (node != root) huffmanCoding.encodePositiveInt(coded.getWriter(), node.c);
 		LinearRecord record = node.record;
 		if (uniqueKeys) {
 			coded.getWriter().writeBoolean(record != null);
 			if (record != null) writeRecord(coded, record);
 		} else {
 			if (record == null) {
-				coded.writePositiveLong(1L);
+				coded.writePositiveLong(0L);
 			} else {
 				// first record the size
 				{
@@ -208,7 +208,7 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 						writeRecord(recordSizingCoded, next);
 						next = next.getNextRecord();
 					} while (next != record);
-					coded.writePositiveLong(recordSizingWriter.getPosition() + 1L);
+					coded.writePositiveLong(recordSizingWriter.getPosition());
 				}
 				// then actually write the records
 				{
@@ -223,8 +223,8 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 	}
 	
 	private void writeRecord(CodedWriter coded, LinearRecord record) {
-		if (definition.isOrdinal()) coded.writePositiveLong(record.getOrdinal() + 1L);
-		if (definition.isPositional()) coded.writePositiveLong(record.getPosition() + 1L);
+		if (definition.isOrdinal()) coded.writePositiveLong(record.getOrdinal());
+		if (definition.isPositional()) coded.writePositiveLong(record.getPosition());
 		record.reset();
 		compactor.compact(coded, record);
 	}
@@ -277,8 +277,8 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 			// now measure the bits needed to write this node
 			writer.setPosition(0L);
 			writeNode(coded, node);
-			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
-			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
+			coded.writePositiveLong(hasChild ? node.child.offset + 1L : 0L);
+			coded.writePositiveLong(hasSibling ? node.sibling.offset + 1L : 0L);
 			long offset = lastOffset - writer.getPosition();
 			
 			// record the negative offset on this node and in the lastOffset
@@ -311,8 +311,8 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 			final boolean hasSibling = node.sibling != null;
 
 			writeNode(coded, node);
-			coded.writePositiveLong(hasChild ? node.child.offset + 2L : 1L);
-			coded.writePositiveLong(hasSibling ? node.sibling.offset + 2L : 1L);
+			coded.writePositiveLong(hasChild ? node.child.offset + 1L : 0L);
+			coded.writePositiveLong(hasSibling ? node.sibling.offset + 1L : 0L);
 
 			if (hasSibling) write(node.sibling);
 			if (hasChild) write(node.child);

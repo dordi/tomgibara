@@ -89,13 +89,13 @@ class ColumnCompactor {
 				i = Arrays.binarySearch(enumeration, value);
 			}
 			if (i < 0) throw new IllegalArgumentException("Not enumerated: " + value);
-			return huffman.encodePositiveInt(w, i + 1);
+			return huffman.encodePositiveInt(w, i);
 		} else {
 			int length = value.length();
 			int n = writer.writeSignedInt(length - (int) offset);
 			for (int i = 0; i < length; i++) {
 				char c = value.charAt(i);
-				n += huffman.encodePositiveInt(w, c + 1);
+				n += huffman.encodePositiveInt(w, c);
 			}
 			return n;
 		}
@@ -103,7 +103,7 @@ class ColumnCompactor {
 	
 	CharSequence decodeString(CodedReader reader) {
 		if (enumerated) {
-			int value = huffman.decodePositiveInt(reader.getReader()) - 1;
+			int value = huffman.decodePositiveInt(reader.getReader());
 			if (enumeration == null) {
 				return Character.toString((char) value);
 			} else {
@@ -113,18 +113,19 @@ class ColumnCompactor {
 			int length = ((int) offset) + reader.readSignedInt();
 			CompactCharSequence chars = store.getChars(columnIndex, length);
 			for (; length > 0; length--) {
-				chars.append((char) (huffman.decodePositiveInt(reader.getReader()) - 1));
+				char c = (char) (huffman.decodePositiveInt(reader.getReader()));
+				chars.append(c);
 			}
 			return chars;
 		}
 	}
 	
 	int encodeChar(CodedWriter writer, char value) {
-		return huffman.encodePositiveInt(writer.getWriter(), value + 1);
+		return huffman.encodePositiveInt(writer.getWriter(), value);
 	}
 	
 	char decodeChar(CodedReader reader) {
-		return (char) (huffman.decodePositiveInt(reader.getReader()) - 1);
+		return (char) huffman.decodePositiveInt(reader.getReader());
 	}
 	
 	int encodeInt(CodedWriter writer, int value) {
@@ -144,11 +145,11 @@ class ColumnCompactor {
 	}
 	
 	int encodeBoolean(CodedWriter writer, boolean value) {
-		return huffman.encodePositiveInt(writer.getWriter(), value ? 1 : 2);
+		return huffman.encodePositiveInt(writer.getWriter(), value ? 0 : 1);
 	}
 	
 	boolean decodeBoolean(CodedReader reader) {
-		return huffman.decodePositiveInt(reader.getReader()) == 1;
+		return huffman.decodePositiveInt(reader.getReader()) == 0;
 	}
 	
 	int encodeFloat(CodedWriter writer, float value) {

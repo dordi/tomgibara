@@ -43,39 +43,39 @@ public class ColumnStats {
 	
 	private static int writeString(CodedWriter writer, String str) {
 		int length = str.length();
-		int c = writer.writePositiveInt(length + 1);
+		int c = writer.writePositiveInt(length);
 		for (int i = 0; i < length; i++) {
-			c += writer.writePositiveInt(str.charAt(i) + 1);
+			c += writer.writePositiveInt(str.charAt(i));
 		}
 		return c;
 	}
 	
 	private static String readString(CodedReader reader) {
-		int length = reader.readPositiveInt() - 1;
+		int length = reader.readPositiveInt();
 		StringBuilder sb = new StringBuilder(length);
 		for (int i = 0; i < length; i++) {
-			sb.append((char) (reader.readPositiveInt() - 1));
+			sb.append((char) (reader.readPositiveInt()));
 		}
 		return sb.toString();
 	}
 	
 	//TODO not entirely correct: huffman implementation may vary and produce different codes
 	public static int write(CodedWriter writer, ColumnStats stats) {
-		int c = writer.writePositiveInt(stats.classification.ordinal() + 1);
+		int c = writer.writePositiveInt(stats.classification.ordinal());
 		c += writer.getWriter().writeBoolean(stats.nullable);
 		c += writeDecimal(writer, stats.maximum);
 		c += writeDecimal(writer, stats.minimum);
 		c += writeDecimal(writer, stats.sum);
-		c += writer.writePositiveLong(stats.count + 1);
+		c += writer.writePositiveLong(stats.count);
 		final long[] freqs = stats.frequencies;
 		int freqCount = freqs == null ? 0 : freqs.length;
-		c += writer.writePositiveInt(freqCount + 1);
+		c += writer.writePositiveInt(freqCount);
 		for (int i = 0; i < freqCount; i++) {
-			c += writer.writePositiveLong(freqs[i] + 1);
+			c += writer.writePositiveLong(freqs[i]);
 		}
 		final String[] enums = stats.enumeration;
 		int enumCount = enums == null ? 0 : enums.length;
-		c += writer.writePositiveInt(enumCount + 1);
+		c += writer.writePositiveInt(enumCount);
 		for (int i = 0; i < enumCount; i++) {
 			c += writeString(writer, enums[i]);
 		}
@@ -85,26 +85,26 @@ public class ColumnStats {
 	
 	public static ColumnStats read(CodedReader reader) {
 		ColumnStats stats = new ColumnStats();
-		stats.setClassification(ColumnStats.Classification.values()[reader.readPositiveInt() - 1]);
+		stats.setClassification(ColumnStats.Classification.values()[reader.readPositiveInt()]);
 		stats.setNullable(reader.getReader().readBoolean());
 		stats.setMaximum(readDecimal(reader));
 		stats.setMinimum(readDecimal(reader));
 		stats.setSum(readDecimal(reader));
-		stats.setCount(reader.readPositiveLong() - 1);
+		stats.setCount(reader.readPositiveLong());
 		
-		int freqCount = reader.readPositiveInt() - 1;
+		int freqCount = reader.readPositiveInt();
 		long[] freqs;
 		if (freqCount == 0) {
 			freqs = null;
 		} else {
 			freqs = new long[freqCount];
 			for (int i = 0; i < freqCount; i++) {
-				freqs[i] = reader.readPositiveLong() - 1;
+				freqs[i] = reader.readPositiveLong();
 			}
 		}
 		stats.setFrequencies(freqs);
 		
-		int enumCount = reader.readPositiveInt() - 1;
+		int enumCount = reader.readPositiveInt();
 		String[] enums;
 		if (enumCount == 0) {
 			enums = null;

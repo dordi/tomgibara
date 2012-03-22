@@ -18,16 +18,42 @@ package com.tomgibara.crinch.coding;
 
 import java.util.Arrays;
 
+/**
+ * Records the frequencies of characters occurring in Strings, arrays and possibly other sources.
+ * 
+ * @author Tom Gibara
+ *
+ */
+
+//TODO add a method that records from CharSequence
+//TODO add a method records characters from an array range
 public class CharFrequencyRecorder {
 
 	private long[] frequencies = new long[128]; // assume ASCII to start
+	
+	/**
+	 * Observes the occurrence of single character.
+	 * 
+	 * @param c
+	 *            a character for which the frequency should be incremented
+	 */
 	
 	public void record(char c) {
 		ensureLength(c);
 		frequencies[c] ++;
 	}
 
+	/**
+	 * Observes the occurrence of characters in an array.
+	 * 
+	 * @param cs
+	 *            an array of characters
+	 * @throws IllegalArgumentException
+	 *             if the array of characters is null
+	 */
+	
 	public void record(char[] cs) {
+		if (cs == null) throw new IllegalArgumentException("null cs");
 		switch (cs.length) {
 		case 0 : return;
 		case 1 : record(cs[0]); return;
@@ -43,8 +69,18 @@ public class CharFrequencyRecorder {
 			}
 		}
 	}
+
+	/**
+	 * Observes the occurrence of characters in a String.
+	 * 
+	 * @param str
+	 *            a string
+	 * @throws IllegalArgumentException
+	 *             if the String is null
+	 */
 	
 	public void record(String str) {
+		if (str == null) throw new IllegalArgumentException("null str");
 		int length = str.length();
 		switch (length) {
 		case 0 : return;
@@ -62,9 +98,27 @@ public class CharFrequencyRecorder {
 		}
 	}
 	
+	/**
+	 * The frequencies of the observed characters. The frequency of a character
+	 * c is stored in the cth index. The length of the array may be less than
+	 * the number of possible characters. If the value of a character is greater
+	 * than or equal to the length of the frequency array, it implies that the
+	 * frequency of the character is zero.
+	 * 
+	 * The returned array is owned by the caller.
+	 * 
+	 * @return an array of the observed character frequencies.
+	 */
+	
 	public long[] getFrequencies() {
-		return frequencies;
+		return frequencies.clone();
 	}
+
+	/**
+	 * The total number of characters that have been observed.
+	 * 
+	 * @return the total of all frequencies
+	 */
 	
 	public long getFrequencyTotal() {
 		long total = 0L;

@@ -347,6 +347,19 @@ public class CodingFrequencies implements Iterable<Integer> {
 
 	// static helper method
 
+	/**
+	 * Convenience method for adapting an array of longs into an array of
+	 * integers. This method may be helpful if frequencies that have been
+	 * accumulated as longs are to be used with the methods on this class.
+	 * 
+	 * @param longs
+	 *            an array of longs, not null
+	 * @return an array of integers containing the same values
+	 * @throws IllegalArgumentException
+	 *             if any value in the supplied array cannot be represented as
+	 *             an int
+	 */
+	
 	//TODO try to support longs directly in API
 	public static int[] intsFromLongs(long[] longs) {
 		if (longs == null) throw new IllegalArgumentException("null longs");
@@ -452,8 +465,8 @@ public class CodingFrequencies implements Iterable<Integer> {
 	
 	/**
 	 * An inclusive lower bound on the values whose frequencies are recorded by
-	 * this object. No guarantees are made about this value beyond:
-	 * x < getMinimumValue() implies getFrequency(x) == 0.
+	 * this object. This bound is not strict, i.e. no guarantees are made about
+	 * this value beyond: x < getMinimumValue() implies getFrequency(x) == 0.
 	 * 
 	 * @return the minimum value whose frequency is recorded by this object
 	 */
@@ -464,8 +477,8 @@ public class CodingFrequencies implements Iterable<Integer> {
 	
 	/**
 	 * An exclusive upper bound on the values whose frequencies are recorded by
-	 * this object. No guarantees are made about this value beyond:
-	 * x >= getMaximumValue() implies getFrequency(x) == 0.
+	 * this object. This bound is not strict, i.e. no guarantees are made about
+	 * this value beyond: x >= getMaximumValue() implies getFrequency(x) == 0.
 	 * 
 	 * @return the maximum value whose frequency is recorded by this object
 	 */
@@ -475,12 +488,12 @@ public class CodingFrequencies implements Iterable<Integer> {
 	}
 	
 	/**
-	 * The frequency with which the supplied value occured in the data. The
+	 * The frequency with which the supplied value occurred in the data. The
 	 * value specified is free to exceed the bounds of the data from which the
 	 * frequencies were generated.
 	 * 
 	 * @param value any integer value
-	 * @return the frequency with which the supplied value occured in the data
+	 * @return the frequency with which the supplied value occurred in the data
 	 */
 	
 	public int getFrequency(int value) {

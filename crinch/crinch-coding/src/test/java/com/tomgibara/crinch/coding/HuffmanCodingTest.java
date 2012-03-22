@@ -16,15 +16,21 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
+import java.util.Random;
 
 import junit.framework.TestCase;
 
 import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.ByteArrayBitReader;
 import com.tomgibara.crinch.bits.ByteArrayBitWriter;
+import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitReader;
 import com.tomgibara.crinch.bits.IntArrayBitWriter;
+import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 import com.tomgibara.crinch.coding.HuffmanCoding.DescendingFrequencyValues;
 import com.tomgibara.crinch.coding.HuffmanCoding.Dictionary;
 import com.tomgibara.crinch.coding.HuffmanCoding.UnorderedFrequencyValues;
@@ -65,6 +71,39 @@ public class HuffmanCodingTest extends TestCase {
     	for (int i = 0; i < sequence.length; i++) {
     		assertEquals("mismatch at index " + i, sequence[i], coding.decodePositiveInt(reader));
     	}
+    }
+    
+    public void testRandomFrequencies() {
+    	Random r = new Random(0);
+    	for (int i = 0; i < 1000; i++) {
+    		int size = 1 + r.nextInt(2000);
+    		long[] freqs = new long[size];
+    		for (int j = 0; j < freqs.length; j++) {
+    			freqs[j] = (long) Math.abs(r.nextGaussian() * 100000.0);
+			}
+    		HuffmanCoding coding = new HuffmanCoding(new UnorderedFrequencyValues(freqs));
+ 			int length = r.nextInt(5000);
+ 			int[] message = new int[length];
+ 			for (int j = 0; j < message.length; j++) {
+ 				int value;
+ 				do {
+ 					value = r.nextInt(size);
+ 				} while (freqs[value] == 0L); 
+				message[j] = value;
+			}
+ 			ByteArrayOutputStream out = new ByteArrayOutputStream();
+ 			BitWriter writer = new OutputStreamBitWriter(out);
+ 			for (int j = 0; j < message.length; j++) {
+				coding.encodePositiveInt(writer, message[j]);
+			}
+ 			writer.flush();
+ 			ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+ 			BitReader reader = new InputStreamBitReader(in);
+ 			for (int j = 0; j < message.length; j++) {
+				assertEquals(message[j], coding.decodePositiveInt(reader));
+			}
+		}
+    	
     }
     
     private static void testDecodeBoth(long[] freqs) {

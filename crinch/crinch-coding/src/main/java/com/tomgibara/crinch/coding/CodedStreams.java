@@ -51,19 +51,19 @@ public class CodedStreams {
 
 	public static int writeString(CodedWriter writer, String str) {
 		int len = str.length();
-		int c = writer.writePositiveInt(len + 1);
+		int c = writer.writePositiveInt(len);
 		//TODO consider writing as UTF-8 instead
 		for (int i = 0; i < len; i++) {
-			c += writer.writePositiveInt(str.charAt(1));
+			c += writer.writePositiveInt(str.charAt(i));
 		}
 		return c;
 	}
 
 	public static String readString(CodedReader reader) {
-		int len = reader.readPositiveInt() - 1;
+		int len = reader.readPositiveInt();
 		StringBuilder sb = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
-			sb.append((char) (reader.readPositiveInt() - 1));
+			sb.append((char) (reader.readPositiveInt()));
 		}
 		return sb.toString();
 	}
@@ -77,7 +77,7 @@ public class CodedStreams {
 		if (!comp.isPrimitive()) throw new IllegalArgumentException("array components not primitives");
 		
 		int length = Array.getLength(array);
-		writer.writePositiveInt(length + 1);
+		writer.writePositiveInt(length);
 		//TODO would love a switch statement here
 		int c = 0;
 		if (comp == boolean.class) {
@@ -105,7 +105,7 @@ public class CodedStreams {
 			for (int i = 0; i < a.length; i++) c += writer.writeDouble(a[i]);
 		} else if (comp == char.class) {
 			char[] a = (char[]) array;
-			for (int i = 0; i < a.length; i++) c += writer.writePositiveInt(a[i] + 1);
+			for (int i = 0; i < a.length; i++) c += writer.writePositiveInt(a[i]);
 		} else {
 			throw new UnsupportedOperationException("unsupported primitive type " + comp.getName());
 		}
@@ -113,7 +113,7 @@ public class CodedStreams {
 	}
 
 	public static int[] readIntArray(CodedReader reader) {
-		int length = reader.readPositiveInt() - 1;
+		int length = reader.readPositiveInt();
 		int[] a = new int[length];
 		for (int i = 0; i < a.length; i++) {
 			a[i] = reader.readSignedInt();
@@ -123,7 +123,7 @@ public class CodedStreams {
 
 	//TODO add other methods
 	public static long[] readLongArray(CodedReader reader) {
-		int length = reader.readPositiveInt() - 1;
+		int length = reader.readPositiveInt();
 		long[] a = new long[length];
 		for (int i = 0; i < a.length; i++) {
 			a[i] = reader.readSignedLong();
@@ -133,7 +133,7 @@ public class CodedStreams {
 
 	public static int writeStringArray(CodedWriter writer, String[] array) {
 		int len = array.length;
-		int c = writer.writePositiveInt(len + 1);
+		int c = writer.writePositiveInt(len);
 		for (int i = 0; i < len; i++) {
 			c += writeString(writer, array[i]);
 		}
@@ -141,7 +141,7 @@ public class CodedStreams {
 	}
 	
 	public static String[] readStringArray(CodedReader reader) {
-		int len = reader.readPositiveInt() - 1;
+		int len = reader.readPositiveInt();
 		String[] array = new String[len];
 		for (int i = 0; i < len; i++) {
 			array[i] = readString(reader);
@@ -151,10 +151,10 @@ public class CodedStreams {
 	
 	public static <E extends Enum<?>> int writeEnumArray(CodedWriter writer, E[] enums) {
 		int length = enums.length;
-		writer.writePositiveInt(length + 1);
+		writer.writePositiveInt(length);
 		int c = 0;
 		for (int i = 0; i < length; i++) {
-			c += writer.writePositiveInt(enums[i].ordinal() + 1);
+			c += writer.writePositiveInt(enums[i].ordinal());
 		}
 		return c;
 	}
@@ -163,7 +163,7 @@ public class CodedStreams {
 		if (enumClass == null) throw new IllegalArgumentException("null enumClass");
 		E[] values = enumClass.getEnumConstants();
 		if (values == null) throw new IllegalArgumentException("not an enum class");
-		int length = reader.readPositiveInt() - 1;
+		int length = reader.readPositiveInt();
 		E[] a = (E[]) Array.newInstance(enumClass, length);
 		for (int i = 0; i < length; i++) {
 			a[i] = values[reader.readSignedInt() - 1];
@@ -173,9 +173,9 @@ public class CodedStreams {
 
 	public static <E extends Enum<?>> int writeEnumList(CodedWriter writer, List<E> list) {
 		int length = list.size();
-		writer.writePositiveInt(length + 1);
+		writer.writePositiveInt(length);
 		int c = 0;
-		for (E e : list) c += writer.writePositiveInt(e.ordinal() + 1);
+		for (E e : list) c += writer.writePositiveInt(e.ordinal());
 		return c;
 	}
 	
@@ -183,9 +183,9 @@ public class CodedStreams {
 		if (enumClass == null) throw new IllegalArgumentException("null enumClass");
 		E[] values = enumClass.getEnumConstants();
 		if (values == null) throw new IllegalArgumentException("not an enum class");
-		int length = reader.readPositiveInt() - 1;
+		int length = reader.readPositiveInt();
 		List<E> list = new ArrayList<E>(length);
-		for (int i = 0; i < length; i++) list.add( values[reader.readPositiveInt() - 1] );
+		for (int i = 0; i < length; i++) list.add( values[reader.readPositiveInt()] );
 		return list;
 	}
 

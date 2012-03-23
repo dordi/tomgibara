@@ -20,6 +20,15 @@ import java.math.BigInteger;
 
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * Universal codings are capable of encoding any non-negative whole number, no
+ * matter how large. Naturally, resource limitations may impede the coding of
+ * extremely large numbers.
+ * 
+ * @author Tom Gibara
+ * 
+ */
+
 public abstract class UniversalCoding implements Coding {
 
 	abstract int unsafeEncodePositiveInt(BitWriter writer, int value);

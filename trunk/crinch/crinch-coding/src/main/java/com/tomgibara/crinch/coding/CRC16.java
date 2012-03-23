@@ -16,6 +16,7 @@
  */
 package com.tomgibara.crinch.coding;
 
+//TODO this could be modelled as a Hash.
 public final class CRC16 {
 
 	// statics

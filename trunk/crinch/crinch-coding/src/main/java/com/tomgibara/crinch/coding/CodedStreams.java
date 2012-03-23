@@ -28,27 +28,66 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 import com.tomgibara.crinch.bits.InputStreamBitReader;
 import com.tomgibara.crinch.bits.OutputStreamBitWriter;
 
-//TODO rename
-public class CodedStreams {
+/**
+ * Provides static methods for reading/writing data from/to bit streams using
+ * {@link CodedReader}s/{@link CodedWriter}s.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
+public final class CodedStreams {
+
+	/**
+	 * Implementations of this interface may be used to encapsulate an operation
+	 * that writes to a {@link CodedWriter}.
+	 */
+	
 	public interface WriteTask {
+
+		/**
+		 * Called to write data to a {@link CodedWriter}.
+		 * 
+		 * @param writer to which data should be written
+		 */
 		
 		void writeTo(CodedWriter writer);
 		
 	}
 	
+	/**
+	 * Implementations of this interface may be used to encapsulate an operation
+	 * that reads from a {@link CodedReader}.
+	 */
+	
 	public interface ReadTask {
+		
+		/**
+		 * Called to read data from a {@link CodedWriter}.
+		 * 
+		 * @param writer to which data should be written
+		 */
 		
 		void readFrom(CodedReader reader);
 		
 	}
 
+	/**
+	 * Writes a string to a coded writer. The length is written, followed by
+	 * each character in the String.
+	 * 
+	 * @param writer
+	 *            the writer to which values will be written
+	 * @param str
+	 *            the string to write, not null
+	 * @return the number of bits written
+	 */
+	
 	public static int writeString(CodedWriter writer, String str) {
 		int len = str.length();
 		int c = writer.writePositiveInt(len);
@@ -59,6 +98,15 @@ public class CodedStreams {
 		return c;
 	}
 
+	/**
+	 * Reads a string from a coded writer. The length is read, followed by each
+	 * character in the String.
+	 * 
+	 * @param reader
+	 *            the reader from which values will be read
+	 * @return the string read, never null
+	 */
+	
 	public static String readString(CodedReader reader) {
 		int len = reader.readPositiveInt();
 		StringBuilder sb = new StringBuilder(len);
@@ -68,7 +116,17 @@ public class CodedStreams {
 		return sb.toString();
 	}
 	
-	//TODO test
+	/**
+	 * Writes an array of primitives to a coded writer. The length is written,
+	 * followed by each element of the array.
+	 * 
+	 * @param writer
+	 *            the writer to which values will be written
+	 * @param array
+	 *            the array to write, not null
+	 * @return the number of bits written
+	 */
+	
 	public static int writePrimitiveArray(CodedWriter writer, Object array) {
 		if (array == null) throw new IllegalArgumentException("null array");
 		Class<?> clss = array.getClass();
@@ -112,6 +170,15 @@ public class CodedStreams {
 		return c;
 	}
 
+	/**
+	 * Reads an array of ints from a coded writer. The length is read, followed
+	 * by each int in the array.
+	 * 
+	 * @param reader
+	 *            the reader from which the array will be read
+	 * @return the array read, never null
+	 */
+	
 	public static int[] readIntArray(CodedReader reader) {
 		int length = reader.readPositiveInt();
 		int[] a = new int[length];
@@ -122,6 +189,15 @@ public class CodedStreams {
 	}
 
 	//TODO add other methods
+	/**
+	 * Reads an array of longs from a coded writer. The length is read, followed
+	 * by each long in the array.
+	 * 
+	 * @param reader
+	 *            the reader from which the array will be read
+	 * @return the array read, never null
+	 */
+	
 	public static long[] readLongArray(CodedReader reader) {
 		int length = reader.readPositiveInt();
 		long[] a = new long[length];
@@ -131,6 +207,18 @@ public class CodedStreams {
 		return a;
 	}
 
+	/**
+	 * Writes an array of Strings to a coded writer. The length is written,
+	 * followed by every String in the array as by the
+	 * {@link #writeString(CodedWriter, String)} method.
+	 * 
+	 * @param writer
+	 *            the writer to which values will be written
+	 * @param array
+	 *            the array to write, not null
+	 * @return the number of bits written
+	 */
+	
 	public static int writeStringArray(CodedWriter writer, String[] array) {
 		int len = array.length;
 		int c = writer.writePositiveInt(len);
@@ -139,6 +227,16 @@ public class CodedStreams {
 		}
 		return c;
 	}
+	
+	/**
+	 * Reads an array of Strings from a coded writer. The length is read,
+	 * followed by each String in the array as by the
+	 * {@link #readString(CodedReader)} method.
+	 * 
+	 * @param reader
+	 *            the reader from which the array will be read
+	 * @return the array read, never null
+	 */
 	
 	public static String[] readStringArray(CodedReader reader) {
 		int len = reader.readPositiveInt();
@@ -149,6 +247,17 @@ public class CodedStreams {
 		return array;
 	}
 	
+	/**
+	 * Writes an array of enums to a coded writer. The length is written,
+	 * followed by the ordinal of every enum in the array.
+	 * 
+	 * @param writer
+	 *            the writer to which values will be written
+	 * @param array
+	 *            the array to write, not null
+	 * @return the number of bits written
+	 */
+	
 	public static <E extends Enum<?>> int writeEnumArray(CodedWriter writer, E[] enums) {
 		int length = enums.length;
 		writer.writePositiveInt(length);
@@ -158,6 +267,15 @@ public class CodedStreams {
 		}
 		return c;
 	}
+	
+	/**
+	 * Reads an array of enums from a coded writer. The length is read, followed
+	 * by the ordinal of each enum in the array.
+	 * 
+	 * @param reader
+	 *            the reader from which the array will be read
+	 * @return the array read, never null
+	 */
 	
 	public static <E extends Enum<?>> E[] readEnumArray(CodedReader reader, Class<E> enumClass) {
 		if (enumClass == null) throw new IllegalArgumentException("null enumClass");
@@ -171,6 +289,17 @@ public class CodedStreams {
 		return a;
 	}
 
+	/**
+	 * Writes a list of enums to a coded writer. The size of the list is is
+	 * written, followed by the ordinal of every enum in the array.
+	 * 
+	 * @param writer
+	 *            the writer to which values will be written
+	 * @param list
+	 *            a list of enums containing no nulls
+	 * @return the number of bits written
+	 */
+
 	public static <E extends Enum<?>> int writeEnumList(CodedWriter writer, List<E> list) {
 		int length = list.size();
 		writer.writePositiveInt(length);
@@ -179,6 +308,15 @@ public class CodedStreams {
 		return c;
 	}
 	
+	/**
+	 * Reads a list of enums from a coded writer. The size of the list is read,
+	 * followed by the ordinal of each enum in the list.
+	 * 
+	 * @param reader
+	 *            the reader from which the array will be read
+	 * @return the list read, never null
+	 */
+
 	public static <E extends Enum<?>> List<E> readEnumList(CodedReader reader, Class<E> enumClass) {
 		if (enumClass == null) throw new IllegalArgumentException("null enumClass");
 		E[] values = enumClass.getEnumConstants();
@@ -189,6 +327,19 @@ public class CodedStreams {
 		return list;
 	}
 
+	/**
+	 * Writes data to a file using a specified coding.
+	 * 
+	 * @param task
+	 *            writes the data values
+	 * @param coding
+	 *            performs the encoding of the values
+	 * @param file
+	 *            stores the values
+	 * @throws BitStreamException
+	 *             if an I/O problem occurs.
+	 */
+	
 	public static void writeToFile(WriteTask task, ExtendedCoding coding, File file) {
 		OutputStream out = null;
 		try {
@@ -210,6 +361,19 @@ public class CodedStreams {
 		}
 	}
 
+	/**
+	 * Reads data from a file using a specified coding.
+	 * 
+	 * @param task
+	 *            reads the data values
+	 * @param coding
+	 *            performs the decoding of the values
+	 * @param file
+	 *            stores the values
+	 * @throws BitStreamException
+	 *             if an I/O problem occurs.
+	 */
+	
 	public static void readFromFile(ReadTask task, ExtendedCoding coding, File file) {
 		InputStream in = null;
 		try {
@@ -228,6 +392,9 @@ public class CodedStreams {
 				}
 			}
 		}
+	}
+	
+	private CodedStreams() {
 	}
 	
 }

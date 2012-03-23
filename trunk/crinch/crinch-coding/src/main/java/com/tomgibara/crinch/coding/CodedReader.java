@@ -16,10 +16,20 @@
  */
 package com.tomgibara.crinch.coding;
 
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitStreamException;
+
+/**
+ * Pairs a {@link Reader} with an {@link ExtendedCoding} to provide a convenient
+ * way of reading coded data.
+ * 
+ * @author Tom Gibara
+ * 
+ */
 
 public class CodedReader {
 
@@ -29,6 +39,15 @@ public class CodedReader {
 	private final ExtendedCoding coding;
 	
 	// constructors
+
+	/**
+	 * Creates a coded reader.
+	 * 
+	 * @param reader
+	 *            the reader from which bits will be read
+	 * @param coding
+	 *            used to decode the bits into values
+	 */
 	
 	public CodedReader(BitReader reader, ExtendedCoding coding) {
 		if (reader == null) throw new IllegalArgumentException("null reader");
@@ -39,9 +58,17 @@ public class CodedReader {
 	
 	// accessors
 	
+	/**
+	 * The reader that supplies the bits for the coding.
+	 */
+	
 	public BitReader getReader() {
 		return reader;
 	}
+	
+	/**
+	 * The coding that decodes the bits.
+	 */
 	
 	public ExtendedCoding getCoding() {
 		return coding;
@@ -49,34 +76,98 @@ public class CodedReader {
 	
 	// methods
 	
+	/**
+	 * Decodes a positive integer from the reader.
+	 * 
+	 * @return an integer greater than or equal to zero
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public int readPositiveInt() {
 		return coding.decodePositiveInt(reader);
 	}
 	
+	/**
+	 * Decodes a positive long from the reader.
+	 * 
+	 * @return a long greater than or equal to zero
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public long readPositiveLong() {
 		return coding.decodePositiveLong(reader);
 	}
 	
+	/**
+	 * Decodes a positive BigInteger from the reader.
+	 * 
+	 * @return a BigInteger greater than or equal to zero
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public BigInteger readPositiveBigInt() {
 		return coding.decodePositiveBigInt(reader);
 	}
 	
+	/**
+	 * Decodes an integer from the reader.
+	 * 
+	 * @return an integer
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public int readSignedInt() {
 		return coding.decodeSignedInt(reader);
 	}
 	
+	/**
+	 * Decodes a long from the reader.
+	 * 
+	 * @return a long
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public long readSignedLong() {
 		return coding.decodeSignedLong(reader);
 	}
 	
+	/**
+	 * Decodes a BigInteger from the reader.
+	 * 
+	 * @return a BigInteger
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public BigInteger readSignedBigInt() {
 		return coding.decodeSignedBigInt(reader);
 	}
 	
+	/**
+	 * Decodes a double from the reader.
+	 * 
+	 * @return a double
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public double readDouble() {
 		return coding.decodeDouble(reader);
 	}
 	
+	/**
+	 * Decodes a BigDecimal from the reader.
+	 * 
+	 * @return a BigDecimal
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+
 	public BigDecimal readDecimal() {
 		return coding.decodeDecimal(reader);
 	}

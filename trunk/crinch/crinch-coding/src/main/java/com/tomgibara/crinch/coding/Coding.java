@@ -26,6 +26,9 @@ import com.tomgibara.crinch.bits.BitWriter;
  * Implementations of this interface can encode non-negative numbers into a bit
  * sequences that can then be decoded into the original values.
  * 
+ * Some implementations may place further restrictions on the values that can be
+ * encoded. Those that do not extend {@link UniversalCoding}.
+ * 
  * To encode and decode negative values an {@link ExtendedCoding} may be used.
  * 
  * @author Tom Gibara

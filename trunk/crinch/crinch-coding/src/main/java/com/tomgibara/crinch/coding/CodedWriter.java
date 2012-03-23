@@ -83,7 +83,7 @@ public class CodedWriter {
 	 *            an integer greater than or equal to zero
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 
 	public int writePositiveInt(int value) {
@@ -97,7 +97,7 @@ public class CodedWriter {
 	 *            a long greater than or equal to zero
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 	
 	public int writePositiveLong(long value) {
@@ -111,7 +111,7 @@ public class CodedWriter {
 	 *            a BigInteger greater than or equal to zero
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 
 	public int writePositiveBigInt(BigInteger value) {
@@ -125,7 +125,7 @@ public class CodedWriter {
 	 *            an integer
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 
 	public int writeSignedInt(int value) {
@@ -153,7 +153,7 @@ public class CodedWriter {
 	 *            a BigInteger
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 
 	public int writeSignedBigInt(BigInteger value) {
@@ -167,7 +167,7 @@ public class CodedWriter {
 	 *            a double
 	 * @return the number of bits written
 	 * @throws BitStreamException
-	 *             if there was a problem reading bits from the stream
+	 *             if there was a problem writing bits to the stream
 	 */
 
 	public int writeDouble(double value) {

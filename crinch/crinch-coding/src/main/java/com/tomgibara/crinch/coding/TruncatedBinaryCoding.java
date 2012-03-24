@@ -22,6 +22,13 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * Implements truncated binary coding.
+ * 
+ * @author Tom Gibara
+ * @see http://en.wikipedia.org/wiki/Truncated_binary_encoding
+ */
+
 public class TruncatedBinaryCoding implements Coding {
 
 	//TODO could change comparisons to bit length checks?
@@ -36,14 +43,38 @@ public class TruncatedBinaryCoding implements Coding {
 	private final int intCutoff;
 	private final long longCutoff;
 
+	/**
+	 * Constructs a truncated binary coding for the first <em>size</em> natural
+	 * numbers.
+	 * 
+	 * @param size
+	 *            the number of values, must be greater than zero
+	 */
+	
 	public TruncatedBinaryCoding(int size) {
 		this(BigInteger.valueOf(size));
 	}
 
+	/**
+	 * Constructs a truncated binary coding for the first <em>size</em> natural
+	 * numbers.
+	 * 
+	 * @param size
+	 *            the number of values, must be greater than zero
+	 */
+	
 	public TruncatedBinaryCoding(long size) {
 		this(BigInteger.valueOf(size));
 	}
 
+	/**
+	 * Constructs a truncated binary coding for the first <em>size</em> natural
+	 * numbers.
+	 * 
+	 * @param size
+	 *            the number of values, must be greater than zero
+	 */
+	
 	public TruncatedBinaryCoding(BigInteger size) {
 		if (size == null) throw new IllegalArgumentException("null size");
 		if (size.signum() < 1) throw new IllegalArgumentException("non-positive size");

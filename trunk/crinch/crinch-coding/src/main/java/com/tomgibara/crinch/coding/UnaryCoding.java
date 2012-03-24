@@ -31,12 +31,14 @@ import com.tomgibara.crinch.bits.BitWriter;
  * {@link UnaryCoding#MAX_ENCODABLE_INT}. This is in violation of the
  * {@link UniversalCoding} contract, but a necessary practical limitation.
  * 
+ * Instances of this class are available via the static fields
+ * {@link UnaryCoding#oneTerminated} and {@link UnaryCoding#zeroTerminated}.
+ * 
  * @author Tom Gibara
  * @see http://en.wikipedia.org/wiki/Unary_coding
  */
 
-//TODO could implement equality based on terminating bit
-public class UnaryCoding extends UniversalCoding {
+public final class UnaryCoding extends UniversalCoding {
 
 	// statics
 
@@ -77,14 +79,7 @@ public class UnaryCoding extends UniversalCoding {
 	
 	private final boolean terminalBit;
 	
-	/**
-	 * Creates a new unary coding that terminates with the specified bit.
-	 * 
-	 * @param terminalBit
-	 *            whether the unary coding is terminated with a one
-	 */
-	
-	public UnaryCoding(boolean terminalBit) {
+	private UnaryCoding(boolean terminalBit) {
 		this.terminalBit = terminalBit;
 	}
 

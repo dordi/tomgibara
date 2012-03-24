@@ -22,24 +22,77 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * Implements unary coding. Note that unary coding is extremely inefficient for
+ * even moderately sized numbers; writing large numbers could result in huge
+ * resource usage.
+ * 
+ * This implementation limits the number of bits it will write to
+ * {@link UnaryCoding#MAX_ENCODABLE_INT}. This is in violation of the
+ * {@link UniversalCoding} contract, but a necessary practical limitation.
+ * 
+ * @author Tom Gibara
+ * @see http://en.wikipedia.org/wiki/Unary_coding
+ */
+
+//TODO could implement equality based on terminating bit
 public class UnaryCoding extends UniversalCoding {
 
 	// statics
 
+	/**
+	 * The greatest value that may be written by this coding.
+	 */
+	
 	public static final int MAX_ENCODABLE_INT = Integer.MAX_VALUE - 1;
-	public static final BigInteger MAX_ENCODABLE_BIG_INT = BigInteger.valueOf(Integer.MAX_VALUE - 1);
+	private static final BigInteger MAX_ENCODABLE_BIG_INT = BigInteger.valueOf(Integer.MAX_VALUE - 1);
 	
 	//TODO find better names
+	
+	/**
+	 * An unary coding that will generate codes which consist of one bits,
+	 * terminated by a zero.
+	 */
+	
 	public static final UnaryCoding zeroTerminated = new UnaryCoding(false);
+	
+	/**
+	 * An unary coding that will generate codes which consist of zero bits,
+	 * terminated by a one.
+	 */
+	
 	public static final UnaryCoding oneTerminated = new UnaryCoding(true);
+	
+	/**
+	 * An extended coding based on {@link #zeroTerminated}.
+	 */
+	
 	public static final ExtendedCoding zeroExtended = new ExtendedCoding(zeroTerminated);
+
+	/**
+	 * An extended coding based on {@link #oneTerminated}.
+	 */
+	
 	public static final ExtendedCoding oneExtended = new ExtendedCoding(oneTerminated);
 	
 	private final boolean terminalBit;
 	
+	/**
+	 * Creates a new unary coding that terminates with the specified bit.
+	 * 
+	 * @param terminalBit
+	 *            whether the unary coding is terminated with a one
+	 */
+	
 	public UnaryCoding(boolean terminalBit) {
 		this.terminalBit = terminalBit;
 	}
+
+	/**
+	 * Whether the unary coding is terminated with a one
+	 * 
+	 * @return the terminating bit
+	 */
 	
 	public boolean isTerminatedByOne() {
 		return terminalBit;

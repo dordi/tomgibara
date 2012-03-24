@@ -95,7 +95,7 @@ public class TrieProducer implements RecordProducer<LinearRecord> {
 		maxLength = keyStats.getMaximum().intValue();
 		uniqueKeys = keyStats.isUnique();
 
-		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
+		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencies(frequencies));
 		coding = context.getCoding();
 		
 		File file = context.file("trie", false, recordDef);

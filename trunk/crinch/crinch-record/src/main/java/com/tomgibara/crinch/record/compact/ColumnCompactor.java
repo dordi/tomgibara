@@ -61,7 +61,7 @@ class ColumnCompactor {
 		if (freqs == null) {
 			huffman = null;
 		} else {
-			huffman = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(freqs));
+			huffman = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencies(freqs));
 		}
 	}
 	

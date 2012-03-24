@@ -31,7 +31,7 @@ import com.tomgibara.crinch.bits.BitWriter;
  */
 
 //TODO could define equality based on number of bits
-public class RiceCoding extends UniversalCoding {
+public final class RiceCoding extends UniversalCoding {
 
 	private final int bits;
 

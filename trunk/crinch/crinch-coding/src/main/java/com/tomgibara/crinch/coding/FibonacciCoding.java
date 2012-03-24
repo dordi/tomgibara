@@ -27,7 +27,7 @@ import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
-public class FibonacciCoding extends UniversalCoding {
+public final class FibonacciCoding extends UniversalCoding {
 
 	// statics
 

@@ -29,7 +29,7 @@ import com.tomgibara.crinch.bits.BitWriter;
  * @see http://en.wikipedia.org/wiki/Truncated_binary_encoding
  */
 
-public class TruncatedBinaryCoding implements Coding {
+public final class TruncatedBinaryCoding implements Coding {
 
 	//TODO could change comparisons to bit length checks?
 	private static final BigInteger INT_MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);

@@ -146,7 +146,7 @@ public class TrieConsumer implements RecordConsumer<LinearRecord> {
 		CharFreqRec rec = new CharFreqRec();
 		rec.record(root);
 		frequencies = rec.getFrequencies();
-		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencyValues(frequencies));
+		huffmanCoding = new HuffmanCoding(new HuffmanCoding.UnorderedFrequencies(frequencies));
 		new Offsetter().offset(root);
 		writeStats();
 		Writer writer = new Writer();

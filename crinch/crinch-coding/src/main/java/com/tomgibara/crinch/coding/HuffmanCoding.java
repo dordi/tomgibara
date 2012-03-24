@@ -33,7 +33,7 @@ import com.tomgibara.crinch.bits.IntArrayBitWriter;
  * 
  * Huffman codings can be constructed in one of two ways. Either via
  * {@link Frequencies} (a couple convenient implementations are provided by this
- * class {@link UnorderedFrequencyValues} and {@link DescendingFrequencyValues})
+ * class {@link UnorderedFrequencies} and {@link DescendingFrequencies})
  * or using a {@link Dictionary}.
  * 
  * Every Huffman coding exposes a dictionary which stores the minimum data
@@ -240,7 +240,7 @@ public class HuffmanCoding implements Coding {
 	 * that have already been ranked by frequency.
 	 */
 	
-	public static class DescendingFrequencyValues implements Frequencies {
+	public static class DescendingFrequencies implements Frequencies {
 		
 		private final long[] frequencies;
 		private final int count;
@@ -254,7 +254,7 @@ public class HuffmanCoding implements Coding {
 		 *            an array of frequencies
 		 */
 		
-		public DescendingFrequencyValues(long... frequencies) {
+		public DescendingFrequencies(long... frequencies) {
 			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
 			int length = frequencies.length;
 			int count = length;
@@ -292,7 +292,7 @@ public class HuffmanCoding implements Coding {
 	 * that have not already been ranked by frequency.
 	 */
 	
-	public static class UnorderedFrequencyValues implements Frequencies {
+	public static class UnorderedFrequencies implements Frequencies {
 
 		private final long[] frequencies;
 		private final Correspondence correspondence;
@@ -306,7 +306,7 @@ public class HuffmanCoding implements Coding {
 		 *            an array of frequencies
 		 */
 		
-		public UnorderedFrequencyValues(long... frequencies) {
+		public UnorderedFrequencies(long... frequencies) {
 			if (frequencies == null) throw new IllegalArgumentException("null frequencies");
 			int count = frequencies.length;
 			El[] els = new El[count];

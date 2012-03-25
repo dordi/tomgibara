@@ -112,7 +112,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem writing bits to the stream
 	 */
 
-    public int encodeSignedInt(BitWriter writer, int value) {
+    public int encodeInt(BitWriter writer, int value) {
     	value = value < 0 ? -1 - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveInt(writer, value);
     }
@@ -127,7 +127,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem reading bits from the stream
 	 */
 	
-    public int decodeSignedInt(BitReader reader) {
+    public int decodeInt(BitReader reader) {
     	int value = decodePositiveInt(reader);
     	// the term ... | (value & (1 << 31) serves to restore sign bit
     	// in the special case where decoding overflows
@@ -147,7 +147,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem writing bits to the stream
 	 */
 
-    public int encodeSignedLong(BitWriter writer, long value) {
+    public int encodeLong(BitWriter writer, long value) {
     	value = value < 0L ? -1L - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveLong(writer, value);
     }
@@ -162,7 +162,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem reading bits from the stream
 	 */
 	
-    public long decodeSignedLong(BitReader reader) {
+    public long decodeLong(BitReader reader) {
     	long value = decodePositiveLong(reader);
     	// see comments in decodeSignedInt
    		return (value & 1L) == 1L ? ((-1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
@@ -180,7 +180,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem writing bits to the stream
 	 */
 
-    public int encodeSignedBigInt(BitWriter writer, BigInteger value) {
+    public int encodeBigInt(BitWriter writer, BigInteger value) {
     	value = value.signum() < 0 ? MINUS_ONE.subtract(value.shiftLeft(1)) : value.shiftLeft(1);
     	return coding.unsafeEncodePositiveBigInt(writer, value);
     }
@@ -195,7 +195,7 @@ public class ExtendedCoding implements Coding {
 	 *             if there was a problem reading bits from the stream
 	 */
 	
-    public BigInteger decodeSignedBigInt(BitReader reader) {
+    public BigInteger decodeBigInt(BitReader reader) {
     	BigInteger value = decodePositiveBigInt(reader);
     	return value.testBit(0) ? MINUS_ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
     }
@@ -227,7 +227,7 @@ public class ExtendedCoding implements Coding {
 			mantissa = (mantissa << 1) + 3L;
 		}
 		int exponent = (int) ((bits & 0x7ff0000000000000L) >> 52) - 1023;
-    	return coding.unsafeEncodePositiveLong(writer, mantissa) + encodeSignedInt(writer, exponent);
+    	return coding.unsafeEncodePositiveLong(writer, mantissa) + encodeInt(writer, exponent);
     }
     
 	/**
@@ -244,7 +244,7 @@ public class ExtendedCoding implements Coding {
     	long mantissa = decodePositiveLong(reader);
     	if (mantissa == 0L) return 0.0;
     	if (mantissa == 1L) return -0.0;
-    	int exponent = decodeSignedInt(reader);
+    	int exponent = decodeInt(reader);
     	long bits = (exponent + 1023L) << 52;
     	if ((mantissa & 1L) == 0) {
     		mantissa = (mantissa - 2L) >> 1;
@@ -269,7 +269,7 @@ public class ExtendedCoding implements Coding {
 	 */
 
     public int encodeDecimal(BitWriter writer, BigDecimal value) {
-    	return encodeSignedInt(writer, value.scale()) + encodeSignedBigInt(writer, value.unscaledValue());
+    	return encodeInt(writer, value.scale()) + encodeBigInt(writer, value.unscaledValue());
     }
     
 	/**
@@ -283,8 +283,8 @@ public class ExtendedCoding implements Coding {
 	 */
 	
     public BigDecimal decodeDecimal(BitReader reader) {
-    	int scale = decodeSignedInt(reader);
-    	BigInteger bigInt = decodeSignedBigInt(reader);
+    	int scale = decodeInt(reader);
+    	BigInteger bigInt = decodeBigInt(reader);
     	return new BigDecimal(bigInt, scale);
     }
 

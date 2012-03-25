@@ -62,10 +62,10 @@ public abstract class ExtendedCodingTest<C extends ExtendedCoding> extends Codin
 		for (C coding : getCodings()) {
 	    	if (isEncodableValueLimited(coding) && Math.abs(i) > getMaxEncodableValue(coding)) return;
 	        writer.setPosition(0);
-	        coding.encodeSignedInt(writer, i);
+	        coding.encodeInt(writer, i);
 	        writer.flush();
 	        reader.setPosition(0);
-	        int j = coding.decodeSignedInt(reader);
+	        int j = coding.decodeInt(reader);
 	        assertEquals(i, j);
 	        reader.setPosition(0);
 		}
@@ -101,10 +101,10 @@ public abstract class ExtendedCodingTest<C extends ExtendedCoding> extends Codin
 			v.set(false);
 	        BitWriter writer = v.openWriter();
 	    	if (isEncodableValueLimited(coding) && Math.abs(i) > getMaxEncodableValue(coding)) return;
-	        coding.encodeSignedLong(writer, i);
+	        coding.encodeLong(writer, i);
 	        writer.flush();
 	        BitReader reader = v.openReader();
-	        long j = coding.decodeSignedLong(reader);
+	        long j = coding.decodeLong(reader);
 	        assertEquals(i, j);
 		}
     }
@@ -146,10 +146,10 @@ public abstract class ExtendedCodingTest<C extends ExtendedCoding> extends Codin
 		for (C coding : getCodings()) {
 	    	if (isEncodableValueLimited(coding) && i.abs().compareTo(BigInteger.valueOf(getMaxEncodableValue(coding))) > 0) return;
 	        writer.setPosition(0);
-	        coding.encodeSignedBigInt(writer, i);
+	        coding.encodeBigInt(writer, i);
 	        writer.flush();
 	        reader.setPosition(0);
-	        BigInteger j = coding.decodeSignedBigInt(reader);
+	        BigInteger j = coding.decodeBigInt(reader);
 	        assertEquals(i, j);
 	        reader.setPosition(0);
 		}

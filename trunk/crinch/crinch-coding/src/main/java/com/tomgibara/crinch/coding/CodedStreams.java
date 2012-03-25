@@ -144,16 +144,16 @@ public final class CodedStreams {
 			for (int i = 0; i < a.length; i++) c += w.writeBoolean(a[i]);
 		} else if (comp == byte.class) {
 			byte[] a = (byte[]) array;
-			for (int i = 0; i < a.length; i++) c += writer.writeSignedInt(a[i]);
+			for (int i = 0; i < a.length; i++) c += writer.writeInt(a[i]);
 		} else if (comp == short.class) {
 			short[] a = (short[]) array;
-			for (int i = 0; i < a.length; i++) c += writer.writeSignedInt(a[i]);
+			for (int i = 0; i < a.length; i++) c += writer.writeInt(a[i]);
 		} else if (comp == int.class) {
 			int[] a = (int[]) array;
-			for (int i = 0; i < a.length; i++) c += writer.writeSignedInt(a[i]);
+			for (int i = 0; i < a.length; i++) c += writer.writeInt(a[i]);
 		} else if (comp == long.class) {
 			long[] a = (long[]) array;
-			for (int i = 0; i < a.length; i++) c += writer.writeSignedLong(a[i]);
+			for (int i = 0; i < a.length; i++) c += writer.writeLong(a[i]);
 		} else if (comp == float.class) {
 			//TODO add float
 			float[] a = (float[]) array;
@@ -183,7 +183,7 @@ public final class CodedStreams {
 		int length = reader.readPositiveInt();
 		int[] a = new int[length];
 		for (int i = 0; i < a.length; i++) {
-			a[i] = reader.readSignedInt();
+			a[i] = reader.readInt();
 		}
 		return a;
 	}
@@ -202,7 +202,7 @@ public final class CodedStreams {
 		int length = reader.readPositiveInt();
 		long[] a = new long[length];
 		for (int i = 0; i < a.length; i++) {
-			a[i] = reader.readSignedLong();
+			a[i] = reader.readLong();
 		}
 		return a;
 	}
@@ -284,7 +284,7 @@ public final class CodedStreams {
 		int length = reader.readPositiveInt();
 		E[] a = (E[]) Array.newInstance(enumClass, length);
 		for (int i = 0; i < length; i++) {
-			a[i] = values[reader.readSignedInt() - 1];
+			a[i] = values[reader.readInt() - 1];
 		}
 		return a;
 	}

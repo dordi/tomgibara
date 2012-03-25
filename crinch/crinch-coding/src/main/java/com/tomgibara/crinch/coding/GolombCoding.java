@@ -21,6 +21,15 @@ import java.math.BigInteger;
 import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * Implements Golomb coding. The coding is parameterized by a divisor which
+ * determines the size of the quotients generated output by the coding. For
+ * divisors which are a power of two, better performance can be expected by
+ * using a {@link RiceCoding}.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class GolombCoding extends UniversalCoding {
 
 	private final int divisor;

@@ -26,12 +26,31 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
-
+/**
+ * Implements Fibonacci coding. All code words end with "11". Note that in
+ * contrast to most presentations of Fibonacci coding, the mapping from integers
+ * to code words begins at zero, so that 0 -> "11", 1 -> "011" and so on.
+ * 
+ * The singleton instance of this class is available from
+ * {@link FibonacciCoding#instance}.
+ * 
+ * @author Tom Gibara
+ * @see http://en.wikipedia.org/wiki/Fibonacci_coding
+ */
 public final class FibonacciCoding extends UniversalCoding {
 
 	// statics
 
+	/**
+	 * The sole instance of this class.
+	 */
+	
 	public static final FibonacciCoding instance = new FibonacciCoding();
+	
+	/**
+	 * An extended coding of this class.
+	 */
+	
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
 	private static final BigInteger LONG_ADJ = BigInteger.ONE.shiftLeft(64);

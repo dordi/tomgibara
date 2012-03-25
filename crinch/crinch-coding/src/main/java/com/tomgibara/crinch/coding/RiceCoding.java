@@ -36,7 +36,7 @@ public final class RiceCoding extends UniversalCoding {
 	private final int bits;
 
 	/**
-	 * Creates a new Rice coding. Note that this implementation is limit to 64
+	 * Creates a new Rice coding. Note that this implementation is limited to 64
 	 * bits.
 	 * 
 	 * @param bits

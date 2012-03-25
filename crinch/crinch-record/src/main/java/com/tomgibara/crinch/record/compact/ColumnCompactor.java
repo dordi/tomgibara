@@ -92,7 +92,7 @@ class ColumnCompactor {
 			return huffman.encodePositiveInt(w, i);
 		} else {
 			int length = value.length();
-			int n = writer.writeSignedInt(length - (int) offset);
+			int n = writer.writeInt(length - (int) offset);
 			for (int i = 0; i < length; i++) {
 				char c = value.charAt(i);
 				n += huffman.encodePositiveInt(w, c);
@@ -110,7 +110,7 @@ class ColumnCompactor {
 				return enumeration[value];
 			}
 		} else {
-			int length = ((int) offset) + reader.readSignedInt();
+			int length = ((int) offset) + reader.readInt();
 			CompactCharSequence chars = store.getChars(columnIndex, length);
 			for (; length > 0; length--) {
 				char c = (char) (huffman.decodePositiveInt(reader.getReader()));
@@ -129,19 +129,19 @@ class ColumnCompactor {
 	}
 	
 	int encodeInt(CodedWriter writer, int value) {
-		return writer.writeSignedInt(value - (int) offset);
+		return writer.writeInt(value - (int) offset);
 	}
 	
 	int decodeInt(CodedReader reader) {
-		return ((int) offset) + reader.readSignedInt();
+		return ((int) offset) + reader.readInt();
 	}
 	
 	int encodeLong(CodedWriter writer, long value) {
-		return writer.writeSignedLong(value - offset);
+		return writer.writeLong(value - offset);
 	}
 	
 	long decodeLong(CodedReader reader) {
-		return offset + reader.readSignedLong();
+		return offset + reader.readLong();
 	}
 	
 	int encodeBoolean(CodedWriter writer, boolean value) {

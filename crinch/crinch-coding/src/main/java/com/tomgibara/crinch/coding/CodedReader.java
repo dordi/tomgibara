@@ -120,8 +120,8 @@ public class CodedReader {
 	 *             if there was a problem reading bits from the stream
 	 */
 
-	public int readSignedInt() {
-		return coding.decodeSignedInt(reader);
+	public int readInt() {
+		return coding.decodeInt(reader);
 	}
 	
 	/**
@@ -132,8 +132,8 @@ public class CodedReader {
 	 *             if there was a problem reading bits from the stream
 	 */
 
-	public long readSignedLong() {
-		return coding.decodeSignedLong(reader);
+	public long readLong() {
+		return coding.decodeLong(reader);
 	}
 	
 	/**
@@ -144,8 +144,8 @@ public class CodedReader {
 	 *             if there was a problem reading bits from the stream
 	 */
 
-	public BigInteger readSignedBigInt() {
-		return coding.decodeSignedBigInt(reader);
+	public BigInteger readBigInt() {
+		return coding.decodeBigInt(reader);
 	}
 	
 	/**

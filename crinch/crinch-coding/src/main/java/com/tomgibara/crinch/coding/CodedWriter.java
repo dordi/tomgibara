@@ -128,8 +128,8 @@ public class CodedWriter {
 	 *             if there was a problem writing bits to the stream
 	 */
 
-	public int writeSignedInt(int value) {
-		return coding.encodeSignedInt(writer, value);
+	public int writeInt(int value) {
+		return coding.encodeInt(writer, value);
 	}
 	
 	/**
@@ -142,8 +142,8 @@ public class CodedWriter {
 	 *             if there was a problem reading bits from the stream
 	 */
 
-	public int writeSignedLong(long value) {
-		return coding.encodeSignedLong(writer, value);
+	public int writeLong(long value) {
+		return coding.encodeLong(writer, value);
 	}
 	
 	/**
@@ -156,8 +156,8 @@ public class CodedWriter {
 	 *             if there was a problem writing bits to the stream
 	 */
 
-	public int writeSignedBigInt(BigInteger value) {
-		return coding.encodeSignedBigInt(writer, value);
+	public int writeBigInt(BigInteger value) {
+		return coding.encodeBigInt(writer, value);
 	}
 	
 	/**

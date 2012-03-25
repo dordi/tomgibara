@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.tomgibara.crinch</groupId>
   <artifactId>crinch-all</artifactId>
-  <version>0.7</version>
+  <version>0.8-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Crinch</name>
   <properties>
@@ -40,9 +40,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/crinch-all-0.7</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/crinch-all-0.7</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/crinch-all-0.7</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/crinch</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/crinch</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/crinch</url>
   </scm>
 
   <distributionManagement>

@@ -3,7 +3,7 @@
   <artifactId>crinch-csv</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.7</version>
+  	<version>0.8-SNAPSHOT</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch CSV</name>
@@ -12,7 +12,7 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-record</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
     <dependency>
       <groupId>net.sf.opencsv</groupId>

@@ -27,6 +27,9 @@ import com.tomgibara.crinch.bits.BitWriter;
  * An extended coding adds convenient support for encoding arbitrary numeric
  * values (negative, floating point, decimal) with a {@link UniversalCoding}.
  * 
+ * Negative values are coded using an interleaving scheme: 0, 1, -1, 2,...
+ * ie. 2n-1 if n is greater than zero, -2n otherwise.
+ * 
  * @author Tom Gibara
  */
 
@@ -113,7 +116,7 @@ public class ExtendedCoding implements Coding {
 	 */
 
     public int encodeInt(BitWriter writer, int value) {
-    	value = value < 0 ? -1 - (value << 1) : value << 1;
+    	value = value <= 0 ? (-value) << 1 : (value << 1) - 1;
     	return coding.unsafeEncodePositiveInt(writer, value);
     }
 
@@ -132,7 +135,8 @@ public class ExtendedCoding implements Coding {
     	// the term ... | (value & (1 << 31) serves to restore sign bit
     	// in the special case where decoding overflows
     	// but we have enough info to reconstruct the correct value
-   		return (value & 1) == 1 ? ((-1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
+   		//return (value & 1) == 1 ? ((-1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
+   		return (value & 1) == 0 ? -(value >> 1) | (value & (1 << 31)) : (value + 1) >>> 1;
     }
     
 	/**
@@ -148,7 +152,7 @@ public class ExtendedCoding implements Coding {
 	 */
 
     public int encodeLong(BitWriter writer, long value) {
-    	value = value < 0L ? -1L - (value << 1) : value << 1;
+    	value = value <= 0L ? (-value) << 1 : (value << 1) - 1L;
     	return coding.unsafeEncodePositiveLong(writer, value);
     }
 
@@ -164,8 +168,9 @@ public class ExtendedCoding implements Coding {
 	
     public long decodeLong(BitReader reader) {
     	long value = decodePositiveLong(reader);
-    	// see comments in decodeSignedInt
-   		return (value & 1L) == 1L ? ((-1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
+    	// see comments in decodeInt
+   		//return (value & 1L) == 0 ? -(value >> 1) | (value & (1 << 63)) : (value + 1L) >>> 1;
+   		return (value & 1L) == 0 ? -(value >> 1) | (value & (1L << 63)) : (value + 1L) >>> 1;
     }
     
 	/**
@@ -181,7 +186,7 @@ public class ExtendedCoding implements Coding {
 	 */
 
     public int encodeBigInt(BitWriter writer, BigInteger value) {
-    	value = value.signum() < 0 ? MINUS_ONE.subtract(value.shiftLeft(1)) : value.shiftLeft(1);
+    	value = value.signum() <= 0 ? value.shiftLeft(1).negate() : value.shiftLeft(1).subtract(BigInteger.ONE);
     	return coding.unsafeEncodePositiveBigInt(writer, value);
     }
     
@@ -197,7 +202,7 @@ public class ExtendedCoding implements Coding {
 	
     public BigInteger decodeBigInt(BitReader reader) {
     	BigInteger value = decodePositiveBigInt(reader);
-    	return value.testBit(0) ? MINUS_ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
+    	return value.testBit(0) ? value.add(BigInteger.ONE).shiftRight(1): value.shiftRight(1).negate();
     }
     
 	/**

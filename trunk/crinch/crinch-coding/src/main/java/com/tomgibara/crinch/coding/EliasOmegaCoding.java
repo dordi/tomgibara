@@ -23,11 +23,32 @@ import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitVector;
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * Implements Elias omega coding. Note that in contrast to most presentations of
+ * Elias omega coding, the mapping from integers to code words begins at zero so
+ * that 0 -> "0", 1 -> "100" and so on.
+ * 
+ * The singleton instance of this class is available from
+ * {@link EliasOmegaCoding#instance}.
+ * 
+ * @author Tom Gibara
+ * @see http://en.wikipedia.org/wiki/Elias_omega_coding
+ */
+
 final public class EliasOmegaCoding extends UniversalCoding {
 
 	// statics
 	
+	/**
+	 * The sole instance of this class.
+	 */
+	
 	public static final EliasOmegaCoding instance = new EliasOmegaCoding();
+	
+	/**
+	 * An extended coding of this class.
+	 */
+	
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
 	private static int encodeInt0(BitWriter writer, int value) {

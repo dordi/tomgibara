@@ -22,12 +22,33 @@ import com.tomgibara.crinch.bits.BitReader;
 import com.tomgibara.crinch.bits.BitWriter;
 
 
+/**
+ * Implements Elias delta coding. Note that in contrast to most presentations of
+ * Elias delta coding, the mapping from integers to code words begins at zero so that
+ * 0 -> "1", 1 -> "0100" and so on.
+ * 
+ * The singleton instance of this class is available from
+ * {@link EliasDeltaCoding#instance}.
+ * 
+ * @author Tom Gibara
+ * @see http://en.wikipedia.org/wiki/Elias_delta_coding
+ */
+
 //TODO use readUntil method for implementation?
 public final class EliasDeltaCoding extends UniversalCoding {
 
 	// statics
 	
+	/**
+	 * The sole instance of this class.
+	 */
+	
 	public static final EliasDeltaCoding instance = new EliasDeltaCoding();
+	
+	/**
+	 * An extended coding of this class.
+	 */
+
 	public static final ExtendedCoding extended = new ExtendedCoding(instance);
 	
     // constructors

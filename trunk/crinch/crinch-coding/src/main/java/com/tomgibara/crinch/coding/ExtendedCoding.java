@@ -20,8 +20,17 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import com.tomgibara.crinch.bits.BitReader;
+import com.tomgibara.crinch.bits.BitStreamException;
 import com.tomgibara.crinch.bits.BitWriter;
 
+/**
+ * An extended coding adds convenient support for encoding arbitrary numeric
+ * values (negative, floating point, decimal) with a {@link UniversalCoding}.
+ * 
+ * @author Tom Gibara
+ */
+
+//TODO investigate adding support for a fluent Chain
 public class ExtendedCoding implements Coding {
 
 	private static final BigInteger MINUS_ONE = BigInteger.ONE.negate();
@@ -31,6 +40,14 @@ public class ExtendedCoding implements Coding {
 	private final UniversalCoding coding;
 
 	// constructor
+
+	/**
+	 * Wraps a universal coding to provide encoding/decoding methods for
+	 * arbitrary numeric values.
+	 * 
+	 * @param coding
+	 *            the coding to be extended
+	 */
 	
 	public ExtendedCoding(UniversalCoding coding) {
 		if (coding == null) throw new IllegalArgumentException("null coding");
@@ -38,6 +55,12 @@ public class ExtendedCoding implements Coding {
 	}
 	
 	// accessors
+	
+	/**
+	 * The coding that has been extended.
+	 * 
+	 * @return the underlying coding
+	 */
 	
 	public UniversalCoding getUniversalCoding() {
 		return coding;
@@ -77,11 +100,33 @@ public class ExtendedCoding implements Coding {
     
 	// extra methods
 
+	/**
+	 * Writes an integer.
+	 * 
+	 * @param writer
+	 *            the writer that will store the encoded value
+	 * @param value
+	 *            any integer
+	 * @return the number of bits written
+	 * @throws BitStreamException
+	 *             if there was a problem writing bits to the stream
+	 */
+
     public int encodeSignedInt(BitWriter writer, int value) {
     	value = value < 0 ? -1 - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveInt(writer, value);
     }
 
+	/**
+	 * Reads an integer.
+	 * 
+	 * @param reader
+	 *            the reader that will supply the bit encoding
+	 * @return an integer
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+	
     public int decodeSignedInt(BitReader reader) {
     	int value = decodePositiveInt(reader);
     	// the term ... | (value & (1 << 31) serves to restore sign bit
@@ -90,27 +135,85 @@ public class ExtendedCoding implements Coding {
    		return (value & 1) == 1 ? ((-1 - value) >> 1) | (value & (1 << 31)) : value >>> 1;
     }
     
+	/**
+	 * Writes a long.
+	 * 
+	 * @param writer
+	 *            the writer that will store the encoded value
+	 * @param value
+	 *            any long
+	 * @return the number of bits written
+	 * @throws BitStreamException
+	 *             if there was a problem writing bits to the stream
+	 */
+
     public int encodeSignedLong(BitWriter writer, long value) {
     	value = value < 0L ? -1L - (value << 1) : value << 1;
     	return coding.unsafeEncodePositiveLong(writer, value);
     }
 
+	/**
+	 * Reads a long.
+	 * 
+	 * @param reader
+	 *            the reader that will supply the bit encoding
+	 * @return a long
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+	
     public long decodeSignedLong(BitReader reader) {
     	long value = decodePositiveLong(reader);
     	// see comments in decodeSignedInt
    		return (value & 1L) == 1L ? ((-1L - value) >> 1) | (value & (1L << 63)) : value >>> 1;
     }
     
+	/**
+	 * Writes a BigInteger.
+	 * 
+	 * @param writer
+	 *            the writer that will store the encoded value
+	 * @param value
+	 *            any BigInteger
+	 * @return the number of bits written
+	 * @throws BitStreamException
+	 *             if there was a problem writing bits to the stream
+	 */
+
     public int encodeSignedBigInt(BitWriter writer, BigInteger value) {
     	value = value.signum() < 0 ? MINUS_ONE.subtract(value.shiftLeft(1)) : value.shiftLeft(1);
     	return coding.unsafeEncodePositiveBigInt(writer, value);
     }
     
+	/**
+	 * Reads a BigInteger.
+	 * 
+	 * @param reader
+	 *            the reader that will supply the bit encoding
+	 * @return a BigInteger
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+	
     public BigInteger decodeSignedBigInt(BitReader reader) {
     	BigInteger value = decodePositiveBigInt(reader);
     	return value.testBit(0) ? MINUS_ONE.subtract(value).shiftRight(1) : value.shiftRight(1);
     }
     
+	/**
+	 * Writes a double. NaN and infinite values are not supported.
+	 * 
+	 * @param writer
+	 *            the writer that will store the encoded value
+	 * @param value
+	 *            a double, not NaN or +/- infinity
+	 * @return the number of bits written
+	 * @throws BitStreamException
+	 *             if there was a problem writing bits to the stream
+	 * @throws IllegalArgumentException
+	 *             if the supplied value is infinite or NaN.
+	 */
+
     public int encodeDouble(BitWriter writer, double value) {
     	if (Double.isNaN(value) || Double.isInfinite(value)) throw new IllegalArgumentException();
     	long bits = Double.doubleToLongBits(value);
@@ -127,6 +230,16 @@ public class ExtendedCoding implements Coding {
     	return coding.unsafeEncodePositiveLong(writer, mantissa) + encodeSignedInt(writer, exponent);
     }
     
+	/**
+	 * Reads a double.
+	 * 
+	 * @param reader
+	 *            the reader that will supply the bit encoding
+	 * @return a double, never NaN or infinite
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+	
     public double decodeDouble(BitReader reader) {
     	long mantissa = decodePositiveLong(reader);
     	if (mantissa == 0L) return 0.0;
@@ -143,10 +256,32 @@ public class ExtendedCoding implements Coding {
     	return Double.longBitsToDouble(bits);
     }
 
+	/**
+	 * Writes a BigDecimal.
+	 * 
+	 * @param writer
+	 *            the writer that will store the encoded value
+	 * @param value
+	 *            any BigDecimal
+	 * @return the number of bits written
+	 * @throws BitStreamException
+	 *             if there was a problem writing bits to the stream
+	 */
+
     public int encodeDecimal(BitWriter writer, BigDecimal value) {
     	return encodeSignedInt(writer, value.scale()) + encodeSignedBigInt(writer, value.unscaledValue());
     }
     
+	/**
+	 * Reads a BigDecimal.
+	 * 
+	 * @param reader
+	 *            the reader that will supply the bit encoding
+	 * @return a BigDecimal
+	 * @throws BitStreamException
+	 *             if there was a problem reading bits from the stream
+	 */
+	
     public BigDecimal decodeDecimal(BitReader reader) {
     	int scale = decodeSignedInt(reader);
     	BigInteger bigInt = decodeSignedBigInt(reader);

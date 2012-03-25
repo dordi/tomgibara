@@ -3,7 +3,7 @@
   <artifactId>crinch-record</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.7</version>
+  	<version>0.8-SNAPSHOT</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Record</name>
@@ -11,27 +11,27 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-bits</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-coding</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-hashing</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-collections</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-util</artifactId>
-  		<version>0.7</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
     <dependency>
       <groupId>janino</groupId>

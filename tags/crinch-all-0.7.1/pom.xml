@@ -1,0 +1,162 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.tomgibara.crinch</groupId>
+  <artifactId>crinch-all</artifactId>
+  <version>0.7.1</version>
+  <packaging>pom</packaging>
+  <name>Crinch</name>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <inceptionYear>2007</inceptionYear>
+  <url>http://www.tomgibara.com/projects/crinch</url>
+  <description>Compact data representation</description>
+
+  <issueManagement>
+    <system>Google Code</system>
+    <url>http://code.google.com/p/tomgibara/issues/list</url>
+  </issueManagement>
+
+  <developers>
+    <developer>
+      <id>tomgibara</id>
+      <name>Tom Gibara</name>
+      <email>me@tomgibara.com</email>
+      <url>http://www.tomgibara.com</url>
+      <roles>
+        <role>Administrator</role>
+        <role>Developer</role>
+      </roles>
+      <timezone>0</timezone>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/crinch-all-0.7.1</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/crinch-all-0.7.1</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/crinch-all-0.7.1</url>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>tomgibara.com</id>
+      <url>scp://tom@cosworth.recipexperience.com/home/apache/public/www.tomgibara.com/projects/crinch/maven/</url>
+    </site>
+    <repository>
+      <id>tomgibara.com</id>
+      <name>Personal</name>
+      <url>scp://tom@cosworth.recipexperience.com/home/apache/public/www.tomgibara.com/maven/repo</url>
+    </repository>
+  </distributionManagement>
+
+  <modules>
+    <module>crinch-bits</module>
+    <module>crinch-coding</module>
+    <module>crinch-collections</module>
+    <module>crinch-csv</module>
+    <module>crinch-dist</module>
+    <module>crinch-hashing</module>
+    <module>crinch-math</module>
+    <module>crinch-perm</module>
+    <module>crinch-record</module>
+    <module>crinch-util</module>
+  </modules>
+  <build>
+  	<extensions>
+  	</extensions>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.0.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <configuration>
+          <tagBase>https://tomgibara.googlecode.com/svn/tags</tagBase>
+        </configuration>
+      </plugin>
+      <!-- We need to specify 2.2 to avoid this bug: http://jira.codehaus.org/browse/MSITE-490 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>2.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+  	<dependency>
+  		<groupId>junit</groupId>
+  		<artifactId>junit</artifactId>
+  		<version>4.7</version>
+  		<type>jar</type>
+  		<scope>test</scope>
+  	</dependency>
+  </dependencies>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>2.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <bottom>Copyright © {inceptionYear}-{currentYear} Tom Gibara. All Rights Reserved.</bottom>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <configuration>
+          <bottom>Copyright © {inceptionYear}-{currentYear} Tom Gibara. All Rights Reserved.</bottom>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>changelog-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>taglist-maven-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+  </reporting>
+
+</project>

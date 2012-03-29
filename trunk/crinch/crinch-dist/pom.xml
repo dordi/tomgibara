@@ -3,7 +3,7 @@
   <artifactId>crinch-dist</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.8-SNAPSHOT</version>
+  	<version>0.7.1</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Distribution</name>
@@ -11,12 +11,12 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-record</artifactId>
-  		<version>0.8-SNAPSHOT</version>
+  		<version>0.7.1</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-csv</artifactId>
-  		<version>0.8-SNAPSHOT</version>
+  		<version>0.7.1</version>
   	</dependency>
   </dependencies>
   <build>

@@ -3,7 +3,7 @@
   <artifactId>crinch-bits</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.8-SNAPSHOT</version>
+  	<version>0.7.1</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Bits</name>

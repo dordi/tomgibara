@@ -18,10 +18,19 @@ package com.tomgibara.crinch.record.dynamic;
 
 import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.BYTE_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.BYTE_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.CHAR_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.DOUBLE_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.DOUBLE_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.FLOAT_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.FLOAT_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.INT_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.INT_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.LONG_WRAPPER;
+import static com.tomgibara.crinch.record.def.ColumnType.SHORT_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.SHORT_WRAPPER;
 import static com.tomgibara.crinch.record.def.ColumnType.STRING_OBJECT;
 
 import java.util.Arrays;
@@ -36,8 +45,10 @@ import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.StringRecord;
 import com.tomgibara.crinch.record.ColumnParser;
 import com.tomgibara.crinch.record.def.ColumnOrder;
+import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
 import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
+import com.tomgibara.crinch.record.dynamic.DynamicRecordFactory.ClassConfig;
 
 import junit.framework.TestCase;
 
@@ -97,7 +108,6 @@ public class DynamicRecordFactoryTest extends TestCase {
 		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
 		LinearRecord rec1 = fac.newRecord(config, new ParsedRecord(parser, new StringRecord(0L, -1L, "SOMESTR", null)));
 		assertEquals("SOMESTR", rec1.nextString());
-		System.out.println(config);
 		assertFalse(rec1.wasNull());
 		assertNull(rec1.nextString());
 		assertTrue(rec1.wasNull());
@@ -186,6 +196,35 @@ public class DynamicRecordFactoryTest extends TestCase {
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, null, "STR" })), out);
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 10, null })), out);
 		src.sourceData(fac.newRecord(config, new ArrayRecord(0L, 0L, new Object[]{ 1, 20, "STRING" })), out);
+	}
+	
+	public void testHashCode() {
+		RecordDef def = RecordDef.fromTypes(Arrays.asList(
+				BOOLEAN_PRIMITIVE,
+				BOOLEAN_WRAPPER,
+				BYTE_PRIMITIVE,
+				BYTE_WRAPPER,
+				SHORT_PRIMITIVE,
+				SHORT_WRAPPER,
+				INT_PRIMITIVE,
+				INT_WRAPPER,
+				LONG_PRIMITIVE,
+				LONG_WRAPPER,
+				FLOAT_PRIMITIVE,
+				FLOAT_WRAPPER,
+				DOUBLE_PRIMITIVE,
+				DOUBLE_WRAPPER,
+				STRING_OBJECT
+		)).build();
+		ClassConfig config = new DynamicRecordFactory.ClassConfig(false, false, false);
+		DynamicRecordFactory fac = DynamicRecordFactory.getInstance(def);
+		ArrayRecord record = new ArrayRecord(new Object[] { false, null, (byte) 1, null, (short) 3, (short) 4, 5, null, 6L, null, 6.5f, 7f, 7.2, 7.4, "8" });
+		record.mark();
+		LinearRecord r1 = fac.newRecord(config, record);
+		record.reset();
+		LinearRecord r2 = fac.newRecord(config, record);
+		assertEquals(r1.hashCode(), r2.hashCode());
+		
 	}
 
 }

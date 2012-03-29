@@ -17,6 +17,8 @@
 package com.tomgibara.crinch.record.dynamic;
 
 import static com.tomgibara.crinch.record.def.ColumnType.BOOLEAN_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.DOUBLE_PRIMITIVE;
+import static com.tomgibara.crinch.record.def.ColumnType.FLOAT_PRIMITIVE;
 import static com.tomgibara.crinch.record.def.ColumnType.LONG_PRIMITIVE;
 
 import java.lang.reflect.Constructor;
@@ -483,13 +485,22 @@ public class DynamicRecordFactory {
 			int field = 0;
 			for (ColumnType type : definition.getTypes()) {
 				if (type == BOOLEAN_PRIMITIVE) {
-					sb.append("\t\th = (31 * h) ^ (f_" + field + " ? 1231 : 1237);\n");
+					sb.append("\t\th = (31 * h) ^ (f_").append(field).append(" ? 1231 : 1237);\n");
 				} else if (type == LONG_PRIMITIVE) {
-					sb.append("\t\th = (31 * h) ^ (int) (f_" + field + " >> 32) ^ (int) f_" + field + ";\n");
+					sb.append("\t\th = (31 * h) ^ (int) (f_").append(field).append(" >> 32) ^ (int) f_" + field + ";\n");
+				} else if (type == FLOAT_PRIMITIVE) {
+					sb.append("\t\th = (31 * h) ^ Float.floatToIntBits(f_").append(field).append(");\n");
+				} else if (type == DOUBLE_PRIMITIVE) {
+					sb.append("\t\t{");
+					{
+						sb.append("\t\t\tlong tmp = Double.doubleToLongBits(f_").append(field).append(");\n");
+						sb.append("\t\t\th = (31 * h) ^ (int) (tmp >> 32) ^ (int) tmp;\n");
+					}
+					sb.append("\t\t}");
 				} else if (type.typeClass.isPrimitive()) {
-					sb.append("\t\th = (31 * h) ^ f_" + field + ";\n");
+					sb.append("\t\th = (31 * h) ^ f_").append(field).append(";\n");
 				} else {
-					
+					sb.append("\t\tif (f_").append(field).append(" != null) h = (31 * h) ^ f_").append(field).append(".hashCode();\n");
 				}
 				field++;
 			}

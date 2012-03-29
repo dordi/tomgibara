@@ -629,6 +629,45 @@ public class CodingFrequencies implements Iterable<Integer> {
 	}
 	
 	/**
+	 * Computes the information entropy associated with the given value.
+	 * If the value has zero frequency, positive infinity is returned
+	 * 
+	 * @param base the log base for entropy calculation
+	 * @param value some value
+	 * @return the entropy, in the specified base, associated with the value
+	 */
+	
+	public double getEntropy(double base, int value) {
+		if (base <= 1.0) throw new IllegalArgumentException("base must be strictly greater than 1.0");
+		int f = getFrequency(value);
+		if (f == 0) return Double.POSITIVE_INFINITY;
+		return -Math.log((double) f / frequencyTotal) / Math.log(base);
+	}
+
+	/**
+	 * The computed binary information entropy associated with the given value.
+	 * 
+	 * @see #getEntropy(double, int)
+	 * @return the binary entropy associated with the value
+	 */
+	
+	public double getBinaryEntropy(int value) {
+		return getEntropy(2.0, value);
+	}
+	
+	/**
+	 * The idealized number of bits necessary to transmit the value.
+	 * 
+	 * @return a number of bits
+	 */
+	
+	public double getBits(int value) {
+		int f = getFrequency(value);
+		if (f == 0) return Double.POSITIVE_INFINITY;
+		return -f * Math.log((double) f / frequencyTotal) / Math.log(2.0);
+	}
+
+	/**
 	 * Returns a compact set of frequencies - if called on an already compact
 	 * instance, the original object is returned. Compaction discards the
 	 * original mapping between values and their frequencies. Instead,

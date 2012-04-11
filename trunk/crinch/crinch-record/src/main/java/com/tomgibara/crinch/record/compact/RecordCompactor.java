@@ -52,7 +52,7 @@ public class RecordCompactor extends CompactCharStore {
 		this.types = (ColumnType[]) types.toArray(new ColumnType[types.size()]);
 		this.compactors = compactors;
 		this.startIndex = startIndex;
-		setCharColumns(compactors.length);
+		setCharColumns(startIndex + compactors.length);
 	}
 
 	public ColumnStats getColumnStats(int index) {

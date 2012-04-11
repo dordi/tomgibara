@@ -44,7 +44,7 @@ public class RecordDecompactor extends CompactCharStore {
 			compactors[j] = new ColumnCompactor(list.get(i), this, i);
 		}
 		this.compactors = compactors;
-		setCharColumns(compactors.length);
+		setCharColumns(compactors.length + startIndex);
 	}
 
 	public CompactRecord decompact(CodedReader reader, long ordinal) {

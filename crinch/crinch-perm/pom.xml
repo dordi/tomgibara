@@ -3,7 +3,7 @@
   <artifactId>crinch-perm</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.8-SNAPSHOT</version>
+  	<version>0.7.2</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Permutations</name>
@@ -11,12 +11,12 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-bits</artifactId>
-  		<version>0.8-SNAPSHOT</version>
+  		<version>0.7.2</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-math</artifactId>
-  		<version>0.8-SNAPSHOT</version>
+  		<version>0.7.2</version>
   	</dependency>
   </dependencies>
 </project>

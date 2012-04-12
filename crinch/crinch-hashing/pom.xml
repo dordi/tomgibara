@@ -3,7 +3,7 @@
   <artifactId>crinch-hashing</artifactId>
   <parent>
   	<groupId>com.tomgibara.crinch</groupId>
-  	<version>0.7.2</version>
+  	<version>0.8-SNAPSHOT</version>
   	<artifactId>crinch-all</artifactId>
   </parent>
   <name>Crinch Hashing</name>
@@ -11,12 +11,12 @@
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-util</artifactId>
-  		<version>0.7.2</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>com.tomgibara.crinch</groupId>
   		<artifactId>crinch-math</artifactId>
-  		<version>0.7.2</version>
+  		<version>0.8-SNAPSHOT</version>
   	</dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

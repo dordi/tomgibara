@@ -8,13 +8,14 @@ import java.net.Socket;
 public class Receive {
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		ServerSocket socket = new ServerSocket(8000);
-		while (true) {
-			try {
-				Socket s = socket.accept();
-				new Worker(s).start();
-			} catch (IOException e) {
-				e.printStackTrace();
+		try (ServerSocket socket = new ServerSocket(Integer.parseInt(args[0]))) {
+			while (true) {
+				try {
+					Socket s = socket.accept();
+					new Worker(s).start();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

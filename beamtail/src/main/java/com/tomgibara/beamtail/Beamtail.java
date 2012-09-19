@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -24,42 +24,42 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
+import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.nio.file.WatchEvent.Kind;
+import java.nio.file.attribute.FileTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.tomgibara.pronto.config.ConfigFactory;
 import com.tomgibara.pronto.config.ConfigSource;
+import com.tomgibara.pronto.config.ProntoConfigException;
 import com.tomgibara.pronto.util.Duration;
 import com.tomgibara.pronto.util.Streams;
 
-//TODO change conf file to not be a flag, perhaps a list of filenames
 //TODO introduce logging
 //TODO limit number of connections
 //TODO remove dependencies on files
 public class Beamtail implements Runnable {
 
-	public static final String DEFAULT_CONFIG_PATH = "beamtail.conf";
-	public static final File DEFAULT_CONFIG_FILE = new File(DEFAULT_CONFIG_PATH);
+	public static final Charset CONFIG_CHARSET = Charset.defaultCharset();
 	public static final String DEFAULT_SETTINGS_PATH = "beamtail.settings";
-	public static final File DEFAULT_SETTINGS_FILE = new File(DEFAULT_SETTINGS_PATH);
 	
 	private static void message(String type, String message, Throwable t) {
 		type = type.toUpperCase();
@@ -164,24 +164,60 @@ public class Beamtail implements Runnable {
 		
 	}
 
-	public static class FileConverter implements IStringConverter<File> {
-		@Override
-		public File convert(String value) {
-			return new File(value);
-		}
-	}
+	/**
+	 * Provides the configuration properties for settings.
+	 */
 	
+	private static class SettingsSource implements ConfigSource {
+
+		private final Path settingsPath;
+		
+		SettingsSource(Path settingsPath) {
+			this.settingsPath = settingsPath;
+		}
+		
+		@Override
+		public Map<String, String> getProperties() throws RuntimeException {
+			if (!Files.isReadable(settingsPath)) return Collections.emptyMap();
+			Properties properties = new Properties();
+	        InputStream in = null;
+	        try {
+	            in = new BufferedInputStream(Files.newInputStream(settingsPath));
+				properties.load(in);
+	        } catch (IOException e) {
+	            throw new RuntimeException("Error reading settings from " + settingsPath, e);
+	        } finally {
+	            Streams.safeClose(in);
+	        }
+			return new HashMap<String, String>((Map) properties);
+		}
+
+		@Override
+		public long lastModified() throws RuntimeException {
+			FileTime time = null;
+			try {
+				time = Files.getLastModifiedTime(settingsPath);
+			} catch (IOException e) {
+				//TODO
+				e.printStackTrace();
+			}
+	        return time == null ? System.currentTimeMillis() : time.toMillis();
+		}
+	
+	}
+
 	private final FileSystem fs = FileSystems.getDefault();
 	private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 	private final Tailer tailer = new Tailer();
 	private final Beamer beamer = new Beamer();
 	private final Writer writer = new Writer();
 	
-	@Parameter(names={"-c", "--config"}, converter=FileConverter.class, description="path to configuration file", arity=1)
-	private File configFile = DEFAULT_CONFIG_FILE;
-	@Parameter(names={"-s", "--settings"}, converter=FileConverter.class, description="path to settings file", arity=1)
-	private File settingsFile = DEFAULT_SETTINGS_FILE;
-	@Parameter(names={"-f", "--files"}, converter=FileConverter.class, description="file to which file information is saved", arity=1)
+	@Parameter(names = {"-h", "--help"}, help = true)
+	private boolean help;
+	@Parameter(description="config-file-paths", required=true)
+	private List<String> configPaths;
+	@Parameter(names={"-s", "--settings"}, description="path to settings file", arity=1)
+	private String settingsPath = DEFAULT_SETTINGS_PATH;
 	private Settings settings;
 	
 	private final Set<Path> paths = new HashSet<Path>();
@@ -195,105 +231,73 @@ public class Beamtail implements Runnable {
 	private Map<Path, FileSize> fileSizes = new HashMap<Path, FileSize>(); // persisted file size information
 
 	public Beamtail(String[] args) throws IOException {
-		new JCommander(this, args);
-		try {
-			configure();
-			settings = new DefaultSettings( ConfigFactory.getInstance().newConfig(new SettingsSource(), null).adaptSettings(null, false, Settings.class) );
-		} catch (RuntimeException e) {
-			error("Failed to configure", e);
-			System.exit(1);
-		}
-		
+		if (!readCommands(args)) System.exit(1);
+		if (help) System.exit(0);
+		if (!configure()) System.exit(1);
+		//TODO what to do if no paths configured?
+		if (!mapSettings()) System.exit(1);
 	}
 
-	private void configure() {
+	private boolean readCommands(String[] args) {
+		JCommander jc = new JCommander(this);
+		jc.setProgramName("beamtail");
+		try {
+			jc.parse(args);
+		} catch (ParameterException e) {
+			error("Incorrect arguments", e);
+			help = true;
+			return false;
+		} finally {
+			if (help) jc.usage();
+		}
+		return true;
+	}
+
+	// false return indicates abort startup
+	private boolean mapSettings() {
+		Path path;
+		try {
+			path = fs.getPath(settingsPath);
+		} catch (InvalidPathException e) {
+			error("Invalid settings path", e);
+			return false;
+		}
+		
+		try {
+			settings = new DefaultSettings( ConfigFactory.getInstance().newConfig(new SettingsSource(path), null).adaptSettings(null, false, Settings.class) );
+		} catch (ProntoConfigException e) {
+			error("Failed to apply settings", e);
+			return false;
+		}
+		return true;
+	}
+
+	// false return indicates abort startup
+	private boolean configure() {
+		// clear previous configuration
 		paths.clear();
 		addresses.clear();
 
-		if (!configFile.isFile()) throw new IllegalArgumentException("Cannot read configuration file: " + configFile);
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(configFile));
+		// configure from each file in turn
+		for (String configPath : configPaths) {
+			Path path;
 			try {
-				int lineNo = 0;
-				while (true) {
-					String line = reader.readLine();
-					if (line == null) break;
-					lineNo ++;
-					line = line.trim();
-					if (line.isEmpty()) continue;
-					if (line.startsWith("#")) continue;
-					int i  = line.lastIndexOf(' ');
-					if (i == -1) throw new IllegalArgumentException("Line " + lineNo + ": invalid line");
-					String address = line.substring(i + 1);
-					int j = address.indexOf(':');
-					if (j == -1) throw new IllegalArgumentException("Line " + lineNo + ": no port number in address " + address);
-					String portStr = address.substring(j + 1);
-					int port;
-					try {
-						port = Integer.parseInt(portStr);
-					} catch (NumberFormatException e) {
-						throw new IllegalArgumentException("Line " + lineNo + ": port not a number " + portStr);
-					}
-					if (port < 1 || port > 65535) throw new IllegalArgumentException("Line " + lineNo + ": invalid port number " + port);
-					String host = address.substring(0, j);
-					InetAddress inetAddress;
-					try {
-						inetAddress = InetAddress.getByName(host);
-					} catch (UnknownHostException e) {
-						throw new IllegalArgumentException("Line " + lineNo + ": unknown host " + host);
-					}
-					InetSocketAddress socketAddress = new InetSocketAddress(inetAddress, port);
-					
-					String glob = line.substring(0, i).trim();
-					if (glob.length() > 1) {
-						char first = glob.charAt(0);
-						char last = glob.charAt(glob.length() - 1);
-						if (first == last && (first == '\'' || first == '"')) {
-							glob = glob.substring(1, glob.length() - 1);
-						}
-					}
-					PathMatcher matcher;
-					try {
-						matcher = fs.getPathMatcher("glob:" + glob);
-					} catch (IllegalArgumentException e) {
-						throw new IllegalArgumentException("Line " + lineNo + ": invalid glob syntax " + glob);
-					}
-
-					int k = glob.indexOf('*');
-					int l = glob.indexOf('?');
-					String pathStr;
-					if (k == -1 && l == -1) {
-						pathStr = glob;
-					} else if (k == -1) {
-						pathStr = glob.substring(0, l);
-					} else if (l == -1) {
-						pathStr = glob.substring(0, k);
-					} else {
-						pathStr = glob.substring(0, Math.min(k, l));
-					}
-					
-					Path path;
-					try {
-						path = fs.getPath(pathStr);
-						if (!pathStr.endsWith("/")) path = path.getParent();
-					} catch (InvalidPathException e) {
-						throw new IllegalArgumentException("Line " + lineNo + ": invalid path syntax " + pathStr);
-					}
-					
-					paths.add(path);
-					addresses.put(matcher, socketAddress);
-				}
-			} finally {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					/* ignored */
-				}
+				path = fs.getPath(configPath);
+			} catch (InvalidPathException e) {
+				throw new IllegalArgumentException("Invalid configuration path: " + e.getMessage());
 			}
-		} catch (IOException e) {
-			throw new RuntimeException("Error reading configuration file: " + configFile, e);
+			try {
+				configure(path);
+			} catch (IllegalArgumentException e) {
+				error("Failed to configure from file " + configPath, e);
+				return false;
+			} catch (IOException e) {
+				error("Error reading file " + configPath, e);
+				return false;
+			}
 		}
-		
+
+		// eliminate duplicated subpaths
 		outer: do {
 			for (Path path : paths) {
 				for (Path other : paths) {
@@ -307,6 +311,90 @@ public class Beamtail implements Runnable {
 			break outer;
 		} while (true);
 
+		return true;
+	}
+	
+	private void configure(Path configPath) throws IOException {
+		if (!Files.isReadable(configPath)) throw new IllegalArgumentException("Cannot read file");
+		BufferedReader reader = Files.newBufferedReader(configPath, CONFIG_CHARSET);
+		try {
+			int lineNo = 0;
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) break;
+				lineNo ++;
+				line = line.trim();
+				if (line.isEmpty()) continue;
+				if (line.startsWith("#")) continue;
+				int i  = line.lastIndexOf(' ');
+				if (i == -1) throw new IllegalArgumentException("Line " + lineNo + ": invalid line");
+				String address = line.substring(i + 1);
+				int j = address.indexOf(':');
+				if (j == -1) throw new IllegalArgumentException("Line " + lineNo + ": no port number in address " + address);
+				String portStr = address.substring(j + 1);
+				int port;
+				try {
+					port = Integer.parseInt(portStr);
+				} catch (NumberFormatException e) {
+					throw new IllegalArgumentException("Line " + lineNo + ": port not a number " + portStr);
+				}
+				if (port < 1 || port > 65535) throw new IllegalArgumentException("Line " + lineNo + ": invalid port number " + port);
+				String host = address.substring(0, j);
+				InetAddress inetAddress;
+				try {
+					inetAddress = InetAddress.getByName(host);
+				} catch (UnknownHostException e) {
+					throw new IllegalArgumentException("Line " + lineNo + ": unknown host " + host);
+				}
+				InetSocketAddress socketAddress = new InetSocketAddress(inetAddress, port);
+				
+				String glob = line.substring(0, i).trim();
+				if (glob.length() > 1) {
+					char first = glob.charAt(0);
+					char last = glob.charAt(glob.length() - 1);
+					if (first == last && (first == '\'' || first == '"')) {
+						glob = glob.substring(1, glob.length() - 1);
+					}
+				}
+				PathMatcher matcher;
+				try {
+					matcher = fs.getPathMatcher("glob:" + glob);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException("Line " + lineNo + ": invalid glob syntax " + glob);
+				}
+
+				int k = glob.indexOf('*');
+				int l = glob.indexOf('?');
+				String pathStr;
+				if (k == -1 && l == -1) {
+					pathStr = glob;
+				} else if (k == -1) {
+					pathStr = glob.substring(0, l);
+				} else if (l == -1) {
+					pathStr = glob.substring(0, k);
+				} else {
+					pathStr = glob.substring(0, Math.min(k, l));
+				}
+				
+				Path path;
+				try {
+					path = fs.getPath(pathStr);
+					if (!pathStr.endsWith("/")) path = path.getParent();
+				} catch (InvalidPathException e) {
+					throw new IllegalArgumentException("Line " + lineNo + ": invalid path syntax " + pathStr);
+				}
+				
+				paths.add(path);
+				addresses.put(matcher, socketAddress);
+			}
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				/* ignored */
+			}
+		}
+		
 	}
 
 	private void execute(Runnable command) {
@@ -405,36 +493,6 @@ public class Beamtail implements Runnable {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Provides the configuration properties for settings.
-	 */
-	
-	private class SettingsSource implements ConfigSource {
-
-		@Override
-		public Map<String, String> getProperties() throws RuntimeException {
-			if (!settingsFile.isFile()) return Collections.emptyMap();
-			Properties properties = new Properties();
-	        InputStream in = null;
-	        try {
-	            in = new BufferedInputStream(new FileInputStream(settingsFile));
-				properties.load(in);
-	        } catch (IOException e) {
-	            throw new RuntimeException("Error reading settings file: " + settingsFile, e);
-	        } finally {
-	            Streams.safeClose(in);
-	        }
-			return new HashMap<String, String>((Map) properties);
-		}
-
-		@Override
-		public long lastModified() throws RuntimeException {
-	        long time = settingsFile.lastModified();
-	        return time == 0L ? System.currentTimeMillis() : time;
-		}
-	
 	}
 
 	/**

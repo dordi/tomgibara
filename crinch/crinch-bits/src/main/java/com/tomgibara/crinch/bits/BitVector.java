@@ -481,11 +481,36 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		this(new BigInteger(str, radix));
 	}
 	
-	public BitVector(Random random, int size) {
+	//TODO unit test
+	public BitVector(Random random, float probability, int size) {
 		this(size);
-		for (int i = 0; i < bits.length; i++) {
-			bits[i] = random.nextLong();
+		if (random == null) throw new IllegalArgumentException("null random");
+		if (probability < 0f) throw new IllegalArgumentException("negative probability");
+		if (probability > 1f) throw new IllegalArgumentException("probability exceeds one");
+		if (probability == 0f) {
+			// nothing to do
+		} else if (probability == 1f) {
+			for (int i = 0; i < bits.length; i++) {
+				bits[i] = -1L;
+			}
+		} else if (probability == 0.5f) {
+			for (int i = 0; i < bits.length; i++) {
+				bits[i] = random.nextLong();
+			}
+		} else {
+			for (int i = 0; i < bits.length; i++) {
+				long b = 0L;
+				for (int j = 0; j < 64; j++) {
+					b <<= 1;
+					if (random.nextFloat() < probability) b |= 1L;
+				}
+				bits[i] = b;
+			}
 		}
+	}
+	
+	public BitVector(Random random, int size) {
+		this(random, 0.5f, size);
 	}
 	
 	private BitVector(int start, int finish, long[] bits, boolean mutable) {
@@ -760,6 +785,21 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 		to += start;
 		if (to > finish) throw new IllegalArgumentException();
 		reverseAdj(from, to);
+	}
+	
+	public void shuffle(Random random) {
+		if (random == null) throw new IllegalArgumentException("null random");
+		shuffleAdj(start, finish, random);
+	}
+	
+	public void shuffleRange(int from, int to, Random random) {
+		if (random == null) throw new IllegalArgumentException("null random");
+		if (from < 0) throw new IllegalArgumentException();
+		if (from > to) throw new IllegalArgumentException();
+		from += start;
+		to += start;
+		if (to > finish) throw new IllegalArgumentException();
+		shuffleAdj(from, to, random);
 	}
 	
 	// comparisons
@@ -2066,6 +2106,22 @@ public final class BitVector extends Number implements Cloneable, Iterable<Boole
 			performSetAdj(to, getThenPerformAdj(SET, from, getBitAdj(to)));
 			from++; to--;
 		}
+	}
+	
+	private void shuffleAdj(int from, int to, Random random) {
+		int size = to - from;
+		int ones = countOnesAdj(from, to);
+		// simple case - all bits identical, nothing to do
+		if (ones == 0 || ones == size) return;
+		// relocate one-bits
+		//TODO could set multiple bits at once for better performance
+		for (int i = from; ones < size && ones > 0; size--) {
+			boolean one = random.nextInt(size) < ones;
+			performSetAdj(i++, one);
+			if (one) ones--;
+		}
+		// fill remaining definites
+		if (size > 0) performAdj(SET, to - size, to, ones > 0);
 	}
 
 	//TODO can eliminate calls to getBitsAdj from these methods

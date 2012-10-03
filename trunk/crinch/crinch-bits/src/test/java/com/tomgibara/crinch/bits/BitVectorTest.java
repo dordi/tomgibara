@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
@@ -697,6 +698,75 @@ public class BitVectorTest extends TestCase {
 		}
 		w.reverse();
 		assertEquals(v, w);
+	}
+
+	public void testShuffle() {
+		for (int i = 0; i < 10; i++) {
+			BitVector[] vs = randomVectorFamily(10);
+			for (int j = 0; j < vs.length; j++) {
+				testShuffle(vs[j]);
+			}
+		}
+	}
+
+	private void testShuffle(BitVector v) {
+		int size = v.size();
+		for (int i = 0; i < 10; i++) {
+			BitVector w = v.copy();
+			int from;
+			int to;
+			if (i == 0) {
+				from = 0;
+				to = size;
+				w.shuffle(random);
+			} else {
+				from = random.nextInt(size + 1);
+				to = from + random.nextInt(size + 1 - from);
+				w.shuffleRange(from, to, random);
+			}
+			assertEquals(v.rangeView(from, to).countOnes(), w.rangeView(from, to).countOnes());
+		}
+	}
+
+	public void testShuffleIsFair() {
+		{
+			BitVector v = new BitVector(256);
+			v.setRange(0, 16, true);
+			testShuffleIsFair(v);
+		}
+
+		{
+			BitVector v = new BitVector(100);
+			v.setRange(0, 50, true);
+			testShuffleIsFair(v);
+		}
+		
+		{
+			BitVector v = new BitVector(97);
+			v.setRange(0, 13, true);
+			testShuffleIsFair(v);
+		}
+	}
+
+	private void testShuffleIsFair(BitVector v) {
+		Random random = new Random();
+		int[] freqs = new int[v.size()];
+		int trials = 10000;
+		for (int i = 0; i < trials; i++) {
+			BitVector w = v.clone();
+			w.shuffle(random);
+			for (Integer index : w.asSet()) {
+				freqs[index]++;
+			}
+		}
+		float e = (float) v.countOnes() / v.size() * trials;
+		double rms = 0f;
+		for (int i = 0; i < freqs.length; i++) {
+			float d = freqs[i] - e;
+			rms += d * d;
+		}
+		rms = Math.sqrt(rms / trials);
+		assertTrue(rms / e < 0.01);
 	}
 
 	public void testFirstInRange() {

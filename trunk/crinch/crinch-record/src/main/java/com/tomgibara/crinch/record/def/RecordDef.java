@@ -25,13 +25,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.HashRange;
 import com.tomgibara.crinch.hashing.HashSource;
 import com.tomgibara.crinch.hashing.PRNGMultiHash;
 import com.tomgibara.crinch.record.def.ColumnOrder.Sort;
 import com.tomgibara.crinch.util.WriteStream;
 
-public class RecordDef {
+public final class RecordDef {
 	
 	// statics
 	
@@ -263,11 +264,12 @@ public class RecordDef {
 		}
 	};
 	
+	//TODO probably needs enlarging or combining with something richer than hex
 	private static final int hashDigits = 10;
 	
 	private static HashRange hashRange = new HashRange(BigInteger.ZERO, BigInteger.ONE.shiftLeft(4 * hashDigits));
 	
-	private static PRNGMultiHash<RecordDef> hash = new PRNGMultiHash<RecordDef>(hashSource, hashRange);
+	private static Hash<RecordDef> hash = new PRNGMultiHash<RecordDef>(hashSource, hashRange);
 	
 	private static final String idPattern = "%0" + hashDigits + "X";
 
@@ -307,6 +309,10 @@ public class RecordDef {
 	
 	// accessors
 	
+	public boolean isBasic() {
+		return basis == null;
+	}
+	
 	public RecordDef getBasis() {
 		return basis;
 	}
@@ -325,6 +331,18 @@ public class RecordDef {
 	
 	public List<ColumnDef> getColumns() {
 		return columns;
+	}
+	
+	public List<ColumnDef> getColumns(int... indices) {
+		if (indices.length == 0) return columns;
+		ArrayList<ColumnDef> list = new ArrayList<ColumnDef>(indices.length);
+		for (int i = 0; i < indices.length; i++) {
+			int index = indices[i];
+			if (index < 0) throw new IllegalArgumentException("negative index");
+			if (index >= columns.size()) throw new IllegalArgumentException("index too great");
+			list.add(columns.get(index));
+		}
+		return Collections.unmodifiableList(list);
 	}
 	
 	public List<ColumnType> getTypes() {
@@ -461,7 +479,18 @@ public class RecordDef {
 		return builder;
 	}
 	
-	//TODO object methods
+	@Override
+	public int hashCode() {
+		return getId().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (!(obj instanceof RecordDef)) return false;
+		RecordDef that = (RecordDef) obj;
+		return this.getId().equals(that.getId());
+	}
 	
 	@Override
 	public String toString() {

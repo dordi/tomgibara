@@ -18,6 +18,7 @@ package com.tomgibara.crinch.record.process;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import com.tomgibara.crinch.coding.ExtendedCoding;
 import com.tomgibara.crinch.record.ColumnParser;
@@ -25,6 +26,8 @@ import com.tomgibara.crinch.record.RecordStats;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.fact.Asserter;
+import com.tomgibara.crinch.record.fact.Facts;
 
 
 public interface ProcessContext {
@@ -78,5 +81,11 @@ public interface ProcessContext {
 	RecordDef getRecordDef();
 	
 	File file(String type, boolean stats, RecordDef def);
+	
+	Set<Asserter<?>> getAsserters();
+
+	void setAsserters(Set<Asserter<?>> asserters);
+	
+	Facts getFacts();
 	
 }

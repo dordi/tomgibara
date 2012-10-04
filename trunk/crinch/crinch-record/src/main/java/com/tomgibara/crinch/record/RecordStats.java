@@ -78,7 +78,7 @@ public class RecordStats {
 	
 	public RecordStats adaptFor(RecordDef recordDef) {
 		if (recordDef == null) throw new IllegalArgumentException("null recordDef");
-		if (recordDef.getBasis() == null) return this;
+		if (recordDef.isBasic()) return this;
 		RecordStats copy = copy();
 		recordDef.adaptBasicList(copy.getColumnStats());
 		return copy;

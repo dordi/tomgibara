@@ -18,10 +18,12 @@ package com.tomgibara.crinch.record.def;
 
 import java.util.Map;
 
+import com.tomgibara.crinch.hashing.Hash;
 import com.tomgibara.crinch.hashing.HashSource;
+import com.tomgibara.crinch.hashing.Murmur3_32Hash;
 import com.tomgibara.crinch.util.WriteStream;
 
-public class ColumnDef {
+public final class ColumnDef {
 
 	// statics
 	
@@ -36,6 +38,9 @@ public class ColumnDef {
 			}
 		}
 	};
+	
+	private static Hash<ColumnDef> hash = new Murmur3_32Hash<ColumnDef>(hashSource);
+
 	
 	// fields
 	
@@ -87,8 +92,27 @@ public class ColumnDef {
 		return order == this.order ? this : new ColumnDef(index, type, order, basis, properties);
 	}
 	
-	//TODO implement object methods
+	//object methods
+	
+	@Override
+	public int hashCode() {
+		return hash.hashAsInt(this);
+	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (!(obj instanceof ColumnDef)) return false;
+		ColumnDef that = (ColumnDef) obj;
+		if (this.index != that.index) return false;
+		if (this.type != that.type) return false;
+		if (this.order != that.order) return false;
+		// note basis and column properties don't determine columns
+		//if (this.basis != that.basis) return false;
+		//if (!this.properties.equals(that.properties)) return false;
+		return true;
+	}
+	
 	@Override
 	public String toString() {
 		return "index: " + index + ", type: " + type + ", order: " + order;

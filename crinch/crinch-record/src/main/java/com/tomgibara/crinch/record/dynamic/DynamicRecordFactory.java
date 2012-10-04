@@ -291,7 +291,7 @@ public class DynamicRecordFactory {
 			if (definition.isOrdinal()) sb.append("\t\tthis.ordinal = record.getOrdinal();\n");
 			if (definition.isPositional()) sb.append("\t\tthis.position = record.getPosition();\n");
 			sb.append("\t\tif (basis) {\n");
-			if (definition.getBasis() == null) {
+			if (definition.isBasic()) {
 				sb.append("\t\t\tthrow new IllegalArgumentException(\"no basis defined\");\n");
 			} else {
 				generateRecordCopy(sb, definition.getBasisColumns());

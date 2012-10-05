@@ -65,12 +65,17 @@ public class Facts {
 		}
 	}
 
+	//TODO come up with a better name for this
+	public boolean isEmpty() {
+		return facts.isEmpty();
+	}
+	
 	//TODO address minor risk posed by multiple classloaders
 	public void write(CodedWriter writer) {
 		writer.writeInt(factsByType.size());
 		for (Entry<AssertionType<?>, Set<Fact<?>>> entry : factsByType.entrySet()) {
 			AssertionType<?> type = entry.getKey();
-			CodedStreams.writeString(writer, type.getAssertionClass().getName());
+			CodedStreams.writeString(writer, type.getClass().getName());
 			Set<Fact<?>> set = entry.getValue();
 			writer.writeInt(set.size());
 			for (Fact<?> fact : set) {

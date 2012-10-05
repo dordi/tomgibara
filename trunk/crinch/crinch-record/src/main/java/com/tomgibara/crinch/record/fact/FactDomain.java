@@ -23,7 +23,7 @@ public final class FactDomain {
 		HashMap<String, AssertionType<?>> map = new HashMap<String, AssertionType<?>>(types.size());
 		for (AssertionType<?> type : types) {
 			if (type == null) throw new IllegalArgumentException("null type");
-			boolean wasNew = map.put(type.getAssertionClass().getName(), type) == null;
+			boolean wasNew = map.put(type.getClass().getName(), type) == null;
 			if (!wasNew) throw new IllegalArgumentException("duplicate type name");
 		}
 		this.recordDef = recordDef;
@@ -40,14 +40,14 @@ public final class FactDomain {
 		return types.values();
 	}
 
-	public <A> AssertionType<A> getType(Class<A> assertionClass) {
-		AssertionType<A> type = (AssertionType<A>) types.get(assertionClass.getName());
+	public <A> AssertionType<A> getType(Class<A> typeClass) {
+		AssertionType<A> type = (AssertionType<A>) types.get(typeClass.getName());
 		if (type == null) return type;
-		return type == null || type.getClass() != assertionClass ? null : type;
+		return type == null || type.getClass() != typeClass ? null : type;
 	}
 
-	<A> AssertionType<A> getType(String assertionClassName) {
-		return (AssertionType<A>) types.get(assertionClassName);
+	<A> AssertionType<A> getType(String typeClassName) {
+		return (AssertionType<A>) types.get(typeClassName);
 	}
 
 	// object methods

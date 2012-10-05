@@ -70,6 +70,13 @@ public class RecordProcessor {
 		} catch (RuntimeException e) {
 			context.getLogger().log("error processing records", e);
 		} finally {
+			if (state >= 3) {
+				try {
+				context.persistFacts();
+				} catch (RuntimeException ex) {
+					context.getLogger().log(Level.WARN, "error persisting facts", ex);
+				}
+			}
 			if (state == 4) {
 				state = 0;
 			}

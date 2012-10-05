@@ -82,10 +82,13 @@ public interface ProcessContext {
 	
 	File file(String type, boolean stats, RecordDef def);
 	
-	Set<Asserter<?>> getAsserters();
-
 	void setAsserters(Set<Asserter<?>> asserters);
 	
+	Set<Asserter<?>> getAsserters();
+
 	Facts getFacts();
+	
+	//TODO look for ways to get rid of this method
+	void persistFacts();
 	
 }

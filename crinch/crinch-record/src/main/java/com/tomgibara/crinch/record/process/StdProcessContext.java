@@ -24,7 +24,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.tomgibara.crinch.bits.BitBoundary;
 import com.tomgibara.crinch.bits.BitReader;
@@ -46,6 +49,10 @@ import com.tomgibara.crinch.record.StdColumnParser;
 import com.tomgibara.crinch.record.def.ColumnOrder;
 import com.tomgibara.crinch.record.def.ColumnType;
 import com.tomgibara.crinch.record.def.RecordDef;
+import com.tomgibara.crinch.record.fact.Asserter;
+import com.tomgibara.crinch.record.fact.AssertionType;
+import com.tomgibara.crinch.record.fact.FactDomain;
+import com.tomgibara.crinch.record.fact.Facts;
 import com.tomgibara.crinch.record.process.ProcessLogger.Level;
 
 public class StdProcessContext implements ProcessContext {
@@ -69,6 +76,8 @@ public class StdProcessContext implements ProcessContext {
 	private RecordStats recordStats;
 	private List<ColumnType> columnTypes;
 	private RecordDef recordDef;
+	private Set<Asserter<?>> asserters = Collections.emptySet();
+	private Facts facts;
 
 	public StdProcessContext() {
 		load();
@@ -250,7 +259,8 @@ public class StdProcessContext implements ProcessContext {
 			}
 		}
 		this.columnTypes = columnTypes;
-		recordDef = null;
+		
+		setRecordDef(columnTypes == null ? null : RecordDef.fromTypes(columnTypes).build());
 		//TODO should only write if changed
 		writeColumnTypes();
 	}
@@ -262,11 +272,6 @@ public class StdProcessContext implements ProcessContext {
 
 	@Override
 	public RecordDef getRecordDef() {
-		if (recordDef == null) {
-			if (columnTypes != null) {
-				recordDef = RecordDef.fromTypes(columnTypes).build();
-			}
-		}
 		return recordDef;
 	}
 	
@@ -281,6 +286,34 @@ public class StdProcessContext implements ProcessContext {
 		}
 		if (def != null) sb.append('.').append(def.getId());
 		return new File(dataDir, sb.toString());
+	}
+	
+	@Override
+	public Set<Asserter<?>> getAsserters() {
+		return asserters;
+	}
+	
+	@Override
+	public void setAsserters(Set<Asserter<?>> asserters) {
+		if (asserters == null) throw new IllegalArgumentException("null asserters");
+		if (asserters.equals(this.asserters)) return;
+		this.asserters = Collections.unmodifiableSet(new HashSet<Asserter<?>>(asserters));
+		resetFacts();
+	}
+	
+	@Override
+	public Facts getFacts() {
+		return facts;
+	}
+
+	@Override
+	public void persistFacts() {
+		writeFacts();
+	}
+	
+	private void setRecordDef(RecordDef recordDef) {
+		this.recordDef = recordDef;
+		resetFacts();
 	}
 	
 	private void resetProgress() {
@@ -298,6 +331,7 @@ public class StdProcessContext implements ProcessContext {
 	private void load() {
 		readRecordStats();
 		readColumnTypes();
+		readFacts();
 	}
 	
 	private File getRecordStatsFile() {
@@ -337,13 +371,60 @@ public class StdProcessContext implements ProcessContext {
 	}
 
 	private void readColumnTypes() {
-		columnTypes = read(new ReadOp<List<ColumnType>>() {
+		setColumnTypes(
+			read(new ReadOp<List<ColumnType>>() {
+				@Override
+				public List<ColumnType> read(CodedReader coded) {
+					return CodedStreams.readEnumList(coded, ColumnType.class);
+				}
+			}, getColumnTypesFile()));
+	}
+	
+	private File factsFile() {
+		return new File(dataDir, dataName + ".facts");
+	}
+
+	private FactDomain factDomain() {
+		if (recordDef == null) return null;
+		Set<AssertionType<?>> types = new HashSet<AssertionType<?>>();
+		for (Asserter<?> asserter : this.asserters) {
+			types.add(asserter.getAssertionType());
+		}
+		return new FactDomain(recordDef, types);
+	}
+	
+	private void resetFacts() {
+		FactDomain domain = factDomain();
+		facts = domain == null ? null : new Facts(domain);
+		writeFacts();
+	}
+	
+	private void writeFacts() {
+		write(new WriteOp() {
 			@Override
-			public List<ColumnType> read(CodedReader coded) {
-				return CodedStreams.readEnumList(coded, ColumnType.class);
+			public boolean isNull() {
+				return facts == null || facts.isEmpty();
 			}
-		}, getColumnTypesFile());
-		recordDef = null;
+			@Override
+			public void write(CodedWriter coded) {
+				facts.write(coded);
+			}
+		}, factsFile());
+	}
+	
+	private void readFacts() {
+		final FactDomain domain = factDomain();
+		if (domain == null) {
+			facts = null;
+			return;
+		}
+		facts = read(new ReadOp<Facts>() {
+			@Override
+			public Facts read(CodedReader coded) {
+				return Facts.read(domain, coded);
+			}
+		}, factsFile());
+		if (facts == null) facts = new Facts(domain);
 	}
 	
 	private <T> T read(ReadOp<T> op, File file) {

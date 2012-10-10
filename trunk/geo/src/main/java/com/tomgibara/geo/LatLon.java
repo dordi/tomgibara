@@ -1,5 +1,7 @@
 package com.tomgibara.geo;
 
+import static com.tomgibara.geo.GeoUtil.angleInMinutes;
+
 public final class LatLon {
 
 	private final Datum datum;
@@ -27,6 +29,10 @@ public final class LatLon {
 	public double getLongitude() {
 		return longitude;
 	}
+
+	public LatLonHeight atHeight(double height) {
+		return new LatLonHeight(this, height);
+	}
 	
 	@Override
 	public int hashCode() {
@@ -46,7 +52,7 @@ public final class LatLon {
 	
 	@Override
 	public String toString() {
-		return String.format("%.6f\u00b0,%.6f\u00b0", latitude, longitude);
+		return String.format("%s %s \u2261 %.6f\u00b0,%.6f\u00b0", angleInMinutes(latitude, Coordinate.LATITUDE), angleInMinutes(longitude, Coordinate.LONGITUDE), latitude, longitude);
 	}
 	
 }

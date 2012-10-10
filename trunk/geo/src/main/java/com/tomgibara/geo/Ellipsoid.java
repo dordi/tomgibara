@@ -11,12 +11,17 @@ public final class Ellipsoid {
 	// used for Channel Islands
 	public static final Ellipsoid INT_1924 = new Ellipsoid(6378388.000, 6356911.946);
 	
+	// used for GPS
+	public static final Ellipsoid WGS84 = new Ellipsoid(6378137.000, 6356752.314);
+	public static final Ellipsoid GRS80 = new Ellipsoid(6378137.000, 6356752.314); // TODO inverse flattening
+	
 	public final double a; // semi-major axis
 	public final double b; // semi-minor axis
 	public final double e2; // eccentricity
-	public final double n;
-	public final double n2;
-	public final double n3;
+	
+	final double n;
+	final double n2;
+	final double n3;
 	
 	public Ellipsoid(double a, double b) {
 		if (!GeoUtil.isCoordinate(a)) throw new IllegalArgumentException("a invalid");

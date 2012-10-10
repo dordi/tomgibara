@@ -1,13 +1,13 @@
 package com.tomgibara.geo;
 
 
-public final class OSGrid implements Grid {
+public final class OSIGrid implements Grid {
 
-	public static OSGrid instance = new OSGrid();
+	public static OSIGrid instance = new OSIGrid();
 	
-	private final GridHelper helper = new GridHelper(false);
+	private final GridHelper helper = new GridHelper(true);
 	
-	private OSGrid() { }
+	private OSIGrid() { }
 	
 	@Override
 	public GridRef refFromString(GridRefSystem system, String str) {

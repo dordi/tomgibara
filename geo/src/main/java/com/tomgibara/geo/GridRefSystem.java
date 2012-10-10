@@ -4,6 +4,8 @@ public final class GridRefSystem {
 
 	public static final GridRefSystem OSGB36 = new GridRefSystem(Datum.OSGB36, OSGrid.instance);
 	
+	public static final GridRefSystem OSI65 = new GridRefSystem(Datum.OSI65, OSIGrid.instance);
+	
 	private final Datum datum;
 	private final Grid grid;
 
@@ -24,6 +26,10 @@ public final class GridRefSystem {
 
 	public GridRef createGridRef(String str) {
 		return grid.refFromString(this, str);
+	}
+	
+	public GridRef createGridRef(int easting, int northing) {
+		return new GridRef(this, easting, northing);
 	}
 	
 	@Override

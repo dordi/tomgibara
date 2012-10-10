@@ -1,7 +1,5 @@
 package com.tomgibara.geo;
 
-import java.util.Arrays;
-
 import junit.framework.TestCase;
 
 public class OSGridTest extends TestCase {
@@ -9,10 +7,6 @@ public class OSGridTest extends TestCase {
 	private static GridRefSystem system = GridRefSystem.OSGB36;
 	private static OSGrid grid = (OSGrid) system.getGrid();
 
-	private static void out(int[] ings) {
-		System.out.println( Arrays.toString(ings) );
-	}
-	
 	private GridRef ref(int e, int n) {
 		return new GridRef(system, e, n);
 	}

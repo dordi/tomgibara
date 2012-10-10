@@ -97,6 +97,6 @@ public final class GridRefSystem {
 		lat = lat - VII*dE2 + VIII*dE4 - IX*dE6;
 		double lon = lon0 + X*dE - XI*dE3 + XII*dE5 - XIIA*dE7;
 
-		return new LatLon(Math.toDegrees(lat), Math.toDegrees(lon));
+		return new LatLon(datum, Math.toDegrees(lat), Math.toDegrees(lon));
 	}
 }

@@ -63,13 +63,13 @@ public final class GridRefSystem {
 		double lat = lat0, M = 0;
 		do {
 			lat = (N-N0-M)/(a*F0) + lat;
-			double Ma = (1 + n + (5/4)*n2 + (5/4)*n3) * (lat-lat0);
-			double Mb = (3*n + 3*n2 + (21/8)*n3) * Math.sin(lat-lat0) * Math.cos(lat+lat0);
-			double Mc = ((15/8)*n2 + (15/8)*n3) * Math.sin(2*(lat-lat0)) * Math.cos(2*(lat+lat0));
-			double Md = (35/24)*n3 * Math.sin(3*(lat-lat0)) * Math.cos(3*(lat+lat0));
+			double Ma = (1 + n + (5.0/4.0)*n2 + (5.0/4.0)*n3) * (lat-lat0);
+			double Mb = (3*n + 3*n2 + (21.0/8.0)*n3) * Math.sin(lat-lat0) * Math.cos(lat+lat0);
+			double Mc = ((15.0/8.0)*n2 + (15.0/8.0)*n3) * Math.sin(2*(lat-lat0)) * Math.cos(2*(lat+lat0));
+			double Md = (35.0/24.0)*n3 * Math.sin(3*(lat-lat0)) * Math.cos(3*(lat+lat0));
 			M = b * F0 * (Ma - Mb + Mc - Md);					// meridional arc
 		} while (N-N0-M >= 0.00001);							// ie until < 0.01mm
-
+		
 		double cosLat = Math.cos(lat), sinLat = Math.sin(lat);
 		double nu = a*F0/Math.sqrt(1-e2*sinLat*sinLat);		// transverse radius of curvature
 		double rho = a*F0*(1-e2)/Math.pow(1-e2*sinLat*sinLat, 1.5);  // meridional radius of curvature

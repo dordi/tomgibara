@@ -26,7 +26,7 @@ public class OSGrid implements Grid {
 	private OSGrid() {
 	}
 	
-	public int[] refFromString(String str) {
+	public GridRef refFromString(GridRefSystem system, String str) {
 		Matcher matcher = sSquares.matcher(str);
 		if (!matcher.matches()) throw new IllegalArgumentException("Invalid reference: " + str);
 		char c = Character.toUpperCase( str.charAt(0) );
@@ -34,8 +34,8 @@ public class OSGrid implements Grid {
 		int i = c > 'I' ? c - 'B' : c - 'A';
 		int j = k > 'I' ? k - 'B' : k - 'A';
 		
-		int e = ((i - 2) % 5) * 5 + (j % 5);
-		int n = 19 - (j / 5) * 5 - (j / 5);
+		int e = (((i - 2) % 5) * 5 + (j % 5)) * 100000;
+		int n = (19 - (i / 5) * 5 - (j / 5)) * 100000;
 
 		String coords = matcher.group(2);
 		if (coords == null) coords = "";
@@ -47,11 +47,17 @@ public class OSGrid implements Grid {
 		int scale = sScales[length];
 		int center = sCenters[length];
 		
-		return new int[] { e * 100000 + x * scale + center, n * 100000 + y * scale + center };
+		return new GridRef(
+				system,
+				e + x * scale + center,
+				n + y * scale + center
+				);
 	}
 
-	public String refToString(int easting, int northing) {
-
+	public String refToString(GridRef ref) {
+		int easting = ref.getEasting();
+		int northing = ref.getNorthing();
+		
 		int e1 = easting / 500000;
 		int n1 = northing / 500000;
 		int e2 = (easting - e1 * 500000) / 100000;

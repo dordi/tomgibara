@@ -47,7 +47,7 @@ public final class GridRef {
 
 	@Override
 	public String toString() {
-		return system.getGrid().refToString(easting, northing);
+		return system.getGrid().refToString(this);
 	}
 	
 }

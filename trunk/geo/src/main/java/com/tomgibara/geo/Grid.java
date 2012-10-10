@@ -2,8 +2,8 @@ package com.tomgibara.geo;
 
 public interface Grid {
 
-	int[] refFromString(String str);
+	GridRef refFromString(GridRefSystem system, String str);
 	
-	String refToString(int easting, int northing);
+	String refToString(GridRef ref);
 
 }

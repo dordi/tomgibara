@@ -1,6 +1,8 @@
 package com.tomgibara.geo;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class DatumTransforms {
@@ -25,15 +27,21 @@ public class DatumTransforms {
 	}
 	
 	private final Map<Mapping, CartesianTransform> transforms;
+	private final Map<Datum, Map<Datum, CartesianTransform>> transformsBySource;
+	private final Map<Datum, Map<Datum, CartesianTransform>> transformsByTarget;
 	private final boolean immutable;
 	
 	public DatumTransforms() {
 		transforms = new HashMap<DatumTransforms.Mapping, CartesianTransform>();
+		transformsBySource = new LinkedHashMap<Datum, Map<Datum, CartesianTransform>>();
+		transformsByTarget = new LinkedHashMap<Datum, Map<Datum, CartesianTransform>>();
 		immutable = false;
 	}
 	
 	private DatumTransforms(DatumTransforms that, boolean immutable) {
 		this.transforms = new HashMap<DatumTransforms.Mapping, CartesianTransform>(that.transforms);
+		this.transformsBySource = new LinkedHashMap<Datum, Map<Datum, CartesianTransform>>(that.transformsBySource);
+		this.transformsByTarget = new LinkedHashMap<Datum, Map<Datum, CartesianTransform>>(that.transformsByTarget);
 		this.immutable = immutable;
 	}
 
@@ -45,14 +53,19 @@ public class DatumTransforms {
 		if (source == null) throw new IllegalArgumentException("null source");
 		if (target == null) throw new IllegalArgumentException("null target");
 		if (transform == null) throw new IllegalArgumentException("null transform");
-		CartesianTransform previous = transforms.put(new Mapping(source, target), transform);
-		if (transform.equals(previous)) return false;
-		transforms.put(new Mapping(target, source), transform.getInverse());
+		if (immutable) throw new IllegalStateException();
+		if (source.equals(target)) return false;
+		Mapping mapping = new Mapping(source, target);
+		CartesianTransform current = transforms.get(mapping);
+		if (transform.equals(current)) return false;
+		addTransform(mapping, transform);
+		addTransform(mapping.getInverse(), transform.getInverse());
 		return true;
 	}
 	
 	public LatLonHeightTransform getTransform(Datum target) {
 		if (target == null) throw new IllegalArgumentException("null target datum");
+		if (!immutable) throw new IllegalStateException("transforms not immutable");
 		return new DatumTransform(target);
 	}
 	
@@ -64,6 +77,21 @@ public class DatumTransforms {
 		return new DatumTransforms(this, false);
 	}
 	
+	private void addTransform(Mapping mapping, CartesianTransform transform) {
+		transforms.put(mapping, transform);
+		addTransform(transformsBySource, mapping, transform);
+		addTransform(transformsByTarget, mapping.getInverse(), transform);
+	}
+
+	private void addTransform(Map<Datum, Map<Datum, CartesianTransform>> maps, Mapping mapping, CartesianTransform transform) {
+		Map<Datum, CartesianTransform> map = maps.get(mapping.source);
+		if (map == null) {
+			map = new LinkedHashMap<Datum, CartesianTransform>();
+			maps.put(mapping.source, map);
+		}
+		map.put(mapping.target, transform);
+	}
+	
 	private static class Mapping {
 		
 		private final Datum source;
@@ -73,7 +101,11 @@ public class DatumTransforms {
 			this.source = source;
 			this.target = target;
 		}
-		
+
+		Mapping getInverse() {
+			return new Mapping(target, source);
+		}
+
 		@Override
 		public int hashCode() {
 			return source.hashCode() ^ 31 * target.hashCode();
@@ -94,22 +126,31 @@ public class DatumTransforms {
 	private class DatumTransform implements LatLonHeightTransform {
 		
 		private final Datum target;
+		private final Map<Datum, CartesianTransform> transforms;
 		
 		DatumTransform(Datum target) {
 			this.target = target;
+			transforms = transformsByTarget.get(target);
 		}
 		
 		@Override
 		public LatLonHeight transform(LatLonHeight latLonHeight) {
 			Datum source = latLonHeight.getLatLon().getDatum();
 			if (source.equals(target)) return latLonHeight;
-			CartesianTransform transform = transforms.get(new Mapping(source, target));
+			CartesianTransform transform = transforms.get(source);
+			Cartesian cartesian;
 			if (transform == null) {
-				//TODO should try to find transform pairs
-				throw new TransformUnavailableException();
+				Map<Datum, CartesianTransform> transforms2 = transformsBySource.get(source);
+				LinkedHashSet<Datum> targets = new LinkedHashSet<Datum>(transforms2.keySet());
+				targets.retainAll(transforms.keySet());
+				if (targets.isEmpty()) throw new TransformUnavailableException();
+				Datum intermediate = targets.iterator().next();
+				cartesian = transforms2.get(intermediate).transform(latLonHeight.toCartesian());
+				cartesian = transforms.get(intermediate).transform(cartesian);
 			} else {
-				return transform.transform(latLonHeight.toCartesian()).toLatLonHeight(target);
+				cartesian = transform.transform(latLonHeight.toCartesian());
 			}
+			return cartesian.toLatLonHeight(target);
 		}
 		
 	}

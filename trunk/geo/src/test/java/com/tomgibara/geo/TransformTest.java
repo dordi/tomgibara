@@ -12,6 +12,12 @@ public class TransformTest extends TestCase {
 		testCorrection( GridRefSystem.OSI65.createGridRef("J 02598 74444") );
 		testCorrection( GridRefSystem.OSI65.createGridRef("H 79972 62472") );
 	}
+
+	public void testIntermediate() {
+		LatLonHeight llh1 = GridRefSystem.OSGB36.createGridRef("E651410 N313177").toLatLon().atHeight(0);
+		LatLonHeight llh2 = transforms.getTransform(Datum.OSI65).transform(llh1);
+		System.out.println(llh1 + " -> " + llh2);
+	}
 	
 	public void testCorrection(GridRef ref) {
 		System.out.println(ref.getEasting() +"," + ref.getNorthing());

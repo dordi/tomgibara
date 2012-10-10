@@ -2,17 +2,24 @@ package com.tomgibara.geo;
 
 public final class LatLon {
 
+	private final Datum datum;
 	private final double latitude;
 	private final double longitude;
 	
-	public LatLon(double latitude, double longitude) {
-		//TODO tests worthwhile?
-		if (!GeoUtil.isCoordinate(latitude)) throw new IllegalArgumentException("latitude not a coordinate");
-		if (!GeoUtil.isCoordinate(longitude)) throw new IllegalArgumentException("longitude not a coordinate");
+	//TODO should normalize 
+	public LatLon(Datum datum, double latitude, double longitude) {
+		if (datum == null) throw new IllegalArgumentException("null datum");
+		if (!GeoUtil.isCoordinate(latitude)) throw new IllegalArgumentException("invalid latitude");
+		if (!GeoUtil.isCoordinate(longitude)) throw new IllegalArgumentException("invalid longitude");
+		this.datum = datum;
 		this.latitude = latitude;
 		this.longitude = longitude;
 	}
 
+	public Datum getDatum() {
+		return datum;
+	}
+	
 	public double getLatitude() {
 		return latitude;
 	}

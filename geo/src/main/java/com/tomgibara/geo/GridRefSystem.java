@@ -2,16 +2,21 @@ package com.tomgibara.geo;
 
 public final class GridRefSystem {
 
-	public static final GridRefSystem OSGB36 = new GridRefSystem(Datum.OSGB36, OSGrid.instance);
+	public static final GridRefSystem OSGB36 = new GridRefSystem(
+			Datum.OSGB36,
+			OSGrid.instance,
+			400000, -100000);
 	
 	private final Datum datum;
 	private final Grid grid;
+	private final GridRef trueOrigin;
 
-	public GridRefSystem(Datum datum, Grid grid) {
+	public GridRefSystem(Datum datum, Grid grid, int trueOriginE, int trueOriginN) {
 		if (datum == null) throw new IllegalArgumentException("null datum");
 		if (grid == null) throw new IllegalArgumentException("null grid");
 		this.datum = datum;
 		this.grid = grid;
+		trueOrigin = new GridRef(this, trueOriginE, trueOriginN);
 	}
 	
 	public Datum getDatum() {
@@ -20,6 +25,10 @@ public final class GridRefSystem {
 	
 	public Grid getGrid() {
 		return grid;
+	}
+	
+	public GridRef getTrueOrigin() {
+		return trueOrigin;
 	}
 
 	public GridRef createGridRef(String str) {
@@ -52,7 +61,8 @@ public final class GridRefSystem {
 		double E = gridRef.getEasting(), N = gridRef.getNorthing();
 
 		Ellipsoid ellipsoid = datum.ellipsoid;
-		double N0 = datum.N0, F0 = datum.F0, E0 = datum.E0, lat0 = datum.lat0, lon0 = datum.lon0;
+		double E0 = trueOrigin.getEasting(), N0 = trueOrigin.getNorthing();
+		double F0 = datum.F0, lat0 = datum.lat0, lon0 = datum.lon0;
 		double a = ellipsoid.a, b = ellipsoid.b, e2 = ellipsoid.e2;
 		double n = ellipsoid.n, n2 = ellipsoid.n2, n3 = ellipsoid.n3;
 		

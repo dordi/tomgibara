@@ -30,7 +30,7 @@ public final class LatLon {
 	
 	@Override
 	public int hashCode() {
-		return GeoUtil.hashCode(latitude) ^ 31 * GeoUtil.hashCode(longitude);
+		return datum.hashCode() ^ GeoUtil.hashCode(latitude) ^ 31 * GeoUtil.hashCode(longitude);
 	}
 	
 	@Override
@@ -40,6 +40,7 @@ public final class LatLon {
 		LatLon that = (LatLon) obj;
 		if (this.latitude != that.latitude) return false;
 		if (this.longitude != that.longitude) return false;
+		if (!this.datum.equals(that.datum)) return false;
 		return true;
 	}
 	

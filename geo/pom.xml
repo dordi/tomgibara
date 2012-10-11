@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.tomgibara.geo</groupId>
   <artifactId>geo</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.2</version>
   <name>Geographic</name>
   <description>Converts coordinates between different geographic reference systems</description>
   <dependencies>
@@ -36,9 +36,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:svn:http://tomgibara.googlecode.com/svn/trunk/geo</connection>
-    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/trunk/geo</developerConnection>
-    <url>http://code.google.com/p/tomgibara/source/browse/#svn/trunk/geo</url>
+    <connection>scm:svn:http://tomgibara.googlecode.com/svn/tags/geo-0.2</connection>
+    <developerConnection>scm:svn:https://tomgibara.googlecode.com/svn/tags/geo-0.2</developerConnection>
+    <url>http://code.google.com/p/tomgibara/source/browse/#svn/tags/geo-0.2</url>
   </scm>
   <build>
     <plugins>

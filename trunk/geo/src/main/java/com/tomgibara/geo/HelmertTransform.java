@@ -5,7 +5,7 @@ import static com.tomgibara.geo.GeoUtil.arcSecsToRads;
 //TODO could compute more accurately?
 public class HelmertTransform implements CartesianTransform {
 
-	public static HelmertTransform mPpmArcSecs(double cx, double cy, double cz, double s, double rx, double ry, double rz) {
+	public static HelmertTransform withMPpmArcSecs(double cx, double cy, double cz, double s, double rx, double ry, double rz) {
 		return new HelmertTransform(cx, cy, cz, s/1000000, arcSecsToRads(rx), arcSecsToRads(ry), arcSecsToRads(rz));
 	}
 

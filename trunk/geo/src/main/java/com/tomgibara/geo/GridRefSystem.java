@@ -1,15 +1,21 @@
 package com.tomgibara.geo;
 
+import static com.tomgibara.geo.GeoUtil.canonical;
+
 public final class GridRefSystem {
 
-	public static final GridRefSystem OSGB36 = new GridRefSystem(Datum.OSGB36, OSGrid.instance);
+	public static final GridRefSystem OSGB36 = withDatumAndGrid(Datum.OSGB36, OSGrid.instance);
 	
-	public static final GridRefSystem OSI65 = new GridRefSystem(Datum.OSI65, OSIGrid.instance);
+	public static final GridRefSystem OSI65 = withDatumAndGrid(Datum.OSI65, OSIGrid.instance);
+
+	public static GridRefSystem withDatumAndGrid(Datum datum, Grid grid) {
+		return canonical(new GridRefSystem(datum, grid));
+	}
 	
 	private final Datum datum;
 	private final Grid grid;
 
-	public GridRefSystem(Datum datum, Grid grid) {
+	private GridRefSystem(Datum datum, Grid grid) {
 		if (datum == null) throw new IllegalArgumentException("null datum");
 		if (grid == null) throw new IllegalArgumentException("null grid");
 		this.datum = datum;
@@ -91,6 +97,11 @@ public final class GridRefSystem {
 		lat = lat - VII*dE2 + VIII*dE4 - IX*dE6;
 		double lon = lon0 + X*dE - XI*dE3 + XII*dE5 - XIIA*dE7;
 
-		return new LatLon(datum, Math.toDegrees(lat), Math.toDegrees(lon));
+		return datum.createLatLonRadians(lat, lon);
+	}
+	
+	GridRef latLonToGridRef(LatLon latLon) {
+		//TODO
+		throw new UnsupportedOperationException();
 	}
 }

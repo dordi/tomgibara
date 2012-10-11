@@ -8,8 +8,8 @@ public final class LatLon {
 	private final double latitude;
 	private final double longitude;
 	
-	//TODO should normalize 
-	public LatLon(Datum datum, double latitude, double longitude) {
+	//TODO should normalize or consider equality mod degrees
+	LatLon(Datum datum, double latitude, double longitude) {
 		if (datum == null) throw new IllegalArgumentException("null datum");
 		if (!GeoUtil.isCoordinate(latitude)) throw new IllegalArgumentException("invalid latitude");
 		if (!GeoUtil.isCoordinate(longitude)) throw new IllegalArgumentException("invalid longitude");
@@ -32,6 +32,11 @@ public final class LatLon {
 
 	public LatLonHeight atHeight(double height) {
 		return new LatLonHeight(this, height);
+	}
+	
+	public GridRef toGridRef(Grid grid) {
+		if (grid == null) throw new IllegalArgumentException();
+		return GridRefSystem.withDatumAndGrid(datum, grid).latLonToGridRef(this);
 	}
 	
 	@Override

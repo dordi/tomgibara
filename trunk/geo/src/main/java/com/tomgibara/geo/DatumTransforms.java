@@ -13,11 +13,11 @@ public class DatumTransforms {
 		DatumTransforms dts = new DatumTransforms();
 		dts.addTransform(
 				Datum.WSG84, Datum.OSGB36,
-				HelmertTransform.mPpmArcSecs(-446.448, 125.157, -542.06, 20.4894, -0.1502, -0.247, -0.8421)
+				HelmertTransform.withMPpmArcSecs(-446.448, 125.157, -542.06, 20.4894, -0.1502, -0.247, -0.8421)
 				);
 		dts.addTransform(
 				Datum.WSG84, Datum.OSI65,
-				HelmertTransform.mPpmArcSecs(-482.53, 130.596, -564.557, -8.15, 1.042, 0.214, 0.631)
+				HelmertTransform.withMPpmArcSecs(-482.53, 130.596, -564.557, -8.15, 1.042, 0.214, 0.631)
 				);
 		defaultTransforms = dts.immutableCopy();
 	}

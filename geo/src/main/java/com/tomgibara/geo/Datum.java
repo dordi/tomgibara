@@ -185,7 +185,7 @@ public class Datum {
 	public String toString() {
 		return ellipsoid.toString()
 				+ " lat: " + GeoUtil.angleInMinutes(Math.toDegrees(lat0), Coordinate.LATITUDE)
-				+ " lon: " + GeoUtil.angleInMinutes(Math.toDegrees(lat0), Coordinate.LONGITUDE)
+				+ " lon: " + GeoUtil.angleInMinutes(Math.toDegrees(lon0), Coordinate.LONGITUDE)
 				+ " E:" + E0 + "m"
 				+ " N:" + N0 + "m"
 				+ " scale: " + F0;

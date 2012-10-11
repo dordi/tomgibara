@@ -106,6 +106,7 @@ public class GeoUtil {
 			local.set(new HashMap<Object, Object>());
 		}
 		
+		@SuppressWarnings("unchecked")
 		<A> A get(A a) {
 			Map<Object, Object> localMap = local.get();
 			Object obj = localMap.get(a);

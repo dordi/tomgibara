@@ -1,5 +1,9 @@
 package com.tomgibara.geo;
 
+import java.util.HashMap;
+import java.util.Map;
+
+//TODO add naming
 public class GeoUtil {
 
 	public static double arcMinsToRads(double arcSeconds) {
@@ -62,5 +66,38 @@ public class GeoUtil {
 	static boolean isCoordinate(double coord) {
 		return !Double.isInfinite(coord) && !Double.isNaN(coord);
 	}
+	
+	static <A> A canonical(A a) {
+		return canon.get(a);
+	}
+	
+	private static final Canon canon = new Canon();
+	
+	private static class Canon {
+
+		private final ThreadLocal<Map<Object, Object>> local = new ThreadLocal<Map<Object,Object>>();
+		private final Map<Object, Object> globalMap = new HashMap<Object, Object>();
+		
+		Canon() {
+			local.set(new HashMap<Object, Object>());
+		}
+		
+		<A> A get(A a) {
+			Map<Object, Object> localMap = local.get();
+			Object obj = localMap.get(a);
+			if (obj != null) return (A) obj;
+			synchronized (globalMap) {
+				obj = globalMap.get(a);
+				if (obj == null) {
+					globalMap.put(a, a);
+					obj = a;
+				}
+			}
+			localMap.put(obj, obj);
+			return (A) obj;
+		}
+		
+	}
+
 	
 }

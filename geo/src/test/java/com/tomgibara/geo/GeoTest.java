@@ -19,7 +19,7 @@ package com.tomgibara.geo;
 
 import junit.framework.TestCase;
 
-public class GeoTest extends TestCase {
+public abstract class GeoTest extends TestCase {
 
 	void assertAlmostEquals(double a, double b) {
 		assertTrue(Math.abs(a-b) < 0.01);

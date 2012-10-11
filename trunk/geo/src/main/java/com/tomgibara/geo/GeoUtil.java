@@ -45,10 +45,10 @@ public class GeoUtil {
 		char dir;
 		switch (coordinate) {
 		case LATITUDE:
-			dir = neg ? 'W' : 'E';
+			dir = neg ? 'S' : 'N';
 			break;
 		case LONGITUDE:
-			dir = neg ? 'S' : 'N';
+			dir = neg ? 'W' : 'E';
 			break;
 		default:
 			throw new IllegalStateException("Coordinate not angular");

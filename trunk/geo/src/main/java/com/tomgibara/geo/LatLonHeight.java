@@ -64,7 +64,7 @@ public final class LatLonHeight {
 	
 	@Override
 	public String toString() {
-		return String.format("%.6f\u00b0,%.6f\u00b0,%.6fm", latLon.getLatitude(), latLon.getLongitude(), height);
+		return String.format("%s at %.6fm", latLon, height);
 	}
 	
 }

@@ -43,5 +43,37 @@ public class HelmertTransform implements CartesianTransform {
 		return new HelmertTransform(-cx, -cy, -cz, -s, -rx, -ry, -rz);
 	}
 	
-	//TODO hashcode and equals 
+	@Override
+	public int hashCode() {
+		return GeoUtil.hashCode(s)
+				+ GeoUtil.hashCode(cx)
+				+ GeoUtil.hashCode(rx)
+				+ 31 * (
+						GeoUtil.hashCode(cy)
+						+ GeoUtil.hashCode(ry)
+						+ 31 * (
+								GeoUtil.hashCode(cz)
+								+ GeoUtil.hashCode(rz)));
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (!(obj instanceof HelmertTransform)) return false;
+		HelmertTransform that = (HelmertTransform) obj;
+		if (this.cx != that.cx) return false;
+		if (this.cy != that.cy) return false;
+		if (this.cz != that.cz) return false;
+		if (this.s != that.s) return false;
+		if (this.rx != that.rx) return false;
+		if (this.ry != that.ry) return false;
+		if (this.rz != that.rz) return false;
+		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return "(" + cx + "," + cy + "," + cz + ") " + s + "[" + rx + "," + ry + "," + rz + "]";
+	}
+	
 }

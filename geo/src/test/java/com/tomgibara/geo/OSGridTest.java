@@ -1,14 +1,13 @@
 package com.tomgibara.geo;
 
-import junit.framework.TestCase;
 
-public class OSGridTest extends TestCase {
+public class OSGridTest extends GeoTest {
 
 	private static GridRefSystem system = GridRefSystem.OSGB36;
 	private static OSGrid grid = (OSGrid) system.getGrid();
 
 	private GridRef ref(int e, int n) {
-		return new GridRef(system, e, n);
+		return system.createGridRef(e, n);
 	}
 	
 	private GridRef ref(String str) {

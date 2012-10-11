@@ -1,8 +1,7 @@
 package com.tomgibara.geo;
 
-import junit.framework.TestCase;
 
-public class OSIGridTest extends TestCase {
+public class OSIGridTest extends GeoTest {
 
 	public void testBasic() {
 		GridRef ref = GridRefSystem.OSI65.createGridRef("J 02598 74444");

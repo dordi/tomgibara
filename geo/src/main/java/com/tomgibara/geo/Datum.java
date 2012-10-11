@@ -129,7 +129,7 @@ public class Datum {
 		double x = (v + h) * c * Math.cos(lon);
 		double y = (v + h) * c * Math.sin(lon);
 		double z = ((1 - e2) * v + h) * s;
-		return new Cartesian(x, y, z);
+		return Cartesian.inMeters(x, y, z);
 	}
 
 	LatLonHeight cartesianToLatLonHeight(Cartesian cartesian) {

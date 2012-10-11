@@ -19,11 +19,15 @@ package com.tomgibara.geo;
 
 public class Cartesian {
 
+	public static Cartesian inMeters(double x, double y, double z) {
+		return new Cartesian(x,y,z);
+	}
+	
 	private final double x;
 	private final double y;
 	private final double z;
 	
-	public Cartesian(double x, double y, double z) {
+	private Cartesian(double x, double y, double z) {
 		if (!GeoUtil.isCoordinate(x)) throw new IllegalArgumentException("invalid x");
 		if (!GeoUtil.isCoordinate(y)) throw new IllegalArgumentException("invalid y");
 		if (!GeoUtil.isCoordinate(z)) throw new IllegalArgumentException("invalid z");

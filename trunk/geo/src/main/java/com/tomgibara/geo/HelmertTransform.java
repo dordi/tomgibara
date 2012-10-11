@@ -52,7 +52,7 @@ public class HelmertTransform implements CartesianTransform {
 		double tx = cx + x * s1 - y * rz + z * ry;
 		double ty = cy + x * rz + y * s1 - z * rx;
 		double tz = cz - x * ry + y * rx + z * s1;
-		return new Cartesian(tx, ty, tz);
+		return Cartesian.inMeters(tx, ty, tz);
 	}
 	
 	@Override

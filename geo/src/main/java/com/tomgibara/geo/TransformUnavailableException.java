@@ -17,6 +17,13 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Thrown when transformation of a point is not possible because no suitable
+ * transformation is known.
+ * 
+ * @author Tom Gibara
+ */
+
 public class TransformUnavailableException extends RuntimeException {
 
 	private static final long serialVersionUID = -3983054942122984072L;

@@ -19,6 +19,12 @@ package com.tomgibara.geo;
 
 import static com.tomgibara.geo.GeoUtil.canonical;
 
+/**
+ * An approximation of a planetary shape against which coordinates may be defined.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class Ellipsoid {
 
 	// used for OS

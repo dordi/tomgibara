@@ -20,6 +20,13 @@ package com.tomgibara.geo;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility methods for handling geographic data.
+ * 
+ * @author Tom Gibara
+ *
+ */
+
 //TODO add naming
 public class GeoUtil {
 

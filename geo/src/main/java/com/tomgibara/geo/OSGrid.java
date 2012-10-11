@@ -17,6 +17,11 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Parses and formats map references using the Ordinance Survey grid.
+ * 
+ * @author Tom Gibara
+ */
 
 public final class OSGrid implements Grid {
 

@@ -17,12 +17,18 @@
 
 package com.tomgibara.geo;
 
+/**
+ * A latitude, longitude pair combined with a height.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class LatLonHeight {
 
 	private final LatLon latLon;
 	private final double height;
 	
-	public LatLonHeight(LatLon latLon, double height) {
+	LatLonHeight(LatLon latLon, double height) {
 		if (latLon == null) throw new IllegalArgumentException("null latLon");
 		if (!GeoUtil.isCoordinate(height)) throw new IllegalArgumentException("invalid height");
 		this.latLon = latLon;

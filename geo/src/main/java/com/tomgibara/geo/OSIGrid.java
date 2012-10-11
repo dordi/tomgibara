@@ -18,6 +18,12 @@
 package com.tomgibara.geo;
 
 
+/**
+ * Parses and formats map references using the Ordinance Survey Ireland grid.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class OSIGrid implements Grid {
 
 	public static OSIGrid instance = new OSIGrid();

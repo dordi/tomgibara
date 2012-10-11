@@ -19,6 +19,12 @@ package com.tomgibara.geo;
 
 import static com.tomgibara.geo.GeoUtil.angleInMinutes;
 
+/**
+ * A latitude and longitude pair defined relative to some datum.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class LatLon {
 
 	private final Datum datum;

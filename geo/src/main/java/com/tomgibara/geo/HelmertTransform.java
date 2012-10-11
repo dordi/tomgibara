@@ -19,6 +19,13 @@ package com.tomgibara.geo;
 
 import static com.tomgibara.geo.GeoUtil.arcSecsToRads;
 
+/**
+ * A transformation that operates by translating, scaling and rotating
+ * coordinates in 3D space.
+ * 
+ * @author Tom Gibara
+ */
+
 //TODO could compute more accurately?
 public class HelmertTransform implements CartesianTransform {
 

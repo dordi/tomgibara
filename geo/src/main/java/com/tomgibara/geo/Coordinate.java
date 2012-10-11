@@ -17,6 +17,13 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Enumeration of coordinate types.
+ * 
+ * @author Tom Gibara
+ */
+
+//TODO better name?
 public enum Coordinate {
 
 	LATITUDE,

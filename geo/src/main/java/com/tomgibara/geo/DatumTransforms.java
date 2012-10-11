@@ -22,6 +22,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
+/**
+ * A collection of transforms that can transform points defined in different datums.
+ * 
+ * @author Tom Gibara
+ */
+
 public class DatumTransforms {
 
 	private static final DatumTransforms defaultTransforms;
@@ -80,10 +86,10 @@ public class DatumTransforms {
 		return true;
 	}
 	
-	public LatLonHeightTransform getTransform(Datum target) {
+	public DatumTransform getTransform(Datum target) {
 		if (target == null) throw new IllegalArgumentException("null target datum");
 		if (!immutable) throw new IllegalStateException("transforms not immutable");
-		return new DatumTransform(target);
+		return new DatumTransformImpl(target);
 	}
 	
 	public DatumTransforms immutableCopy() {
@@ -140,12 +146,12 @@ public class DatumTransforms {
 		
 	}
 	
-	private class DatumTransform implements LatLonHeightTransform {
+	private class DatumTransformImpl implements DatumTransform {
 		
 		private final Datum target;
 		private final Map<Datum, CartesianTransform> transforms;
 		
-		DatumTransform(Datum target) {
+		DatumTransformImpl(Datum target) {
 			this.target = target;
 			transforms = transformsByTarget.get(target);
 		}

@@ -17,6 +17,12 @@
 
 package com.tomgibara.geo;
 
+/**
+ * A reversible transform that operates on cartesian coordinates.
+ * 
+ * @author Tom Gibara
+ */
+
 public interface CartesianTransform {
 
 	Cartesian transform(Cartesian source);

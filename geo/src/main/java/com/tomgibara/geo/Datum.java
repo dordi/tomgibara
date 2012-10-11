@@ -22,6 +22,12 @@ import static com.tomgibara.geo.GeoUtil.isCoordinate;
 import static java.lang.Math.toDegrees;
 import static java.lang.Math.toRadians;
 
+/**
+ * A reference against which position measurements may be made.
+ * 
+ * @author Tom Gibara
+ */
+
 public class Datum {
 
 	public static final Datum OSGB36 = withDegreesMeters(

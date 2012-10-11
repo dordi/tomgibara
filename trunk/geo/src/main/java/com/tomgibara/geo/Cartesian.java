@@ -17,6 +17,12 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Cartesian coordinates of a point in 3D space.
+ * 
+ * @author Tom Gibara
+ */
+
 public class Cartesian {
 
 	public static Cartesian inMeters(double x, double y, double z) {

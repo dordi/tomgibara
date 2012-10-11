@@ -20,6 +20,12 @@ package com.tomgibara.geo;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Common functionality for the OS and OSI grids.
+ * 
+ * @author Tom Gibara
+ */
+
 class GridHelper {
 
 	private static final Pattern sNoSquares = Pattern.compile("([EW])\\s*(\\d+)\\s*([NS])\\s*(\\d+)", Pattern.CASE_INSENSITIVE);

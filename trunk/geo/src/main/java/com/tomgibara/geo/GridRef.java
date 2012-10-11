@@ -17,6 +17,12 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Defines a surface location as coordinate pair relative to a grid reference system.
+ * 
+ * @author Tom Gibara
+ */
+
 public final class GridRef {
 
 	private final GridRefSystem system;

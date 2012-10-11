@@ -17,7 +17,15 @@
 
 package com.tomgibara.geo;
 
-public interface LatLonHeightTransform {
+/**
+ * Implementations transform (lat,lon,height) coordinates to a different datum.
+ * If the source coordinates are defined in a datum for which no transformation
+ * is known, an exception is thrown.
+ * 
+ * @author Tom Gibara
+ */
+
+public interface DatumTransform {
 
 	LatLonHeight transform(LatLonHeight latLonHeight) throws TransformUnavailableException;
 	

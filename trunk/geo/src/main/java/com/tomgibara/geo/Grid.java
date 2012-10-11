@@ -17,6 +17,12 @@
 
 package com.tomgibara.geo;
 
+/**
+ * Implementations both parse and format grid references relative to a reference system.
+ * 
+ * @author Tom Gibara
+ */
+
 public interface Grid {
 
 	GridRef refFromString(GridRefSystem system, String str);

@@ -20,6 +20,13 @@ package com.tomgibara.geo;
 import static com.tomgibara.geo.GeoUtil.canonical;
 import static java.lang.Math.toRadians;
 
+/**
+ * Combines a grid (for deriving eastings and northings) with a datum (with
+ * which to establish their longitude and latitude),
+ * 
+ * @author Tom Gibara
+ */
+
 public final class GridRefSystem {
 
 	public static final GridRefSystem OSGB36 = withDatumAndGrid(Datum.OSGB36, OSGrid.instance);

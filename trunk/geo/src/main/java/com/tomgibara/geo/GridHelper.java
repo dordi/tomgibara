@@ -51,7 +51,7 @@ class GridHelper {
 			int northing = Integer.parseInt(matcher.group(4));
 			if (matcher.group(1).equals("W")) easting = -easting;
 			if (matcher.group(3).equals("S")) northing = -northing;
-			return new GridRef(system, easting, northing);
+			return system.createGridRef(easting, northing);
 		}
 
 		Pattern pattern = singleLetter ? sSingleSquares : sDoubleSquares;
@@ -83,8 +83,7 @@ class GridHelper {
 		int scale = sScales[length];
 		int center = sCenters[length];
 		
-		return new GridRef(
-				system,
+		return system.createGridRef(
 				e + x * scale + center,
 				n + y * scale + center
 				);

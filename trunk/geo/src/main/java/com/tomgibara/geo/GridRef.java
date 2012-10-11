@@ -6,7 +6,7 @@ public final class GridRef {
 	private final int easting;
 	private final int northing;
 
-	public GridRef(GridRefSystem system, int easting, int northing) {
+	GridRef(GridRefSystem system, int easting, int northing) {
 		if (system == null) throw new IllegalArgumentException("null grid");
 		this.system = system;
 		this.easting = easting;

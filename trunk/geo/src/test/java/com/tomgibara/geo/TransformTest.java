@@ -1,8 +1,7 @@
 package com.tomgibara.geo;
 
-import junit.framework.TestCase;
 
-public class TransformTest extends TestCase {
+public class TransformTest extends GeoTest {
 
 	private final DatumTransforms transforms = DatumTransforms.getDefaultTransforms();
 	

@@ -17,6 +17,7 @@
 package com.tomgibara.crinch.math;
 
 import java.math.BigInteger;
+import java.util.Random;
 
 /**
  * <p>
@@ -113,5 +114,9 @@ public interface Combinator {
 	 *             combination
 	 */
 	int[] getCombination(BigInteger index, int[] array) throws IndexOutOfBoundsException, IllegalArgumentException;
+	
+	int[] getRandomCombination(Random random, int[] array) throws IllegalArgumentException;
+	
+	int[] getRandomCombination(Random random) throws IllegalArgumentException;
 	
 }

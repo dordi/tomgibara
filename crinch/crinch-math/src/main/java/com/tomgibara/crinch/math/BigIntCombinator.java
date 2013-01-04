@@ -19,6 +19,7 @@ package com.tomgibara.crinch.math;
 import static java.math.BigInteger.valueOf;
 
 import java.math.BigInteger;
+import java.util.Random;
 
 class BigIntCombinator extends AbstractCombinator {
 
@@ -57,18 +58,8 @@ class BigIntCombinator extends AbstractCombinator {
 	}
 	
 	@Override
-	public int[] getCombination(long m) throws IndexOutOfBoundsException, IllegalArgumentException {
-		return getCombination(valueOf(m));
-	}
-
-	@Override
 	public int[] getCombination(long m, int[] as) throws IndexOutOfBoundsException, IllegalArgumentException {
 		return getCombination(valueOf(m), as);
-	}
-	
-	@Override
-	public int[] getCombination(BigInteger m) {
-		return getCombination(m, new int[k]);
 	}
 	
 	@Override
@@ -94,6 +85,15 @@ class BigIntCombinator extends AbstractCombinator {
 		}
 		
 		return as;
+	}
+	
+	@Override
+	public int[] getRandomCombination(Random random, int[] as) throws IllegalArgumentException {
+		int bits = size.bitCount();
+		while (true) {
+			BigInteger r = new BigInteger(bits, random);
+			if (r.compareTo(size) < 0) return getCombination(r, as);
+		}
 	}
 	
 	private int largest(int a, int b, BigInteger x) {

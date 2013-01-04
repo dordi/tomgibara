@@ -16,8 +16,25 @@
  */
 package com.tomgibara.crinch.math;
 
+import java.math.BigInteger;
+import java.util.Random;
+
 abstract class AbstractCombinator implements Combinator {
 
+	@Override
+	public int[] getCombination(BigInteger m) throws IndexOutOfBoundsException, IllegalArgumentException {
+		return getCombination(m, new int[getTupleLength()]);
+	}
+	
+	@Override
+	public int[] getCombination(long m) {
+		return getCombination(m, new int[getTupleLength()]);
+	}
+	
+	@Override
+	public int[] getRandomCombination(Random random) throws IllegalArgumentException {
+		return getRandomCombination(random, new int[getTupleLength()]);
+	}
 	
 	@Override
 	public boolean equals(Object obj) {

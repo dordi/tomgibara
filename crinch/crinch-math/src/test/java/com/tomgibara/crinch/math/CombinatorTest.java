@@ -19,7 +19,10 @@ package com.tomgibara.crinch.math;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -121,4 +124,69 @@ public class CombinatorTest extends TestCase {
 		
 	}
 
+	public void testRandom() {
+		int tests = 100000;
+		Random r = new SecureRandom();
+		Combinator c = new LongCombinator(20, 3);
+		Map<IntArray, Integer> counts = new HashMap<CombinatorTest.IntArray, Integer>();
+		for (int i = 0; i < tests; i++) {
+			IntArray array = new IntArray(c.getRandomCombination(r));
+			Integer count = counts.get(array);
+			if (count == null) {
+				counts.put(array, 1);
+			} else {
+				counts.put(array, count + 1);
+			}
+		}
+		
+		int sum = 0;
+		int sumSqr = 0;
+		for (Integer count : counts.values()) {
+			int j = count;
+			sum += j;
+			sumSqr += j * j;
+		}
+
+		float size = c.size().longValue();
+		float mean = sum / size;
+		float meanSqr = sumSqr / size;
+		float var = meanSqr - mean * mean;
+
+		float p = 1f / size;
+		float q = 1f - p;
+		float v = tests * p * q;
+		
+		// expect to be within 10% of expected variance
+		assertTrue(var > v * 0.9f);
+		assertTrue(var < v * 1.1f);
+	}
+	
+	private static final class IntArray {
+		
+		private final int[] ints;
+
+		IntArray(int[] ints) {
+			this.ints = ints;
+		}
+		
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(ints);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) return true;
+			if (!(obj instanceof CombinatorTest.IntArray)) return false;
+			CombinatorTest.IntArray that = (CombinatorTest.IntArray) obj;
+			return Arrays.equals(this.ints, that.ints);
+		}
+		
+		@Override
+		public String toString() {
+			return Arrays.toString(ints);
+		}
+		
+	}
+	
 }

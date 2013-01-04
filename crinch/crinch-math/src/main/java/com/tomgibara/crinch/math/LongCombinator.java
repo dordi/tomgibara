@@ -17,11 +17,13 @@
 package com.tomgibara.crinch.math;
 
 import java.math.BigInteger;
+import java.util.Random;
 
 class LongCombinator extends AbstractCombinator implements PackedCombinator {
 
 	private final int n;
 	private final int k;
+	private final long longSize;
 	private final BigInteger size;
 	private final int nBits;
 	private final long nMask;
@@ -38,7 +40,8 @@ class LongCombinator extends AbstractCombinator implements PackedCombinator {
 				cs[i][j] = Combinators.chooseAsLong(j, i);
 			}
 		}
-		size = BigInteger.valueOf(cs[k][n] /* choose(n, k) */);
+		longSize = cs[k][n] /* choose(n, k) */;
+		size = BigInteger.valueOf(longSize);
 		if (packed) {
 			nMask = (n == 1 ? 1 : (Long.highestOneBit(n - 1) << 1)) - 1;
 			nBits = Long.bitCount(nMask);
@@ -71,28 +74,17 @@ class LongCombinator extends AbstractCombinator implements PackedCombinator {
 	}
 	
 	@Override
-	public int[] getCombination(BigInteger m) throws IndexOutOfBoundsException, IllegalArgumentException {
-		return getCombination(m, new int[k]);
-	}
-	
-	@Override
 	public int[] getCombination(BigInteger m, int[] as) throws IndexOutOfBoundsException, IllegalArgumentException {
 		if (m.signum() < 0) throw new IndexOutOfBoundsException();
-		if (m.compareTo(BigInteger.valueOf(cs[k][n] /* choose(n, k) */)) >= 0) throw new IndexOutOfBoundsException();
+		if (m.compareTo(size) >= 0) throw new IndexOutOfBoundsException();
 		if (as.length < k) throw new IllegalArgumentException();
 		return getCombinationImpl(m.longValue(), as);
 	}
 	
 	@Override
-	public int[] getCombination(long m) {
-		return getCombination(m, new int[k]);
-	}
-	
-	@Override
 	public int[] getCombination(long m, int[] as) {
-		final long[][] cs = this.cs;
 		if (m < 0) throw new IndexOutOfBoundsException();
-		if (m >= cs[k][n] /* choose(n, k) */) throw new IndexOutOfBoundsException();
+		if (m >= longSize) throw new IndexOutOfBoundsException();
 		if (as.length < k) throw new IllegalArgumentException();
 		return getCombinationImpl(m, as);
 	}
@@ -108,7 +100,7 @@ class LongCombinator extends AbstractCombinator implements PackedCombinator {
 	public long getPackedCombination(long m) throws IllegalStateException, IndexOutOfBoundsException {
 		final long[][] cs = this.cs;
 		if (m < 0) throw new IndexOutOfBoundsException();
-		if (m >= cs[k][n] /* choose(n, k) */) throw new IndexOutOfBoundsException();
+		if (m >= longSize) throw new IndexOutOfBoundsException();
 		int a = n;
 		int b = k;
 		long x = cs[b][a] /*choose(a, b)*/ - 1 - m;
@@ -130,6 +122,19 @@ class LongCombinator extends AbstractCombinator implements PackedCombinator {
 		return (int) ((packed >> ((k - i - 1) * nBits)) & nMask);
 	}
 	
+	@Override
+	public int[] getRandomCombination(Random random, int[] as) throws IllegalArgumentException {
+		if (random == null) throw new IllegalArgumentException("null random");
+		if (as.length < k) throw new IllegalArgumentException();
+		//TODO could cache
+		long mask = -1L >>> Long.numberOfLeadingZeros(longSize);
+		while (true) {
+			long r = random.nextLong() & mask;
+			if (r < longSize) return getCombinationImpl(r, as);
+		}
+		
+	}
+
 	private int[] getCombinationImpl(long m, int[] as) {
 		int a = n;
 		int b = k;

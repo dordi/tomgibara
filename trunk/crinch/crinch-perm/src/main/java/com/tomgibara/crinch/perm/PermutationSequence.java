@@ -22,11 +22,15 @@ public interface PermutationSequence {
 	
 	boolean hasPrevious();
 	
+	PermutationSequence first();
+	
+	PermutationSequence last();
+	
 	PermutationSequence next();
 	
 	PermutationSequence previous();
 	
-	// the generator this sequence is manipluating
+	// the generator this sequence is manipulating
 	
 	Permutation.Generator getGenerator();
 }

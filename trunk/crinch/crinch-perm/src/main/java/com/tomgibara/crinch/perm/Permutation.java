@@ -432,8 +432,13 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 		
 		// accessors
 		
-		public OrderedSequence getOrderedSequence() {
+		public PermutationSequence getOrderedSequence() {
 			return orderedSequence == null ? orderedSequence = new OrderedSequence() : orderedSequence;
+		}
+		
+		public PermutationSequence getFixFreeInvolutionSequence() {
+			if ((correspondence.length & 1) != 0) throw new IllegalStateException("odd order");
+			return new FixFreeInvolutionSequence();
 		}
 		
 		// mutators
@@ -601,6 +606,26 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			}
 		}
 		
+		private void makeIdentity() {
+			for (int i = 0; i < correspondence.length; i++) {
+				correspondence[i] = i;
+			}
+		}
+		
+		private void makeReverse() {
+			int max = correspondence.length - 1;
+			for (int i = 0; i <= max; i++) {
+				correspondence[i] = max - i;
+			}
+		}
+		
+		private void makeSwaps() {
+			for (int i = 0; i < correspondence.length; i++) {
+				correspondence[i] = i++ + 1;
+				correspondence[i] = i - 1;
+			}
+		}
+		
 		private class OrderedSequence implements PermutationSequence {
 
 			public boolean hasNext() {
@@ -619,6 +644,18 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 				return false;
 			}
 
+			@Override
+			public PermutationSequence first() {
+				makeIdentity();
+				return this;
+			}
+
+			@Override
+			public PermutationSequence last() {
+				makeReverse();
+				return this;
+			}
+			
 			@Override
 			public PermutationSequence next() {
 				nextByNumber(true);
@@ -642,6 +679,143 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			}
 			
 		}
+
+		// TODO can this be more efficient?
+		// ie. defer setting correspondence array without creating large inefficiencies elsewhere?
+		private class FixFreeInvolutionSequence implements PermutationSequence {
+			
+			private final int[] values = new int[correspondence.length / 2];
+			
+			@Override
+			public boolean hasNext() {
+				index();
+				int limit = values.length * 2 - 2;
+				for (int i = 0; i < values.length; i++) {
+					if (values[i] < limit) return true;
+					limit -= 2;
+				}
+				return false;
+			}
+			
+			@Override
+			public boolean hasPrevious() {
+				index();
+				for (int i = 0; i < values.length; i++) {
+					if (values[i] > 0) return true;
+				}
+				return false;
+			}
+			
+			@Override
+			public PermutationSequence first() {
+				makeSwaps();
+				return this;
+			}
+			
+			@Override
+			public PermutationSequence last() {
+				makeReverse();
+				return this;
+			}
+			
+			@Override
+			public PermutationSequence next() {
+				index();
+				boolean overflow = true;
+				int limit = 1;
+				for (int i = values.length - 2; i >= 0; i--) {
+					if (values[i] <= limit) {
+						values[i]++;
+						overflow = false;
+						break;
+					}
+					values[i] = 0;
+					limit += 2;
+				}
+				if (overflow) throw new IllegalStateException("no such permutation");
+				correspond();
+				return this;
+			}
+			
+			@Override
+			public PermutationSequence previous() {
+				index();
+				boolean overflow = true;
+				int limit = 1;
+				for (int i = values.length - 2; i >= 0; i--) {
+					if (values[i] > 0) {
+						values[i]--;
+						overflow = false;
+						break;
+					}
+					values[i] = limit;
+					limit += 2;
+				}
+				if (overflow) throw new IllegalStateException("no such permutation");
+				correspond();
+				return this;
+			}
+			
+			@Override
+			public Generator getGenerator() {
+				return Generator.this;
+			}
+
+			// clears supplied array, populates values
+			private void index() {
+				int[] correspondence = Generator.this.correspondence.clone();
+				for (int i = 0; i < values.length; i++) {
+					int j = correspondence[0];
+					if (j == 0 || correspondence[j] != 0) throw new IllegalStateException("not fix free involution");
+					values[i] = j - 1;
+					int length = correspondence.length - 2 * i;
+					int m = 0;
+					for (int n = 1; n < correspondence.length; n++) {
+						if (n != j) {
+							int c = correspondence[n];
+							correspondence[m++] = c >= j ? c - 2 : c - 1;
+						}
+					}
+					correspondence[length - 1] = -1;
+					correspondence[length - 2] = -1;
+				}
+			}
+			
+			private void correspond() {
+				Arrays.fill(correspondence, -1);
+				int steps = values.length - 1;
+				for (int a = 0; a <= steps; a++) {
+					int b = values[a];
+					int ai = -1;
+					int bi = -1;
+					for (int i = 0; i < correspondence.length; i++) {
+						if (correspondence[i] == -1) {
+							if (ai >= 0) { // case where a is already placed
+								if (b == 0) { // case where we need to place "b"
+									bi = i;
+									break;
+								} else { // case where we need to look further to place "b"
+									b--;
+								}
+							} else { // case where we need to place "a"
+								ai = i;
+							}
+						} else { // case where correspondence is already set
+							/* do nothing */
+						}
+					}
+					correspondence[ai] = bi;
+					correspondence[bi] = ai;
+				}
+			}
+			
+			@Override
+			public String toString() {
+				return "FixFreeInvolutionSequence at " + Generator.this.toString();
+			}
+			
+		}
+		
 	}
 
 }

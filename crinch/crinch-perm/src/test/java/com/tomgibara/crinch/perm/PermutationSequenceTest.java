@@ -16,14 +16,57 @@
  */
 package com.tomgibara.crinch.perm;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+
+import com.tomgibara.crinch.perm.Permutation.Generator;
+import com.tomgibara.crinch.perm.Permutation.Info;
 
 public class PermutationSequenceTest extends PermutationTestCase {
 
+	private static final BigInteger TWO = BigInteger.valueOf(2);
+
+	private static void assertIsFFI(Permutation p) {
+		// check p is empty, or...
+		if (p.getSize() == 0) return;
+		Info info = p.getInfo();
+		// ... it is an involution...
+		assertEquals(TWO, info.getLengthOfOrbit());
+		// ...and has no fixed points
+		assertTrue(info.getFixedPoints().isAllZeros());
+	}
+	
+	public void testFirstAndLastOrderedSequence() {
+		Random r = new Random();
+		for (int i = 0; i < 100; i++) {
+			int size = r.nextInt(100);
+			Generator generator = Permutation.identity(size).generator();
+			PermutationSequence sequence = generator.getOrderedSequence();
+			assertFalse(sequence.first().hasPrevious());
+			assertEquals(Permutation.identity(size), generator.permutation());
+			assertFalse(sequence.last().hasNext());
+			assertEquals(Permutation.reverse(size), generator.permutation());
+		}
+	}
+	
+	public void testFirstAndLastFFISequence() {
+		Random r = new Random();
+		for (int i = 0; i < 100; i++) {
+			int size = 2 * r.nextInt(50);
+			Generator generator = Permutation.identity(size).generator();
+			PermutationSequence sequence = generator.getFixFreeInvolutionSequence();
+			assertFalse(sequence.first().hasPrevious());
+			assertIsFFI(generator.permutation());
+			assertFalse(sequence.last().hasNext());
+			assertIsFFI(generator.permutation());
+		}
+	}
+	
 	public void testNextAndPreviousByOrder() {
 		int count = 1;
 		for (int size = 0; size < 5; size++) {
@@ -64,4 +107,29 @@ public class PermutationSequenceTest extends PermutationTestCase {
 		}
 	}
 
+	public void testFFISequence() {
+		int expectedSize = 1;
+		for (int i = 0; i < 6; i++) {
+			int size = 2 * i;
+			Permutation.Generator pg = Permutation.identity(size).generator();
+			PermutationSequence ps = pg.getFixFreeInvolutionSequence().first();
+			Permutation p;
+			
+			Set<Permutation> set = new HashSet<Permutation>();
+			List<Permutation> list = new ArrayList<Permutation>();
+			p = pg.permutation();
+			set.add(p);
+			list.add(p);
+			while (ps.hasNext()) {
+				p = ps.next().getGenerator().permutation();
+				assertIsFFI(p);
+				set.add(p);
+				list.add(p);
+			} 
+			if (size > 0) expectedSize *= size - 1;
+			assertEquals(expectedSize, list.size());
+			assertEquals(expectedSize, set.size());
+		}
+	}
+	
 }

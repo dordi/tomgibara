@@ -421,10 +421,21 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 	
 	// inner classes
 	
+	private static abstract class Syncer {
+		
+		// called to indicate that state of generator has changed
+		abstract void desync();
+		
+		// called to invite syncer to update the state of the generator
+		abstract void resync();
+		
+	}
+	
 	public static final class Generator implements Permutable {
 
 		final int[] correspondence;
 		private OrderedSequence orderedSequence = null;
+		private Syncer syncer;
 
 		Generator(int[] correspondence) {
 			this.correspondence = correspondence;
@@ -437,6 +448,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 		}
 		
 		public PermutationSequence getFixFreeInvolutionSequence() {
+			if (syncer instanceof FixFreeInvolutionSequence) return (PermutationSequence) syncer;
 			if ((correspondence.length & 1) != 0) throw new IllegalStateException("odd order");
 			return new FixFreeInvolutionSequence();
 		}
@@ -447,6 +459,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			if (permutation == null) throw new IllegalArgumentException("null permutation");
 			if (permutation.getSize() != correspondence.length) throw new IllegalArgumentException("incorrect size");
 			permutation.generator(this);
+			desync();
 			return this;
 		}
 
@@ -454,6 +467,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			for (int i = 0; i < correspondence.length; i++) {
 				correspondence[i] = i;
 			}
+			desync();
 			return this;
 		}
 		
@@ -476,6 +490,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 	                count ++;
 	            } while(i != start);
 	        }
+			desync();
 	        return this;
 		}
 		
@@ -485,6 +500,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 				array[correspondence[i]] = i;
 			}
 			System.arraycopy(array, 0, correspondence, 0, array.length);
+			desync();
 			return this;
 		}
 		
@@ -493,6 +509,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			for (int i = 0, j = correspondence.length - 1; i < h; i++, j--) {
 				swap(i, j);
 			}
+			if (syncer != null) syncer.desync();
 			return this;
 		}
 		
@@ -500,44 +517,43 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			for (int i = correspondence.length - 1; i > 0 ; i--) {
 				transpose(i, random.nextInt(i + 1));
 			}
+			desync();
 			return this;
 		}
 		
 		// equivalent to: permutation.permute(generator);
 		public Generator apply(Permutation permutation) {
 			permutation.permute(this);
+			desync();
 			return this;
 		}
 		
 		public Generator power(int power) {
-			if (power == 0) {
-				identity();
-				return this;
-			}
+			if (power == 0) return identity();
 
 			if (power < 0) {
 				invert();
 				power = -power;
 			}
 			
-			if (power == 1) {
-				return this;
+			if (power > 1) {
+				//TODO could be made more efficient
+				Permutation p = permutation();
+				identity();
+				while (power > 0) {
+					if ((power & 1) == 1) p.permute(this);
+					p = p.generator().apply(p).permutation();
+					power >>= 1;
+				}
 			}
-			
-			//TODO could be made more efficient
-			Permutation p = permutation();
-			identity();
-			while (power > 0) {
-				if ((power & 1) == 1) p.permute(this);
-				p = p.generator().apply(p).permutation();
-				power >>= 1;
-			}
+			desync();
 			return this;
 		}
 		
 		// factory methods
 		
 		public Permutation permutation() {
+			resync();
 			return new Permutation(this);
 		}
 		
@@ -555,7 +571,10 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			if (i > correspondence.length) throw new IllegalArgumentException("i greater than or equal to size");
 			if (j > correspondence.length) throw new IllegalArgumentException("j greater than or equal to size");
 			
-			if (j != i) swap(i, j);
+			if (j != i) {
+				swap(i, j);
+				desync();
+			}
 			
 			return this;
 		}
@@ -570,6 +589,20 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 		}
 		
 		// private utility methods
+		
+		private void desync() {
+			if (syncer != null) syncer.desync();
+		}
+		
+		private void resync() {
+			if (syncer != null) syncer.resync();
+		}
+		
+		private void setSyncer(Syncer syncer) {
+			if (syncer == this.syncer) return;
+			if (this.syncer != null) syncer.desync();
+			this.syncer = syncer;
+		}
 		
 		private void swap(int i, int j) {
 			int t = correspondence[i];
@@ -625,7 +658,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 				correspondence[i] = i - 1;
 			}
 		}
-		
+
 		private class OrderedSequence implements PermutationSequence {
 
 			public boolean hasNext() {
@@ -680,15 +713,22 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			
 		}
 
-		// TODO can this be more efficient?
-		// ie. defer setting correspondence array without creating large inefficiencies elsewhere?
-		private class FixFreeInvolutionSequence implements PermutationSequence {
+		private class FixFreeInvolutionSequence extends Syncer implements PermutationSequence {
+			
+			private boolean theyChanged;
+			private boolean weChanged;
 			
 			private final int[] values = new int[correspondence.length / 2];
 			
+			FixFreeInvolutionSequence() {
+				setSyncer(this);
+				theyChanged = true;
+				weChanged = false;
+			}
+			
 			@Override
 			public boolean hasNext() {
-				index();
+				if (theyChanged) index();
 				int limit = values.length * 2 - 2;
 				for (int i = 0; i < values.length; i++) {
 					if (values[i] < limit) return true;
@@ -699,7 +739,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			
 			@Override
 			public boolean hasPrevious() {
-				index();
+				if (theyChanged) index();
 				for (int i = 0; i < values.length; i++) {
 					if (values[i] > 0) return true;
 				}
@@ -709,22 +749,29 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			@Override
 			public PermutationSequence first() {
 				makeSwaps();
+				Arrays.fill(values, 0);
+				sync();
 				return this;
 			}
 			
 			@Override
 			public PermutationSequence last() {
 				makeReverse();
+				int steps = values.length - 1;
+				for (int i = 0; i <= steps; i++) {
+					values[i] = 2 * (steps - i);
+				}
+				sync();
 				return this;
 			}
 			
 			@Override
 			public PermutationSequence next() {
-				index();
+				if (theyChanged) index();
 				boolean overflow = true;
-				int limit = 1;
+				int limit = 2;
 				for (int i = values.length - 2; i >= 0; i--) {
-					if (values[i] <= limit) {
+					if (values[i] < limit) {
 						values[i]++;
 						overflow = false;
 						break;
@@ -733,15 +780,15 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 					limit += 2;
 				}
 				if (overflow) throw new IllegalStateException("no such permutation");
-				correspond();
+				weChanged = true;
 				return this;
 			}
 			
 			@Override
 			public PermutationSequence previous() {
-				index();
+				if (theyChanged) index();
 				boolean overflow = true;
-				int limit = 1;
+				int limit = 2;
 				for (int i = values.length - 2; i >= 0; i--) {
 					if (values[i] > 0) {
 						values[i]--;
@@ -752,7 +799,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 					limit += 2;
 				}
 				if (overflow) throw new IllegalStateException("no such permutation");
-				correspond();
+				weChanged = true;
 				return this;
 			}
 			
@@ -760,7 +807,18 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			public Generator getGenerator() {
 				return Generator.this;
 			}
-
+			
+			@Override
+			void desync() {
+				theyChanged = true;
+				weChanged = false;
+			}
+			
+			@Override
+			void resync() {
+				if (weChanged) correspond();
+			}
+			
 			// clears supplied array, populates values
 			private void index() {
 				int[] correspondence = Generator.this.correspondence.clone();
@@ -778,6 +836,10 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 					}
 					correspondence[length - 1] = -1;
 					correspondence[length - 2] = -1;
+				}
+				if (syncer == this) {
+					theyChanged = false;
+					weChanged = false;
 				}
 			}
 			
@@ -807,6 +869,13 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 					correspondence[ai] = bi;
 					correspondence[bi] = ai;
 				}
+				sync();
+			}
+			
+			private void sync() {
+				setSyncer(this);
+				weChanged = false;
+				theyChanged = false;
 			}
 			
 			@Override

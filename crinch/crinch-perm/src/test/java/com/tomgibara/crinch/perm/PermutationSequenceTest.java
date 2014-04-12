@@ -31,14 +31,13 @@ public class PermutationSequenceTest extends PermutationTestCase {
 
 	private static final BigInteger TWO = BigInteger.valueOf(2);
 
-	private static void assertIsFFI(Permutation p) {
+	private static boolean isFFI(Permutation p) {
 		// check p is empty, or...
-		if (p.getSize() == 0) return;
+		if (p.getSize() == 0) return true;
 		Info info = p.getInfo();
 		// ... it is an involution...
-		assertEquals(TWO, info.getLengthOfOrbit());
 		// ...and has no fixed points
-		assertTrue(info.getFixedPoints().isAllZeros());
+		return TWO.equals(info.getLengthOfOrbit()) && info.getFixedPoints().isAllZeros();
 	}
 	
 	public void testFirstAndLastOrderedSequence() {
@@ -61,9 +60,9 @@ public class PermutationSequenceTest extends PermutationTestCase {
 			Generator generator = Permutation.identity(size).generator();
 			PermutationSequence sequence = generator.getFixFreeInvolutionSequence();
 			assertFalse(sequence.first().hasPrevious());
-			assertIsFFI(generator.permutation());
+			assertTrue(isFFI(generator.permutation()));
 			assertFalse(sequence.last().hasNext());
-			assertIsFFI(generator.permutation());
+			assertTrue(isFFI(generator.permutation()));
 		}
 	}
 	
@@ -122,7 +121,7 @@ public class PermutationSequenceTest extends PermutationTestCase {
 			list.add(p);
 			while (ps.hasNext()) {
 				p = ps.next().getGenerator().permutation();
-				assertIsFFI(p);
+				assertTrue(isFFI(p));
 				set.add(p);
 				list.add(p);
 			} 
@@ -132,4 +131,35 @@ public class PermutationSequenceTest extends PermutationTestCase {
 		}
 	}
 	
+	public void testSequenceInterleaving() {
+		Generator g = Permutation.identity(6).generator();
+		List<Permutation> ffis = new ArrayList<Permutation>();
+		for (PermutationSequence s = g.getFixFreeInvolutionSequence().first(); s.hasNext();) {
+			ffis.add(s.next().getGenerator().permutation());
+		}
+		
+		Random r = new Random(0L);
+		int size = ffis.size();
+		int tests = 20;
+		PermutationSequence s = g.getFixFreeInvolutionSequence();
+		for (int test = 0; test < tests;) {
+			int start = r.nextInt(size);
+			int finish = r.nextInt(size);
+			if (start == finish) continue;
+			Permutation p = ffis.get(start);
+			Permutation q = ffis.get(finish);
+			g.set(p);
+			while (start < finish) {
+				s.next();
+				start++;
+			}
+			while (start > finish) {
+				s.previous();
+				start--;
+			}
+			assertEquals(q, g.permutation());
+			test++;
+		}
+	}
+
 }

@@ -659,7 +659,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			}
 		}
 
-		private class OrderedSequence implements PermutationSequence {
+		private final class OrderedSequence implements PermutationSequence {
 
 			public boolean hasNext() {
 				int[] array = correspondence;
@@ -713,7 +713,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			
 		}
 
-		private class FixFreeInvolutionSequence extends Syncer implements PermutationSequence {
+		private final class FixFreeInvolutionSequence extends Syncer implements PermutationSequence {
 			
 			private boolean theyChanged;
 			private boolean weChanged;

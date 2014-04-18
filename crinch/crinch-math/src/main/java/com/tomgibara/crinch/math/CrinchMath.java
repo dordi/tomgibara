@@ -92,6 +92,20 @@ public class CrinchMath {
 		}
 	}
 
+	public static float pow(float f, int n) {
+		if (n < 0) {
+			f = 1/f;
+			n = -n;
+		}
+		float p = 1f;
+		while (n != 0) {
+			if ((n & 1) == 1) p *= f;
+			f *= f;
+			n >>= 1;
+		}
+		return p;
+	}
+	
 	private CrinchMath() {}
 	
 }

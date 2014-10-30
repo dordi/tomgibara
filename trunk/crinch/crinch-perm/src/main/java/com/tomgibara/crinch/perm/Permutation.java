@@ -550,6 +550,54 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 			return this;
 		}
 		
+		public Generator cycle(int... cycle) {
+			if (cycle == null) throw new IllegalArgumentException("null cycle");
+			int length = cycle.length;
+			if (length > correspondence.length) throw new IllegalArgumentException("cycle larger than permutation");
+			switch (length) {
+			case 0:
+				// nothing to do
+				return this;
+			case 1: {
+				// just check argument
+				int i = cycle[0];
+				if (i < 0) throw new IllegalArgumentException("negative index: " + i);
+				if (i >= correspondence.length) throw new IllegalArgumentException("index too large: " + i);
+				return this;
+			}
+			case 2: {
+				int i = cycle[0];
+				int j = cycle[1];
+				// check for dupes...
+				if (i == j) throw new IllegalArgumentException("cycle contains duplicate index: " + i);
+				// ... otherwise treat as a transposition
+				return transpose(i, j);
+			}
+			default:
+				// check for dupes in cycle
+				BitVector check = new BitVector(correspondence.length);
+				for (int i : cycle) {
+					boolean result;
+					try {
+						result = check.getThenSetBit(i, true);
+					} catch (IllegalArgumentException e) {
+						throw new IllegalArgumentException("cycle contains invalid index: " + i);
+					}
+					if (result) throw new IllegalArgumentException("cycle contains duplicate index: " + i);
+				}
+				// now start cycling
+				int target = cycle[0];
+				int t = correspondence[target];
+				for (int i = 1; i < length; i++) {
+					int source = cycle[i];
+					correspondence[target] = correspondence[source];
+					target = source;
+				}
+				correspondence[target] = t;
+				return this;
+			}
+		}
+		
 		// factory methods
 		
 		public Permutation permutation() {

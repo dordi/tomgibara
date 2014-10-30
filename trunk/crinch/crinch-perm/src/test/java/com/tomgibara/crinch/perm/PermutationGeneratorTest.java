@@ -65,5 +65,44 @@ public class PermutationGeneratorTest extends PermutationTestCase {
 		}
 	}
 	
-
+	public void testCycle() {
+		Permutation id = Permutation.identity(5);
+		assertEquals(id, id.generator().cycle(4).permutation());
+		assertEquals(id, id.generator().cycle().permutation());
+		assertEquals(Permutation.transpose(5, 0, 1), id.generator().cycle(0,1).permutation());
+		assertEquals(Permutation.transpose(5, 1, 4), id.generator().cycle(4,1).permutation());
+		assertEquals(new Permutation(0, 3, 2, 4, 1), id.generator().cycle(1, 3, 4).permutation());
+		//test failures
+		try {
+			id.generator().cycle(0, 0);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			id.generator().cycle(1, 2, 1);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			id.generator().cycle(-1);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			id.generator().cycle(1, 9);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+		try {
+			id.generator().cycle(0, 1, 5);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// expected
+		}
+	}
+	
 }

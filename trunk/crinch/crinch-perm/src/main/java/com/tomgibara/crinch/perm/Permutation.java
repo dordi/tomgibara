@@ -514,6 +514,7 @@ public final class Permutation implements Comparable<Permutation>, Serializable 
 		}
 		
 		public Generator shuffle(Random random) {
+			if (random == null) throw new IllegalArgumentException("null random");
 			for (int i = correspondence.length - 1; i > 0 ; i--) {
 				transpose(i, random.nextInt(i + 1));
 			}
